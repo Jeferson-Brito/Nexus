@@ -1224,6 +1224,7 @@
 
     function renderTable() {
         const container = document.getElementById('kpiTableContainer');
+        if (!container) return;  // Oculto para analistas ({% if can_edit %})
 
         if (kpisData.length === 0) {
             container.innerHTML = `
