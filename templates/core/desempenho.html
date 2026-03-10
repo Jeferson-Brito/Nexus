@@ -1677,14 +1677,25 @@
     async function loadPodium() {
         const monthSelect = document.getElementById('podiumMonth');
         const yearSelect = document.getElementById('podiumYear');
-        if (!monthSelect || !yearSelect) return;
-
-        const mes = monthSelect.value;
-        const ano = yearSelect.value;
-
-        if (!mes || !ano) return;
-
         const container = document.getElementById('podiumContainer');
+        if (!container) return;
+
+        // Usar valores dos selects, ou calcular fallback do kpisData/data atual
+        let mes = monthSelect ? monthSelect.value : '';
+        let ano = yearSelect ? yearSelect.value : '';
+
+        if (!mes || !ano) {
+            // Fallback: último dado inserido ou mês/ano atual
+            if (kpisData && kpisData.length > 0) {
+                const last = kpisData[kpisData.length - 1];
+                mes = mes || String(parseInt(last.mes));
+                ano = ano || String(parseInt(last.ano));
+            } else {
+                mes = mes || String(new Date().getMonth() + 1);
+                ano = ano || String(new Date().getFullYear());
+            }
+        }
+
         container.innerHTML = '<div class="text-center py-4" style="grid-column: 1 / -1;"><i class="bi bi-hourglass-split"></i> Carregando...</div>';
 
         try {
