@@ -598,9 +598,9 @@
 
             <select class="select-period" id="periodSelect" onchange="changeFilter()"
                 style="margin-left: 10px; padding: 10px 16px; border-radius: 10px; border: 1px solid #e5e7eb; background: white; font-weight: 500; color: #374151; outline: none; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-                <option value="6" {% if current_period == '6' %}selected{% endif %}>Últimos 6 meses</option>
-                <option value="12" {% if current_period == '12' %}selected{% endif %}>Últimos 12 meses</option>
-                <option value="all" {% if current_period == 'all' %}selected{% endif %}>Todo o histórico</option>
+                <option value="6" {% if current_period=='6' %}selected{% endif %}>Últimos 6 meses</option>
+                <option value="12" {% if current_period=='12' %}selected{% endif %}>Últimos 12 meses</option>
+                <option value="all" {% if current_period=='all' %}selected{% endif %}>Todo o histórico</option>
             </select>
             {% endif %}
 
@@ -830,24 +830,24 @@
 
     let tmeChart, npsChart, chatsChart;
 
-    // Plugin inline: rótulos nas barras (substitui chartjs-plugin-datalabels)
+    // Plugin inline: rótulos nas barras e na linha de meta
     const barLabelsPlugin = {
         id: 'barLabels',
         afterDatasetsDraw(chart) {
             const { ctx } = chart;
-            chart.data.datasets.forEach((dataset, datasetIndex) => {
-                // Ignora datasets do tipo 'line'
-                if (dataset.type === 'line') return;
 
+            chart.data.datasets.forEach((dataset, datasetIndex) => {
                 const meta = chart.getDatasetMeta(datasetIndex);
                 if (!meta.visible) return;
 
-                meta.data.forEach((bar, index) => {
+                const isLine = dataset.type === 'line';
+
+                meta.data.forEach((element, index) => {
                     const value = dataset.data[index];
                     if (value === null || value === undefined || value === 0) return;
 
+                    // Formata o label conforme o tipo de dado
                     let label = '';
-                    // Detecta o tipo de dado pelo dataset label
                     if (dataset.label && dataset.label.includes('TME')) {
                         label = secondsToHms(value);
                     } else if (dataset.label && dataset.label.includes('NPS')) {
@@ -855,37 +855,41 @@
                     } else {
                         label = value.toString();
                     }
-
                     if (!label) return;
 
                     ctx.save();
-                    ctx.font = 'bold 11px Inter, system-ui, sans-serif';
+                    ctx.font = 'bold 10px Inter, system-ui, sans-serif';
                     ctx.textAlign = 'center';
-                    ctx.textBaseline = 'bottom';
 
                     const textWidth = ctx.measureText(label).width;
-                    const padX = 6;
-                    const padY = 2;
+                    const padX = 5;
                     const boxWidth = textWidth + padX * 2;
-                    const boxHeight = 18;
-                    const x = bar.x;
-                    const y = bar.y - 4;
+                    const boxHeight = 16;
+                    const x = element.x;
 
-                    // Fundo escuro semitransparente
-                    ctx.fillStyle = 'rgba(30, 41, 59, 0.75)';
-                    ctx.beginPath();
-                    ctx.roundRect(
-                        x - boxWidth / 2,
-                        y - boxHeight,
-                        boxWidth,
-                        boxHeight,
-                        4
-                    );
-                    ctx.fill();
+                    if (isLine) {
+                        // Rótulo da LINHA (meta): acima do ponto, badge vermelho
+                        const y = element.y - 6; // topo do badge
+                        ctx.textBaseline = 'bottom';
+                        ctx.fillStyle = 'rgba(220, 38, 38, 0.9)';
+                        ctx.beginPath();
+                        ctx.roundRect(x - boxWidth / 2, y - boxHeight, boxWidth, boxHeight, 3);
+                        ctx.fill();
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillText(label, x, y - 2);
+                    } else {
+                        // Rótulo da BARRA: na base (parte de baixo), badge escuro
+                        const barBase = element.base; // y da base da barra (x-axis)
+                        const y = barBase - 4; // 4px acima da base
+                        ctx.textBaseline = 'bottom';
+                        ctx.fillStyle = 'rgba(30, 41, 59, 0.78)';
+                        ctx.beginPath();
+                        ctx.roundRect(x - boxWidth / 2, y - boxHeight, boxWidth, boxHeight, 4);
+                        ctx.fill();
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillText(label, x, y - 2);
+                    }
 
-                    // Texto branco
-                    ctx.fillStyle = '#ffffff';
-                    ctx.fillText(label, x, y - padY);
                     ctx.restore();
                 });
             });
