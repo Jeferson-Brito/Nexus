@@ -598,9 +598,9 @@
 
             <select class="select-period" id="periodSelect" onchange="changeFilter()"
                 style="margin-left: 10px; padding: 10px 16px; border-radius: 10px; border: 1px solid #e5e7eb; background: white; font-weight: 500; color: #374151; outline: none; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-                <option value="6" {% if current_period=='6' %}selected{% endif %}>Últimos 6 meses</option>
-                <option value="12" {% if current_period=='12' %}selected{% endif %}>Últimos 12 meses</option>
-                <option value="all" {% if current_period=='all' %}selected{% endif %}>Todo o histórico</option>
+                <option value="6" {% if current_period == '6' %}selected{% endif %}>Últimos 6 meses</option>
+                <option value="12" {% if current_period == '12' %}selected{% endif %}>Últimos 12 meses</option>
+                <option value="all" {% if current_period == 'all' %}selected{% endif %}>Todo o histórico</option>
             </select>
             {% endif %}
 
