@@ -344,17 +344,10 @@ def api_ranking(request):
 @require_http_methods(["GET"])
 def api_podium(request):
     """Retorna pódio (top 3) de analistas para cada métrica em um mês/ano específico"""
-    user = request.user
-    
-    # Verificar se é do departamento NRS Suporte
-    try:
-        nrs_dept = Department.objects.get(name='NRS Suporte')
-    except Department.DoesNotExist:
+    # Pódio é visível para todos os usuários autenticados
+    nrs_dept = get_nrs_department(request.user)
+    if not nrs_dept:
         return JsonResponse({'error': 'Departamento não encontrado'}, status=404)
-    
-    # Todos do NRS Suporte podem ver o pódio
-    if user.department != nrs_dept and user.role != 'administrador':
-        return JsonResponse({'error': 'Acesso restrito ao NRS Suporte'}, status=403)
     
     # Parâmetros
     mes = request.GET.get('mes')
