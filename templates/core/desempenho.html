@@ -689,8 +689,8 @@
         </div>
     </div>
 
-    <!-- Tabela de KPIs -->
-
+    <!-- Tabela de KPIs (apenas gestores/admin) -->
+    {% if can_edit %}
     <div class="kpi-table-section">
         <div class="kpi-table-header">
             <h3 class="kpi-table-title">Histórico de KPIs</h3>
@@ -700,6 +700,7 @@
             <!-- Preenchido via JavaScript -->
         </div>
     </div>
+    {% endif %}
 
     {% if can_edit %}
     <!-- Seção de Ranking (apenas gestores/admin) -->
