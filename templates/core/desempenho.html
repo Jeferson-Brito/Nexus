@@ -976,16 +976,16 @@
                         }
                     },
                     datalabels: {
-                        display: true,
-                        align: (context) => context.dataset.type === 'line' ? 'top' : 'top',
-                        anchor: (context) => context.dataset.type === 'line' ? 'end' : 'start',
-                        offset: (context) => context.dataset.type === 'line' ? 8 : 15,
+                        display: (context) => context.dataset.type === 'line' ? false : true,
+                        align: 'top',
+                        anchor: 'end',
+                        offset: 4,
                         color: '#ffffff',
-                        backgroundColor: (context) => context.dataset.type === 'line' ? '#dc2626' : 'rgba(0, 0, 0, 0.4)',
+                        backgroundColor: 'rgba(0, 0, 0, 0.45)',
                         borderRadius: 4,
                         padding: { top: 2, bottom: 2, left: 6, right: 6 },
-                        font: { weight: 'bold', size: 12 },
-                        formatter: (value) => value ? secondsToHms(value) : ''
+                        font: { weight: 'bold', size: 11 },
+                        formatter: (value) => value ? secondsToHms(value) : null
                     },
                     tooltip: {
                         callbacks: {
@@ -1065,16 +1065,16 @@
                         }
                     },
                     datalabels: {
-                        display: true,
-                        align: (context) => context.dataset.type === 'line' ? 'top' : 'top',
-                        anchor: (context) => context.dataset.type === 'line' ? 'end' : 'start',
-                        offset: (context) => context.dataset.type === 'line' ? 8 : 15,
+                        display: (context) => context.dataset.type === 'line' ? false : true,
+                        align: 'top',
+                        anchor: 'end',
+                        offset: 4,
                         color: '#ffffff',
-                        backgroundColor: (context) => context.dataset.type === 'line' ? '#dc2626' : 'rgba(0, 0, 0, 0.4)',
+                        backgroundColor: 'rgba(0, 0, 0, 0.45)',
                         borderRadius: 4,
                         padding: { top: 2, bottom: 2, left: 6, right: 6 },
-                        font: { weight: 'bold', size: 12 },
-                        formatter: (value) => value ? value.toFixed(2) : ''
+                        font: { weight: 'bold', size: 11 },
+                        formatter: (value) => value ? value.toFixed(2) : null
                     }
                 }
             }
@@ -1125,16 +1125,16 @@
                         }
                     },
                     datalabels: {
-                        display: true,
-                        align: (context) => context.dataset.type === 'line' ? 'top' : 'top',
-                        anchor: (context) => context.dataset.type === 'line' ? 'end' : 'start',
-                        offset: (context) => context.dataset.type === 'line' ? 8 : 15,
+                        display: (context) => context.dataset.type === 'line' ? false : true,
+                        align: 'top',
+                        anchor: 'end',
+                        offset: 4,
                         color: '#ffffff',
-                        backgroundColor: (context) => context.dataset.type === 'line' ? '#dc2626' : 'rgba(0, 0, 0, 0.4)',
+                        backgroundColor: 'rgba(0, 0, 0, 0.45)',
                         borderRadius: 4,
                         padding: { top: 2, bottom: 2, left: 6, right: 6 },
-                        font: { weight: 'bold', size: 12 },
-                        formatter: (value) => value || ''
+                        font: { weight: 'bold', size: 11 },
+                        formatter: (value) => (value !== null && value !== undefined && value !== 0) ? value : null
                     }
                 }
             }
@@ -1459,11 +1459,9 @@
 
         if (!monthSelect) return;
 
-        // Set current month if not already set
-        if (!monthSelect.value) {
-            const currentMonth = new Date().getMonth() + 1;
-            monthSelect.value = currentMonth;
-        }
+        // Always set current month as default
+        const currentMonth = new Date().getMonth() + 1;
+        monthSelect.value = currentMonth;
 
         // Load ranking automatically
         loadRanking();
@@ -1587,11 +1585,9 @@
 
         if (!monthSelect) return;
 
-        // Set current month if not already set
-        if (!monthSelect.value) {
-            const currentMonth = new Date().getMonth() + 1;
-            monthSelect.value = currentMonth;
-        }
+        // Always set current month as default
+        const currentMonth = new Date().getMonth() + 1;
+        monthSelect.value = currentMonth;
 
         // Load podium automatically
         loadPodium();
