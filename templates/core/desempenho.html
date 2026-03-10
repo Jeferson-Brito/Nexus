@@ -598,9 +598,9 @@
 
             <select class="select-period" id="periodSelect" onchange="changeFilter()"
                 style="margin-left: 10px; padding: 10px 16px; border-radius: 10px; border: 1px solid #e5e7eb; background: white; font-weight: 500; color: #374151; outline: none; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-                <option value="6" {% if current_period == '6' %}selected{% endif %}>Últimos 6 meses</option>
-                <option value="12" {% if current_period == '12' %}selected{% endif %}>Últimos 12 meses</option>
-                <option value="all" {% if current_period == 'all' %}selected{% endif %}>Todo o histórico</option>
+                <option value="6" {% if current_period=='6' %}selected{% endif %}>Últimos 6 meses</option>
+                <option value="12" {% if current_period=='12' %}selected{% endif %}>Últimos 12 meses</option>
+                <option value="all" {% if current_period=='all' %}selected{% endif %}>Todo o histórico</option>
             </select>
             {% endif %}
 
@@ -821,8 +821,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js" defer></script>
 <script>
     const kpisData = {{ kpis_json| safe }};
     const canEdit = {{ can_edit_str }};
@@ -831,15 +830,92 @@
 
     let tmeChart, npsChart, chatsChart;
 
+    // Plugin inline: rótulos nas barras (substitui chartjs-plugin-datalabels)
+    const barLabelsPlugin = {
+        id: 'barLabels',
+        afterDatasetsDraw(chart) {
+            const { ctx } = chart;
+            chart.data.datasets.forEach((dataset, datasetIndex) => {
+                // Ignora datasets do tipo 'line'
+                if (dataset.type === 'line') return;
+
+                const meta = chart.getDatasetMeta(datasetIndex);
+                if (!meta.visible) return;
+
+                meta.data.forEach((bar, index) => {
+                    const value = dataset.data[index];
+                    if (value === null || value === undefined || value === 0) return;
+
+                    let label = '';
+                    // Detecta o tipo de dado pelo dataset label
+                    if (dataset.label && dataset.label.includes('TME')) {
+                        label = secondsToHms(value);
+                    } else if (dataset.label && dataset.label.includes('NPS')) {
+                        label = parseFloat(value).toFixed(2);
+                    } else {
+                        label = value.toString();
+                    }
+
+                    if (!label) return;
+
+                    ctx.save();
+                    ctx.font = 'bold 11px Inter, system-ui, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'bottom';
+
+                    const textWidth = ctx.measureText(label).width;
+                    const padX = 6;
+                    const padY = 2;
+                    const boxWidth = textWidth + padX * 2;
+                    const boxHeight = 18;
+                    const x = bar.x;
+                    const y = bar.y - 4;
+
+                    // Fundo escuro semitransparente
+                    ctx.fillStyle = 'rgba(30, 41, 59, 0.75)';
+                    ctx.beginPath();
+                    ctx.roundRect(
+                        x - boxWidth / 2,
+                        y - boxHeight,
+                        boxWidth,
+                        boxHeight,
+                        4
+                    );
+                    ctx.fill();
+
+                    // Texto branco
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillText(label, x, y - padY);
+                    ctx.restore();
+                });
+            });
+        }
+    };
+
+    // Registra e inicializa ao carregar
     document.addEventListener('DOMContentLoaded', function () {
         if (typeof Chart === 'undefined') {
             console.error('Chart.js not loaded yet');
             return;
         }
 
-        if (typeof ChartDataLabels !== 'undefined') {
-            Chart.register(ChartDataLabels);
+        // Polyfill para roundRect (navegadores antigos)
+        if (!CanvasRenderingContext2D.prototype.roundRect) {
+            CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
+                if (w < 2 * r) r = w / 2;
+                if (h < 2 * r) r = h / 2;
+                this.moveTo(x + r, y);
+                this.arcTo(x + w, y, x + w, y + h, r);
+                this.arcTo(x + w, y + h, x, y + h, r);
+                this.arcTo(x, y + h, x, y, r);
+                this.arcTo(x, y, x + w, y, r);
+                this.closePath();
+                return this;
+            };
         }
+
+        // Registra o plugin de rótulos
+        Chart.register(barLabelsPlugin);
 
         renderCharts();
         renderTable();
@@ -975,18 +1051,7 @@
                             padding: 15
                         }
                     },
-                    datalabels: {
-                        display: (context) => context.dataset.type === 'line' ? false : true,
-                        align: 'top',
-                        anchor: 'end',
-                        offset: 4,
-                        color: '#ffffff',
-                        backgroundColor: 'rgba(0, 0, 0, 0.45)',
-                        borderRadius: 4,
-                        padding: { top: 2, bottom: 2, left: 6, right: 6 },
-                        font: { weight: 'bold', size: 11 },
-                        formatter: (value) => value ? secondsToHms(value) : null
-                    },
+                    barLabels: {},
                     tooltip: {
                         callbacks: {
                             label: (context) => {
@@ -1064,18 +1129,7 @@
                             padding: 15
                         }
                     },
-                    datalabels: {
-                        display: (context) => context.dataset.type === 'line' ? false : true,
-                        align: 'top',
-                        anchor: 'end',
-                        offset: 4,
-                        color: '#ffffff',
-                        backgroundColor: 'rgba(0, 0, 0, 0.45)',
-                        borderRadius: 4,
-                        padding: { top: 2, bottom: 2, left: 6, right: 6 },
-                        font: { weight: 'bold', size: 11 },
-                        formatter: (value) => value ? value.toFixed(2) : null
-                    }
+                    barLabels: {}
                 }
             }
         });
@@ -1124,18 +1178,7 @@
                             padding: 15
                         }
                     },
-                    datalabels: {
-                        display: (context) => context.dataset.type === 'line' ? false : true,
-                        align: 'top',
-                        anchor: 'end',
-                        offset: 4,
-                        color: '#ffffff',
-                        backgroundColor: 'rgba(0, 0, 0, 0.45)',
-                        borderRadius: 4,
-                        padding: { top: 2, bottom: 2, left: 6, right: 6 },
-                        font: { weight: 'bold', size: 11 },
-                        formatter: (value) => (value !== null && value !== undefined && value !== 0) ? value : null
-                    }
+                    barLabels: {}
                 }
             }
         });
@@ -1459,9 +1502,16 @@
 
         if (!monthSelect) return;
 
-        // Always set current month as default
-        const currentMonth = new Date().getMonth() + 1;
-        monthSelect.value = currentMonth;
+        // Usa o mês e ano do último dado inserido (de kpisData) ou o período atual como fallback
+        let targetMonth = new Date().getMonth() + 1;
+        let targetYear = new Date().getFullYear();
+        if (kpisData && kpisData.length > 0) {
+            const lastKpi = kpisData[kpisData.length - 1];
+            targetMonth = lastKpi.mes;
+            targetYear = lastKpi.ano;
+        }
+        monthSelect.value = targetMonth;
+        yearSelect.value = targetYear;
 
         // Load ranking automatically
         loadRanking();
@@ -1585,9 +1635,16 @@
 
         if (!monthSelect) return;
 
-        // Always set current month as default
-        const currentMonth = new Date().getMonth() + 1;
-        monthSelect.value = currentMonth;
+        // Usa o mês e ano do último dado inserido (de kpisData) ou o período atual como fallback
+        let targetMonth = new Date().getMonth() + 1;
+        let targetYear = new Date().getFullYear();
+        if (kpisData && kpisData.length > 0) {
+            const lastKpi = kpisData[kpisData.length - 1];
+            targetMonth = lastKpi.mes;
+            targetYear = lastKpi.ano;
+        }
+        monthSelect.value = targetMonth;
+        yearSelect.value = targetYear;
 
         // Load podium automatically
         loadPodium();
