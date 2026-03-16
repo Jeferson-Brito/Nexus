@@ -43,9 +43,9 @@ def api_chat_inactivity_list(request):
             'was_inactivity': r.was_inactivity,
             'analyst_name': r.analyst.get_full_name() or r.analyst.username,
             'status': r.status,
-            'created_at': r.created_at.strftime('%d/%m/%Y %H:%M'),
+            'created_at': timezone.localtime(r.created_at).strftime('%d/%m/%Y %H:%M'),
             'reviewed_by_name': r.reviewed_by.get_full_name() or r.reviewed_by.username if r.reviewed_by else None,
-            'reviewed_at': r.reviewed_at.strftime('%d/%m/%Y %H:%M') if r.reviewed_at else None,
+            'reviewed_at': timezone.localtime(r.reviewed_at).strftime('%d/%m/%Y %H:%M') if r.reviewed_at else None,
             'analyst_id': str(r.analyst.id),
             'review_notes': r.review_notes
         })
