@@ -1861,16 +1861,16 @@
             let actions = '';
             if (isManager && r.status === 'pendente') {
                 actions += `
-                    <button class="btn btn-sm btn-info" onclick="openReviewChatModal(${r.id}, '${r.chat_id}', '${r.analyst_name}')" title="Revisar">
+                    <button class="btn btn-sm btn-info" onclick="openReviewChatModal('${r.id}', '${r.chat_id}', '${r.analyst_name}')" title="Revisar">
                         <i class="bi bi-pencil-square"></i>
                     </button>
-                    <button class="btn btn-sm btn-outline-danger" onclick="deleteChatRequest(${r.id})" title="Excluir">
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteChatRequest('${r.id}')" title="Excluir">
                         <i class="bi bi-trash"></i>
                     </button>
                 `;
             } else if (r.status === 'pendente') {
                 actions += `
-                    <button class="btn btn-sm btn-outline-danger" onclick="deleteChatRequest(${r.id})" title="Excluir">
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteChatRequest('${r.id}')" title="Excluir">
                         <i class="bi bi-trash"></i>
                     </button>
                 `;
