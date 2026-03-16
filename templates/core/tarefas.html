@@ -197,7 +197,7 @@
     <div class="row mt-4" style="position: relative; z-index: 1;">
         <div class="col-12">
             <div class="card shadow-sm border-0">
-                <div class="card-header bg-info text-dark py-3 d-flex justify-content-between align-items-center">
+                <div class="card-header bg-info text-white py-3 d-flex justify-content-between align-items-center">
                     <h5 class="mb-0 fw-bold"><i class="bi bi-chat-left-dots me-2"></i>Remoção de Inatividade - Chats
                     </h5>
                     <div class="d-flex gap-2">
@@ -233,6 +233,9 @@
                                 </tr>
                             </tbody>
                         </table>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center p-3 border-top"
+                        id="chat-pagination-container">
                     </div>
                 </div>
             </div>
@@ -1771,6 +1774,10 @@
         }
     }
 
+    let allChatRequests = [];
+    let currentChatPage = 1;
+    const chatItemsPerPage = 10;
+
     async function loadChatInactivityRequests() {
         const status = document.getElementById('chatInactivityStatusFilter').value;
         let url = `/api/chat-inactivity/list/?status=${status}`;
@@ -1779,11 +1786,63 @@
             const res = await fetch(url);
             if (res.ok) {
                 const data = await res.json();
-                renderChatInactivityRequests(data);
+                allChatRequests = data;
+                currentChatPage = 1;
+                renderChatInactivityPage();
             }
         } catch (e) {
             console.error('Erro ao carregar solicitações de chat', e);
         }
+    }
+
+    function renderChatInactivityPage() {
+        const start = (currentChatPage - 1) * chatItemsPerPage;
+        const end = start + chatItemsPerPage;
+        const paginatedData = allChatRequests.slice(start, end);
+
+        renderChatInactivityRequests(paginatedData);
+        renderChatPagination();
+    }
+
+    function changeChatPage(page) {
+        currentChatPage = page;
+        renderChatInactivityPage();
+    }
+
+    function renderChatPagination() {
+        const container = document.getElementById('chat-pagination-container');
+        if (!container) return;
+
+        const totalPages = Math.ceil(allChatRequests.length / chatItemsPerPage);
+
+        if (totalPages <= 1) {
+            container.innerHTML = '';
+            return;
+        }
+
+        let html = `<div class="text-muted small">Mostrando ${(currentChatPage - 1) * chatItemsPerPage + 1} a ${Math.min(currentChatPage * chatItemsPerPage, allChatRequests.length)} de ${allChatRequests.length} registros</div>`;
+        html += `<nav><ul class="pagination pagination-sm mb-0">`;
+
+        html += `<li class="page-item ${currentChatPage === 1 ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="changeChatPage(${currentChatPage - 1}); return false;">Anterior</a>
+                 </li>`;
+
+        for (let i = 1; i <= totalPages; i++) {
+            if (i === 1 || i === totalPages || (i >= currentChatPage - 1 && i <= currentChatPage + 1)) {
+                html += `<li class="page-item ${currentChatPage === i ? 'active' : ''}">
+                            <a class="page-link" href="#" onclick="changeChatPage(${i}); return false;">${i}</a>
+                         </li>`;
+            } else if (i === currentChatPage - 2 || i === currentChatPage + 2) {
+                html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+            }
+        }
+
+        html += `<li class="page-item ${currentChatPage === totalPages ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="changeChatPage(${currentChatPage + 1}); return false;">Próxima</a>
+                 </li>`;
+
+        html += `</ul></nav>`;
+        container.innerHTML = html;
     }
 
     function renderChatInactivityRequests(requests) {
