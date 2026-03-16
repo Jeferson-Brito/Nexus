@@ -12,7 +12,7 @@ def api_chat_inactivity_list(request):
     user = request.user
     is_manager = user.role in ['gestor', 'administrador']
     
-    queryset = ChatInactivityRequest.objects.all().select_related('analyst', 'reviewed_by')
+    queryset = ChatInactivityRequest.objects.all().select_related('analyst', 'reviewed_by').order_by('created_at')
     
     # Filtros
     status = request.GET.get('status')
