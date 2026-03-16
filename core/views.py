@@ -2361,7 +2361,7 @@ def tasks_view(request):
     show_create_button = is_manager or is_nrs_analyst or user.is_administrador()
     
     context = {
-        'title': 'Tarefas e Rotinas',
+        'title': 'Tarefas e Solicitações',
         'is_manager': is_manager,
         'show_create_button': show_create_button,
     }
