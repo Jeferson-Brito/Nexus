@@ -57,37 +57,33 @@
 
     <!-- Stats Cards -->
     <div class="row mb-4">
-        <div class="col-6 col-lg-3 mb-3">
-            <div class="stat-card stat-card-primary">
+        <div class="col-6 col-lg-4 mb-3">
+            <div class="stat-card stat-card-primary" style="cursor:pointer;" onclick="filterSection('tarefas-section')"
+                title="Ver apenas Tarefas Atribuídas">
                 <div class="stat-card-icon"><i class="bi bi-list-task"></i></div>
-                <p class="stat-card-title">Total Tarefas</p>
+                <p class="stat-card-title">Tarefas Atribuídas</p>
                 <h2 class="stat-card-value" id="stat-total">0</h2>
             </div>
         </div>
-        <div class="col-6 col-lg-3 mb-3">
-            <div class="stat-card stat-card-warning">
-                <div class="stat-card-icon"><i class="bi bi-hourglass-split"></i></div>
-                <p class="stat-card-title">Pendentes</p>
+        <div class="col-6 col-lg-4 mb-3">
+            <div class="stat-card stat-card-warning" style="cursor:pointer;" onclick="filterSection('chats-section')"
+                title="Ver apenas Remoção de Inatividade - Chats">
+                <div class="stat-card-icon"><i class="bi bi-chat-left-dots"></i></div>
+                <p class="stat-card-title">Solicitação de Inatividades</p>
                 <h2 class="stat-card-value" id="stat-pending">0</h2>
             </div>
         </div>
-        <div class="col-6 col-lg-3 mb-3">
-            <div class="stat-card stat-card-info">
+        <div class="col-6 col-lg-4 mb-3">
+            <div class="stat-card stat-card-info" style="cursor:pointer;" onclick="filterSection('cs-section')"
+                title="Ver apenas Solicitações ao CS Clientes">
                 <div class="stat-card-icon"><i class="bi bi-receipt-cutoff"></i></div>
                 <p class="stat-card-title">Solicitações CS</p>
                 <h2 class="stat-card-value" id="stat-refunds">0</h2>
             </div>
         </div>
-        <div class="col-6 col-lg-3 mb-3">
-            <div class="stat-card stat-card-success">
-                <div class="stat-card-icon"><i class="bi bi-check-circle"></i></div>
-                <p class="stat-card-title">Concluídas</p>
-                <h2 class="stat-card-value" id="stat-completed">0</h2>
-            </div>
-        </div>
     </div>
 
-    <div class="row">
+    <div class="row" id="tarefas-section">
         <!-- Tarefas Atribuídas -->
         <div class="col-12 mb-4">
             <div class="card">
@@ -133,7 +129,7 @@
     <div class="clearfix"></div>
 
     <!-- Solicitações ao CS Clientes (NRS Suporte) -->
-    <div class="row mt-4" style="position: relative; z-index: 1;">
+    <div class="row mt-4" id="cs-section" style="position: relative; z-index: 1;">
         <div class="col-12">
             <div class="card">
                 <div class="card-header bg-primary text-white py-3">
@@ -194,7 +190,7 @@
     </div>
 
     <!-- Remoção de Inatividades - Chats (NRS Suporte) -->
-    <div class="row mt-4" style="position: relative; z-index: 1;">
+    <div class="row mt-4" id="chats-section" style="position: relative; z-index: 1;">
         <div class="col-12">
             <div class="card shadow-sm border-0">
                 <div class="card-header bg-info text-white py-3 d-flex justify-content-between align-items-center">
@@ -2000,6 +1996,31 @@
         } catch (e) {
             console.error(e);
             Swal.fire('Erro!', 'Erro de conexão ao excluir.', 'error');
+        }
+    }
+    // Card click to filter sections
+    let activeSectionFilter = null;
+    const allSections = ['tarefas-section', 'cs-section', 'chats-section'];
+
+    function filterSection(sectionId) {
+        if (activeSectionFilter === sectionId) {
+            // Second click: restore all sections
+            activeSectionFilter = null;
+            allSections.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.style.display = '';
+            });
+            // Also restore clearfix
+            const cf = document.querySelector('.clearfix');
+            if (cf) cf.style.display = '';
+        } else {
+            activeSectionFilter = sectionId;
+            allSections.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.style.display = (id === sectionId) ? '' : 'none';
+            });
+            const cf = document.querySelector('.clearfix');
+            if (cf) cf.style.display = (sectionId === 'tarefas-section') ? '' : 'none';
         }
     }
 
