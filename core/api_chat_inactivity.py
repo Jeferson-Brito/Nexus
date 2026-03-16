@@ -30,8 +30,22 @@ def api_chat_inactivity_list(request):
     if search:
         queryset = queryset.filter(
             Q(chat_id__icontains=search) |
-            Q(chat_link__icontains=search)
+            Q(chat_link__icontains=search) |
+            Q(analyst__first_name__icontains=search) |
+            Q(analyst__last_name__icontains=search)
         )
+
+    chat_date = request.GET.get('chat_date')
+    if chat_date:
+        queryset = queryset.filter(chat_date=chat_date)
+
+    date_start = request.GET.get('date_start')
+    if date_start:
+        queryset = queryset.filter(created_at__date__gte=date_start)
+
+    date_end = request.GET.get('date_end')
+    if date_end:
+        queryset = queryset.filter(created_at__date__lte=date_end)
         
     requests_data = []
     for r in queryset:

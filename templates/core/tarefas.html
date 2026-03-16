@@ -187,17 +187,36 @@
     <div class="row mt-4" id="chats-section" style="position: relative; z-index: 1;">
         <div class="col-12">
             <div class="card shadow-sm border-0">
-                <div class="card-header bg-info text-white py-3 d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0 fw-bold"><i class="bi bi-chat-left-dots me-2"></i>Remoção de Inatividade - Chats
-                    </h5>
-                    <div class="d-flex gap-2">
-                        <select class="form-select form-select-sm" id="chatInactivityStatusFilter" style="width: 150px;"
-                            onchange="loadChatInactivityRequests()">
+                <div class="card-header bg-info text-white py-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h5 class="mb-0 fw-bold"><i class="bi bi-chat-left-dots me-2"></i>Remoção de Inatividade - Chats
+                        </h5>
+                    </div>
+                    <div class="d-flex gap-2 flex-wrap align-items-center">
+                        <input type="text" class="form-control form-control-sm rounded-pill" id="chatSearch"
+                            placeholder="ID ou Analista..." style="width: 170px; border: none;"
+                            oninput="debounceChatSearch()">
+                        <select class="form-select form-select-sm rounded-pill" id="chatInactivityStatusFilter"
+                            style="width: 140px; border: none;" onchange="loadChatInactivityRequests()">
                             <option value="">Todos Status</option>
                             <option value="pendente">Pendentes</option>
                             <option value="aprovado">Aprovados</option>
                             <option value="reprovado">Reprovados</option>
                         </select>
+                        <input type="date" class="form-control form-control-sm rounded-pill" id="chatDateFilter"
+                            title="Data do Chat" style="width: 155px; border: none;"
+                            onchange="loadChatInactivityRequests()">
+                        <span class="text-white-50 small">Criação:</span>
+                        <input type="date" class="form-control form-control-sm rounded-pill" id="chatDateStart"
+                            title="Criação De" style="width: 155px; border: none;"
+                            onchange="loadChatInactivityRequests()">
+                        <input type="date" class="form-control form-control-sm rounded-pill" id="chatDateEnd"
+                            title="Criação Até" style="width: 155px; border: none;"
+                            onchange="loadChatInactivityRequests()">
+                        <button class="btn btn-sm btn-light rounded-pill" onclick="clearChatFilters()"
+                            title="Limpar filtros">
+                            <i class="bi bi-x-lg text-info"></i>
+                        </button>
                     </div>
                 </div>
                 <div class="card-body p-0">
@@ -1771,8 +1790,17 @@
     const chatItemsPerPage = 10;
 
     async function loadChatInactivityRequests() {
-        const status = document.getElementById('chatInactivityStatusFilter').value;
+        const status = document.getElementById('chatInactivityStatusFilter')?.value || '';
+        const search = document.getElementById('chatSearch')?.value || '';
+        const chatDate = document.getElementById('chatDateFilter')?.value || '';
+        const dateStart = document.getElementById('chatDateStart')?.value || '';
+        const dateEnd = document.getElementById('chatDateEnd')?.value || '';
+
         let url = `/api/chat-inactivity/list/?status=${status}`;
+        if (search) url += `&q=${encodeURIComponent(search)}`;
+        if (chatDate) url += `&chat_date=${chatDate}`;
+        if (dateStart) url += `&date_start=${dateStart}`;
+        if (dateEnd) url += `&date_end=${dateEnd}`;
 
         try {
             const res = await fetch(url);
@@ -2021,6 +2049,22 @@
             const cf = document.querySelector('.clearfix');
             if (cf) cf.style.display = (sectionId === 'tarefas-section') ? '' : 'none';
         }
+    }
+
+    // Chat filter helpers
+    let chatSearchTimer = null;
+    function debounceChatSearch() {
+        clearTimeout(chatSearchTimer);
+        chatSearchTimer = setTimeout(() => loadChatInactivityRequests(), 350);
+    }
+
+    function clearChatFilters() {
+        const ids = ['chatSearch', 'chatInactivityStatusFilter', 'chatDateFilter', 'chatDateStart', 'chatDateEnd'];
+        ids.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = '';
+        });
+        loadChatInactivityRequests();
     }
 
 </script>
