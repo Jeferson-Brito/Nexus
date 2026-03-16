@@ -2445,10 +2445,11 @@ def verificacao_lojas(request):
         irregular_count = len(irregular_store_ids)
 
         # Lojas verificadas este mês (Conforme)
-        ok_count = base_stats_query.annotate(
-            _has_issue=Exists(StoreAuditIssue.objects.filter(store=OuterRef('pk'), status='aberta')),
-            _has_audit=Exists(StoreAudit.objects.filter(store=OuterRef('pk')))
-        ).filter(_has_audit=True, _has_issue=False).count()
+        ok_count = base_stats_query.filter(
+            audits__isnull=False
+        ).exclude(
+            audit_issues__status='aberta'
+        ).distinct().count()
         
         # Contagem de suspensos
         suspended_query = Store.objects.filter(active=False)
@@ -2475,9 +2476,9 @@ def verificacao_lojas(request):
     elif tab == 'suspended':
         stores_queryset = stores_queryset.filter(active=False)
     elif tab == 'irregular':
-        stores_queryset = stores_queryset.filter(active=True, has_open_issue=True)
+        stores_queryset = stores_queryset.filter(active=True, id__in=irregular_store_ids)
     elif tab == 'verified':
-        stores_queryset = stores_queryset.filter(active=True, has_audit=True, has_open_issue=False)
+        stores_queryset = stores_queryset.filter(active=True, audits__isnull=False).exclude(id__in=irregular_store_ids).distinct()
     else:
         stores_queryset = stores_queryset.filter(active=True)
 
@@ -2507,7 +2508,10 @@ def verificacao_lojas(request):
         # Fetch pending issues ONLY when on irregular tab or if needed for dashboard
         pending_issues_queryset = StoreAuditIssue.objects.filter(
             status='aberta'
-        ).select_related('store').order_by('-created_at')
+        ).select_related('store').prefetch_related(
+            'items', 
+            'items__audit__analyst'
+        ).order_by('-created_at')
         
         pending_paginator = Paginator(pending_issues_queryset, 25)
         pending_page_number = request.GET.get('pending_page', 1)
@@ -2539,21 +2543,29 @@ def verificacao_lojas(request):
         latest_audits = {}
         audits_qs = StoreAudit.objects.filter(
             store_id__in=page_store_ids
-        ).select_related('analyst').order_by('store', '-created_at')
+        ).select_related('analyst').order_by('store_id', '-created_at')
         
+        # Usando .distinct('store_id') com order_by compatível com Postgres
+        # Mas vamos fazer por código para ser seguro em qualquer BD
         for audit in audits_qs:
             if audit.store_id not in latest_audits:
                 latest_audits[audit.store_id] = audit
-        
+
+        # Determinar status has_audit rapidamente para todas da pagina
+        stores_with_audits = set(StoreAudit.objects.filter(store_id__in=page_store_ids).values_list('store_id', flat=True).distinct())
+
         for store in stores:
             store.latest_audit = latest_audits.get(store.id)
             store.audits_this_month_count = monthly_counts_map.get(store.id, 0)
             
+            _has_open_issue = store.id in irregular_store_ids
+            _has_audit = store.id in stores_with_audits
+            
             if not store.active:
                 store.ui_status = 'suspended'
-            elif store.has_open_issue:
+            elif _has_open_issue:
                 store.ui_status = 'irregular'
-            elif store.has_audit:
+            elif _has_audit:
                 store.ui_status = 'compliant'
             else:
                 store.ui_status = 'pending'

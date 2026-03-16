@@ -135,7 +135,14 @@ def api_create_ticket_from_issue(request, issue_id):
         issue.notification_channel = 'ticket'
         issue.ticket_priority = data.get('priority', 'media')
         issue.ticket_notes = data.get('notes', '')
-        issue.deadline_hours = int(data.get('deadline_hours', 72))
+        
+        # Validar e processar deadline_hours de forma segura
+        raw_deadline = data.get('deadline_hours')
+        try:
+            issue.deadline_hours = int(raw_deadline) if raw_deadline is not None else 72
+        except (ValueError, TypeError):
+            issue.deadline_hours = 72
+            
         issue.deadline_datetime = timezone.now() + timedelta(hours=issue.deadline_hours)
         issue.notified = True
         

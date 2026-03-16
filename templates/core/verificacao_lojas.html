@@ -1700,7 +1700,17 @@
                 })
             });
 
-            const data = await response.json();
+            const textResponse = await response.text();
+            console.log('Raw Server Response:', textResponse);
+
+            let data;
+            try {
+                data = JSON.parse(textResponse);
+            } catch (e) {
+                console.error("Failed to parse JSON:", e);
+                showToast('error', 'Resposta inválida do servidor (veja o console)');
+                return;
+            }
 
             if (data.success) {
                 bootstrap.Modal.getInstance(document.getElementById('ticketModal')).hide();
@@ -1835,35 +1845,6 @@
             </div>
         `;
         }
-    }
-
-    // Toast notification
-    function showToast(type, message) {
-        const toastHtml = `
-        <div class="toast align-items-center text-white bg-${type === 'success' ? 'success' : 'danger'} border-0" role="alert">
-            <div class="d-flex">
-                <div class="toast-body">
-                    <i class="bi bi-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>
-                    ${message}
-                </div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-            </div>
-        </div>
-    `;
-
-        let toastContainer = document.querySelector('.toast-container');
-        if (!toastContainer) {
-            toastContainer = document.createElement('div');
-            toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
-            document.body.appendChild(toastContainer);
-        }
-
-        toastContainer.insertAdjacentHTML('beforeend', toastHtml);
-        const toastElement = toastContainer.lastElementChild;
-        const toast = new bootstrap.Toast(toastElement);
-        toast.show();
-
-        setTimeout(() => toastElement.remove(), 5000);
     }
 
     // Iniciar timers ao carregar página
