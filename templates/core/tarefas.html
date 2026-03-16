@@ -857,12 +857,8 @@
 
             // Update stats
             const total = tasks.length;
-            const pending = tasks.filter(t => t.status === 'pendente').length;
-            const completed = tasks.filter(t => t.status === 'concluida').length;
 
             document.getElementById('stat-total').textContent = total;
-            document.getElementById('stat-pending').textContent = pending;
-            document.getElementById('stat-completed').textContent = completed;
 
             if (tasks.length === 0) {
                 tbody.innerHTML = '<tr class="empty-row"><td colspan="6" class="text-center text-muted py-4">Nenhuma tarefa encontrada.</td></tr>';
@@ -1298,6 +1294,7 @@
                 const count = data.refunds.length;
                 const countBadge = document.getElementById('refund-count-badge');
                 if (countBadge) countBadge.textContent = `${count} registro${count !== 1 ? 's' : ''}`;
+                // Update card count
                 const statRefunds = document.getElementById('stat-refunds');
                 if (statRefunds) statRefunds.textContent = count;
             }
@@ -1785,6 +1782,9 @@
                 allChatRequests = data;
                 currentChatPage = 1;
                 renderChatInactivityPage();
+                // Update card count
+                const statPending = document.getElementById('stat-pending');
+                if (statPending) statPending.textContent = data.length;
             }
         } catch (e) {
             console.error('Erro ao carregar solicitações de chat', e);
