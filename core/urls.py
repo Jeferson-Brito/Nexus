@@ -262,8 +262,8 @@ urlpatterns = [
     # Chat Inactivity Removal APIs
     path('api/chat-inactivity/list/', api_chat_inactivity.api_chat_inactivity_list, name='api_chat_inactivity_list'),
     path('api/chat-inactivity/create/', api_chat_inactivity.api_chat_inactivity_create, name='api_chat_inactivity_create'),
-    path('api/chat-inactivity/<pk>/delete/', api_chat_inactivity.api_chat_inactivity_delete, name='api_chat_inactivity_delete'),
-    path('api/chat-inactivity/<pk>/action/', api_chat_inactivity.api_chat_inactivity_action, name='api_chat_inactivity_action'),
+    path('api/chat-inactivity/<str:pk>/delete/', api_chat_inactivity.api_chat_inactivity_delete, name='api_chat_inactivity_delete'),
+    path('api/chat-inactivity/<str:pk>/action/', api_chat_inactivity.api_chat_inactivity_action, name='api_chat_inactivity_action'),
 
     # API RH - Colaboradores
     path('api/rh/auxiliar/', api_rh.api_rh_auxiliar_data, name='api_rh_auxiliar_data'),
