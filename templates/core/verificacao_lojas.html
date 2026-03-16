@@ -494,7 +494,7 @@
                                             {% if issue.status == 'aberta' %}
                                             <button
                                                 class="btn btn-sm btn-primary fw-bold px-3 d-flex align-items-center"
-                                                onclick="openNotifyModal({{ issue.id|unlocalize }})"
+                                                onclick="openNotifyModal('{{ issue.id|unlocalize }}')"
                                                 style="height: 32px;">
                                                 <i class="bi bi-send me-1"></i> Notificar
                                             </button>
@@ -674,7 +674,7 @@
                                         <i class="bi bi-clock-history me-1"></i> Histórico
                                     </button>
                                     <button class="btn btn-outline-primary btn-sm rounded-3 px-3 fw-500"
-                                        onclick="showStoreDetails({{ store.id|unlocalize }})">
+                                        onclick="showStoreDetails('{{ store.id|unlocalize }}')">
                                         <i class="bi bi-eye me-1"></i> Ver
                                     </button>
                                     <a href="{% url 'store_audit_create' store.id %}"
@@ -791,7 +791,7 @@
                                 </td>
                                 <td class="text-end pe-4">
                                     <button class="btn btn-sm btn-outline-primary"
-                                        onclick="showStoreDetails({{ audit.store.id|unlocalize }})">
+                                        onclick="showStoreDetails('{{ audit.store.id|unlocalize }}')">
                                         <i class="bi bi-eye"></i>
                                     </button>
                                 </td>
