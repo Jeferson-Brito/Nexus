@@ -188,37 +188,45 @@
         <div class="col-12">
             <div class="card shadow-sm border-0">
                 <div class="card-header bg-info text-white py-3">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="d-flex justify-content-between align-items-center">
                         <h5 class="mb-0 fw-bold"><i class="bi bi-chat-left-dots me-2"></i>Remoção de Inatividade - Chats
                         </h5>
-                    </div>
-                    <div class="d-flex gap-2 flex-wrap align-items-center">
-                        <input type="text" class="form-control form-control-sm rounded-pill" id="chatSearch"
-                            placeholder="ID ou Analista..." style="width: 170px; border: none;"
-                            oninput="debounceChatSearch()">
-                        <select class="form-select form-select-sm rounded-pill" id="chatInactivityStatusFilter"
-                            style="width: 140px; border: none;" onchange="loadChatInactivityRequests()">
-                            <option value="">Todos Status</option>
-                            <option value="pendente">Pendentes</option>
-                            <option value="aprovado">Aprovados</option>
-                            <option value="reprovado">Reprovados</option>
-                        </select>
-                        <input type="date" class="form-control form-control-sm rounded-pill" id="chatDateFilter"
-                            title="Data do Chat" style="width: 155px; border: none;"
-                            onchange="loadChatInactivityRequests()">
-                        <span class="text-white-50 small">Criação:</span>
-                        <input type="date" class="form-control form-control-sm rounded-pill" id="chatDateStart"
-                            title="Criação De" style="width: 155px; border: none;"
-                            onchange="loadChatInactivityRequests()">
-                        <input type="date" class="form-control form-control-sm rounded-pill" id="chatDateEnd"
-                            title="Criação Até" style="width: 155px; border: none;"
-                            onchange="loadChatInactivityRequests()">
-                        <button class="btn btn-sm btn-light rounded-pill" onclick="clearChatFilters()"
-                            title="Limpar filtros">
-                            <i class="bi bi-x-lg text-info"></i>
+                        <button class="btn btn-sm btn-light text-info rounded-pill px-3"
+                            onclick="toggleChatFilters(this)">
+                            <i class="bi bi-funnel me-1"></i>Filtros
                         </button>
                     </div>
+                    <div id="chat-filters-panel" style="display:none; margin-top: 10px;">
+                        <div class="d-flex gap-2 flex-wrap align-items-center">
+                            <input type="text" id="chatSearch" placeholder="ID ou Analista..."
+                                oninput="debounceChatSearch()"
+                                style="height:32px; border:none; border-radius:20px; padding:0 12px; font-size:0.82rem; width:170px;">
+                            <select id="chatInactivityStatusFilter" onchange="loadChatInactivityRequests()"
+                                style="height:32px; border:none; border-radius:20px; padding:0 10px; font-size:0.82rem; width:145px;">
+                                <option value="">Todos Status</option>
+                                <option value="pendente">Pendentes</option>
+                                <option value="aprovado">Aprovados</option>
+                                <option value="reprovado">Reprovados</option>
+                            </select>
+                            <input type="date" id="chatDateFilter" title="Data do Chat"
+                                onchange="loadChatInactivityRequests()"
+                                style="height:32px; border:none; border-radius:20px; padding:0 10px; font-size:0.82rem; width:150px;">
+                            <span class="text-white-50 small">Criação:</span>
+                            <input type="date" id="chatDateStart" title="Criação De"
+                                onchange="loadChatInactivityRequests()"
+                                style="height:32px; border:none; border-radius:20px; padding:0 10px; font-size:0.82rem; width:150px;">
+                            <input type="date" id="chatDateEnd" title="Criação Até"
+                                onchange="loadChatInactivityRequests()"
+                                style="height:32px; border:none; border-radius:20px; padding:0 10px; font-size:0.82rem; width:150px;">
+                            <button onclick="clearChatFilters()" title="Limpar"
+                                style="height:32px; width:32px; border:none; border-radius:50%; background:#fff; color:#17a2b8; cursor:pointer;">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                        </div>
+                    </div>
                 </div>
+
+
                 <div class="card-body p-0">
                     <div class="table-responsive">
                         <table class="table table-hover align-middle mb-0">
@@ -2065,6 +2073,15 @@
             if (el) el.value = '';
         });
         loadChatInactivityRequests();
+    }
+    function toggleChatFilters(btn) {
+        const panel = document.getElementById('chat-filters-panel');
+        if (!panel) return;
+        const visible = panel.style.display !== 'none';
+        panel.style.display = visible ? 'none' : 'block';
+        btn.innerHTML = visible
+            ? '<i class="bi bi-funnel me-1"></i>Filtros'
+            : '<i class="bi bi-funnel-fill me-1"></i>Filtros';
     }
 
 </script>
