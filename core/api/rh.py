@@ -1,4 +1,4 @@
-﻿"""
+"""
 APIs para o Módulo de RH - Gestão de Colaboradores
 """
 
@@ -12,7 +12,7 @@ import json
 import logging
 
 from ..models import (
-    Colaborador, Cargo, Department, HistoricoProfissional, 
+    Colaborador, Department, HistoricoProfissional, 
     PerformanceRH, User, DocumentoColaborador
 )
 
@@ -262,9 +262,7 @@ def api_save_colaborador(request):
 @require_http_methods(["GET"])
 def api_rh_auxiliar_data(request):
     """Dados auxiliares para formulários (Cargos, Departamentos, Opções)"""
-    cargos = list(Cargo.objects.all().values('id', 'nome', 'department__name'))
-    for cargo in cargos:
-        cargo['id'] = str(cargo['id'])
+    cargos = []
     depts = list(Department.objects.all().values('id', 'name'))
     for dept in depts:
         dept['id'] = str(dept['id'])

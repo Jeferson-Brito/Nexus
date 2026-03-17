@@ -191,8 +191,8 @@
             </a>
 
             <div class="nav-group-title">Operacional RH</div>
-            <a href="{% url 'rh_ponto_frequencia' %}"
-                class="nav-link {% if request.resolver_match.url_name == 'rh_ponto_frequencia' %}active{% endif %}">
+            <a href="{% url 'ponto_admin' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'ponto_admin' or request.resolver_match.url_name == 'ponto_relatorios' %}active{% endif %}">
                 <i class="bi bi-clock-history"></i>
                 <span class="link-text">Ponto e Frequência</span>
             </a>
