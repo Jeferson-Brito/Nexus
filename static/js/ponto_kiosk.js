@@ -105,16 +105,20 @@ document.querySelectorAll('.numpad-btn').forEach(btn => {
 function updateCpfDisplay() {
     elCpfInput.value = appState.cpf;
     
-    // Mascara bonita
-    let formatted = '';
+    // Bolinhas animadas
+    elCpfDisplay.innerHTML = ''; // Limpar atual
+    
     for(let i=0; i<6; i++) {
+        const dot = document.createElement('div');
         if (i < appState.cpf.length) {
-            formatted += appState.cpf[i] + ' ';
+            // Dígito preenchido (bolinha azul maior)
+            dot.className = 'w-6 h-6 bg-blue-500 rounded-full shadow-[0_0_15px_rgba(59,130,246,0.6)] transition-all duration-200 transform scale-110';
         } else {
-            formatted += '• ';
+            // Dígito vazio (bolinha cinza menor)
+            dot.className = 'w-4 h-4 bg-slate-600 rounded-full transition-all duration-200';
         }
+        elCpfDisplay.appendChild(dot);
     }
-    elCpfDisplay.textContent = formatted.trim();
 }
 
 async function buscarColaborador(cpf6) {

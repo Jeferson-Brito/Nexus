@@ -40,12 +40,18 @@
         <section id="step-cpf" class="flex flex-col items-center w-full max-w-md mx-auto fade-in">
             <h2 class="text-3xl font-light mb-8 text-slate-300 text-center">Informe os <strong class="font-bold text-white">6 primeiros dígitos</strong><br>do seu CPF</h2>
             
-            <div class="w-full relative mb-12">
-                <input type="password" id="cpf-input" readonly
-                    class="w-full bg-slate-800 border-2 border-slate-600 rounded-2xl py-6 text-center text-5xl font-mono tracking-[1em] text-white focus:outline-none focus:border-blue-500 shadow-2xl transition-colors"
-                    placeholder="••••••" maxlength="6">
-                <!-- Mostra dígitos mascarados ex: 1 2 3 • • • -->
-                <div id="cpf-display" class="absolute inset-0 flex items-center justify-center text-5xl font-mono tracking-[0.5em] pointer-events-none text-blue-400 font-bold empty:hidden"></div>
+            <div class="w-full mb-12 relative flex justify-center">
+                <!-- Wrapper que centraliza Input e Bolinhas -->
+                <div class="relative w-full">
+                    <input type="password" id="cpf-input" readonly
+                        class="w-full bg-slate-800 border-2 border-slate-600 rounded-2xl py-6 text-center text-5xl font-mono text-transparent caret-transparent focus:outline-none focus:border-blue-500 shadow-2xl transition-colors select-none"
+                        placeholder="" maxlength="6" style="letter-spacing: normal;">
+                    
+                    <!-- Container das "Bolinhas" Sobreposto Perno e Centralizado -->
+                    <div id="cpf-display" class="absolute inset-0 flex items-center justify-center gap-4 pointer-events-none">
+                        <!-- Bolinhas injetadas via JS -->
+                    </div>
+                </div>
             </div>
 
             <!-- Teclado Numérico -->
