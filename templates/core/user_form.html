@@ -123,6 +123,7 @@
                                 <option value="">Selecione...</option>
                                 <option value="analista" {% if target_user and target_user.role == 'analista' %}selected{% elif form_data and form_data.role == 'analista' %}selected{% endif %}>Analista</option>
                                 <option value="gestor" {% if target_user and target_user.role == 'gestor' %}selected{% elif form_data and form_data.role == 'gestor' %}selected{% endif %}>Gestor</option>
+                                <option value="tablet" {% if target_user and target_user.role == 'tablet' %}selected{% elif form_data and form_data.role == 'tablet' %}selected{% endif %}>Tablet (Kiosk de Ponto)</option>
                                 {% if request.user.is_administrador %}
                                 <option value="administrador" {% if target_user and target_user.role == 'administrador' %}selected{% elif form_data and form_data.role == 'administrador' %}selected{% endif %}>Administrador</option>
                                 {% endif %}
