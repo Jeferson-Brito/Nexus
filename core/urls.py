@@ -1,21 +1,20 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
 from . import views
-from . import api_escala
-from . import api_eventos
-from . import api_kb
-from . import api_quadro
-from . import api_tasks
-from . import api_desempenho
-from . import api_refunds
-from . import api_stores
-# from . import api_chat  # Removed
-from . import api_kanban
-from . import api_store_verification
-from . import api_auditoria
-from . import api_chat_inactivity
-from . import api_rh
-from .api_quadro import api_quadro_data, api_cartao_create, api_cartao_move, api_cartao_update, api_cartao_delete, api_cartao_details, api_comentario_add, api_anexo_add, api_anexo_delete, api_lista_create, api_lista_delete
+from .api import escala as api_escala
+from .api import eventos as api_eventos
+from .api import kb as api_kb
+from .api import quadro as api_quadro
+from .api import tasks as api_tasks
+from .api import desempenho as api_desempenho
+from .api import refunds as api_refunds
+from .api import stores as api_stores
+from .api import kanban as api_kanban
+from .api import store_verification as api_store_verification
+from .api import auditoria as api_auditoria
+from .api import chat_inactivity as api_chat_inactivity
+from .api import rh as api_rh
+from .api.quadro import api_quadro_data, api_cartao_create, api_cartao_move, api_cartao_update, api_cartao_delete, api_cartao_details, api_comentario_add, api_anexo_add, api_anexo_delete, api_lista_create, api_lista_delete
 
 
 
@@ -168,7 +167,6 @@ urlpatterns = [
     path('api/routines/check/<int:log_id>/', api_tasks.api_routine_check, name='api_routine_check'),
     path('api/routines/alerts/', api_tasks.api_manager_alerts, name='api_manager_alerts'),
     path('api/routines/overview/', api_tasks.api_routines_overview, name='api_routines_overview'),
-    path('api/desempenho/kpis/<int:pk>/delete/', api_desempenho.api_kpi_delete, name='api_kpi_delete'),
     
     # Refund Request APIs
     path('solicitacoes/', views.solicitacoes_view, name='solicitacoes'),
@@ -276,6 +274,5 @@ urlpatterns = [
     path('api/rh/colaboradores/performance/save/', api_rh.api_save_performance, name='api_rh_save_performance'),
     path('api/rh/colaboradores/documentos/upload/', api_rh.api_upload_documento, name='api_rh_upload_documento'),
     path('api/rh/colaboradores/documentos/<int:pk>/delete/', api_rh.api_delete_documento, name='api_rh_delete_documento'),
-    path('api/rh/auxiliar/', api_rh.api_rh_auxiliar_data, name='api_rh_auxiliar_data'),
 ]
 

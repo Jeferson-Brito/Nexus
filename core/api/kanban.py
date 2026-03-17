@@ -1,4 +1,4 @@
-"""
+﻿"""
 API REST para Kanban Board
 Endpoints para gerenciar quadros, listas, cartões, labels, checklists e comentários
 """
@@ -11,7 +11,7 @@ from django.shortcuts import get_object_or_404
 from django.db.models import Q, Max
 from django.utils import timezone
 
-from .models import (
+from ..models import (
     User, KanbanBoard, BoardMembership, KanbanList, KanbanCard,
     CardLabel, Checklist, ChecklistItem, CardComment, CardAttachment, CardActivity
 )

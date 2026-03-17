@@ -1,4 +1,4 @@
-from django.http import JsonResponse
+﻿from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
@@ -8,7 +8,7 @@ from datetime import datetime
 from django.utils import timezone
 from django.db.models import Q
 
-from .models import Evento, User
+from ..models import Evento, User
 
 @login_required
 def api_eventos_users_list(request):
@@ -86,7 +86,7 @@ def api_evento_create(request):
         if request.user.is_administrador():
             selected_dept_id = request.session.get('selected_department_id')
             if selected_dept_id:
-                from .models import Department
+                from ..models import Department
                 dept = get_object_or_404(Department, id=selected_dept_id)
         else:
             dept = request.user.department

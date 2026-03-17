@@ -1,4 +1,4 @@
-from django.http import JsonResponse
+﻿from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
@@ -6,7 +6,7 @@ from django.shortcuts import get_object_or_404
 import json
 from datetime import datetime
 
-from .models import Turno, AnalistaEscala, FolgaManual
+from ..models import Turno, AnalistaEscala, FolgaManual
 
 
 from functools import wraps

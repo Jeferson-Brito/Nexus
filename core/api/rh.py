@@ -1,4 +1,4 @@
-"""
+﻿"""
 APIs para o Módulo de RH - Gestão de Colaboradores
 """
 
@@ -11,7 +11,7 @@ from django.utils import timezone
 import json
 import logging
 
-from .models import (
+from ..models import (
     Colaborador, Cargo, Department, HistoricoProfissional, 
     PerformanceRH, User, DocumentoColaborador
 )

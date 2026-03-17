@@ -1,10 +1,10 @@
-from django.http import JsonResponse
+﻿from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.db.models import Q
 import json
-from .models import ChatInactivityRequest, User
+from ..models import ChatInactivityRequest, User
 
 @login_required
 def api_chat_inactivity_list(request):

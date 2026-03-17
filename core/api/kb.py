@@ -1,10 +1,10 @@
-import json
+﻿import json
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
-from .models import ArtigoBaseConhecimento, FerramentaIA, Department
+from ..models import ArtigoBaseConhecimento, FerramentaIA, Department
 
 @login_required
 def api_kb_articles_list(request):

@@ -1,7 +1,7 @@
-from django.db.models import Avg, Sum, Count, F, Q
+﻿from django.db.models import Avg, Sum, Count, F, Q
 from django.utils import timezone
 from datetime import timedelta, date
-from .models import User, Department, IndicadorDesempenho, ObservacaoDesempenho
+from ..models import User, Department, IndicadorDesempenho, ObservacaoDesempenho
 
 def get_performance_stats(department, start_date=None, end_date=None):
     """

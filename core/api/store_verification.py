@@ -1,4 +1,4 @@
-"""
+﻿"""
 APIs para o Sistema de Verificação de Lojas - Notificações e Timers
 """
 
@@ -16,7 +16,7 @@ import time
 import random
 import math
 
-from .models import (
+from ..models import (
     Store, StoreAudit, StoreAuditIssue, StoreAuditItem,
     AnalystAssignment, User
 )
@@ -1340,7 +1340,7 @@ def api_get_all_analysts_monthly_kpi(request):
     if request.user.role not in ['gestor', 'administrador']:
         return JsonResponse({'success': False, 'error': 'Permissão negada'}, status=403)
     
-    from .models import WeeklyVerificationKPI, StoreAudit, AnalystAssignment
+    from ..models import WeeklyVerificationKPI, StoreAudit, AnalystAssignment
     from django.db.models import Prefetch
     
     today = timezone.now().date()
@@ -1484,7 +1484,7 @@ def api_override_daily_quota(request):
         
     try:
         import json
-        from .models import DailyAuditQuota
+        from ..models import DailyAuditQuota
         
         data = json.loads(request.body)
         analyst_id = data.get('analyst_id')

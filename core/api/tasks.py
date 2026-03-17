@@ -1,4 +1,4 @@
-from django.http import JsonResponse
+﻿from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
@@ -7,7 +7,7 @@ from django.utils import timezone
 import json
 from datetime import datetime, timedelta, date
 
-from .models import Task, Routine, RoutineLog, User, StoreAuditIssue
+from ..models import Task, Routine, RoutineLog, User, StoreAuditIssue
 
 @login_required
 def api_tasks_list(request):

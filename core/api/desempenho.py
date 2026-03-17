@@ -1,9 +1,9 @@
-from django.http import JsonResponse
+﻿from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth.decorators import login_required
 import json
 
-from .models import IndicadorDesempenho, User, Department, MetaMensalGlobal
+from ..models import IndicadorDesempenho, User, Department, MetaMensalGlobal
 
 
 def get_nrs_department(user=None):
