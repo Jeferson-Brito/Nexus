@@ -135,7 +135,7 @@ def buscar_colaborador(request):
         foto_url = request.build_absolute_uri(encontrado.foto.url)
 
     return JsonResponse({
-        'id': encontrado.id,
+        'id': str(encontrado.id),
         'nome': encontrado.nome_completo,
         'cargo': encontrado.cargo_atual,
         'departamento': encontrado.department.name if encontrado.department else '',
@@ -172,8 +172,8 @@ def registrar_ponto(request):
         return JsonResponse({'erro': f'Tipo inválido. Use: {TIPOS_VALIDOS}'}, status=400)
 
     try:
-        colaborador = Colaborador.objects.get(id=colaborador_id, status='ativo')
-    except Colaborador.DoesNotExist:
+        colaborador = Colaborador.objects.get(id=int(colaborador_id), status='ativo')
+    except (Colaborador.DoesNotExist, ValueError, TypeError):
         return JsonResponse({'erro': 'Colaborador não encontrado'}, status=404)
 
     agora = timezone.localtime(timezone.now())
