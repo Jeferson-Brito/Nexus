@@ -1,0 +1,395 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Controle de Ponto - Admin{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/ponto.css' %}">
+<style>
+    .kpi-card {
+        background: #fff;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        border: 1px solid #e2e8f0;
+    }
+    .kpi-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+    .bg-blue-light { background: #eff6ff; color: #3b82f6; }
+    .bg-green-light { background: #f0fdf4; color: #22c55e; }
+    .bg-red-light { background: #fef2f2; color: #ef4444; }
+    .bg-purple-light { border: 1px solid #d8b4fe; background: #faf5ff; color: #a855f7; }
+
+    .table-ponto th {
+        background: #f8fafc;
+        padding: 12px 16px;
+        text-align: left;
+        font-weight: 600;
+        color: #475569;
+        border-bottom: 2px solid #e2e8f0;
+    }
+    .table-ponto td {
+        padding: 12px 16px;
+        border-bottom: 1px solid #e2e8f0;
+        color: #1e293b;
+    }
+    .badge-tipo {
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    .badge-entrada { background: #dcfce7; color: #166534; }
+    .badge-saida { background: #fee2e2; color: #991b1b; }
+    .badge-almoco { background: #fef3c7; color: #92400e; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4 max-w-[1400px] mx-auto">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-800"><i class="fa-solid fa-clock mr-2 text-blue-600"></i> Painel de Ponto</h1>
+            <p class="text-slate-500 text-sm mt-1">Gestão de entradas, saídas e justificativas do dia.</p>
+        </div>
+        <div class="flex gap-3">
+            <a href="{% url 'ponto_kiosk' %}" target="_blank" class="px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition">
+                <i class="fa-solid fa-tablet-screen-button mr-2"></i> Abrir Kiosk
+            </a>
+            <button onclick="openModalAjuste()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-lg shadow-blue-500/30">
+                <i class="fa-solid fa-plus mr-2"></i> Lançamento Manual
+            </button>
+        </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="kpi-card">
+            <div class="kpi-icon bg-blue-light"><i class="fa-solid fa-users"></i></div>
+            <div>
+                <p class="text-sm text-slate-500 font-medium">Total de Colaboradores</p>
+                <h3 class="text-2xl font-bold text-slate-800" id="kpi-total">0</h3>
+            </div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon bg-green-light"><i class="fa-solid fa-user-check"></i></div>
+            <div>
+                <p class="text-sm text-slate-500 font-medium">Presentes Agora</p>
+                <h3 class="text-2xl font-bold text-slate-800" id="kpi-presentes">0</h3>
+            </div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon bg-red-light"><i class="fa-solid fa-user-xmark"></i></div>
+            <div>
+                <p class="text-sm text-slate-500 font-medium">Ausentes</p>
+                <h3 class="text-2xl font-bold text-slate-800" id="kpi-ausentes">0</h3>
+            </div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon bg-purple-light"><i class="fa-solid fa-house-user"></i></div>
+            <div>
+                <p class="text-sm text-slate-500 font-medium">Já Finalizaram</p>
+                <h3 class="text-2xl font-bold text-slate-800" id="kpi-finalizados">0</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros e Tabela -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="p-4 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
+            <h3 class="font-semibold text-slate-800">Registros Recentes</h3>
+            <div class="flex gap-3">
+                <input type="date" id="filter-date" class="px-3 py-1.5 border border-slate-300 rounded text-sm focus:outline-none focus:border-blue-500">
+                <button onclick="loadRegistros()" class="px-3 py-1 border border-slate-300 rounded bg-white hover:bg-slate-50 text-sm">
+                    <i class="fa-solid fa-filter text-slate-500"></i> Filtrar
+                </button>
+            </div>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full table-ponto">
+                <thead>
+                    <tr>
+                        <th class="w-12 text-center">Foto</th>
+                        <th>Colaborador</th>
+                        <th>Tipo</th>
+                        <th>Data</th>
+                        <th>Hora</th>
+                        <th>Origem</th>
+                        <th>Observação</th>
+                        <th class="text-right">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="registros-tbody">
+                    <!-- Preenchido via JS -->
+                    <tr>
+                        <td colspan="8" class="text-center py-8 text-slate-500">
+                            <i class="fa-solid fa-spinner fa-spin text-2xl mb-2 text-blue-500"></i><br>Carregando...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ajuste Manual -->
+<div id="modal-ajuste" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all">
+        <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+            <h3 class="font-bold text-slate-800" id="modal-title">Novo Lançamento Manual</h3>
+            <button onclick="closeModalAjuste()" class="text-slate-400 hover:text-red-500 transition"><i class="fa-solid fa-xmark text-xl"></i></button>
+        </div>
+        <div class="p-6">
+            <form id="form-ajuste" onsubmit="salvarAjuste(event)">
+                <input type="hidden" id="ajuste-id">
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Colaborador ID</label>
+                    <input type="number" id="ajuste-colab" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500" placeholder="ID do Colaborador">
+                    <!-- Idealmente seria um Select dropdown, usando input numérico por simplicidade na primeira versão -->
+                    <p class="text-xs text-slate-500 mt-1">Digite o ID do colaborador</p>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Data</label>
+                        <input type="date" id="ajuste-data" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Hora</label>
+                        <input type="time" id="ajuste-hora" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500">
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Tipo do Ponto</label>
+                    <select id="ajuste-tipo" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500">
+                        <option value="entrada">Entrada</option>
+                        <option value="saida_almoco">Saída p/ Almoço</option>
+                        <option value="retorno_almoco">Retorno do Almoço</option>
+                        <option value="saida">Saída Final</option>
+                    </select>
+                </div>
+                
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Justificativa / Observação</label>
+                    <textarea id="ajuste-obs" required rows="2" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500" placeholder="Motivo do lançamento manual"></textarea>
+                </div>
+                
+                <div class="flex justify-end gap-3">
+                    <button type="button" onclick="closeModalAjuste()" class="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg transition">Cancelar</button>
+                    <button type="submit" id="btn-salvar-ajuste" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">Salvar Lançamento</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Imagem Zoom Modal -->
+<div id="modal-foto" class="fixed inset-0 bg-black/90 z-50 hidden flex justify-center items-center" onclick="this.classList.add('hidden')">
+    <img id="foto-zoom" src="" class="max-w-[90vw] max-h-[90vh] object-contain rounded border-2 border-slate-700">
+</div>
+
+<script>
+    // Configura data de hoje nos inputs
+    const hoje = new Date().toISOString().split('T')[0];
+    document.getElementById('filter-date').value = hoje;
+    document.getElementById('ajuste-data').value = hoje;
+
+    async function loadDashboard() {
+        try {
+            const res = await fetch('/api/ponto/dashboard/');
+            const data = await res.json();
+            
+            if(res.ok) {
+                document.getElementById('kpi-total').textContent = data.total_colaboradores;
+                document.getElementById('kpi-presentes').textContent = data.presentes;
+                document.getElementById('kpi-ausentes').textContent = data.ausentes;
+                document.getElementById('kpi-finalizados').textContent = data.finalizaram;
+            }
+        } catch(e) { console.error('Error loading dashboard', e); }
+    }
+
+    async function loadRegistros() {
+        const date = document.getElementById('filter-date').value;
+        const tbody = document.getElementById('registros-tbody');
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4"><i class="fa-solid fa-spinner fa-spin"></i></td></tr>';
+        
+        try {
+            const res = await fetch(`/api/ponto/registros/?data_inicio=${date}&data_fim=${date}`);
+            const data = await res.json();
+            
+            if(data.registros.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-slate-500">Nenhum registro encontrado para esta data.</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = '';
+            data.registros.forEach(r => {
+                let badgeClass = 'badge-almoco';
+                if(r.tipo === 'entrada') badgeClass = 'badge-entrada';
+                if(r.tipo === 'saida') badgeClass = 'badge-saida';
+                
+                let imgHtml = '<div class="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 group-hover:bg-slate-200"><i class="fa-solid fa-camera-slash"></i></div>';
+                if (r.foto_url) {
+                    imgHtml = `<img src="${r.foto_url}" class="w-10 h-10 object-cover rounded-full border border-slate-200 cursor-pointer hover:border-blue-400 transition-colors" onclick="verFoto('${r.foto_url}')">`;
+                }
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 group transition-colors">
+                        <td class="text-center">${imgHtml}</td>
+                        <td>
+                            <div class="font-medium text-slate-800">${r.colaborador_nome}</div>
+                            <div class="text-xs text-slate-500">${r.departamento} (ID: ${r.colaborador_id})</div>
+                        </td>
+                        <td><span class="badge-tipo ${badgeClass}">${r.tipo_display}</span></td>
+                        <td>${r.data.split('-').reverse().join('/')}</td>
+                        <td class="font-mono font-medium">${r.hora}</td>
+                        <td class="text-sm">
+                            ${r.origem === 'tablet' ? '<i class="fa-solid fa-tablet-screen-button text-slate-400 mr-1"></i> Tablet' : '<i class="fa-solid fa-desktop text-blue-400 mr-1"></i> Admin'}
+                        </td>
+                        <td class="text-sm italic text-slate-500 max-w-[200px] truncate" title="${r.observacao}">${r.observacao || '-'}</td>
+                        <td class="text-right">
+                            <button onclick="editarRegistro(${r.id}, ${r.colaborador_id}, '${r.tipo}', '${r.data}', '${r.hora}', '${r.observacao}')" class="text-blue-500 hover:text-blue-700 p-2"><i class="fa-solid fa-edit"></i></button>
+                            <button onclick="excluirRegistro(${r.id})" class="text-red-500 hover:text-red-700 p-2"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+        } catch(e) {
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-red-500">Erro ao carregar registros.</td></tr>';
+        }
+    }
+
+    function verFoto(url) {
+        document.getElementById('foto-zoom').src = url;
+        document.getElementById('modal-foto').classList.remove('hidden');
+    }
+
+    function getCsrfToken() {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.startsWith('csrftoken=')) {
+                return cookie.substring('csrftoken='.length, cookie.length);
+            }
+        }
+        return '';
+    }
+
+    // Modal Funções
+    function openModalAjuste() {
+        document.getElementById('form-ajuste').reset();
+        document.getElementById('ajuste-id').value = '';
+        document.getElementById('ajuste-data').value = hoje;
+        document.getElementById('modal-title').textContent = 'Novo Lançamento Manual';
+        document.getElementById('modal-ajuste').classList.remove('hidden');
+    }
+
+    function closeModalAjuste() {
+        document.getElementById('modal-ajuste').classList.add('hidden');
+    }
+
+    function editarRegistro(id, colab_id, tipo, data, hora, obs) {
+        document.getElementById('ajuste-id').value = id;
+        document.getElementById('ajuste-colab').value = colab_id;
+        document.getElementById('ajuste-data').value = data;
+        document.getElementById('ajuste-hora').value = hora;
+        document.getElementById('ajuste-tipo').value = tipo;
+        document.getElementById('ajuste-obs').value = obs !== 'null' && obs ? obs : '';
+        document.getElementById('modal-title').textContent = 'Editar Lançamento';
+        document.getElementById('modal-ajuste').classList.remove('hidden');
+    }
+
+    async function salvarAjuste(e) {
+        e.preventDefault();
+        const btn = document.getElementById('btn-salvar-ajuste');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvando...';
+
+        const id = document.getElementById('ajuste-id').value;
+        const payload = {
+            colaborador_id: document.getElementById('ajuste-colab').value,
+            data: document.getElementById('ajuste-data').value,
+            hora: document.getElementById('ajuste-hora').value,
+            tipo: document.getElementById('ajuste-tipo').value,
+            observacao: document.getElementById('ajuste-obs').value,
+        };
+
+        const url = id ? `/api/ponto/ajustar/${id}/` : '/api/ponto/ajustar/';
+
+        try {
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if(res.ok) {
+                Swal.fire('Sucesso!', 'Registro salvo.', 'success');
+                closeModalAjuste();
+                loadDashboard();
+                loadRegistros();
+            } else {
+                const data = await res.json();
+                Swal.fire('Erro', data.erro || 'Erro ao salvar', 'error');
+            }
+        } catch(err) {
+            Swal.fire('Erro', 'Falha na conexão', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = 'Salvar Lançamento';
+        }
+    }
+
+    function excluirRegistro(id) {
+        Swal.fire({
+            title: 'Tem certeza?',
+            text: "Você não poderá reverter esta exclusão!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Sim, excluir!',
+            cancelButtonText: 'Cancelar'
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                try {
+                    const res = await fetch(`/api/ponto/${id}/delete/`, {
+                        method: 'DELETE',
+                        headers: {'X-CSRFToken': getCsrfToken()}
+                    });
+                    if(res.ok) {
+                        loadDashboard();
+                        loadRegistros();
+                        Swal.fire('Excluído!', 'O registro foi removido.', 'success');
+                    } else {
+                        Swal.fire('Erro', 'Não foi possível excluir.', 'error');
+                    }
+                } catch(e) {
+                    Swal.fire('Erro', 'Falha na conexão', 'error');
+                }
+            }
+        });
+    }
+
+    // Iniciar
+    loadDashboard();
+    loadRegistros();
+</script>
+{% endblock %}

@@ -14,6 +14,8 @@ from .api import store_verification as api_store_verification
 from .api import auditoria as api_auditoria
 from .api import chat_inactivity as api_chat_inactivity
 from .api import rh as api_rh
+from .api import ponto as api_ponto
+from . import views_ponto
 from .api.quadro import api_quadro_data, api_cartao_create, api_cartao_move, api_cartao_update, api_cartao_delete, api_cartao_details, api_comentario_add, api_anexo_add, api_anexo_delete, api_lista_create, api_lista_delete
 
 
@@ -274,5 +276,22 @@ urlpatterns = [
     path('api/rh/colaboradores/performance/save/', api_rh.api_save_performance, name='api_rh_save_performance'),
     path('api/rh/colaboradores/documentos/upload/', api_rh.api_upload_documento, name='api_rh_upload_documento'),
     path('api/rh/colaboradores/documentos/<int:pk>/delete/', api_rh.api_delete_documento, name='api_rh_delete_documento'),
+
+    # Ponto Eletrônico - Views
+    path('ponto/tablet/', views_ponto.ponto_kiosk, name='ponto_kiosk'),
+    path('rh/ponto/', views_ponto.ponto_admin, name='ponto_admin'),
+    path('rh/ponto/relatorios/', views_ponto.ponto_relatorios, name='ponto_relatorios'),
+
+    # Ponto Eletrônico - API
+    path('api/ponto/buscar-colaborador/', api_ponto.buscar_colaborador, name='api_ponto_buscar_colaborador'),
+    path('api/ponto/registrar/', api_ponto.registrar_ponto, name='api_ponto_registrar_ponto'),
+    path('api/ponto/registros/', api_ponto.listar_registros, name='api_ponto_listar_registros'),
+    path('api/ponto/ajustar/<int:pk>/', api_ponto.ajustar_registro, name='api_ponto_ajustar_registro'),
+    path('api/ponto/ajustar/', api_ponto.ajustar_registro, name='api_ponto_ajustar_registro_new'),
+    path('api/ponto/<int:pk>/delete/', api_ponto.deletar_registro, name='api_ponto_deletar_registro'),
+    path('api/ponto/dashboard/', api_ponto.dashboard_ponto, name='api_ponto_dashboard_ponto'),
+    path('api/ponto/banco-horas/<int:pk>/', api_ponto.banco_horas, name='api_ponto_banco_horas'),
+    path('api/ponto/relatorio/', api_ponto.relatorio_mensal, name='api_ponto_relatorio_mensal'),
+    path('api/ponto/exportar-excel/', api_ponto.exportar_excel, name='api_ponto_exportar_excel'),
 ]
 

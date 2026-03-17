@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Registro de Ponto - Nexus</title>
+    
+    <!-- Tailwind via CDN para prototipação rápida (ou usar o compilado do projeto se houver) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- CSS Customizado -->
+    <link rel="stylesheet" href="/static/css/ponto.css">
+    
+    <!-- Ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- SweetAlert2 para alertas bonitos -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body class="bg-slate-900 text-white h-screen overflow-hidden select-none font-sans flex flex-col items-center justify-center relative">
+
+    <!-- Header Simples -->
+    <div class="absolute top-0 left-0 w-full p-6 flex justify-between items-center bg-slate-800/50 backdrop-blur-md border-b border-slate-700/50">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center font-bold text-xl shadow-lg shadow-blue-500/20">
+                N
+            </div>
+            <h1 class="text-2xl font-semibold tracking-wide text-slate-100">CONTROLE DE PONTO</h1>
+        </div>
+        <div class="text-right">
+            <div id="relogio-kiosk" class="text-4xl font-mono font-bold text-blue-400 tracking-wider">00:00:00</div>
+            <div id="data-kiosk" class="text-sm text-slate-400 uppercase tracking-widest mt-1">--</div>
+        </div>
+    </div>
+
+    <!-- Container Principal (Muda dinamicamente com JS) -->
+    <main id="kiosk-app" class="w-full max-w-4xl px-8 mt-16 transition-all duration-300">
+        
+        <!-- ETAPA 1: Digitar CPF -->
+        <section id="step-cpf" class="flex flex-col items-center w-full max-w-md mx-auto fade-in">
+            <h2 class="text-3xl font-light mb-8 text-slate-300 text-center">Informe os <strong class="font-bold text-white">6 primeiros dígitos</strong><br>do seu CPF</h2>
+            
+            <div class="w-full relative mb-12">
+                <input type="password" id="cpf-input" readonly
+                    class="w-full bg-slate-800 border-2 border-slate-600 rounded-2xl py-6 text-center text-5xl font-mono tracking-[1em] text-white focus:outline-none focus:border-blue-500 shadow-2xl transition-colors"
+                    placeholder="••••••" maxlength="6">
+                <!-- Mostra dígitos mascarados ex: 1 2 3 • • • -->
+                <div id="cpf-display" class="absolute inset-0 flex items-center justify-center text-5xl font-mono tracking-[0.5em] pointer-events-none text-blue-400 font-bold empty:hidden"></div>
+            </div>
+
+            <!-- Teclado Numérico -->
+            <div class="grid grid-cols-3 gap-4 w-full px-4">
+                <button class="numpad-btn" data-val="1">1</button>
+                <button class="numpad-btn" data-val="2">2</button>
+                <button class="numpad-btn" data-val="3">3</button>
+                <button class="numpad-btn" data-val="4">4</button>
+                <button class="numpad-btn" data-val="5">5</button>
+                <button class="numpad-btn" data-val="6">6</button>
+                <button class="numpad-btn" data-val="7">7</button>
+                <button class="numpad-btn" data-val="8">8</button>
+                <button class="numpad-btn" data-val="9">9</button>
+                <button class="numpad-btn bg-red-500/10 text-red-400 border-red-500/30 hover:bg-red-500/20" id="btn-clear"><i class="fa-solid fa-xmark"></i></button>
+                <button class="numpad-btn" data-val="0">0</button>
+                <button class="numpad-btn bg-slate-700/50 text-slate-300 border-slate-600 hover:bg-slate-700" id="btn-backspace"><i class="fa-solid fa-delete-left"></i></button>
+            </div>
+        </section>
+
+
+        <!-- ETAPA 2: Confirmar Usuário e Escolher Tipo -->
+        <section id="step-tipo" class="hidden flex-col items-center w-full fade-in">
+            <!-- Card do Usuário -->
+            <div class="bg-slate-800/80 backdrop-blur border border-slate-700 rounded-3xl p-8 mb-10 w-full max-w-2xl text-center shadow-2xl flex flex-col items-center">
+                <img id="user-avatar" src="" alt="Avatar" class="w-32 h-32 rounded-full mb-6 object-cover border-4 border-blue-500 shadow-lg shadow-blue-500/30 bg-slate-700 hidden">
+                <div id="user-avatar-fallback" class="w-32 h-32 rounded-full mb-6 flex items-center justify-center text-5xl font-bold bg-gradient-to-br from-blue-600 to-indigo-700 border-4 border-slate-700 shadow-lg"></div>
+                
+                <h2 id="user-name" class="text-4xl font-bold mb-2">Nome do Funcionário</h2>
+                <p id="user-dept" class="text-xl text-slate-400 font-light">Cargo • Departamento</p>
+                <input type="hidden" id="user-id">
+            </div>
+
+            <h3 class="text-2xl mb-8 text-slate-300">Selecione o tipo de registro:</h3>
+            
+            <div class="grid grid-cols-2 gap-6 w-full max-w-3xl">
+                <button class="type-btn group bg-emerald-500/10 border-emerald-500/30 hover:bg-emerald-500 hover:text-white text-emerald-400" data-type="entrada">
+                    <i class="fa-solid fa-right-to-bracket text-4xl mb-4 group-hover:scale-110 transition-transform"></i>
+                    <span class="text-2xl font-semibold">Entrada</span>
+                </button>
+                
+                <button class="type-btn group bg-amber-500/10 border-amber-500/30 hover:bg-amber-500 hover:text-white text-amber-400" data-type="saida_almoco">
+                    <i class="fa-solid fa-utensils text-4xl mb-4 group-hover:scale-110 transition-transform"></i>
+                    <span class="text-2xl font-semibold">Saída p/ Almoço</span>
+                </button>
+                
+                <button class="type-btn group bg-blue-500/10 border-blue-500/30 hover:bg-blue-500 hover:text-white text-blue-400" data-type="retorno_almoco">
+                    <i class="fa-solid fa-person-walking-arrow-right text-4xl mb-4 group-hover:scale-110 transition-transform"></i>
+                    <span class="text-2xl font-semibold">Retorno Almoço</span>
+                </button>
+                
+                <button class="type-btn group bg-rose-500/10 border-rose-500/30 hover:bg-rose-500 hover:text-white text-rose-400" data-type="saida">
+                    <i class="fa-solid fa-right-from-bracket text-4xl mb-4 group-hover:scale-110 transition-transform"></i>
+                    <span class="text-2xl font-semibold">Saída Final</span>
+                </button>
+            </div>
+
+            <button class="mt-12 text-slate-500 hover:text-white text-xl py-4 px-8 rounded-full border border-slate-700 hover:bg-slate-800 transition-colors" onclick="resetKiosk()">
+                <i class="fa-solid fa-arrow-left mr-2"></i> Cancelar / Voltar
+            </button>
+        </section>
+
+
+        <!-- ETAPA 3: Câmera -->
+        <section id="step-camera" class="hidden flex-col items-center w-full fade-in">
+            <h2 class="text-3xl font-light mb-6 text-center text-white">Posicione seu rosto na marcação</h2>
+            
+            <div class="relative w-full max-w-lg aspect-[3/4] bg-slate-800 rounded-3xl overflow-hidden border-4 border-slate-700 shadow-2xl mb-8">
+                <!-- Video stream -->
+                <video id="camera-stream" autoplay playsinline class="w-full h-full object-cover transform -scale-x-100"></video>
+                
+                <!-- Face overlay guide (oval) -->
+                <div class="absolute inset-0 pointer-events-none flex items-center justify-center">
+                    <div class="w-64 h-80 border-4 border-white/50 rounded-[40%] shadow-[0_0_0_9999px_rgba(15,23,42,0.8)] border-dashed animate-pulse"></div>
+                </div>
+                
+                <!-- Loading indicator -->
+                <div id="camera-loading" class="absolute inset-0 flex items-center justify-center bg-slate-900 z-10">
+                    <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500"></div>
+                </div>
+            </div>
+
+            <p class="text-xl text-slate-400 mb-8 animate-pulse" id="camera-instruction">Aguardando...</p>
+            
+            <button class="text-slate-500 hover:text-white text-xl py-4 px-8 rounded-full border border-slate-700 hover:bg-slate-800 transition-colors" onclick="resetKiosk()">
+                Cancelar
+            </button>
+        </section>
+
+    </main>
+
+    <!-- Fullscreen Toggle Button (Apenas visível via hover forte no canto) -->
+    <button id="btn-fullscreen" class="fixed bottom-4 right-4 w-12 h-12 rounded-full bg-slate-800/20 text-slate-500/20 hover:bg-slate-700 hover:text-white flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity z-50">
+        <i class="fa-solid fa-expand"></i>
+    </button>
+
+    <script src="/static/js/ponto_kiosk.js"></script>
+</body>
+</html>
