@@ -3,150 +3,707 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Registro de Ponto - Nexus</title>
-    
-    <!-- Tailwind via CDN para prototipação rápida (ou usar o compilado do projeto se houver) -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- CSS Customizado -->
-    <link rel="stylesheet" href="/static/css/ponto.css">
-    
-    <!-- Ícones -->
+    <title>Ponto - Nexus</title>
+    {% load static %}
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- SweetAlert2 para alertas bonitos -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="{% static 'css/ponto.css' %}">
+
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: #0d1117;
+            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            height: 100dvh;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* ──────────────── SCREENSAVER (tela inicial) ──────────────── */
+        #screen-idle {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            background: radial-gradient(ellipse at center, #131c2e 0%, #0d1117 100%);
+            transition: opacity .4s;
+        }
+
+        .idle-logo {
+            width: min(180px, 40vw);
+            margin-bottom: 8px;
+            filter: drop-shadow(0 0 20px rgba(59,130,246,.4));
+        }
+
+        #idle-hora {
+            font-size: clamp(3rem, 10vw, 6rem);
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: 4px;
+            color: #3b82f6;
+            text-shadow: 0 0 40px rgba(59,130,246,.5);
+            line-height: 1;
+        }
+
+        #idle-data {
+            font-size: clamp(.85rem, 2.5vw, 1.1rem);
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+
+        #btn-registrar {
+            margin-top: 32px;
+            padding: 16px 48px;
+            font-size: clamp(1rem, 3vw, 1.25rem);
+            font-weight: 700;
+            background: #3b82f6;
+            color: #fff;
+            border: none;
+            border-radius: 100px;
+            cursor: pointer;
+            box-shadow: 0 0 30px rgba(59,130,246,.5);
+            transition: transform .15s, box-shadow .15s;
+        }
+        #btn-registrar:hover  { transform: scale(1.04); box-shadow: 0 0 50px rgba(59,130,246,.7); }
+        #btn-registrar:active { transform: scale(.97); }
+
+        /* ──────────────── TELAS INTERNAS ──────────────── */
+        .kiosk-screen {
+            position: fixed;
+            inset: 0;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            background: #0d1117;
+            overflow-y: auto;
+        }
+        .kiosk-screen.active { display: flex; }
+
+        /* Topo de navegação nas telas internas */
+        .kiosk-topbar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(15,23,42,.8);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid rgba(255,255,255,.07);
+            z-index: 10;
+        }
+        .topbar-logo {
+            height: 30px;
+        }
+        .topbar-clock {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #3b82f6;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* ──────────────── ETAPA CPF ──────────────── */
+        .cpf-card {
+            width: 100%;
+            max-width: 440px;
+            margin-top: 60px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .cpf-card h2 {
+            font-size: clamp(1.1rem, 4vw, 1.4rem);
+            color: #cbd5e1;
+            text-align: center;
+            font-weight: 300;
+            line-height: 1.5;
+        }
+        .cpf-card h2 strong { color: #fff; font-weight: 700; }
+
+        #cpf-input-real {
+            width: 100%;
+            padding: 18px 20px;
+            font-size: 2rem;
+            letter-spacing: 12px;
+            text-align: center;
+            background: rgba(255,255,255,.06);
+            border: 2px solid rgba(255,255,255,.15);
+            border-radius: 16px;
+            color: #fff;
+            caret-color: #3b82f6;
+            outline: none;
+            transition: border-color .2s;
+            -webkit-appearance: none;
+        }
+        #cpf-input-real:focus {
+            border-color: #3b82f6;
+            background: rgba(59,130,246,.07);
+        }
+        #cpf-input-real::placeholder { color: rgba(255,255,255,.2); letter-spacing: 6px; font-size: 1.2rem; }
+
+        /* Dots indicator */
+        #cpf-dots {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+        .cpf-dot {
+            width: 14px; height: 14px;
+            border-radius: 50%;
+            background: #1e293b;
+            border: 2px solid #334155;
+            transition: all .2s;
+        }
+        .cpf-dot.filled {
+            background: #3b82f6;
+            border-color: #3b82f6;
+            box-shadow: 0 0 10px rgba(59,130,246,.6);
+            transform: scale(1.2);
+        }
+
+        .btn-cancelar {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,.15);
+            color: #94a3b8;
+            padding: 10px 28px;
+            border-radius: 100px;
+            font-size: .95rem;
+            cursor: pointer;
+            transition: all .2s;
+        }
+        .btn-cancelar:hover { background: rgba(255,255,255,.06); color: #fff; }
+
+        /* ──────────────── ETAPA TIPO ──────────────── */
+        .tipo-card {
+            width: 100%;
+            max-width: 540px;
+            margin-top: 60px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .user-badge {
+            background: rgba(255,255,255,.05);
+            border: 1px solid rgba(255,255,255,.1);
+            border-radius: 20px;
+            padding: 20px 28px;
+            text-align: center;
+            width: 100%;
+        }
+        .user-badge img, .user-badge-initials {
+            width: 72px; height: 72px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #3b82f6;
+            margin-bottom: 10px;
+        }
+        .user-badge-initials {
+            background: linear-gradient(135deg, #3b82f6, #6366f1);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.8rem; font-weight: 700;
+            margin: 0 auto 10px;
+        }
+        .user-badge h3 { font-size: clamp(1.1rem, 4vw, 1.5rem); font-weight: 700; }
+        .user-badge p  { font-size: .9rem; color: #94a3b8; margin-top: 4px; }
+
+        .tipo-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            width: 100%;
+        }
+
+        .type-btn {
+            padding: 20px 16px;
+            border-radius: 16px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            font-size: clamp(.9rem, 2.5vw, 1.1rem);
+            font-weight: 700;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            transition: all .2s;
+        }
+        .type-btn i { font-size: 1.6rem; }
+        .type-btn.entrada  { background: rgba(34,197,94,.1);  border-color: rgba(34,197,94,.3);  color: #4ade80; }
+        .type-btn.almoco   { background: rgba(234,179,8,.1);  border-color: rgba(234,179,8,.3);  color: #facc15; }
+        .type-btn.retorno  { background: rgba(59,130,246,.1); border-color: rgba(59,130,246,.3); color: #60a5fa; }
+        .type-btn.saida    { background: rgba(239,68,68,.1);  border-color: rgba(239,68,68,.3);  color: #f87171; }
+        .type-btn.entrada:hover  { background: rgba(34,197,94,.25);  border-color: #22c55e; }
+        .type-btn.almoco:hover   { background: rgba(234,179,8,.25);  border-color: #eab308; }
+        .type-btn.retorno:hover  { background: rgba(59,130,246,.25); border-color: #3b82f6; }
+        .type-btn.saida:hover    { background: rgba(239,68,68,.25);  border-color: #ef4444; }
+
+        /* ──────────────── ETAPA CÂMERA ──────────────── */
+        .camera-card {
+            width: 100%;
+            max-width: 420px;
+            margin-top: 60px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .camera-wrap {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 3/4;
+            border-radius: 24px;
+            overflow: hidden;
+            border: 3px solid rgba(255,255,255,.1);
+            background: #1e293b;
+        }
+        .camera-wrap video {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1);
+        }
+        .camera-overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+        .face-guide {
+            width: 55%;
+            aspect-ratio: 3/4;
+            border: 3px dashed rgba(255,255,255,.4);
+            border-radius: 50%;
+            animation: pulse 2s infinite ease-in-out;
+            box-shadow: 0 0 0 9999px rgba(13,17,23,.65);
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: .5; }
+            50% { opacity: 1; }
+        }
+
+        #camera-loading {
+            position: absolute;
+            inset: 0;
+            background: #1e293b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 5;
+        }
+        .spinner {
+            width: 48px; height: 48px;
+            border: 4px solid rgba(59,130,246,.3);
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        #camera-instruction {
+            font-size: 1rem;
+            color: #94a3b8;
+            text-align: center;
+            animation: fadeIn 1s ease;
+        }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; } }
+
+        /* SweetAlert dark override */
+        .kiosk-swal { background: #1e293b !important; color: #fff !important; }
+        .kiosk-swal .swal2-title { color: #fff !important; }
+        .kiosk-swal .swal2-html-container { color: #94a3b8 !important; }
+    </style>
 </head>
-<body class="bg-slate-900 text-white h-screen overflow-hidden select-none font-sans flex flex-col items-center justify-center relative">
+<body>
 
-    <!-- Header Simples -->
-    <div class="absolute top-0 left-0 w-full p-6 flex justify-between items-center bg-slate-800/50 backdrop-blur-md border-b border-slate-700/50">
-        <div class="flex items-center gap-3">
-            <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center font-bold text-xl shadow-lg shadow-blue-500/20">
-                N
-            </div>
-            <h1 class="text-2xl font-semibold tracking-wide text-slate-100">CONTROLE DE PONTO</h1>
-        </div>
-        <div class="text-right">
-            <div id="relogio-kiosk" class="text-4xl font-mono font-bold text-blue-400 tracking-wider">00:00:00</div>
-            <div id="data-kiosk" class="text-sm text-slate-400 uppercase tracking-widest mt-1">--</div>
-        </div>
-    </div>
-
-    <!-- Container Principal (Muda dinamicamente com JS) -->
-    <main id="kiosk-app" class="w-full max-w-4xl px-8 mt-16 transition-all duration-300">
-        
-        <!-- ETAPA 1: Digitar CPF -->
-        <section id="step-cpf" class="flex flex-col items-center w-full max-w-md mx-auto fade-in">
-            <h2 class="text-3xl font-light mb-8 text-slate-300 text-center">Informe os <strong class="font-bold text-white">6 primeiros dígitos</strong><br>do seu CPF</h2>
-            
-            <div class="w-full mb-12 relative flex justify-center">
-                <!-- Wrapper que centraliza Input e Bolinhas -->
-                <div class="relative w-full">
-                    <input type="password" id="cpf-input" readonly
-                        class="w-full bg-slate-800 border-2 border-slate-600 rounded-2xl py-6 text-center text-5xl font-mono text-transparent caret-transparent focus:outline-none focus:border-blue-500 shadow-2xl transition-colors select-none"
-                        placeholder="" maxlength="6" style="letter-spacing: normal;">
-                    
-                    <!-- Container das "Bolinhas" Sobreposto Perno e Centralizado -->
-                    <div id="cpf-display" class="absolute inset-0 flex items-center justify-center gap-4 pointer-events-none">
-                        <!-- Bolinhas injetadas via JS -->
-                    </div>
-                </div>
-            </div>
-
-            <!-- Teclado Numérico -->
-            <div class="grid grid-cols-3 gap-4 w-full px-4">
-                <button class="numpad-btn" data-val="1">1</button>
-                <button class="numpad-btn" data-val="2">2</button>
-                <button class="numpad-btn" data-val="3">3</button>
-                <button class="numpad-btn" data-val="4">4</button>
-                <button class="numpad-btn" data-val="5">5</button>
-                <button class="numpad-btn" data-val="6">6</button>
-                <button class="numpad-btn" data-val="7">7</button>
-                <button class="numpad-btn" data-val="8">8</button>
-                <button class="numpad-btn" data-val="9">9</button>
-                <button class="numpad-btn bg-red-500/10 text-red-400 border-red-500/30 hover:bg-red-500/20" id="btn-clear"><i class="fa-solid fa-xmark"></i></button>
-                <button class="numpad-btn" data-val="0">0</button>
-                <button class="numpad-btn bg-slate-700/50 text-slate-300 border-slate-600 hover:bg-slate-700" id="btn-backspace"><i class="fa-solid fa-delete-left"></i></button>
-            </div>
-        </section>
-
-
-        <!-- ETAPA 2: Confirmar Usuário e Escolher Tipo -->
-        <section id="step-tipo" class="hidden flex-col items-center w-full fade-in">
-            <!-- Card do Usuário -->
-            <div class="bg-slate-800/80 backdrop-blur border border-slate-700 rounded-3xl p-8 mb-10 w-full max-w-2xl text-center shadow-2xl flex flex-col items-center">
-                <img id="user-avatar" src="" alt="Avatar" class="w-32 h-32 rounded-full mb-6 object-cover border-4 border-blue-500 shadow-lg shadow-blue-500/30 bg-slate-700 hidden">
-                <div id="user-avatar-fallback" class="w-32 h-32 rounded-full mb-6 flex items-center justify-center text-5xl font-bold bg-gradient-to-br from-blue-600 to-indigo-700 border-4 border-slate-700 shadow-lg"></div>
-                
-                <h2 id="user-name" class="text-4xl font-bold mb-2">Nome do Funcionário</h2>
-                <p id="user-dept" class="text-xl text-slate-400 font-light">Cargo • Departamento</p>
-                <input type="hidden" id="user-id">
-            </div>
-
-            <h3 class="text-2xl mb-8 text-slate-300">Selecione o tipo de registro:</h3>
-            
-            <div class="grid grid-cols-2 gap-6 w-full max-w-3xl">
-                <button class="type-btn group bg-emerald-500/10 border-emerald-500/30 hover:bg-emerald-500 hover:text-white text-emerald-400" data-type="entrada">
-                    <i class="fa-solid fa-right-to-bracket text-4xl mb-4 group-hover:scale-110 transition-transform"></i>
-                    <span class="text-2xl font-semibold">Entrada</span>
-                </button>
-                
-                <button class="type-btn group bg-amber-500/10 border-amber-500/30 hover:bg-amber-500 hover:text-white text-amber-400" data-type="saida_almoco">
-                    <i class="fa-solid fa-utensils text-4xl mb-4 group-hover:scale-110 transition-transform"></i>
-                    <span class="text-2xl font-semibold">Saída p/ Almoço</span>
-                </button>
-                
-                <button class="type-btn group bg-blue-500/10 border-blue-500/30 hover:bg-blue-500 hover:text-white text-blue-400" data-type="retorno_almoco">
-                    <i class="fa-solid fa-person-walking-arrow-right text-4xl mb-4 group-hover:scale-110 transition-transform"></i>
-                    <span class="text-2xl font-semibold">Retorno Almoço</span>
-                </button>
-                
-                <button class="type-btn group bg-rose-500/10 border-rose-500/30 hover:bg-rose-500 hover:text-white text-rose-400" data-type="saida">
-                    <i class="fa-solid fa-right-from-bracket text-4xl mb-4 group-hover:scale-110 transition-transform"></i>
-                    <span class="text-2xl font-semibold">Saída Final</span>
-                </button>
-            </div>
-
-            <button class="mt-12 text-slate-500 hover:text-white text-xl py-4 px-8 rounded-full border border-slate-700 hover:bg-slate-800 transition-colors" onclick="resetKiosk()">
-                <i class="fa-solid fa-arrow-left mr-2"></i> Cancelar / Voltar
-            </button>
-        </section>
-
-
-        <!-- ETAPA 3: Câmera -->
-        <section id="step-camera" class="hidden flex-col items-center w-full fade-in">
-            <h2 class="text-3xl font-light mb-6 text-center text-white">Posicione seu rosto na marcação</h2>
-            
-            <div class="relative w-full max-w-lg aspect-[3/4] bg-slate-800 rounded-3xl overflow-hidden border-4 border-slate-700 shadow-2xl mb-8">
-                <!-- Video stream -->
-                <video id="camera-stream" autoplay playsinline muted class="w-full h-full object-cover transform -scale-x-100"></video>
-                
-                <!-- Face overlay guide (oval) -->
-                <div class="absolute inset-0 pointer-events-none flex items-center justify-center">
-                    <div class="w-64 h-80 border-4 border-white/50 rounded-[40%] shadow-[0_0_0_9999px_rgba(15,23,42,0.8)] border-dashed animate-pulse"></div>
-                </div>
-                
-                <!-- Loading indicator -->
-                <div id="camera-loading" class="absolute inset-0 flex items-center justify-center bg-slate-900 z-10">
-                    <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500"></div>
-                </div>
-            </div>
-
-            <p class="text-xl text-slate-400 mb-8 animate-pulse" id="camera-instruction">Aguardando...</p>
-            
-            <button class="text-slate-500 hover:text-white text-xl py-4 px-8 rounded-full border border-slate-700 hover:bg-slate-800 transition-colors" onclick="resetKiosk()">
-                Cancelar
-            </button>
-        </section>
-
-    </main>
-
-    <!-- Fullscreen Toggle Button (Apenas visível via hover forte no canto) -->
-    <button id="btn-fullscreen" class="fixed bottom-4 right-4 w-12 h-12 rounded-full bg-slate-800/20 text-slate-500/20 hover:bg-slate-700 hover:text-white flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity z-50">
-        <i class="fa-solid fa-expand"></i>
+<!-- ══════════════════ SCREENSAVER ══════════════════ -->
+<div id="screen-idle">
+    <img src="{% static 'img/logo_nexus_horizontal.png' %}" alt="Nexus" class="idle-logo">
+    <div id="idle-hora">00:00:00</div>
+    <div id="idle-data">--</div>
+    <button id="btn-registrar" onclick="abrirCPF()">
+        <i class="fa-solid fa-fingerprint" style="margin-right:8px;"></i>Registrar Ponto
     </button>
+</div>
 
-    <script src="/static/js/ponto_kiosk.js"></script>
+<!-- ══════════════════ TOPBAR (mostrada nas telas internas) ══════════════════ -->
+<div id="topbar" class="kiosk-topbar" style="display:none;">
+    <img src="{% static 'img/logo_nexus_horizontal.png' %}" alt="Nexus" class="topbar-logo">
+    <span class="topbar-clock" id="topbar-hora">00:00:00</span>
+</div>
+
+<!-- ══════════════════ TELA 1: CPF ══════════════════ -->
+<div id="screen-cpf" class="kiosk-screen">
+    <div class="cpf-card">
+        <h2>Informe os <strong>6 primeiros dígitos</strong><br>do seu CPF</h2>
+
+        <div id="cpf-dots" aria-hidden="true">
+            <div class="cpf-dot" id="d0"></div>
+            <div class="cpf-dot" id="d1"></div>
+            <div class="cpf-dot" id="d2"></div>
+            <div class="cpf-dot" id="d3"></div>
+            <div class="cpf-dot" id="d4"></div>
+            <div class="cpf-dot" id="d5"></div>
+        </div>
+
+        <!-- Input nativo — o teclado do dispositivo será chamado automaticamente -->
+        <input
+            id="cpf-input-real"
+            type="tel"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            maxlength="6"
+            placeholder="••••••"
+            autocomplete="off"
+            autocorrect="off"
+            spellcheck="false"
+        >
+
+        <button class="btn-cancelar" onclick="voltarIdle()">
+            <i class="fa-solid fa-arrow-left" style="margin-right:6px;"></i>Cancelar
+        </button>
+    </div>
+</div>
+
+<!-- ══════════════════ TELA 2: TIPO DE PONTO ══════════════════ -->
+<div id="screen-tipo" class="kiosk-screen">
+    <div class="tipo-card">
+        <div class="user-badge">
+            <img id="user-avatar" src="" alt="Avatar" style="display:none;">
+            <div id="user-initials" class="user-badge-initials"></div>
+            <h3 id="user-name">—</h3>
+            <p id="user-dept">—</p>
+        </div>
+
+        <h3 style="color:#94a3b8; font-weight:400; font-size:.95rem;">Selecione o tipo de registro:</h3>
+
+        <div class="tipo-grid">
+            <button class="type-btn entrada" data-type="entrada">
+                <i class="fa-solid fa-right-to-bracket"></i>
+                Entrada
+            </button>
+            <button class="type-btn almoco" data-type="saida_almoco">
+                <i class="fa-solid fa-utensils"></i>
+                Saída p/ Almoço
+            </button>
+            <button class="type-btn retorno" data-type="retorno_almoco">
+                <i class="fa-solid fa-person-walking-arrow-right"></i>
+                Retorno Almoço
+            </button>
+            <button class="type-btn saida" data-type="saida">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                Saída Final
+            </button>
+        </div>
+
+        <button class="btn-cancelar" onclick="voltarIdle()">
+            <i class="fa-solid fa-arrow-left" style="margin-right:6px;"></i>Cancelar
+        </button>
+    </div>
+</div>
+
+<!-- ══════════════════ TELA 3: CÂMERA ══════════════════ -->
+<div id="screen-camera" class="kiosk-screen">
+    <div class="camera-card">
+        <h2 style="color:#cbd5e1; font-weight:300; text-align:center; font-size:clamp(1rem,3vw,1.25rem);">
+            Posicione seu rosto na marcação
+        </h2>
+
+        <div class="camera-wrap">
+            <video id="camera-stream" autoplay playsinline muted></video>
+            <div class="camera-overlay">
+                <div class="face-guide"></div>
+            </div>
+            <div id="camera-loading">
+                <div class="spinner"></div>
+            </div>
+        </div>
+
+        <p id="camera-instruction">Aguardando câmera...</p>
+
+        <button class="btn-cancelar" onclick="voltarIdle()">Cancelar</button>
+    </div>
+</div>
+
+<!-- Fullscreen trigger (canto inferior direito, invisível até hover) -->
+<button id="btn-fs" onclick="toggleFS()"
+        style="position:fixed;bottom:12px;right:12px;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.05);border:none;color:rgba(255,255,255,.2);cursor:pointer;transition:all .3s;z-index:999;"
+        onmouseenter="this.style.color='rgba(255,255,255,.7)'; this.style.background='rgba(255,255,255,.1)'"
+        onmouseleave="this.style.color='rgba(255,255,255,.2)'; this.style.background='rgba(255,255,255,.05)'">
+    <i class="fa-solid fa-expand"></i>
+</button>
+
+<script>
+// ─── Estado ───────────────────────────────────────────────────
+const state = {
+    cpf: '',
+    colaboradorId: null,
+    colaboradorNome: '',
+    tipoPonto: null,
+    videoStream: null,
+};
+
+// ─── Relógio ──────────────────────────────────────────────────
+function tick() {
+    const n = new Date();
+    const hms = [n.getHours(), n.getMinutes(), n.getSeconds()]
+        .map(v => String(v).padStart(2,'0')).join(':');
+    document.getElementById('idle-hora').textContent = hms;
+    document.getElementById('topbar-hora').textContent = hms;
+
+    const opts = { weekday:'short', day:'2-digit', month:'long', year:'numeric' };
+    document.getElementById('idle-data').textContent = n.toLocaleDateString('pt-BR', opts).toUpperCase();
+}
+setInterval(tick, 1000);
+tick();
+
+// ─── Navegação de telas ───────────────────────────────────────
+function showScreen(id) {
+    ['screen-idle','screen-cpf','screen-tipo','screen-camera'].forEach(s => {
+        const el = document.getElementById(s);
+        el.classList.remove('active');
+    });
+    const topbar = document.getElementById('topbar');
+    if (id === 'screen-idle') {
+        topbar.style.display = 'none';
+    } else {
+        topbar.style.display = 'flex';
+        document.getElementById(id).classList.add('active');
+    }
+}
+
+function abrirCPF() {
+    state.cpf = '';
+    updateDots();
+    showScreen('screen-cpf');
+    // Foca o input para abrir o teclado nativo
+    setTimeout(() => document.getElementById('cpf-input-real').focus(), 80);
+}
+
+function voltarIdle() {
+    pararCamera();
+    state.cpf = '';
+    state.colaboradorId = null;
+    state.tipoPonto = null;
+    document.getElementById('cpf-input-real').value = '';
+    updateDots();
+    // Garante que o idle apareça e as telas internas somam
+    ['screen-cpf','screen-tipo','screen-camera'].forEach(s =>
+        document.getElementById(s).classList.remove('active'));
+    document.getElementById('topbar').style.display = 'none';
+    document.getElementById('screen-idle').style.display = '';
+}
+
+// ─── CPF Input ───────────────────────────────────────────────
+const cpfInput = document.getElementById('cpf-input-real');
+
+cpfInput.addEventListener('input', () => {
+    // Permite apenas números
+    cpfInput.value = cpfInput.value.replace(/\D/g, '').slice(0, 6);
+    state.cpf = cpfInput.value;
+    updateDots();
+
+    if (state.cpf.length === 6) {
+        cpfInput.blur();
+        buscarColaborador(state.cpf);
+    }
+});
+
+function updateDots() {
+    for (let i = 0; i < 6; i++) {
+        document.getElementById('d' + i).className = 'cpf-dot' + (i < state.cpf.length ? ' filled' : '');
+    }
+}
+
+// ─── Buscar colaborador ───────────────────────────────────────
+async function buscarColaborador(cpf6) {
+    Swal.fire({
+        title: 'Buscando...',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading(),
+        customClass: { popup: 'kiosk-swal' }
+    });
+
+    try {
+        const res = await fetch('/api/ponto/buscar-colaborador/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ cpf_iniciais: cpf6 })
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+            Swal.fire({ icon:'error', title:'Não encontrado', text: data.erro || 'CPF não localizado.',
+                customClass: { popup:'kiosk-swal' }, timer: 3000, showConfirmButton: false });
+            state.cpf = '';
+            cpfInput.value = '';
+            updateDots();
+            setTimeout(() => cpfInput.focus(), 3100);
+            return;
+        }
+
+        Swal.close();
+        state.colaboradorId = data.id;
+        state.colaboradorNome = data.nome;
+
+        // Preencher card
+        document.getElementById('user-name').textContent = data.nome;
+        document.getElementById('user-dept').textContent = `${data.cargo} • ${data.departamento}`;
+
+        const avatar = document.getElementById('user-avatar');
+        const initials = document.getElementById('user-initials');
+        if (data.foto_url) {
+            avatar.src = data.foto_url;
+            avatar.style.display = 'block';
+            initials.style.display = 'none';
+        } else {
+            avatar.style.display = 'none';
+            initials.style.display = 'flex';
+            const parts = data.nome.split(' ');
+            initials.textContent = parts[0][0].toUpperCase() + (parts.length > 1 ? parts[parts.length-1][0].toUpperCase() : '');
+        }
+
+        showScreen('screen-tipo');
+    } catch(err) {
+        Swal.fire({ icon:'error', title:'Erro de conexão', text:'Tente novamente.',
+            customClass: { popup:'kiosk-swal' } });
+        state.cpf = '';
+        cpfInput.value = '';
+        updateDots();
+    }
+}
+
+// ─── Tipo de ponto ────────────────────────────────────────────
+document.querySelectorAll('.type-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        state.tipoPonto = btn.getAttribute('data-type');
+        showScreen('screen-camera');
+        startCamera();
+    });
+});
+
+// ─── Câmera ───────────────────────────────────────────────────
+async function startCamera() {
+    const loading = document.getElementById('camera-loading');
+    const inst    = document.getElementById('camera-instruction');
+    const video   = document.getElementById('camera-stream');
+    loading.style.display = 'flex';
+    inst.textContent = 'Aguardando câmera...';
+
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+        state.videoStream = stream;
+        video.srcObject = stream;
+        video.onloadedmetadata = () => {
+            loading.style.display = 'none';
+            let c = 3;
+            inst.textContent = `Registrando em ${c}...`;
+            const t = setInterval(() => {
+                c--;
+                if (c > 0) {
+                    inst.textContent = `Registrando em ${c}...`;
+                } else {
+                    clearInterval(t);
+                    inst.textContent = 'Fotografando...';
+                    capturarEEnviar();
+                }
+            }, 1000);
+        };
+    } catch(err) {
+        loading.style.display = 'none';
+        Swal.fire({
+            icon: 'warning',
+            title: 'Câmera inacessível',
+            text: 'Prosseguindo sem foto.',
+            customClass: { popup:'kiosk-swal' },
+            confirmButtonText: 'Continuar'
+        }).then(() => enviarRegistro(null));
+    }
+}
+
+function pararCamera() {
+    if (state.videoStream) {
+        state.videoStream.getTracks().forEach(t => t.stop());
+        state.videoStream = null;
+    }
+    const video = document.getElementById('camera-stream');
+    video.srcObject = null;
+}
+
+function capturarEEnviar() {
+    const video = document.getElementById('camera-stream');
+    const canvas = document.createElement('canvas');
+    canvas.width  = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    const foto = canvas.toDataURL('image/jpeg', 0.7);
+    enviarRegistro(foto);
+}
+
+// ─── Enviar registro ──────────────────────────────────────────
+async function enviarRegistro(fotoBase64) {
+    pararCamera();
+    Swal.fire({ title:'Registrando...', allowOutsideClick:false, didOpen:()=>Swal.showLoading(),
+        customClass:{ popup:'kiosk-swal' } });
+
+    try {
+        const res = await fetch('/api/ponto/registrar/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                colaborador_id: state.colaboradorId,
+                tipo: state.tipoPonto,
+                origem: 'tablet',
+                foto_base64: fotoBase64
+            })
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+            Swal.fire({
+                icon:'success',
+                title:'Registrado!',
+                text: data.mensagem || `Ponto de ${state.tipoPonto} registrado às ${data.hora}.`,
+                customClass: { popup:'kiosk-swal' },
+                timer: 4000,
+                showConfirmButton: false
+            }).then(voltarIdle);
+        } else {
+            Swal.fire({ icon:'error', title:'Falha', text: data.erro || 'Erro ao registrar.',
+                customClass: { popup:'kiosk-swal' } }).then(voltarIdle);
+        }
+    } catch(e) {
+        Swal.fire({ icon:'error', title:'Erro de conexão', text:'Tente novamente.',
+            customClass: { popup:'kiosk-swal' } }).then(voltarIdle);
+    }
+}
+
+// ─── Fullscreen ───────────────────────────────────────────────
+function toggleFS() {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+        document.exitFullscreen();
+    }
+}
+
+// Bloquear F5 / Ctrl+R
+document.addEventListener('keydown', e => {
+    if (e.key === 'F5' || (e.ctrlKey && e.key === 'r')) e.preventDefault();
+});
+</script>
 </body>
 </html>
