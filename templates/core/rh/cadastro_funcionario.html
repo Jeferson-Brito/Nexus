@@ -254,7 +254,7 @@
                                 <div class="input-group">
                                     <span class="input-group-text bg-light">R$</span>
                                     <input type="number" step="0.01" name="salario_atual" class="form-control" required
-                                           value="{{ colaborador.salario_atual|default:'' }}">
+                                           value="{{ colaborador.salario_atual|unlocalize|default:'' }}">
                                 </div>
                             </div>
 
