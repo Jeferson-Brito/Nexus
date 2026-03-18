@@ -2,7 +2,7 @@
 APIs para o Módulo de RH - Gestão de Colaboradores
 """
 
-from django.http import JsonResponse
+from django.http import JsonResponse, Http404
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
 from django.shortcuts import get_object_or_404
@@ -154,8 +154,8 @@ def api_colaborador_detail(request, pk):
             'data_admissao': colaborador.data_admissao.strftime('%d/%m/%Y') if colaborador.data_admissao else None,
             'data_desligamento': colaborador.data_desligamento.strftime('%d/%m/%Y') if colaborador.data_desligamento else None,
             'cargo_atual': colaborador.cargo_atual,
-            'department': colaborador.department.name,
-            'department_id': str(colaborador.department.id),
+            'department': colaborador.department.name if colaborador.department else '',
+            'department_id': str(colaborador.department.id) if colaborador.department_id else '',
             'empresa_id': str(colaborador.empresa_id) if colaborador.empresa_id else '',
             'empresa': colaborador.empresa.nome if colaborador.empresa else '',
             'salario_atual': float(colaborador.salario_atual),
@@ -282,6 +282,8 @@ def api_save_colaborador(request):
                 
             return JsonResponse({'success': True, 'id': str(colaborador.id), 'message': 'Dados salvos com sucesso'})
             
+    except Http404:
+        return JsonResponse({'success': False, 'error': 'Colaborador não encontrado.'}, status=404)
     except Exception as e:
         logger.error(f"Erro ao salvar colaborador: {str(e)}")
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
@@ -500,6 +502,8 @@ def api_save_empresa(request):
             empresa.save()
 
         return JsonResponse({'success': True, 'message': 'Empresa salva com sucesso.', 'id': str(empresa.id)})
+    except Http404:
+        return JsonResponse({'success': False, 'error': 'Empresa não encontrada.'}, status=404)
     except Exception as ex:
         logger.error(f"Erro ao salvar empresa: {ex}")
         return JsonResponse({'success': False, 'error': str(ex)}, status=500)
@@ -513,5 +517,8 @@ def api_delete_empresa(request, pk):
         empresa = get_object_or_404(Empresa, pk=pk)
         empresa.delete()
         return JsonResponse({'success': True, 'message': 'Empresa excluída com sucesso.'})
+    except Http404:
+        return JsonResponse({'success': False, 'error': 'Empresa não encontrada.'}, status=404)
     except Exception as ex:
+        logger.error(f"Erro ao excluir empresa: {ex}")
         return JsonResponse({'success': False, 'error': str(ex)}, status=500)

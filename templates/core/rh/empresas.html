@@ -175,7 +175,7 @@ function render() {
                     <a href="/rh/empresas/${e.id}/editar/" class="btn btn-sm btn-light border me-1" title="Editar">
                         <i class="bi bi-pencil-square text-primary"></i>
                     </a>
-                    <button class="btn btn-sm btn-light border" title="Excluir" onclick="openDelete(${e.id},'${escHtml(e.nome)}')">
+                    <button class="btn btn-sm btn-light border" title="Excluir" onclick="openDelete('${e.id}','${escHtml(e.nome)}')">
                         <i class="bi bi-trash3 text-danger"></i>
                     </button>
                 </td>
