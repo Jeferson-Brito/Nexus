@@ -183,9 +183,13 @@ AWS_ACCESS_KEY_ID = get_env("AWS_ACCESS_KEY_ID")
 
 if AWS_ACCESS_KEY_ID:
     AWS_SECRET_ACCESS_KEY = get_env("AWS_SECRET_ACCESS_KEY")
-    AWS_STORAGE_BUCKET_NAME = get_env("AWS_STORAGE_BUCKET_NAME")
+    AWS_STORAGE_BUCKET_NAME = get_env("AWS_STORAGE_BUCKET_NAME", "nexus-media")
     AWS_S3_ENDPOINT_URL = get_env("AWS_S3_ENDPOINT_URL")
     AWS_S3_REGION_NAME = get_env("AWS_S3_REGION_NAME", "sa-east-1")
+
+    # URL pública para acessar os arquivos (Supabase Public Bucket URL)
+    # Forma: https://<project-ref>.supabase.co/storage/v1/object/public/<bucket>
+    _supabase_public_url = get_env("SUPABASE_STORAGE_PUBLIC_URL", "")
 
     STORAGES = {
         "default": {
@@ -199,10 +203,10 @@ if AWS_ACCESS_KEY_ID:
                 "querystring_auth": False,
                 "file_overwrite": False,
                 "addressing_style": "path",
-                "custom_domain": f"{AWS_S3_ENDPOINT_URL.replace('https://', '').split('.')[0]}.supabase.co/storage/v1/object/public/{AWS_STORAGE_BUCKET_NAME}",
                 "object_parameters": {
                     "CacheControl": "max-age=86400",
                 },
+                **({"custom_domain": _supabase_public_url.replace("https://", "")} if _supabase_public_url else {}),
             },
         },
         "staticfiles": {
