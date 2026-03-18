@@ -179,6 +179,8 @@ def api_save_colaborador(request):
         # Nota: multipart/form-data para fotos
         data = request.POST
         pk = data.get('id')
+        if pk:
+            pk = str(pk).replace('.', '').replace(',', '')  # Failsafe for localized IDs
         
         with transaction.atomic():
             if pk:
@@ -471,6 +473,8 @@ def api_save_empresa(request):
     try:
         data = request.POST
         pk = data.get('id')
+        if pk:
+            pk = str(pk).replace('.', '').replace(',', '')  # Failsafe for localized IDs
         with transaction.atomic():
             if pk:
                 empresa = get_object_or_404(Empresa, pk=pk)

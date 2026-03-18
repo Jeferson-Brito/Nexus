@@ -26,7 +26,8 @@
 
         <form id="formEmpresa" enctype="multipart/form-data">
             {% csrf_token %}
-            <input type="hidden" name="id" value="{{ empresa_id|default:'' }}">
+            {% load l10n %}
+            <input type="hidden" name="id" value="{{ empresa_id|unlocalize|default:'' }}">
 
             <div class="card-body p-4">
 

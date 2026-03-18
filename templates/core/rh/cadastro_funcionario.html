@@ -27,7 +27,7 @@
         <form id="formNovoFuncionario" enctype="multipart/form-data">
             {% csrf_token %}
             {% load l10n %}
-            <input type="hidden" name="id" value="{% localize off %}{{ colaborador_id|default:'' }}{% endlocalize %}">
+            <input type="hidden" name="id" value="{{ colaborador_id|unlocalize|default:'' }}">
             <input type="hidden" name="user_id" value="{{ user_id|default:'' }}">
 
             <div class="card-body p-4">
