@@ -156,6 +156,8 @@ def api_colaborador_detail(request, pk):
             'cargo_atual': colaborador.cargo_atual,
             'department': colaborador.department.name,
             'department_id': str(colaborador.department.id),
+            'empresa_id': str(colaborador.empresa_id) if colaborador.empresa_id else '',
+            'empresa': colaborador.empresa.nome if colaborador.empresa else '',
             'salario_atual': float(colaborador.salario_atual),
             'tipo_contrato': colaborador.tipo_contrato,
             'jornada': colaborador.jornada_trabalho,
@@ -203,6 +205,8 @@ def api_save_colaborador(request):
             colaborador.cargo_atual = data.get('cargo')
             colaborador.cargo_inicial = data.get('cargo_inicial', '')
             colaborador.department_id = data.get('department_id')
+            empresa_id = data.get('empresa_id') or None
+            colaborador.empresa_id = empresa_id if empresa_id else None
             colaborador.salario_atual = parse_decimal(data.get('salario_atual'))
             colaborador.status = data.get('status', 'ativo')
             colaborador.tipo_contrato = data.get('tipo_contrato', 'clt')
@@ -446,7 +450,7 @@ def api_empresas_list(request):
         empresas = Empresa.objects.all()
         return JsonResponse({'success': True, 'empresas': [
             {
-                'id': e.id,
+                'id': str(e.id),  # string to avoid JS precision loss on large CockroachDB IDs
                 'nome': e.nome,
                 'nome_fantasia': e.nome_fantasia,
                 'cnpj': e.cnpj,
@@ -494,7 +498,7 @@ def api_save_empresa(request):
 
             empresa.save()
 
-        return JsonResponse({'success': True, 'message': 'Empresa salva com sucesso.', 'id': empresa.id})
+        return JsonResponse({'success': True, 'message': 'Empresa salva com sucesso.', 'id': str(empresa.id)})
     except Exception as ex:
         logger.error(f"Erro ao salvar empresa: {ex}")
         return JsonResponse({'success': False, 'error': str(ex)}, status=500)

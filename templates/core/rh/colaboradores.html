@@ -506,31 +506,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 // ─── Editar ───────────────────────────────────────────────────────────────────
 window.editColaborador = function (id) {
-    document.getElementById('colaboradorUserId').value = '';
-    fetch(`/api/rh/colaboradores/${id}/`)
-        .then(r => r.json())
-        .then(data => {
-            if (data.success) {
-                const c    = data.colaborador;
-                const form = document.getElementById('formColaborador');
-                form.querySelector('[name="id"]').value = c.id;
-                form.querySelector('[name="nome_completo"]').value = c.nome_completo || '';
-                form.querySelector('[name="cpf"]').value  = c.cpf  || '';
-                form.querySelector('[name="rg"]').value   = c.rg   || '';
-                const dtNasc = c.data_nascimento || '';
-                form.querySelector('[name="data_nascimento"]').value = dtNasc.includes('/') ? dtNasc.split('/').reverse().join('-') : dtNasc;
-                const dtAdm = c.data_admissao || '';
-                form.querySelector('[name="data_admissao"]').value = dtAdm.includes('/') ? dtAdm.split('/').reverse().join('-') : dtAdm;
-                form.querySelector('[name="department_id"]').value = c.department_id || '';
-                form.querySelector('[name="cargo"]').value = c.cargo_atual || '';
-                form.querySelector('[name="salario_atual"]').value = c.salario_atual || '';
-                form.querySelector('[name="status"]').value = c.status || 'ativo';
-                document.getElementById('divCargoInicial').style.display = 'none';
-                document.getElementById('previewFoto').src = c.foto_url || "{% static 'img/avatar_placeholder.png' %}";
-                document.getElementById('modalTitle').textContent = 'Editar Funcionário';
-                new bootstrap.Modal(document.getElementById('modalColaborador')).show();
-            }
-        });
+    window.location.href = `/rh/colaboradores/${id}/editar/`;
 };
 
 // ─── Excluir ──────────────────────────────────────────────────────────────────

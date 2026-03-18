@@ -152,7 +152,17 @@
                     <div class="tab-pane fade show active" id="tabGeral">
                         <div class="row g-4">
 
-                            <!-- Linha 1: Departamento | Centro de Custo | Cargo -->
+                            <!-- Linha 1: Empresa | Departamento | Cargo -->
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">Empresa</label>
+                                <select name="empresa_id" id="formEmpresa" class="form-select">
+                                    <option value="">Sem empresa</option>
+                                    {% if colaborador.empresa %}
+                                    <option value="{{ colaborador.empresa.id }}" selected>{{ colaborador.empresa.nome }}</option>
+                                    {% endif %}
+                                </select>
+                            </div>
+
                             <div class="col-md-4">
                                 <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">Departamento</label>
                                 <select name="department_id" id="formDept" class="form-select" required>
@@ -659,6 +669,22 @@ document.addEventListener('DOMContentLoaded', function () {
                 const opt = new Option(l, v);
                 if (v === '{{ colaborador.tipo_contrato|default:"clt" }}') opt.selected = true;
                 tcSel.add(opt);
+            });
+        });
+
+    // Load empresas para o select
+    fetch('/api/rh/empresas/')
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) return;
+            const sel = document.getElementById('formEmpresa');
+            const currentEmpresaId = '{{ colaborador.empresa_id|default:"" }}';
+            (data.empresas || []).forEach(e => {
+                // skip if already rendered by Django template
+                if ([...sel.options].some(o => o.value === e.id)) return;
+                const opt = new Option(e.nome, e.id);
+                if (e.id === currentEmpresaId) opt.selected = true;
+                sel.add(opt);
             });
         });
 

@@ -2111,6 +2111,7 @@ class Colaborador(models.Model):
     data_desligamento = models.DateField(null=True, blank=True)
     cargo_atual = models.CharField(max_length=100)
     department = models.ForeignKey(Department, on_delete=models.PROTECT, related_name='colaboradores_rh')
+    empresa = models.ForeignKey('Empresa', on_delete=models.SET_NULL, null=True, blank=True, related_name='colaboradores_empresa', verbose_name='Empresa')
     salario_atual = models.DecimalField(max_digits=10, decimal_places=2)
     tipo_contrato = models.CharField(max_length=20, choices=TIPO_CONTRATO_CHOICES, default='clt')
     jornada_trabalho = models.CharField(max_length=100, blank=True, help_text="Ex: 44h semanais, 10h às 19h")
