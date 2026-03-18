@@ -207,6 +207,9 @@ def api_save_colaborador(request):
             colaborador.email_pessoal = data.get('email_pessoal', '')
             colaborador.telefone = data.get('telefone', '')
             colaborador.endereco = data.get('endereco', '')
+            colaborador.jornada_trabalho = data.get('jornada_trabalho', '')
+            colaborador.pis = data.get('pis', '')
+            colaborador.matricula = data.get('matricula', '')
             
             if 'foto' in request.FILES:
                 colaborador.foto = request.FILES['foto']

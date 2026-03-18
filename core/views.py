@@ -3098,3 +3098,23 @@ def rh_colaborador_perfil_view(request, pk):
         'colaborador': colaborador,
         'departments_all': departments_all,
     })
+
+
+@login_required
+def rh_cadastro_funcionario_view(request, pk=None):
+    """Página de cadastro/edição de funcionário (full-page, estilo Control iD)"""
+    colaborador = None
+    colaborador_id = ''
+    user_id = ''
+    if pk:
+        colaborador = get_object_or_404(Colaborador, pk=pk)
+        colaborador_id = str(colaborador.pk)
+    if request.GET.get('user_id'):
+        user_id = request.GET.get('user_id')
+    page_title = 'Editar Funcionário' if colaborador else 'Novo Funcionário'
+    return render(request, 'core/rh/cadastro_funcionario.html', {
+        'colaborador': colaborador,
+        'colaborador_id': colaborador_id,
+        'user_id': user_id,
+        'page_title': page_title,
+    })

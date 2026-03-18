@@ -1,0 +1,407 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-3" style="max-width: 1100px;">
+
+    <!-- Breadcrumb -->
+    <nav class="mb-3" aria-label="breadcrumb">
+        <ol class="breadcrumb small mb-0">
+            <li class="breadcrumb-item"><a href="{% url 'rh_colaboradores' %}" class="text-decoration-none text-primary">Funcionários</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ page_title }}</li>
+        </ol>
+    </nav>
+
+    <div class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
+
+        <!-- Header azul -->
+        <div class="card-header border-0 py-3 px-4 d-flex align-items-center justify-content-between"
+             style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
+            <h5 class="fw-bold mb-0 text-white">{{ page_title }}</h5>
+            <a href="{% url 'rh_colaboradores' %}" class="btn btn-sm"
+               style="background:rgba(255,255,255,0.2); color:#fff; border:1.5px solid rgba(255,255,255,0.6);">
+                <i class="bi bi-arrow-left me-1"></i> Voltar
+            </a>
+        </div>
+
+        <form id="formNovoFuncionario" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="hidden" name="id" value="{{ colaborador_id|default:'' }}">
+            <input type="hidden" name="user_id" value="{{ user_id|default:'' }}">
+
+            <div class="card-body p-4">
+
+                <!-- ══════════════════════════════════════════
+                     SEÇÃO SUPERIOR: campos principais + foto
+                     ══════════════════════════════════════════ -->
+                <div class="row g-3 pb-4 border-bottom mb-4">
+
+                    <!-- Coluna de campos -->
+                    <div class="col-lg-9">
+                        <!-- Linha 1: Nome + PIS -->
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-7">
+                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">Nome</label>
+                                <div class="input-group">
+                                    <input type="text" name="nome_completo" class="form-control"
+                                           placeholder="Nome completo" required
+                                           value="{{ colaborador.nome_completo|default:'' }}">
+                                    <span class="input-group-text bg-light"><i class="bi bi-person text-muted"></i></span>
+                                </div>
+                            </div>
+                            <div class="col-md-5">
+                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">PIS / NIS</label>
+                                <div class="input-group">
+                                    <input type="text" name="pis" class="form-control"
+                                           placeholder="000.00000.00-0"
+                                           value="{{ colaborador.pis|default:'' }}">
+                                    <span class="input-group-text bg-light"><i class="bi bi-upc text-muted"></i></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Linha 2: Matrícula + Departamento + Status -->
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">Matrícula</label>
+                                <div class="input-group">
+                                    <input type="text" name="matricula" class="form-control"
+                                           placeholder="Ex: 00123"
+                                           value="{{ colaborador.matricula|default:'' }}">
+                                    <span class="input-group-text bg-light"><i class="bi bi-hash text-muted"></i></span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">Departamento</label>
+                                <select name="department_id" id="formDept" class="form-select" required>
+                                    <option value="">Selecione</option>
+                                </select>
+                            </div>
+                            <div class="col-md-5">
+                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">Status</label>
+                                <div class="d-flex gap-3 mt-2">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="status" id="statusAtivo" value="ativo"
+                                               {% if not colaborador or colaborador.status == 'ativo' %}checked{% endif %}>
+                                        <label class="form-check-label small" for="statusAtivo">Ativo</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="status" id="statusFerias" value="ferias"
+                                               {% if colaborador.status == 'ferias' %}checked{% endif %}>
+                                        <label class="form-check-label small" for="statusFerias">Férias</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="status" id="statusAfastado" value="afastado"
+                                               {% if colaborador.status == 'afastado' %}checked{% endif %}>
+                                        <label class="form-check-label small" for="statusAfastado">Afastado</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="status" id="statusDesligado" value="desligado"
+                                               {% if colaborador.status == 'desligado' %}checked{% endif %}>
+                                        <label class="form-check-label small" for="statusDesligado">Desligado</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Linha 3: Data de admissão + Horário (Jornada) -->
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">Data da Admissão</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="bi bi-calendar3 text-muted"></i></span>
+                                    <input type="date" name="data_admissao" class="form-control" required
+                                           value="{{ colaborador.data_admissao|date:'Y-m-d'|default:'' }}">
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">Horário / Jornada</label>
+                                <select name="jornada_trabalho" id="formJornada" class="form-select">
+                                    <option value="">Selecione</option>
+                                    <option value="44h - Seg a Sex 09h-18h" {% if colaborador.jornada_trabalho == '44h - Seg a Sex 09h-18h' %}selected{% endif %}>44h — Seg a Sex 09h–18h</option>
+                                    <option value="44h - Seg a Sab 09h-15h" {% if colaborador.jornada_trabalho == '44h - Seg a Sab 09h-15h' %}selected{% endif %}>44h — Seg a Sáb 09h–15h</option>
+                                    <option value="40h - Seg a Sex 08h-17h" {% if colaborador.jornada_trabalho == '40h - Seg a Sex 08h-17h' %}selected{% endif %}>40h — Seg a Sex 08h–17h</option>
+                                    <option value="12x36 - Diurno" {% if colaborador.jornada_trabalho == '12x36 - Diurno' %}selected{% endif %}>12×36 — Diurno</option>
+                                    <option value="12x36 - Noturno" {% if colaborador.jornada_trabalho == '12x36 - Noturno' %}selected{% endif %}>12×36 — Noturno</option>
+                                    <option value="outro" {% if colaborador.jornada_trabalho == 'outro' %}selected{% endif %}>Outro</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Coluna da foto -->
+                    <div class="col-lg-3 d-flex flex-column align-items-center justify-content-center">
+                        <div class="position-relative mb-2">
+                            <img id="previewFoto"
+                                 src="{{ colaborador.foto.url|default:'{% static \"img/avatar_placeholder.png\" %}' }}"
+                                 alt="Foto"
+                                 style="width:130px; height:160px; object-fit:cover; border:2px solid #e5e7eb; border-radius:8px; background:#f3f4f6;">
+                        </div>
+                        <div class="d-flex gap-2">
+                            <label for="inputFoto" class="btn btn-sm btn-outline-success" title="Upload foto">
+                                <i class="bi bi-person-badge"></i>
+                            </label>
+                            <label for="inputFoto" class="btn btn-sm btn-outline-secondary" title="Câmera">
+                                <i class="bi bi-camera"></i>
+                            </label>
+                        </div>
+                        <input type="file" id="inputFoto" name="foto" class="d-none" accept="image/*">
+                        <small class="text-muted mt-2" style="font-size:0.72rem;">Clique para enviar a foto</small>
+                    </div>
+                </div>
+
+                <!-- ══════════════════════════════════════════
+                     TABS
+                     ══════════════════════════════════════════ -->
+                <ul class="nav nav-underline mb-4" id="funcionarioTabs">
+                    <li class="nav-item">
+                        <button class="nav-link active fw-semibold" type="button" data-bs-toggle="tab" data-bs-target="#tabGeral">
+                            Informações Gerais
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" type="button" data-bs-toggle="tab" data-bs-target="#tabPessoal">
+                            Dados Pessoais
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" type="button" data-bs-toggle="tab" data-bs-target="#tabCarreira">
+                            Histórico de Carreira
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content">
+
+                    <!-- ──────── TAB: Informações Gerais ──────── -->
+                    <div class="tab-pane fade show active" id="tabGeral">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">Cargo</label>
+                                <input type="text" name="cargo" id="formCargo" class="form-control"
+                                       placeholder="Ex: Analista de RH" required
+                                       value="{{ colaborador.cargo_atual|default:'' }}">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">Cargo na Admissão</label>
+                                <input type="text" name="cargo_inicial" class="form-control"
+                                       placeholder="Igual ao atual se vazio">
+                                <small class="text-muted" style="font-size:0.7rem;">Deixe vazio se for o mesmo cargo</small>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">Tipo de Contrato</label>
+                                <select name="tipo_contrato" id="formTipoContrato" class="form-select"></select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">Salário Atual</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light">R$</span>
+                                    <input type="number" step="0.01" name="salario_atual" class="form-control" required
+                                           value="{{ colaborador.salario_atual|default:'' }}">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">Data de Desligamento</label>
+                                <input type="date" name="data_desligamento" class="form-control"
+                                       value="{{ colaborador.data_desligamento|date:'Y-m-d'|default:'' }}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ──────── TAB: Dados Pessoais ──────── -->
+                    <div class="tab-pane fade" id="tabPessoal">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">CPF</label>
+                                <input type="text" name="cpf" class="form-control"
+                                       placeholder="000.000.000-00" required
+                                       value="{{ colaborador.cpf|default:'' }}">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">RG</label>
+                                <input type="text" name="rg" class="form-control"
+                                       value="{{ colaborador.rg|default:'' }}">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">Data de Nascimento</label>
+                                <input type="date" name="data_nascimento" class="form-control" required
+                                       value="{{ colaborador.data_nascimento|date:'Y-m-d'|default:'' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">Telefone</label>
+                                <input type="text" name="telefone" class="form-control"
+                                       placeholder="(00) 00000-0000"
+                                       value="{{ colaborador.telefone|default:'' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">E-mail Pessoal</label>
+                                <input type="email" name="email_pessoal" class="form-control"
+                                       value="{{ colaborador.email_pessoal|default:'' }}">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">Endereço</label>
+                                <textarea name="endereco" class="form-control" rows="2"
+                                          placeholder="Rua, número, bairro, cidade — UF">{{ colaborador.endereco|default:'' }}</textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ──────── TAB: Histórico de Carreira ──────── -->
+                    <div class="tab-pane fade" id="tabCarreira">
+                        {% if colaborador_id %}
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <p class="text-muted small mb-0">Evolução profissional registrada para este funcionário.</p>
+                            <button type="button" class="btn btn-sm btn-primary" id="btnNovoHistorico">
+                                <i class="bi bi-plus-lg me-1"></i> Novo Registro
+                            </button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle small mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Data</th>
+                                        <th>Evento</th>
+                                        <th>Cargo Anterior</th>
+                                        <th>Cargo Novo</th>
+                                        <th>Salário</th>
+                                        <th>Observações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="historicoTbody">
+                                    <tr><td colspan="6" class="text-center py-4 text-muted">
+                                        <div class="spinner-border spinner-border-sm me-2"></div>Carregando...
+                                    </td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-info border-0" style="background:#eff6ff; color:#1e40af;">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Salve o cadastro primeiro. O histórico de carreira estará disponível após o registro inicial.
+                        </div>
+                        {% endif %}
+                    </div>
+
+                </div><!-- /.tab-content -->
+            </div><!-- /.card-body -->
+
+            <!-- Footer com botões -->
+            <div class="card-footer bg-white border-top d-flex justify-content-end gap-2 py-3 px-4">
+                <a href="{% url 'rh_colaboradores' %}" class="btn btn-light px-4">Cancelar</a>
+                <button type="submit" class="btn btn-primary px-5">
+                    <i class="bi bi-check-lg me-1"></i> Salvar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .nav-underline .nav-link { color: #6b7280; font-size: 0.875rem; }
+    .nav-underline .nav-link.active { color: #2563eb; border-bottom-color: #2563eb; }
+    .nav-underline .nav-link:hover:not(.active) { color: #374151; }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const colaboradorId = '{{ colaborador_id|default:"" }}';
+    const previewFoto   = document.getElementById('previewFoto');
+    const inputFoto     = document.getElementById('inputFoto');
+    const form          = document.getElementById('formNovoFuncionario');
+
+    // Pré-visualização da foto
+    inputFoto.addEventListener('change', e => {
+        if (e.target.files[0]) {
+            previewFoto.src = URL.createObjectURL(e.target.files[0]);
+        }
+    });
+
+    // Carrega departamentos e tipo contrato
+    fetch('/api/rh/auxiliar/')
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) return;
+            const deptSel = document.getElementById('formDept');
+            (data.departments || []).forEach(d => {
+                const opt = document.createElement('option');
+                opt.value = d.id;
+                opt.textContent = d.name;
+                if (d.id == '{{ colaborador.department_id|default:"" }}') opt.selected = true;
+                deptSel.appendChild(opt);
+            });
+            const tcSel = document.getElementById('formTipoContrato');
+            Object.entries(data.tipo_contrato_choices || {}).forEach(([v, l]) => {
+                const opt = document.createElement('option');
+                opt.value = v; opt.textContent = l;
+                if (v === '{{ colaborador.tipo_contrato|default:"clt" }}') opt.selected = true;
+                tcSel.appendChild(opt);
+            });
+        });
+
+    // Carrega histórico se estiver editando
+    if (colaboradorId) {
+        fetch(`/api/rh/colaboradores/${colaboradorId}/`)
+            .then(r => r.json())
+            .then(data => {
+                if (!data.success) return;
+                const h = data.colaborador.historico || [];
+                const tb = document.getElementById('historicoTbody');
+                if (!tb) return;
+                if (h.length === 0) {
+                    tb.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">Nenhum registro de carreira.</td></tr>';
+                    return;
+                }
+                tb.innerHTML = h.map(r => `
+                    <tr>
+                        <td style="white-space:nowrap;">${r.data}</td>
+                        <td><span class="badge bg-light text-dark border">${r.tipo}</span></td>
+                        <td>${r.cargo_anterior || '—'}</td>
+                        <td>${r.cargo_novo || '—'}</td>
+                        <td>${r.salario_novo ? 'R$ ' + parseFloat(r.salario_novo).toLocaleString('pt-BR', {minimumFractionDigits:2}) : '—'}</td>
+                        <td class="text-muted">${r.observacoes || '—'}</td>
+                    </tr>
+                `).join('');
+            });
+    }
+
+    // Submit
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        const btn = form.querySelector('[type="submit"]');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Salvando...';
+
+        const formData = new FormData(this);
+
+        fetch('/api/rh/colaboradores/save/', {
+            method: 'POST',
+            body: formData,
+            headers: { 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value }
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Salvo!',
+                    text: data.message || 'Funcionário cadastrado com sucesso.',
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    window.location.href = '{% url "rh_colaboradores" %}';
+                });
+            } else {
+                Swal.fire({ icon: 'error', title: 'Erro', text: data.error });
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Salvar';
+            }
+        })
+        .catch(() => {
+            Swal.fire({ icon: 'error', title: 'Erro de rede', text: 'Tente novamente.' });
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Salvar';
+        });
+    });
+});
+</script>
+{% endblock %}

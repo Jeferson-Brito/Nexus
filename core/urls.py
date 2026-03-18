@@ -112,7 +112,9 @@ urlpatterns = [
         'description': 'Indicadores automáticos de taxas de falta e rotatividade (turnover) baseados nos registros de escala e frequência.'
     }, name='rh_absenteismo'),
     path('rh/colaboradores/', views.rh_colaboradores_view, name='rh_colaboradores'),
+    path('rh/colaboradores/novo/', views.rh_cadastro_funcionario_view, name='rh_cadastro_funcionario'),
     path('rh/colaboradores/<int:pk>/', views.rh_colaborador_perfil_view, name='rh_colaborador_perfil'),
+    path('rh/colaboradores/<int:pk>/editar/', views.rh_cadastro_funcionario_view, name='rh_editar_funcionario'),
     path('rh/onboarding/', views.under_development, {
         'page_name': 'Acompanhamento de Onboarding',
         'description': 'Checklist interativo para garantir que todos os novos colaboradores recebam equipamentos, acessos e treinamentos necessários.'

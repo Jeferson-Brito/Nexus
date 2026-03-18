@@ -2059,6 +2059,8 @@ class Colaborador(models.Model):
     tipo_contrato = models.CharField(max_length=20, choices=TIPO_CONTRATO_CHOICES, default='clt')
     jornada_trabalho = models.CharField(max_length=100, blank=True, help_text="Ex: 44h semanais, 10h às 19h")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='ativo')
+    pis = models.CharField(max_length=14, blank=True, verbose_name='PIS/NIS')
+    matricula = models.CharField(max_length=30, blank=True, verbose_name='Matrícula')
     
     # Metadados
     created_at = models.DateTimeField(auto_now_add=True)
