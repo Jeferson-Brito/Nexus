@@ -363,10 +363,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     <td class="text-muted small">—</td>
                     <td><span class="status-badge badge-sem-ficha">Sem ficha RH</span></td>
                     <td class="text-end pe-4">
-                        <button class="btn-row-action" title="Criar ficha RH"
-                            onclick="criarFichaParaUsuario('${(c.user_id || '').toString().replace(/'/g, "\\'")}')">
+                        <a href="{% url 'rh_cadastro_funcionario' %}?user_id=${c.user_id}" class="btn-row-action" title="Criar ficha RH">
                             <i class="bi bi-person-plus"></i>
-                        </button>
+                        </a>
                     </td>
                 </tr>`;
             }
@@ -438,21 +437,6 @@ document.addEventListener('DOMContentLoaded', function () {
         ul.appendChild(next);
     }
 
-    // ─── Criar ficha para usuário sem ficha ──────────────────────────────────
-    window.criarFichaParaUsuario = function(userId) {
-        const userObj = (window.allColaboradores || []).find(x => x.tipo === 'usuario_sem_ficha' && x.user_id == userId);
-        if (!userObj) return;
-        document.getElementById('colaboradorId').value = '';
-        document.getElementById('colaboradorUserId').value = userObj.user_id || '';
-        form.reset();
-        document.querySelector('[name="nome_completo"]').value = userObj.nome || '';
-        document.querySelector('[name="department_id"]').value = userObj.department_id || '';
-        document.getElementById('colaboradorUserId').value = userObj.user_id || '';
-        document.getElementById('divCargoInicial').style.display = 'none';
-        document.getElementById('modalTitle').textContent = 'Criar ficha RH para ' + (userObj.nome || 'usuário');
-        document.getElementById('previewFoto').src = userObj.foto_url || "{% static 'img/avatar_placeholder.png' %}";
-        new bootstrap.Modal(document.getElementById('modalColaborador')).show();
-    };
 
     // ─── Listeners ───────────────────────────────────────────────────────────
     filterStatus.addEventListener('change', loadColaboradores);
