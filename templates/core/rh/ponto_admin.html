@@ -74,7 +74,7 @@
 {% endblock %}
 
 {% block content %}
-<div style="max-width:1400px; margin:0 auto; padding:24px 16px;">
+<div style="width:100%; max-width:1400px; margin:0 auto; padding:24px 0; box-sizing:border-box;">
 
     <!-- Header -->
     <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:24px;">
@@ -84,13 +84,13 @@
             </h1>
             <p style="font-size:.875rem; color:#64748b; margin:4px 0 0;">Gestão de entradas, saídas e justificativas do dia.</p>
         </div>
-        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
             <a href="{% url 'ponto_kiosk' %}" target="_blank"
-               style="padding:8px 16px; background:#1e293b; color:#fff; border-radius:8px; font-size:.875rem; text-decoration:none; display:flex; align-items:center; gap:6px;">
+               style="padding:8px 16px; background:#1e293b; color:#fff; border-radius:8px; font-size:.875rem; text-decoration:none; display:flex; align-items:center; gap:6px; white-space:nowrap;">
                 <i class="fa-solid fa-tablet-screen-button"></i> Abrir Kiosk
             </a>
             <button onclick="openModalAjuste()"
-                    style="padding:8px 16px; background:#3b82f6; color:#fff; border:none; border-radius:8px; font-size:.875rem; cursor:pointer; display:flex; align-items:center; gap:6px;">
+                    style="padding:8px 16px; background:#3b82f6; color:#fff; border:none; border-radius:8px; font-size:.875rem; cursor:pointer; display:flex; align-items:center; gap:6px; white-space:nowrap;">
                 <i class="fa-solid fa-plus"></i> Lançamento Manual
             </button>
         </div>

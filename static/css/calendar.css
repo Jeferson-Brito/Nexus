@@ -3,6 +3,8 @@
     max-width: 100%;
     margin: 0;
     padding: 24px;
+    overflow-x: hidden;
+    box-sizing: border-box;
 }
 
 /* ========== HEADER MODERNO ========== */
@@ -603,8 +605,9 @@
     }
 
     .calendar-day {
-        padding: 6px 4px;
-        min-height: 52px;
+        padding: 4px 2px;
+        min-height: 44px;
+        aspect-ratio: unset;
         border-radius: 8px;
         border-width: 1px;
     }

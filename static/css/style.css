@@ -3106,6 +3106,8 @@ body.dark-theme .dropdown-item:hover {
     display: flex;
     flex-direction: column;
     align-items: center;
+    overflow-x: hidden;
+    box-sizing: border-box;
 }
 
 /* Base body spacing */
