@@ -190,7 +190,9 @@
                         <i class="bi bi-person-badge"></i>
                         <span class="link-text">Funcionários</span>
                     </a>
-                    <a href="#" class="nav-link sub-link disabled opacity-50" title="Em breve">
+                    <a href="{% url 'rh_empresas' %}"
+                        class="nav-link sub-link {% if 'rh_empresas' in request.resolver_match.url_name or 'rh_cadastro_empresa' in request.resolver_match.url_name or 'rh_editar_empresa' in request.resolver_match.url_name %}active{% endif %}"
+                        title="Empresas">
                         <i class="bi bi-building"></i>
                         <span class="link-text">Empresas</span>
                     </a>
