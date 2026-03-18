@@ -352,9 +352,33 @@
                                 <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">UF</label>
                                 <select name="uf" id="inputUf" class="form-select">
                                     <option value="">—</option>
-                                    {% for uf in "AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO"|split:" " %}
-                                    <option value="{{ uf }}" {% if colaborador.uf == uf %}selected{% endif %}>{{ uf }}</option>
-                                    {% endfor %}
+                                    <option value="AC" {% if colaborador.uf == 'AC' %}selected{% endif %}>AC</option>
+                                    <option value="AL" {% if colaborador.uf == 'AL' %}selected{% endif %}>AL</option>
+                                    <option value="AP" {% if colaborador.uf == 'AP' %}selected{% endif %}>AP</option>
+                                    <option value="AM" {% if colaborador.uf == 'AM' %}selected{% endif %}>AM</option>
+                                    <option value="BA" {% if colaborador.uf == 'BA' %}selected{% endif %}>BA</option>
+                                    <option value="CE" {% if colaborador.uf == 'CE' %}selected{% endif %}>CE</option>
+                                    <option value="DF" {% if colaborador.uf == 'DF' %}selected{% endif %}>DF</option>
+                                    <option value="ES" {% if colaborador.uf == 'ES' %}selected{% endif %}>ES</option>
+                                    <option value="GO" {% if colaborador.uf == 'GO' %}selected{% endif %}>GO</option>
+                                    <option value="MA" {% if colaborador.uf == 'MA' %}selected{% endif %}>MA</option>
+                                    <option value="MT" {% if colaborador.uf == 'MT' %}selected{% endif %}>MT</option>
+                                    <option value="MS" {% if colaborador.uf == 'MS' %}selected{% endif %}>MS</option>
+                                    <option value="MG" {% if colaborador.uf == 'MG' %}selected{% endif %}>MG</option>
+                                    <option value="PA" {% if colaborador.uf == 'PA' %}selected{% endif %}>PA</option>
+                                    <option value="PB" {% if colaborador.uf == 'PB' %}selected{% endif %}>PB</option>
+                                    <option value="PR" {% if colaborador.uf == 'PR' %}selected{% endif %}>PR</option>
+                                    <option value="PE" {% if colaborador.uf == 'PE' %}selected{% endif %}>PE</option>
+                                    <option value="PI" {% if colaborador.uf == 'PI' %}selected{% endif %}>PI</option>
+                                    <option value="RJ" {% if colaborador.uf == 'RJ' %}selected{% endif %}>RJ</option>
+                                    <option value="RN" {% if colaborador.uf == 'RN' %}selected{% endif %}>RN</option>
+                                    <option value="RS" {% if colaborador.uf == 'RS' %}selected{% endif %}>RS</option>
+                                    <option value="RO" {% if colaborador.uf == 'RO' %}selected{% endif %}>RO</option>
+                                    <option value="RR" {% if colaborador.uf == 'RR' %}selected{% endif %}>RR</option>
+                                    <option value="SC" {% if colaborador.uf == 'SC' %}selected{% endif %}>SC</option>
+                                    <option value="SP" {% if colaborador.uf == 'SP' %}selected{% endif %}>SP</option>
+                                    <option value="SE" {% if colaborador.uf == 'SE' %}selected{% endif %}>SE</option>
+                                    <option value="TO" {% if colaborador.uf == 'TO' %}selected{% endif %}>TO</option>
                                 </select>
                             </div>
 
