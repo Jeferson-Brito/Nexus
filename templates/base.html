@@ -500,6 +500,19 @@
             <button class="btn btn-link text-secondary p-0 d-lg-none" id="mobileToggle" title="Alternar Menu">
                 <i class="bi bi-list fs-4"></i>
             </button>
+            
+            <!-- Botão Bater Ponto Web -->
+            {% if request.user.is_authenticated and request.user.colaborador_perfil %}
+                {% if request.user.colaborador_perfil.ponto_web_permitido %}
+                <button class="btn btn-primary btn-sm rounded-pill fw-semibold px-3 shadow-sm d-flex align-items-center gap-1 me-1"
+                        data-bs-toggle="modal" data-bs-target="#modalPontoWeb"
+                        style="font-size: 0.85rem;">
+                    <i class="bi bi-fingerprint"></i>
+                    <span class="d-none d-md-inline" style="margin-top: 1px;">Bater Ponto</span>
+                </button>
+                {% endif %}
+            {% endif %}
+
             <!-- Notification Dropdown -->
             <div class="dropdown">
                 <button class="btn btn-link text-secondary p-0 position-relative" title="Notificações"
@@ -1046,6 +1059,14 @@
             modal.show();
         }
     </script>
+    
+    <!-- Modal Bater Ponto Web -->
+    {% if request.user.is_authenticated and request.user.colaborador_perfil %}
+        {% if request.user.colaborador_perfil.ponto_web_permitido %}
+            {% include 'core/rh/modal_ponto_web.html' %}
+        {% endif %}
+    {% endif %}
+    
 </body>
 
 
