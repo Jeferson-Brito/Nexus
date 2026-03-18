@@ -193,6 +193,12 @@ urlpatterns = [
     path('api/refunds/stats/', api_refunds.api_refund_stats, name='api_refund_stats'),
     path('api/refunds/<int:pk>/edit/', api_refunds.api_refund_edit, name='api_refund_edit'),
     path('api/users/nrs-analysts/', api_refunds.api_nrs_analysts, name='api_nrs_analysts'),
+    # ─────────────────────────────────────────────────────────
+    #   APIs Auxiliares / Web
+    # ─────────────────────────────────────────────────────────
+    path('api/aux/department/<int:dept_id>/analysts/', views.get_department_analysts, name='api_dept_analysts'),
+
+    path('debug_colab/', views.debug_colab, name='debug_colab'),
     
     # Store Presence and History APIs
     path('api/stores/presence/', api_stores.api_stores_all_presence, name='api_stores_all_presence'),
