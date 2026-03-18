@@ -3086,12 +3086,20 @@ def api_get_system_notifications(request):
 @login_required
 def rh_colaboradores_view(request):
     """Página de listagem geral de colaboradores (Cards)"""
+    if not (request.user.is_gestor() or request.user.is_administrador() or getattr(request.user.department, 'name', '') == 'RH'):
+        messages.error(request, 'Acesso restrito para Gestores ou Departamento de RH.')
+        return redirect('dashboard')
+    
     return render(request, 'core/rh/colaboradores.html')
 
 
 @login_required
 def rh_colaborador_perfil_view(request, pk):
     """Página de perfil detalhado do colaborador (Dossiê)"""
+    if not (request.user.is_gestor() or request.user.is_administrador() or getattr(request.user.department, 'name', '') == 'RH'):
+        messages.error(request, 'Acesso restrito para Gestores ou Departamento de RH.')
+        return redirect('dashboard')
+        
     colaborador = get_object_or_404(Colaborador, pk=pk)
     departments_all = Department.objects.all().order_by('name')
     return render(request, 'core/rh/colaborador_perfil.html', {
@@ -3103,6 +3111,10 @@ def rh_colaborador_perfil_view(request, pk):
 @login_required
 def rh_cadastro_funcionario_view(request, pk=None):
     """Página de cadastro/edição de funcionário (full-page, estilo Control iD)"""
+    if not (request.user.is_gestor() or request.user.is_administrador() or getattr(request.user.department, 'name', '') == 'RH'):
+        messages.error(request, 'Acesso restrito para Gestores ou Departamento de RH.')
+        return redirect('dashboard')
+        
     colaborador = None
     colaborador_id = ''
     user_id = ''
