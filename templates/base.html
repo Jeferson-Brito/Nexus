@@ -667,7 +667,7 @@
     <script src="{% static 'js/custom_timepicker.js' %}"></script>
     {% if user.is_authenticated %}
     <script>
-        const currentUserId = {% if user.id %}{{ user.id|unlocalize }}{% else %}0{% endif %};
+        const currentUserId = {% if user.id %}{{ user.id }}{% else %}0{% endif %};
         const currentUserName = "{{ user.get_full_name|default:user.username }}";
     </script>
 
