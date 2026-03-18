@@ -21,12 +21,17 @@ logger = logging.getLogger(__name__)
 
 def parse_decimal(value):
     """Auxiliar para converter valores decimais que podem vir com vírgula da UI"""
-    if not value:
+    if not value or str(value).strip() == '':
         return None
     try:
-        # Resolve problema de locale: 3120,00 -> 3120.00
         if isinstance(value, str):
-            value = value.replace('.', '').replace(',', '.')
+            value = value.strip()
+            if '.' in value and ',' not in value:
+                pass
+            elif ',' in value and '.' not in value:
+                value = value.replace(',', '.')
+            elif '.' in value and ',' in value:
+                value = value.replace('.', '').replace(',', '.')
         return float(value)
     except (ValueError, TypeError):
         return None
