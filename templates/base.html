@@ -46,19 +46,6 @@
     {% if user.is_authenticated %}
 
 
-    <!-- Mobile Toggle Navbar -->
-    <nav class="mobile-navbar d-lg-none">
-        <div class="mobile-navbar-container">
-            <div class="brand-full">
-                <!-- Mobile Logo -->
-                <span class="brand-grs">Nexus</span>
-            </div>
-            <button class="mobile-toggle" id="mobileToggle">
-                <i class="bi bi-list"></i>
-            </button>
-        </div>
-    </nav>
-
     <!-- Sidebar Overlay -->
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
@@ -398,15 +385,14 @@
     </div>
 
     <!-- Top Header -->
-    <header class="header d-flex align-items-center px-4 border-bottom bg-white" id="header"
-        style="position: fixed; top: 0; left: 0; right: 0; height: 80px; z-index: 1030;">
+    <header class="header d-flex align-items-center px-4 border-bottom bg-white" id="header">
 
         <!-- Logo -->
         <a href="{% url 'dashboard' %}" class="d-flex align-items-center text-decoration-none me-4">
             <img src="{% static 'img/logo_nexus_horizontal.png' %}" alt="Nexus" style="height: 60px;">
         </a>
 
-        <button class="btn btn-link text-secondary d-lg-none" id="headerSidebarToggle" title="Alternar Menu">
+        <button class="btn btn-link text-secondary d-lg-none" id="mobileToggle" title="Alternar Menu">
             <i class="bi bi-list fs-4"></i>
         </button>
 
@@ -481,7 +467,7 @@
     {% endif %}
 
     <!-- Conteúdo Principal -->
-    <div class="{% if user.is_authenticated %}main-content{% endif %}" style="padding-top: 80px;">
+    <div class="{% if user.is_authenticated %}main-content{% endif %}">
         {% if user.is_authenticated %}
         <!-- Header antigo removido -->
         {% endif %}
@@ -549,60 +535,43 @@
 
             // Desktop Toggle
             function toggleSidebar() {
-                document.body.classList.toggle('sidebar-collapsed');
-                sidebar.classList.toggle('collapsed');
-                if (mainContent) mainContent.classList.toggle('expanded');
+                if (window.innerWidth <= 991) {
+                    sidebar.classList.toggle('mobile-show');
+                    sidebarOverlay.classList.toggle('show');
+                    if (sidebar.classList.contains('mobile-show')) {
+                        document.body.style.overflow = 'hidden';
+                    } else {
+                        document.body.style.overflow = '';
+                    }
+                } else {
+                    document.body.classList.toggle('sidebar-collapsed');
+                    sidebar.classList.toggle('collapsed');
+                    if (mainContent) mainContent.classList.toggle('expanded');
 
-                // Salvar estado
-                const isCollapsed = sidebar.classList.contains('collapsed');
-                localStorage.setItem('sidebarCollapsed', isCollapsed);
+                    // Salvar estado
+                    const isCollapsed = sidebar.classList.contains('collapsed');
+                    localStorage.setItem('sidebarCollapsed', isCollapsed);
 
-                // Trocar ícones nos botões (se existirem)
-                const toggleBtns = [sidebarToggle, document.getElementById('headerSidebarToggle')];
-
-                toggleBtns.forEach(btn => {
-                    if (btn) {
-                        const icon = btn.querySelector('i');
-                        if (icon) {
-                            if (isCollapsed) {
-                                icon.classList.remove('bi-chevron-left');
-                                icon.classList.remove('bi-list'); // Remove list icon if it was list
-
-                                // Se for o botão do header, mantemos 'list' ou usamos outra lógica?
-                                // A referência visual sugere hamburger menu.
-                                // Geralmente hamburger menu nÃ£o muda de Ã­cone, mas vamos manter simples.
-                                // Se for o toggle da sidebar (seta), vira direita. Se for hambúrguer, pode ficar hambúrguer ou virar X.
-
-                                if (btn.id === 'sidebarToggle') {
-                                    icon.classList.add('bi-chevron-right');
-                                    btn.title = 'Expandir menu';
-                                }
-                            } else {
-                                if (btn.id === 'sidebarToggle') {
-                                    icon.classList.remove('bi-chevron-right');
-                                    icon.classList.add('bi-chevron-left');
-                                    btn.title = 'Minimizar menu';
-                                }
-                            }
+                    // Trocar ícones
+                    const icon = sidebarToggle.querySelector('i');
+                    if (icon) {
+                        if (isCollapsed) {
+                            icon.classList.replace('bi-chevron-left', 'bi-chevron-right');
+                            sidebarToggle.title = 'Expandir menu';
+                        } else {
+                            icon.classList.replace('bi-chevron-right', 'bi-chevron-left');
+                            sidebarToggle.title = 'Minimizar menu';
                         }
                     }
-                });
+                }
             }
 
             sidebarToggle.addEventListener('click', toggleSidebar);
 
-            const headerToggle = document.getElementById('headerSidebarToggle');
-            if (headerToggle) {
-                headerToggle.addEventListener('click', toggleSidebar);
-            }
-
-            // Mobile Toggle
-            if (mobileToggle) {
-                mobileToggle.addEventListener('click', function () {
-                    sidebar.classList.add('mobile-show');
-                    sidebarOverlay.classList.add('show');
-                    document.body.style.overflow = 'hidden';
-                });
+            // Re-bind to the unified toggle button
+            const mobileToggleBtn = document.getElementById('mobileToggle');
+            if (mobileToggleBtn) {
+                mobileToggleBtn.addEventListener('click', toggleSidebar);
             }
 
             if (sidebarOverlay) {
@@ -698,7 +667,7 @@
     <script src="{% static 'js/custom_timepicker.js' %}"></script>
     {% if user.is_authenticated %}
     <script>
-        const currentUserId = {% if user.id %}{ { user.id | unlocalize } } {% else %} 0{% endif %};
+        const currentUserId = {% if user.id %}{{ user.id|unlocalize }}{% else %}0{% endif %};
         const currentUserName = "{{ user.get_full_name|default:user.username }}";
     </script>
 
