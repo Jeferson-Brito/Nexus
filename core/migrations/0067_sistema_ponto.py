@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0064_alter_analystassignment_active_and_more'),
+        ('core', '0066_documentocolaborador'),
     ]
 
     operations = [
