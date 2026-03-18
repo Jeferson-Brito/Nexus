@@ -302,8 +302,8 @@
                                     CPF <span class="text-danger">*</span>
                                 </label>
                                 <div class="input-group">
-                                    <input type="text" name="cpf" class="form-control"
-                                           placeholder="000.000.000-00" required
+                                    <input type="text" name="cpf" id="inputCpf" class="form-control"
+                                           placeholder="000.000.000-00"
                                            value="{{ colaborador.cpf|default:'' }}">
                                     <span class="input-group-text bg-light"><i class="bi bi-pencil-square text-muted"></i></span>
                                 </div>
@@ -731,6 +731,16 @@ document.addEventListener('DOMContentLoaded', function () {
     // Submit
     form.addEventListener('submit', function (e) {
         e.preventDefault();
+
+        // Validar CPF (que fica na aba Dados Pessoais)
+        const cpfVal = document.getElementById('inputCpf')?.value?.trim();
+        if (!cpfVal) {
+            // Mudar para a aba Dados Pessoais e alertar
+            document.querySelector('[data-bs-target="#tabPessoal"]')?.click();
+            Swal.fire({ icon: 'warning', title: 'CPF obrigatório', text: 'Preencha o CPF na aba Dados Pessoais antes de salvar.' });
+            return;
+        }
+
         const btn = form.querySelector('[type="submit"]');
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Salvando...';

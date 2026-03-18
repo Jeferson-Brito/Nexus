@@ -455,6 +455,7 @@ def api_empresas_list(request):
                 'nome_fantasia': e.nome_fantasia,
                 'cnpj': e.cnpj,
                 'num_funcionarios': e.num_funcionarios,
+                'logo_url': e.logo.url if e.logo else None,
             } for e in empresas
         ]})
     except Exception as ex:

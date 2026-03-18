@@ -3107,7 +3107,10 @@ def rh_cadastro_funcionario_view(request, pk=None):
     colaborador_id = ''
     user_id = ''
     if pk:
-        colaborador = get_object_or_404(Colaborador, pk=pk)
+        colaborador = get_object_or_404(
+            Colaborador.objects.select_related('department', 'empresa', 'superior_direto'),
+            pk=pk
+        )
         colaborador_id = str(colaborador.pk)
     if request.GET.get('user_id'):
         user_id = request.GET.get('user_id')
