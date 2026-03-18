@@ -28,7 +28,7 @@
             {% csrf_token %}
             {% load l10n %}
             <input type="hidden" name="id" value="{{ colaborador_id|unlocalize|default:'' }}">
-            <input type="hidden" name="user_id" value="{{ user_id|default:'' }}">
+            <input type="hidden" name="user_id" value="{{ user_id|unlocalize|default:'' }}">
 
             <div class="card-body p-4">
 
@@ -641,7 +641,7 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const colaboradorId = '{{ colaborador_id|default:"" }}';
+    const colaboradorId = '{{ colaborador_id|unlocalize|default:"" }}';
     const previewFoto   = document.getElementById('previewFoto');
     const inputFoto     = document.getElementById('inputFoto');
     const form          = document.getElementById('formNovoFuncionario');
@@ -660,7 +660,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const deptSel = document.getElementById('formDept');
             (data.departments || []).forEach(d => {
                 const opt = new Option(d.name, d.id);
-                if (d.id == '{{ colaborador.department_id|default:"" }}') opt.selected = true;
+                if (d.id == '{{ colaborador.department_id|unlocalize|default:"" }}') opt.selected = true;
                 deptSel.add(opt);
             });
 
@@ -679,7 +679,7 @@ document.addEventListener('DOMContentLoaded', function () {
         .then(data => {
             if (!data.success) return;
             const sel = document.getElementById('formEmpresa');
-            const currentEmpresaId = '{{ colaborador.empresa_id|default:"" }}';
+            const currentEmpresaId = '{{ colaborador.empresa_id|unlocalize|default:"" }}';
             (data.empresas || []).forEach(e => {
                 // skip if already rendered by Django template
                 if ([...sel.options].some(o => o.value === e.id)) return;
@@ -696,9 +696,9 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!data.success) return;
             const sel = document.getElementById('formSuperior');
             (data.colaboradores || []).forEach(c => {
-                if (c.id == '{{ colaborador_id|default:"" }}') return; // Não mostrar a si mesmo
+                if (c.id == '{{ colaborador_id|unlocalize|default:"" }}') return; // Não mostrar a si mesmo
                 const opt = new Option(c.nome, c.id);
-                if (c.id == '{{ colaborador.superior_direto_id|default:"" }}') opt.selected = true;
+                if (c.id == '{{ colaborador.superior_direto_id|unlocalize|default:"" }}') opt.selected = true;
                 sel.add(opt);
             });
         });
