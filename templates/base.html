@@ -170,87 +170,11 @@
                 <span class="link-text">Escala</span>
             </a>
 
-            <!-- Cadastros (submenu) -->
             <div class="nav-group-title">Gestão de Pessoas</div>
-            <a href="#rhCadastrosSubmenu"
-                class="nav-link dropdown-toggle-custom {% if 'rh_colaboradores' in request.resolver_match.url_name or 'rh_colaborador_perfil' in request.resolver_match.url_name %}active{% endif %}"
-                data-bs-toggle="collapse"
-                aria-expanded="{% if 'rh_colaboradores' in request.resolver_match.url_name or 'rh_colaborador_perfil' in request.resolver_match.url_name %}true{% else %}false{% endif %}"
-                aria-controls="rhCadastrosSubmenu">
-                <i class="bi bi-layers"></i>
-                <span class="link-text">Cadastros</span>
-                <i class="bi bi-chevron-down ms-auto arrow-icon"></i>
-            </a>
-            <div class="collapse nav-submenu-container {% if 'rh_colaboradores' in request.resolver_match.url_name or 'rh_colaborador_perfil' in request.resolver_match.url_name %}show{% endif %}"
-                id="rhCadastrosSubmenu">
-                <div class="nav-submenu">
-                    <a href="{% url 'rh_colaboradores' %}"
-                        class="nav-link sub-link {% if 'rh_colaboradores' in request.resolver_match.url_name or 'rh_colaborador_perfil' in request.resolver_match.url_name %}active{% endif %}"
-                        title="Funcionários">
-                        <i class="bi bi-person-badge"></i>
-                        <span class="link-text">Funcionários</span>
-                    </a>
-                    <a href="#" class="nav-link sub-link disabled opacity-50" title="Em breve">
-                        <i class="bi bi-building"></i>
-                        <span class="link-text">Empresas</span>
-                    </a>
-                    <a href="#" class="nav-link sub-link disabled opacity-50" title="Em breve">
-                        <i class="bi bi-diagram-3"></i>
-                        <span class="link-text">Departamentos</span>
-                    </a>
-                    <a href="#" class="nav-link sub-link disabled opacity-50" title="Em breve">
-                        <i class="bi bi-briefcase"></i>
-                        <span class="link-text">Cargos</span>
-                    </a>
-                    <a href="#" class="nav-link sub-link disabled opacity-50" title="Em breve">
-                        <i class="bi bi-currency-dollar"></i>
-                        <span class="link-text">Centros de Custo</span>
-                    </a>
-                    <a href="#" class="nav-link sub-link disabled opacity-50" title="Em breve">
-                        <i class="bi bi-door-open"></i>
-                        <span class="link-text">Motivos de Demissão</span>
-                    </a>
-                    <a href="#" class="nav-link sub-link disabled opacity-50" title="Em breve">
-                        <i class="bi bi-calendar-heart"></i>
-                        <span class="link-text">Feriados</span>
-                    </a>
-                    <a href="#" class="nav-link sub-link disabled opacity-50" title="Em breve">
-                        <i class="bi bi-file-text"></i>
-                        <span class="link-text">Layouts TXT para Folha</span>
-                    </a>
-                    <a href="#" class="nav-link sub-link disabled opacity-50" title="Em breve">
-                        <i class="bi bi-exclamation-triangle"></i>
-                        <span class="link-text">Tipos de Inconsistência</span>
-                    </a>
-                    <a href="#" class="nav-link sub-link disabled opacity-50" title="Em breve">
-                        <i class="bi bi-journal-check"></i>
-                        <span class="link-text">Tipos de Justificativa</span>
-                    </a>
-                    <a href="#" class="nav-link sub-link disabled opacity-50" title="Em breve">
-                        <i class="bi bi-people-fill"></i>
-                        <span class="link-text">Atribuições em Massa</span>
-                    </a>
-                    <a href="#" class="nav-link sub-link disabled opacity-50" title="Em breve">
-                        <i class="bi bi-geo-alt"></i>
-                        <span class="link-text">Locais de Trabalho</span>
-                    </a>
-                    <a href="#" class="nav-link sub-link disabled opacity-50" title="Em breve">
-                        <i class="bi bi-check2-all"></i>
-                        <span class="link-text">Fluxos de Aprovação</span>
-                    </a>
-                </div>
-            </div>
-
-            <!-- Equipamentos -->
-            <a href="#" class="nav-link disabled opacity-50" title="Em breve">
-                <i class="bi bi-hdd-stack"></i>
-                <span class="link-text">Equipamentos</span>
-            </a>
-
-            <!-- Config Horário -->
-            <a href="#" class="nav-link disabled opacity-50" title="Em breve">
-                <i class="bi bi-clock-fill"></i>
-                <span class="link-text">Config Horário</span>
+            <a href="{% url 'rh_colaboradores' %}"
+                class="nav-link {% if 'rh_colaboradores' in request.resolver_match.url_name or 'rh_colaborador_perfil' in request.resolver_match.url_name %}active{% endif %}">
+                <i class="bi bi-people"></i>
+                <span class="link-text">Colaboradores</span>
             </a>
 
             <div class="nav-group-title">Operacional RH</div>
@@ -273,31 +197,6 @@
                 class="nav-link {% if request.resolver_match.url_name == 'rh_onboarding' %}active{% endif %}">
                 <i class="bi bi-person-plus"></i>
                 <span class="link-text">Onboarding</span>
-            </a>
-
-            <!-- Apuração e Cálculo -->
-            <a href="#" class="nav-link disabled opacity-50" title="Em breve">
-                <i class="bi bi-calculator"></i>
-                <span class="link-text">Apuração e Cálculo</span>
-            </a>
-
-            <div class="nav-group-title">Análise</div>
-            <!-- Relatórios -->
-            <a href="#" class="nav-link disabled opacity-50" title="Em breve">
-                <i class="bi bi-file-earmark-bar-graph"></i>
-                <span class="link-text">Relatórios</span>
-            </a>
-
-            <!-- Portaria 1510 -->
-            <a href="#" class="nav-link disabled opacity-50" title="Em breve">
-                <i class="bi bi-pin-map"></i>
-                <span class="link-text">Portaria 1510</span>
-            </a>
-
-            <!-- Operadores -->
-            <a href="#" class="nav-link disabled opacity-50" title="Em breve">
-                <i class="bi bi-person-gear"></i>
-                <span class="link-text">Operadores</span>
             </a>
 
             {% elif current_department.name == 'NRS Suporte' or current_department.name == 'NRP' %}
