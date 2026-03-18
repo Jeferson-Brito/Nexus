@@ -197,19 +197,41 @@ def api_save_colaborador(request):
             colaborador.nome_completo = data.get('nome_completo')
             colaborador.cpf = data.get('cpf')
             colaborador.rg = data.get('rg', '')
-            colaborador.data_nascimento = data.get('data_nascimento')
+            dn = data.get('data_nascimento', '')
+            colaborador.data_nascimento = dn if dn else None
             colaborador.data_admissao = data.get('data_admissao')
             colaborador.cargo_atual = data.get('cargo')
+            colaborador.cargo_inicial = data.get('cargo_inicial', '')
             colaborador.department_id = data.get('department_id')
             colaborador.salario_atual = parse_decimal(data.get('salario_atual'))
             colaborador.status = data.get('status', 'ativo')
             colaborador.tipo_contrato = data.get('tipo_contrato', 'clt')
             colaborador.email_pessoal = data.get('email_pessoal', '')
             colaborador.telefone = data.get('telefone', '')
+            colaborador.ramal = data.get('ramal', '')
             colaborador.endereco = data.get('endereco', '')
+            colaborador.cep = data.get('cep', '')
+            colaborador.bairro = data.get('bairro', '')
+            colaborador.cidade = data.get('cidade', '')
+            colaborador.uf = data.get('uf', '')
+            colaborador.nome_pai = data.get('nome_pai', '')
+            colaborador.nome_mae = data.get('nome_mae', '')
+            colaborador.genero = data.get('genero', '')
             colaborador.jornada_trabalho = data.get('jornada_trabalho', '')
             colaborador.pis = data.get('pis', '')
             colaborador.matricula = data.get('matricula', '')
+            colaborador.numero_folha = data.get('numero_folha', '')
+            colaborador.ctps = data.get('ctps', '')
+            sup_id = data.get('superior_direto_id')
+            colaborador.superior_direto_id = sup_id if sup_id else None
+            dd = data.get('data_desligamento', '')
+            colaborador.data_desligamento = dd if dd else None
+            # Identificação Web
+            colaborador.email_acesso = data.get('email_acesso', '')
+            colaborador.ponto_web_permitido = data.get('ponto_web_permitido') == 'on'
+            colaborador.ponto_web_foto = data.get('ponto_web_foto') == 'on'
+            colaborador.ponto_web_inserir = data.get('ponto_web_inserir') == 'on'
+            colaborador.ponto_web_justificativa = data.get('ponto_web_justificativa') == 'on'
             
             if 'foto' in request.FILES:
                 colaborador.foto = request.FILES['foto']

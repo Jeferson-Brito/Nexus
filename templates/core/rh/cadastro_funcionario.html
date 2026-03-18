@@ -31,12 +31,12 @@
 
             <div class="card-body p-4">
 
-                <!-- ══════════════════════════════════════════
-                     SEÇÃO SUPERIOR: campos principais + foto
-                     ══════════════════════════════════════════ -->
+                <!-- ══════════════════════════════
+                     SEÇÃO SUPERIOR: Nome + Foto
+                     ══════════════════════════════ -->
                 <div class="row g-3 pb-4 border-bottom mb-4">
 
-                    <!-- Coluna de campos -->
+                    <!-- Campos principais -->
                     <div class="col-lg-9">
                         <!-- Linha 1: Nome + PIS -->
                         <div class="row g-3 mb-3">
@@ -60,8 +60,8 @@
                             </div>
                         </div>
 
-                        <!-- Linha 2: Matrícula + Departamento + Status -->
-                        <div class="row g-3 mb-3">
+                        <!-- Linha 2: Matrícula + Status -->
+                        <div class="row g-3">
                             <div class="col-md-3">
                                 <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">Matrícula</label>
                                 <div class="input-group">
@@ -71,15 +71,9 @@
                                     <span class="input-group-text bg-light"><i class="bi bi-hash text-muted"></i></span>
                                 </div>
                             </div>
-                            <div class="col-md-4">
-                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">Departamento</label>
-                                <select name="department_id" id="formDept" class="form-select" required>
-                                    <option value="">Selecione</option>
-                                </select>
-                            </div>
-                            <div class="col-md-5">
+                            <div class="col-md-9">
                                 <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">Status</label>
-                                <div class="d-flex gap-3 mt-2">
+                                <div class="d-flex gap-3 mt-2 flex-wrap">
                                     <div class="form-check">
                                         <input class="form-check-input" type="radio" name="status" id="statusAtivo" value="ativo"
                                                {% if not colaborador or colaborador.status == 'ativo' %}checked{% endif %}>
@@ -103,37 +97,13 @@
                                 </div>
                             </div>
                         </div>
-
-                        <!-- Linha 3: Data de admissão + Horário (Jornada) -->
-                        <div class="row g-3">
-                            <div class="col-md-4">
-                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">Data da Admissão</label>
-                                <div class="input-group">
-                                    <span class="input-group-text bg-light"><i class="bi bi-calendar3 text-muted"></i></span>
-                                    <input type="date" name="data_admissao" class="form-control" required
-                                           value="{{ colaborador.data_admissao|date:'Y-m-d'|default:'' }}">
-                                </div>
-                            </div>
-                            <div class="col-md-8">
-                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">Horário / Jornada</label>
-                                <select name="jornada_trabalho" id="formJornada" class="form-select">
-                                    <option value="">Selecione</option>
-                                    <option value="44h - Seg a Sex 09h-18h" {% if colaborador.jornada_trabalho == '44h - Seg a Sex 09h-18h' %}selected{% endif %}>44h — Seg a Sex 09h–18h</option>
-                                    <option value="44h - Seg a Sab 09h-15h" {% if colaborador.jornada_trabalho == '44h - Seg a Sab 09h-15h' %}selected{% endif %}>44h — Seg a Sáb 09h–15h</option>
-                                    <option value="40h - Seg a Sex 08h-17h" {% if colaborador.jornada_trabalho == '40h - Seg a Sex 08h-17h' %}selected{% endif %}>40h — Seg a Sex 08h–17h</option>
-                                    <option value="12x36 - Diurno" {% if colaborador.jornada_trabalho == '12x36 - Diurno' %}selected{% endif %}>12×36 — Diurno</option>
-                                    <option value="12x36 - Noturno" {% if colaborador.jornada_trabalho == '12x36 - Noturno' %}selected{% endif %}>12×36 — Noturno</option>
-                                    <option value="outro" {% if colaborador.jornada_trabalho == 'outro' %}selected{% endif %}>Outro</option>
-                                </select>
-                            </div>
-                        </div>
                     </div>
 
-                    <!-- Coluna da foto -->
+                    <!-- Foto -->
                     <div class="col-lg-3 d-flex flex-column align-items-center justify-content-center">
                         <div class="position-relative mb-2">
                             <img id="previewFoto"
-                                 src="{{ colaborador.foto.url|default:'{% static \"img/avatar_placeholder.png\" %}' }}"
+                                 src="{{ colaborador.foto.url|default:'/static/img/avatar_placeholder.png' }}"
                                  alt="Foto"
                                  style="width:130px; height:160px; object-fit:cover; border:2px solid #e5e7eb; border-radius:8px; background:#f3f4f6;">
                         </div>
@@ -150,9 +120,9 @@
                     </div>
                 </div>
 
-                <!-- ══════════════════════════════════════════
+                <!-- ══════════════════════════════
                      TABS
-                     ══════════════════════════════════════════ -->
+                     ══════════════════════════════ -->
                 <ul class="nav nav-underline mb-4" id="funcionarioTabs">
                     <li class="nav-item">
                         <button class="nav-link active fw-semibold" type="button" data-bs-toggle="tab" data-bs-target="#tabGeral">
@@ -160,12 +130,17 @@
                         </button>
                     </li>
                     <li class="nav-item">
-                        <button class="nav-link" type="button" data-bs-toggle="tab" data-bs-target="#tabPessoal">
+                        <button class="nav-link fw-semibold" type="button" data-bs-toggle="tab" data-bs-target="#tabPessoal">
                             Dados Pessoais
                         </button>
                     </li>
                     <li class="nav-item">
-                        <button class="nav-link" type="button" data-bs-toggle="tab" data-bs-target="#tabCarreira">
+                        <button class="nav-link fw-semibold" type="button" data-bs-toggle="tab" data-bs-target="#tabIdWeb">
+                            Identificação Web
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link fw-semibold" type="button" data-bs-toggle="tab" data-bs-target="#tabCarreira">
                             Histórico de Carreira
                         </button>
                     </li>
@@ -175,23 +150,94 @@
 
                     <!-- ──────── TAB: Informações Gerais ──────── -->
                     <div class="tab-pane fade show active" id="tabGeral">
-                        <div class="row g-3">
+                        <div class="row g-4">
+
+                            <!-- Linha 1: Departamento | Centro de Custo | Cargo -->
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">Departamento</label>
+                                <select name="department_id" id="formDept" class="form-select" required>
+                                    <option value="">Selecione</option>
+                                </select>
+                                <button type="button" class="btn btn-sm btn-primary mt-2 rounded-pill px-3"
+                                        style="font-size:.75rem;" onclick="alert('Criar departamento — em breve')">
+                                    <i class="bi bi-plus-lg me-1"></i> Criar novo departamento
+                                </button>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">Centro de Custo</label>
+                                <select name="centro_custo" id="formCentroCusto" class="form-select">
+                                    <option value="">Selecione</option>
+                                </select>
+                                <button type="button" class="btn btn-sm btn-primary mt-2 rounded-pill px-3"
+                                        style="font-size:.75rem;" onclick="alert('Criar centro de custo — em breve')">
+                                    <i class="bi bi-plus-lg me-1"></i> Criar novo centro de custo
+                                </button>
+                            </div>
+
                             <div class="col-md-4">
                                 <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">Cargo</label>
                                 <input type="text" name="cargo" id="formCargo" class="form-control"
                                        placeholder="Ex: Analista de RH" required
                                        value="{{ colaborador.cargo_atual|default:'' }}">
+                                <button type="button" class="btn btn-sm btn-primary mt-2 rounded-pill px-3"
+                                        style="font-size:.75rem;" onclick="alert('Criar cargo — em breve')">
+                                    <i class="bi bi-plus-lg me-1"></i> Criar novo cargo
+                                </button>
                             </div>
+
+                            <!-- Linha 2: Nº Folha | CTPS | Superior Direto -->
                             <div class="col-md-4">
-                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">Cargo na Admissão</label>
-                                <input type="text" name="cargo_inicial" class="form-control"
-                                       placeholder="Igual ao atual se vazio">
-                                <small class="text-muted" style="font-size:0.7rem;">Deixe vazio se for o mesmo cargo</small>
+                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">Número da Folha</label>
+                                <div class="input-group">
+                                    <input type="text" name="numero_folha" class="form-control"
+                                           placeholder="Número da Folha"
+                                           value="{{ colaborador.numero_folha|default:'' }}">
+                                    <span class="input-group-text bg-light"><i class="bi bi-pencil-square text-muted"></i></span>
+                                </div>
                             </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">CTPS</label>
+                                <div class="input-group">
+                                    <input type="text" name="ctps" class="form-control"
+                                           placeholder="CTPS"
+                                           value="{{ colaborador.ctps|default:'' }}">
+                                    <span class="input-group-text bg-light"><i class="bi bi-pencil-square text-muted"></i></span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">Superior Direto</label>
+                                <select name="superior_direto_id" id="formSuperior" class="form-select">
+                                    <option value="">Selecione</option>
+                                </select>
+                            </div>
+
+                            <!-- Linha 3: Data de Admissão | Tipo Contrato | Cargo na Admissão -->
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">Data da Admissão</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="bi bi-calendar3 text-muted"></i></span>
+                                    <input type="date" name="data_admissao" class="form-control" required
+                                           value="{{ colaborador.data_admissao|date:'Y-m-d'|default:'' }}">
+                                </div>
+                            </div>
+
                             <div class="col-md-4">
                                 <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">Tipo de Contrato</label>
                                 <select name="tipo_contrato" id="formTipoContrato" class="form-select"></select>
                             </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">Cargo na Admissão</label>
+                                <input type="text" name="cargo_inicial" class="form-control"
+                                       placeholder="Igual ao atual se vazio"
+                                       value="{{ colaborador.cargo_inicial|default:'' }}">
+                                <small class="text-muted" style="font-size:0.7rem;">Deixe vazio se for o mesmo cargo</small>
+                            </div>
+
+                            <!-- Linha 4: Salário Atual | Jornada | Data Desligamento -->
                             <div class="col-md-4">
                                 <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">Salário Atual</label>
                                 <div class="input-group">
@@ -200,49 +246,304 @@
                                            value="{{ colaborador.salario_atual|default:'' }}">
                                 </div>
                             </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">Horário / Jornada</label>
+                                <select name="jornada_trabalho" id="formJornada" class="form-select">
+                                    <option value="">Selecione</option>
+                                    <option value="44h - Seg a Sex 09h-18h" {% if colaborador.jornada_trabalho == '44h - Seg a Sex 09h-18h' %}selected{% endif %}>44h — Seg a Sex 09h–18h</option>
+                                    <option value="44h - Seg a Sab 09h-15h" {% if colaborador.jornada_trabalho == '44h - Seg a Sab 09h-15h' %}selected{% endif %}>44h — Seg a Sáb 09h–15h</option>
+                                    <option value="40h - Seg a Sex 08h-17h" {% if colaborador.jornada_trabalho == '40h - Seg a Sex 08h-17h' %}selected{% endif %}>40h — Seg a Sex 08h–17h</option>
+                                    <option value="12x36 - Diurno"          {% if colaborador.jornada_trabalho == '12x36 - Diurno' %}selected{% endif %}>12×36 — Diurno</option>
+                                    <option value="12x36 - Noturno"         {% if colaborador.jornada_trabalho == '12x36 - Noturno' %}selected{% endif %}>12×36 — Noturno</option>
+                                    <option value="outro"                   {% if colaborador.jornada_trabalho == 'outro' %}selected{% endif %}>Outro</option>
+                                </select>
+                            </div>
+
                             <div class="col-md-4">
                                 <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">Data de Desligamento</label>
                                 <input type="date" name="data_desligamento" class="form-control"
                                        value="{{ colaborador.data_desligamento|date:'Y-m-d'|default:'' }}">
                             </div>
+
                         </div>
                     </div>
 
                     <!-- ──────── TAB: Dados Pessoais ──────── -->
                     <div class="tab-pane fade" id="tabPessoal">
+                        <p class="text-muted small mb-4">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Todos os campos abaixo são opcionais, <strong>exceto o CPF</strong>, que é utilizado para o registro de ponto.
+                        </p>
                         <div class="row g-3">
-                            <div class="col-md-4">
-                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">CPF</label>
-                                <input type="text" name="cpf" class="form-control"
-                                       placeholder="000.000.000-00" required
-                                       value="{{ colaborador.cpf|default:'' }}">
-                            </div>
+
+                            <!-- Fila 1: RG | CPF* | Data de Nascimento -->
                             <div class="col-md-4">
                                 <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">RG</label>
-                                <input type="text" name="rg" class="form-control"
-                                       value="{{ colaborador.rg|default:'' }}">
+                                <div class="input-group">
+                                    <input type="text" name="rg" class="form-control"
+                                           placeholder="RG"
+                                           value="{{ colaborador.rg|default:'' }}">
+                                    <span class="input-group-text bg-light"><i class="bi bi-pencil-square text-muted"></i></span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">
+                                    CPF <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <input type="text" name="cpf" class="form-control"
+                                           placeholder="000.000.000-00" required
+                                           value="{{ colaborador.cpf|default:'' }}">
+                                    <span class="input-group-text bg-light"><i class="bi bi-pencil-square text-muted"></i></span>
+                                </div>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">Data de Nascimento</label>
-                                <input type="date" name="data_nascimento" class="form-control" required
-                                       value="{{ colaborador.data_nascimento|date:'Y-m-d'|default:'' }}">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="bi bi-calendar3 text-muted"></i></span>
+                                    <input type="date" name="data_nascimento" class="form-control"
+                                           value="{{ colaborador.data_nascimento|date:'Y-m-d'|default:'' }}">
+                                </div>
                             </div>
-                            <div class="col-md-6">
+
+                            <!-- Fila 2: CEP | Endereço -->
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">CEP</label>
+                                <div class="input-group">
+                                    <input type="text" name="cep" id="inputCep" class="form-control"
+                                           placeholder="00000-000"
+                                           value="{{ colaborador.cep|default:'' }}">
+                                    <button type="button" class="btn btn-outline-secondary" onclick="buscarCep()" title="Buscar CEP">
+                                        <i class="bi bi-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-9">
+                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">Endereço</label>
+                                <div class="input-group">
+                                    <input type="text" name="endereco" id="inputEndereco" class="form-control"
+                                           placeholder="Rua / Avenida, Número"
+                                           value="{{ colaborador.endereco|default:'' }}">
+                                    <span class="input-group-text bg-light"><i class="bi bi-geo-alt text-muted"></i></span>
+                                </div>
+                            </div>
+
+                            <!-- Fila 3: Bairro | Cidade | UF -->
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">Bairro</label>
+                                <div class="input-group">
+                                    <input type="text" name="bairro" id="inputBairro" class="form-control"
+                                           placeholder="Bairro"
+                                           value="{{ colaborador.bairro|default:'' }}">
+                                    <span class="input-group-text bg-light"><i class="bi bi-bookmark text-muted"></i></span>
+                                </div>
+                            </div>
+                            <div class="col-md-5">
+                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">Cidade</label>
+                                <div class="input-group">
+                                    <input type="text" name="cidade" id="inputCidade" class="form-control"
+                                           placeholder="Cidade"
+                                           value="{{ colaborador.cidade|default:'' }}">
+                                    <span class="input-group-text bg-light"><i class="bi bi-bookmark text-muted"></i></span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">UF</label>
+                                <select name="uf" id="inputUf" class="form-select">
+                                    <option value="">—</option>
+                                    {% for uf in "AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO"|split:" " %}
+                                    <option value="{{ uf }}" {% if colaborador.uf == uf %}selected{% endif %}>{{ uf }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <!-- Fila 4: Telefone | Ramal | E-mail Pessoal -->
+                            <div class="col-md-4">
                                 <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">Telefone</label>
-                                <input type="text" name="telefone" class="form-control"
-                                       placeholder="(00) 00000-0000"
-                                       value="{{ colaborador.telefone|default:'' }}">
+                                <div class="input-group">
+                                    <input type="text" name="telefone" class="form-control"
+                                           placeholder="(00) 00000-0000"
+                                           value="{{ colaborador.telefone|default:'' }}">
+                                    <span class="input-group-text bg-light"><i class="bi bi-telephone text-muted"></i></span>
+                                </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">Ramal</label>
+                                <div class="input-group">
+                                    <input type="text" name="ramal" class="form-control"
+                                           placeholder="Ramal"
+                                           value="{{ colaborador.ramal|default:'' }}">
+                                    <span class="input-group-text bg-light"><i class="bi bi-telephone text-muted"></i></span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
                                 <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">E-mail Pessoal</label>
                                 <input type="email" name="email_pessoal" class="form-control"
+                                       placeholder="email@exemplo.com"
                                        value="{{ colaborador.email_pessoal|default:'' }}">
                             </div>
-                            <div class="col-12">
-                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">Endereço</label>
-                                <textarea name="endereco" class="form-control" rows="2"
-                                          placeholder="Rua, número, bairro, cidade — UF">{{ colaborador.endereco|default:'' }}</textarea>
+
+                            <!-- Fila 5: Nome do Pai | Nome da Mãe | Gênero -->
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">Nome do Pai</label>
+                                <input type="text" name="nome_pai" class="form-control"
+                                       placeholder="Nome do pai"
+                                       value="{{ colaborador.nome_pai|default:'' }}">
                             </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">Nome da Mãe</label>
+                                <input type="text" name="nome_mae" class="form-control"
+                                       placeholder="Nome da mãe"
+                                       value="{{ colaborador.nome_mae|default:'' }}">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">Gênero</label>
+                                <select name="genero" class="form-select">
+                                    <option value="">Selecione</option>
+                                    <option value="M" {% if colaborador.genero == 'M' %}selected{% endif %}>Masculino</option>
+                                    <option value="F" {% if colaborador.genero == 'F' %}selected{% endif %}>Feminino</option>
+                                    <option value="O" {% if colaborador.genero == 'O' %}selected{% endif %}>Outro / Prefiro não informar</option>
+                                </select>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- ──────── TAB: Identificação Web ──────── -->
+                    <div class="tab-pane fade" id="tabIdWeb">
+                        <div class="alert border-0 mb-4" style="background:#eff6ff; color:#1e40af; border-radius:8px;">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Esta aba define o acesso do funcionário ao sistema web de marcação de ponto e ao aplicativo Mobile.
+                            O e-mail e senha cadastrados aqui são os mesmos usados no app.
+                        </div>
+
+                        <div class="row g-4">
+
+                            <!-- E-mail e Senha -->
+                            <div class="col-12">
+                                <h6 class="fw-semibold border-bottom pb-2 mb-3" style="color:#374151;">
+                                    <i class="bi bi-person-lock me-2 text-primary"></i>Credenciais de Acesso
+                                </h6>
+                            </div>
+
+                            <div class="col-md-5">
+                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">E-mail de Acesso</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="bi bi-envelope text-muted"></i></span>
+                                    <input type="email" name="email_acesso" class="form-control"
+                                           placeholder="email@exemplo.com"
+                                           value="{{ colaborador.email_acesso|default:'' }}">
+                                </div>
+                                <small class="text-muted" style="font-size:.7rem;">Usado para login na web e no app Mobile</small>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">Senha</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="bi bi-lock text-muted"></i></span>
+                                    <input type="password" name="senha_acesso" id="inputSenhaAcesso" class="form-control"
+                                           placeholder="Deixe em branco para não alterar">
+                                    <button type="button" class="btn btn-outline-secondary" onclick="toggleSenha()">
+                                        <i class="bi bi-eye" id="iconSenha"></i>
+                                    </button>
+                                </div>
+                                <small class="text-muted" style="font-size:.7rem;">Mínimo 6 caracteres</small>
+                            </div>
+
+                            <!-- Permissões -->
+                            <div class="col-12 mt-2">
+                                <h6 class="fw-semibold border-bottom pb-2 mb-3" style="color:#374151;">
+                                    <i class="bi bi-shield-check me-2 text-primary"></i>Permissões de Acesso Web
+                                </h6>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="row g-3">
+
+                                    <div class="col-md-6">
+                                        <div class="card border" style="border-radius:10px;">
+                                            <div class="card-body d-flex align-items-start gap-3 py-3 px-4">
+                                                <div class="form-check form-switch mt-1">
+                                                    <input class="form-check-input" type="checkbox" role="switch"
+                                                           name="ponto_web_permitido" id="chkPontoWeb"
+                                                           {% if colaborador.ponto_web_permitido %}checked{% endif %}>
+                                                </div>
+                                                <div>
+                                                    <label class="form-check-label fw-semibold" for="chkPontoWeb" style="font-size:.875rem;">
+                                                        Permitir marcação via Web
+                                                    </label>
+                                                    <p class="text-muted mb-0" style="font-size:.78rem;">
+                                                        O funcionário poderá registrar o ponto pelo sistema web
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <div class="card border" style="border-radius:10px;">
+                                            <div class="card-body d-flex align-items-start gap-3 py-3 px-4">
+                                                <div class="form-check form-switch mt-1">
+                                                    <input class="form-check-input" type="checkbox" role="switch"
+                                                           name="ponto_web_foto" id="chkFotoWeb"
+                                                           {% if colaborador.ponto_web_foto %}checked{% endif %}>
+                                                </div>
+                                                <div>
+                                                    <label class="form-check-label fw-semibold" for="chkFotoWeb" style="font-size:.875rem;">
+                                                        Exigir foto na marcação
+                                                    </label>
+                                                    <p class="text-muted mb-0" style="font-size:.78rem;">
+                                                        O sistema exigirá captura de foto ao registrar o ponto
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <div class="card border" style="border-radius:10px;">
+                                            <div class="card-body d-flex align-items-start gap-3 py-3 px-4">
+                                                <div class="form-check form-switch mt-1">
+                                                    <input class="form-check-input" type="checkbox" role="switch"
+                                                           name="ponto_web_inserir" id="chkInserirPonto"
+                                                           {% if colaborador.ponto_web_inserir %}checked{% endif %}>
+                                                </div>
+                                                <div>
+                                                    <label class="form-check-label fw-semibold" for="chkInserirPonto" style="font-size:.875rem;">
+                                                        Permitir inserção de pontos
+                                                    </label>
+                                                    <p class="text-muted mb-0" style="font-size:.78rem;">
+                                                        O funcionário pode inserir registros de ponto manualmente
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <div class="card border" style="border-radius:10px;">
+                                            <div class="card-body d-flex align-items-start gap-3 py-3 px-4">
+                                                <div class="form-check form-switch mt-1">
+                                                    <input class="form-check-input" type="checkbox" role="switch"
+                                                           name="ponto_web_justificativa" id="chkJustificativa"
+                                                           {% if colaborador.ponto_web_justificativa %}checked{% endif %}>
+                                                </div>
+                                                <div>
+                                                    <label class="form-check-label fw-semibold" for="chkJustificativa" style="font-size:.875rem;">
+                                                        Permitir inserção de justificativas
+                                                    </label>
+                                                    <p class="text-muted mb-0" style="font-size:.78rem;">
+                                                        O funcionário pode adicionar justificativas às ocorrências
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+
                         </div>
                     </div>
 
@@ -285,7 +586,7 @@
                 </div><!-- /.tab-content -->
             </div><!-- /.card-body -->
 
-            <!-- Footer com botões -->
+            <!-- Footer -->
             <div class="card-footer bg-white border-top d-flex justify-content-end gap-2 py-3 px-4">
                 <a href="{% url 'rh_colaboradores' %}" class="btn btn-light px-4">Cancelar</a>
                 <button type="submit" class="btn btn-primary px-5">
@@ -300,6 +601,7 @@
     .nav-underline .nav-link { color: #6b7280; font-size: 0.875rem; }
     .nav-underline .nav-link.active { color: #2563eb; border-bottom-color: #2563eb; }
     .nav-underline .nav-link:hover:not(.active) { color: #374151; }
+    .form-check-input:checked { background-color: #2563eb; border-color: #2563eb; }
 </style>
 
 <script>
@@ -309,42 +611,54 @@ document.addEventListener('DOMContentLoaded', function () {
     const inputFoto     = document.getElementById('inputFoto');
     const form          = document.getElementById('formNovoFuncionario');
 
-    // Pré-visualização da foto
+    // Foto preview
     inputFoto.addEventListener('change', e => {
-        if (e.target.files[0]) {
-            previewFoto.src = URL.createObjectURL(e.target.files[0]);
-        }
+        if (e.target.files[0]) previewFoto.src = URL.createObjectURL(e.target.files[0]);
     });
 
-    // Carrega departamentos e tipo contrato
+    // Auxiliares (departamentos, tipo_contrato, colaboradores para superior)
     fetch('/api/rh/auxiliar/')
         .then(r => r.json())
         .then(data => {
             if (!data.success) return;
+
             const deptSel = document.getElementById('formDept');
             (data.departments || []).forEach(d => {
-                const opt = document.createElement('option');
-                opt.value = d.id;
-                opt.textContent = d.name;
+                const opt = new Option(d.name, d.id);
                 if (d.id == '{{ colaborador.department_id|default:"" }}') opt.selected = true;
-                deptSel.appendChild(opt);
+                deptSel.add(opt);
             });
+
             const tcSel = document.getElementById('formTipoContrato');
+            tcSel.add(new Option('Selecione', ''));
             Object.entries(data.tipo_contrato_choices || {}).forEach(([v, l]) => {
-                const opt = document.createElement('option');
-                opt.value = v; opt.textContent = l;
+                const opt = new Option(l, v);
                 if (v === '{{ colaborador.tipo_contrato|default:"clt" }}') opt.selected = true;
-                tcSel.appendChild(opt);
+                tcSel.add(opt);
             });
         });
 
-    // Carrega histórico se estiver editando
+    // Colaboradores (para superior direto)
+    fetch('/api/rh/colaboradores/?status=ativo')
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) return;
+            const sel = document.getElementById('formSuperior');
+            (data.colaboradores || []).forEach(c => {
+                if (c.id == '{{ colaborador_id|default:"" }}') return; // Não mostrar a si mesmo
+                const opt = new Option(c.nome, c.id);
+                if (c.id == '{{ colaborador.superior_direto_id|default:"" }}') opt.selected = true;
+                sel.add(opt);
+            });
+        });
+
+    // Histórico
     if (colaboradorId) {
         fetch(`/api/rh/colaboradores/${colaboradorId}/`)
             .then(r => r.json())
             .then(data => {
                 if (!data.success) return;
-                const h = data.colaborador.historico || [];
+                const h  = data.colaborador.historico || [];
                 const tb = document.getElementById('historicoTbody');
                 if (!tb) return;
                 if (h.length === 0) {
@@ -371,25 +685,19 @@ document.addEventListener('DOMContentLoaded', function () {
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Salvando...';
 
-        const formData = new FormData(this);
-
         fetch('/api/rh/colaboradores/save/', {
             method: 'POST',
-            body: formData,
+            body: new FormData(this),
             headers: { 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value }
         })
         .then(r => r.json())
         .then(data => {
             if (data.success) {
                 Swal.fire({
-                    icon: 'success',
-                    title: 'Salvo!',
+                    icon: 'success', title: 'Salvo!',
                     text: data.message || 'Funcionário cadastrado com sucesso.',
-                    timer: 2000,
-                    showConfirmButton: false
-                }).then(() => {
-                    window.location.href = '{% url "rh_colaboradores" %}';
-                });
+                    timer: 2000, showConfirmButton: false
+                }).then(() => { window.location.href = '{% url "rh_colaboradores" %}'; });
             } else {
                 Swal.fire({ icon: 'error', title: 'Erro', text: data.error });
                 btn.disabled = false;
@@ -403,5 +711,35 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 });
+
+// Toggle senha
+function toggleSenha() {
+    const inp  = document.getElementById('inputSenhaAcesso');
+    const icon = document.getElementById('iconSenha');
+    if (inp.type === 'password') {
+        inp.type = 'text';
+        icon.className = 'bi bi-eye-slash';
+    } else {
+        inp.type = 'password';
+        icon.className = 'bi bi-eye';
+    }
+}
+
+// Busca CEP via ViaCEP
+function buscarCep() {
+    const cep = document.getElementById('inputCep').value.replace(/\D/g,'');
+    if (cep.length !== 8) return;
+    fetch(`https://viacep.com.br/ws/${cep}/json/`)
+        .then(r => r.json())
+        .then(d => {
+            if (d.erro) { alert('CEP não encontrado.'); return; }
+            document.getElementById('inputEndereco').value = d.logradouro || '';
+            document.getElementById('inputBairro').value   = d.bairro    || '';
+            document.getElementById('inputCidade').value   = d.localidade|| '';
+            const ufSel = document.getElementById('inputUf');
+            for (let o of ufSel.options) { if (o.value === d.uf) { o.selected = true; break; } }
+        })
+        .catch(() => alert('Erro ao buscar CEP.'));
+}
 </script>
 {% endblock %}
