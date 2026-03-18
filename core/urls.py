@@ -197,8 +197,6 @@ urlpatterns = [
     #   APIs Auxiliares / Web
     # ─────────────────────────────────────────────────────────
     path('api/aux/department/<int:dept_id>/analysts/', views.get_department_analysts, name='api_dept_analysts'),
-
-    path('debug_colab/', views.debug_colab, name='debug_colab'),
     
     # Store Presence and History APIs
     path('api/stores/presence/', api_stores.api_stores_all_presence, name='api_stores_all_presence'),
