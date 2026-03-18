@@ -2,65 +2,70 @@
 {% load static %}
 
 {% block content %}
-<div class="container-fluid py-3" style="max-width: 1200px;">
+<div class="container-fluid py-4">
 
-    <!-- Header -->
-    <div class="d-flex align-items-center justify-content-between mb-3">
-        <h4 class="fw-bold mb-0" style="color:#fff;">Empresas</h4>
-    </div>
+    <!-- Painel principal -->
+    <div class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
 
-    <div class="card border-0 shadow-sm" style="border-radius:12px; overflow:hidden;">
-
-        <!-- Toolbar -->
-        <div class="card-body border-bottom py-3 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
-            <div class="d-flex align-items-center gap-2">
-                <span class="text-muted small">Mostrar</span>
-                <select id="perPageSelect" class="form-select form-select-sm" style="width:70px;">
-                    <option value="10" selected>10</option>
-                    <option value="25">25</option>
-                    <option value="50">50</option>
-                    <option value="100">100</option>
-                </select>
-                <span class="text-muted small">registros</span>
-            </div>
-            <div class="d-flex align-items-center gap-2">
-                <div class="input-group input-group-sm" style="width:220px;">
-                    <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
-                    <input type="text" id="searchInput" class="form-control border-start-0" placeholder="Buscar...">
-                </div>
-                <a href="{% url 'rh_cadastro_empresa' %}" class="btn btn-primary btn-sm px-3">
-                    <i class="bi bi-plus-lg me-1"></i> Adicionar
+        <!-- Header azul -->
+        <div class="card-header border-0 d-flex align-items-center justify-content-between py-3 px-4"
+             style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
+            <h5 class="fw-bold mb-0 text-white">Empresas</h5>
+            <div class="d-flex gap-2">
+                <a href="{% url 'rh_cadastro_empresa' %}" class="btn d-flex align-items-center gap-2"
+                   style="background:rgba(255,255,255,0.2); color:#fff; border:1.5px solid rgba(255,255,255,0.6); font-weight:600; text-decoration:none;">
+                    <i class="bi bi-plus-lg"></i> Adicionar
                 </a>
                 <div class="dropdown">
-                    <button class="btn btn-sm btn-light border" data-bs-toggle="dropdown">
+                    <button class="btn" data-bs-toggle="dropdown"
+                        style="background:rgba(255,255,255,0.15); color:#fff; border:1.5px solid rgba(255,255,255,0.6); width:38px; height:38px; padding:0; display:flex; align-items:center; justify-content:center;">
                         <i class="bi bi-three-dots"></i>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item small" href="#" onclick="exportCSV()"><i class="bi bi-download me-2"></i>Exportar CSV</a></li>
-                        <li><a class="dropdown-item small" href="#" onclick="loadEmpresas()"><i class="bi bi-arrow-clockwise me-2"></i>Atualizar</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="exportCSV()"><i class="bi bi-download me-2"></i>Exportar CSV</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="loadEmpresas()"><i class="bi bi-arrow-clockwise me-2"></i>Recarregar</a></li>
                     </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toolbar: mostrar + busca -->
+        <div class="card-body border-bottom py-3 px-4">
+            <div class="d-flex flex-wrap align-items-center gap-3">
+                <div class="d-flex align-items-center gap-2 text-muted small">
+                    Mostrar
+                    <select id="perPageSelect" class="form-select form-select-sm" style="width: auto;">
+                        <option value="10">10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                    registros
+                </div>
+                <div class="ms-auto d-flex align-items-center gap-2">
+                    <label class="text-muted small mb-0">Buscar:</label>
+                    <input type="text" id="searchInput" class="form-control form-control-sm"
+                           placeholder="Nome, CNPJ..." style="width: 220px;">
                 </div>
             </div>
         </div>
 
         <!-- Tabela -->
         <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0 small">
-                <thead style="background:#f8fafc;">
+            <table class="table table-hover align-middle mb-0" id="empresasTable">
+                <thead class="table-light">
                     <tr>
-                        <th class="px-4 py-3 text-muted fw-semibold" style="font-size:.75rem; letter-spacing:.04em; cursor:pointer;" onclick="sortBy('nome')">
-                            Nome <i class="bi bi-arrow-down-up ms-1 text-muted" style="font-size:.65rem;"></i>
+                        <th class="px-4 py-3" style="min-width:200px; cursor:pointer;" onclick="sortBy('nome')">
+                            Nome <i class="bi bi-arrow-down-up text-muted ms-1" style="font-size:.75rem;"></i>
                         </th>
-                        <th class="py-3 text-muted fw-semibold" style="font-size:.75rem; letter-spacing:.04em; cursor:pointer;" onclick="sortBy('nome_fantasia')">
-                            Nome Fantasia <i class="bi bi-arrow-down-up ms-1 text-muted" style="font-size:.65rem;"></i>
+                        <th class="py-3" style="cursor:pointer;" onclick="sortBy('nome_fantasia')">
+                            Nome Fantasia <i class="bi bi-arrow-down-up text-muted ms-1" style="font-size:.75rem;"></i>
                         </th>
-                        <th class="py-3 text-muted fw-semibold" style="font-size:.75rem; letter-spacing:.04em; cursor:pointer;" onclick="sortBy('cnpj')">
-                            CNPJ <i class="bi bi-arrow-down-up ms-1 text-muted" style="font-size:.65rem;"></i>
+                        <th class="py-3" style="cursor:pointer;" onclick="sortBy('cnpj')">
+                            CNPJ <i class="bi bi-arrow-down-up text-muted ms-1" style="font-size:.75rem;"></i>
                         </th>
-                        <th class="py-3 text-muted fw-semibold" style="font-size:.75rem; letter-spacing:.04em;">
-                            Número de Funcionários
-                        </th>
-                        <th class="py-3" style="width:90px;"></th>
+                        <th class="py-3">Número de Funcionários</th>
+                        <th class="py-3 text-end pe-4"></th>
                     </tr>
                 </thead>
                 <tbody id="empresasTbody">
@@ -73,15 +78,17 @@
             </table>
         </div>
 
-        <!-- Footer paginação -->
-        <div class="card-footer bg-white border-top d-flex align-items-center justify-content-between px-4 py-2">
-            <small class="text-muted" id="countInfo">—</small>
-            <nav id="paginationNav" aria-label="Paginação"></nav>
+        <!-- Footer: contagem + paginação -->
+        <div class="card-footer bg-white border-top d-flex align-items-center justify-content-between py-3 px-4">
+            <span class="text-muted small" id="paginacaoInfo">—</span>
+            <nav>
+                <ul class="pagination pagination-sm mb-0 gap-1" id="paginacaoControles"></ul>
+            </nav>
         </div>
     </div>
 </div>
 
-<!-- Modal de Confirmação de Exclusão -->
+<!-- Modal Confirmação de Exclusão -->
 <div class="modal fade" id="modalDelete" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered modal-sm">
         <div class="modal-content border-0 shadow">
@@ -120,7 +127,7 @@ function loadEmpresas() {
             if (data.success) { allEmpresas = data.empresas; render(); }
             else showError('Erro ao carregar empresas.');
         })
-        .catch(() => showError('Erro de rede.'));
+        .catch(() => showError('Erro ao carregar empresas.'));
 }
 
 function sortBy(field) {
@@ -154,10 +161,10 @@ function render() {
         tbody.innerHTML = slice.map(e => `
             <tr>
                 <td class="px-4 fw-semibold" style="color:#111827;">${e.nome}</td>
-                <td class="text-muted">${e.nome_fantasia||'—'}</td>
-                <td class="text-muted">${e.cnpj||'—'}</td>
-                <td><span class="badge bg-light text-dark border">${e.num_funcionarios}</span></td>
-                <td class="text-end pe-3">
+                <td class="text-muted">${e.nome_fantasia || '—'}</td>
+                <td class="text-muted">${e.cnpj || '—'}</td>
+                <td>${e.num_funcionarios}</td>
+                <td class="text-end pe-4">
                     <a href="/rh/empresas/${e.id}/editar/" class="btn btn-sm btn-light border me-1" title="Editar">
                         <i class="bi bi-pencil-square text-primary"></i>
                     </a>
@@ -169,21 +176,23 @@ function render() {
         `).join('');
     }
 
-    document.getElementById('countInfo').textContent =
-        total === 0 ? '0 resultados' : `${start+1} a ${Math.min(start+perPage,total)} de ${total}`;
-    buildPagination(pages);
-}
+    // Info
+    const info = total === 0 ? '0 resultados'
+        : `${start+1} a ${Math.min(start+perPage, total)} de ${total}`;
+    document.getElementById('paginacaoInfo').textContent = info;
 
-function buildPagination(pages) {
-    const nav = document.getElementById('paginationNav');
-    if (pages <= 1) { nav.innerHTML = ''; return; }
-    let html = `<ul class="pagination pagination-sm mb-0">`;
-    html += `<li class="page-item ${currentPage===1?'disabled':''}"><a class="page-link" href="#" onclick="goPage(${currentPage-1});return false;">‹</a></li>`;
-    for (let i=1;i<=pages;i++) {
-        html += `<li class="page-item ${i===currentPage?'active':''}"><a class="page-link" href="#" onclick="goPage(${i});return false;">${i}</a></li>`;
+    // Paginação
+    const ul = document.getElementById('paginacaoControles');
+    if (pages <= 1) { ul.innerHTML = ''; return; }
+    let html = `<li class="page-item ${currentPage===1?'disabled':''}">
+        <a class="page-link" href="#" onclick="goPage(${currentPage-1});return false;">‹</a></li>`;
+    for (let i = 1; i <= pages; i++) {
+        html += `<li class="page-item ${i===currentPage?'active':''}">
+            <a class="page-link" href="#" onclick="goPage(${i});return false;">${i}</a></li>`;
     }
-    html += `<li class="page-item ${currentPage===pages?'disabled':''}"><a class="page-link" href="#" onclick="goPage(${currentPage+1});return false;">›</a></li></ul>`;
-    nav.innerHTML = html;
+    html += `<li class="page-item ${currentPage===pages?'disabled':''}">
+        <a class="page-link" href="#" onclick="goPage(${currentPage+1});return false;">›</a></li>`;
+    ul.innerHTML = html;
 }
 
 function goPage(p) { currentPage = p; render(); }

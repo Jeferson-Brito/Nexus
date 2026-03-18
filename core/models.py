@@ -2061,7 +2061,11 @@ class Empresa(models.Model):
 
     @property
     def num_funcionarios(self):
-        return self.colaboradores_empresa.count()
+        try:
+            return self.colaboradores_empresa.count()
+        except Exception:
+            return 0
+
 
 
 class Colaborador(models.Model):
