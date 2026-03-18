@@ -2021,8 +2021,52 @@ class Cargo(models.Model):
         return f"{self.nome} ({self.department.name})"
 
 
+
+class Empresa(models.Model):
+    """Empresa cadastrada no sistema de ponto / RH"""
+    # Informações Gerais
+    nome = models.CharField(max_length=255, verbose_name='Nome')
+    nome_fantasia = models.CharField(max_length=255, blank=True, verbose_name='Nome Fantasia')
+    cnpj = models.CharField(max_length=18, blank=True, verbose_name='CNPJ')
+    cei = models.CharField(max_length=30, blank=True, verbose_name='CEI')
+    cep = models.CharField(max_length=10, blank=True)
+    endereco = models.CharField(max_length=255, blank=True, verbose_name='Endereço')
+    bairro = models.CharField(max_length=100, blank=True)
+    cidade = models.CharField(max_length=100, blank=True)
+    uf = models.CharField(max_length=2, blank=True, verbose_name='UF')
+    numero_folha = models.CharField(max_length=30, blank=True, verbose_name='Número da Folha')
+    inscricao_estadual = models.CharField(max_length=30, blank=True, verbose_name='Inscrição Estadual')
+    fluxo_aprovacao = models.CharField(max_length=100, blank=True, verbose_name='Fluxo de Aprovação')
+
+    # Responsável Legal
+    responsavel_cpf = models.CharField(max_length=14, blank=True, verbose_name='CPF do Responsável')
+    responsavel_nome = models.CharField(max_length=255, blank=True, verbose_name='Nome do Responsável')
+    responsavel_cargo = models.CharField(max_length=100, blank=True, verbose_name='Cargo do Responsável')
+    responsavel_email = models.EmailField(blank=True, verbose_name='E-mail do Responsável')
+
+    # Logo
+    logo = models.ImageField(upload_to='empresas_logos/', null=True, blank=True)
+
+    # Metadados
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Empresa'
+        verbose_name_plural = 'Empresas'
+        ordering = ['nome']
+
+    def __str__(self):
+        return self.nome_fantasia or self.nome
+
+    @property
+    def num_funcionarios(self):
+        return self.colaboradores_empresa.count()
+
+
 class Colaborador(models.Model):
     """Modelo central do RH para gestão de informações do funcionário"""
+
     STATUS_CHOICES = [
         ('ativo', 'Ativo'),
         ('ferias', 'Férias'),

@@ -13,7 +13,7 @@ import logging
 
 from ..models import (
     Colaborador, Department, HistoricoProfissional, 
-    PerformanceRH, User, DocumentoColaborador
+    PerformanceRH, User, DocumentoColaborador, Empresa
 )
 
 logger = logging.getLogger(__name__)
@@ -432,3 +432,81 @@ def api_delete_documento(request, pk):
     except Exception as e:
         logger.error(f"Erro ao deletar documento: {str(e)}")
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+# ─────────────────────────────────────────────
+#  EMPRESAS
+# ─────────────────────────────────────────────
+
+@login_required
+@require_http_methods(["GET"])
+def api_empresas_list(request):
+    """Lista todas as empresas"""
+    try:
+        empresas = Empresa.objects.all()
+        return JsonResponse({'success': True, 'empresas': [
+            {
+                'id': e.id,
+                'nome': e.nome,
+                'nome_fantasia': e.nome_fantasia,
+                'cnpj': e.cnpj,
+                'num_funcionarios': e.num_funcionarios,
+            } for e in empresas
+        ]})
+    except Exception as ex:
+        return JsonResponse({'success': False, 'error': str(ex)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def api_save_empresa(request):
+    """Cria ou atualiza uma empresa"""
+    try:
+        data = request.POST
+        pk = data.get('id')
+        with transaction.atomic():
+            if pk:
+                empresa = get_object_or_404(Empresa, pk=pk)
+            else:
+                empresa = Empresa()
+
+            empresa.nome = data.get('nome', '')
+            empresa.nome_fantasia = data.get('nome_fantasia', '')
+            empresa.cnpj = data.get('cnpj', '')
+            empresa.cei = data.get('cei', '')
+            empresa.cep = data.get('cep', '')
+            empresa.endereco = data.get('endereco', '')
+            empresa.bairro = data.get('bairro', '')
+            empresa.cidade = data.get('cidade', '')
+            empresa.uf = data.get('uf', '')
+            empresa.numero_folha = data.get('numero_folha', '')
+            empresa.inscricao_estadual = data.get('inscricao_estadual', '')
+            empresa.fluxo_aprovacao = data.get('fluxo_aprovacao', '')
+            empresa.responsavel_cpf = data.get('responsavel_cpf', '')
+            empresa.responsavel_nome = data.get('responsavel_nome', '')
+            empresa.responsavel_cargo = data.get('responsavel_cargo', '')
+            empresa.responsavel_email = data.get('responsavel_email', '')
+
+            if data.get('logo_delete') == '1':
+                empresa.logo = None
+            elif 'logo' in request.FILES:
+                empresa.logo = request.FILES['logo']
+
+            empresa.save()
+
+        return JsonResponse({'success': True, 'message': 'Empresa salva com sucesso.', 'id': empresa.id})
+    except Exception as ex:
+        logger.error(f"Erro ao salvar empresa: {ex}")
+        return JsonResponse({'success': False, 'error': str(ex)}, status=500)
+
+
+@login_required
+@require_http_methods(["DELETE"])
+def api_delete_empresa(request, pk):
+    """Exclui uma empresa"""
+    try:
+        empresa = get_object_or_404(Empresa, pk=pk)
+        empresa.delete()
+        return JsonResponse({'success': True, 'message': 'Empresa excluída com sucesso.'})
+    except Exception as ex:
+        return JsonResponse({'success': False, 'error': str(ex)}, status=500)

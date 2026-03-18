@@ -17,7 +17,7 @@ import re
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment
 from datetime import datetime
-from .models import Complaint, Store, User, Department, Escala, IndicadorDesempenho, ObservacaoDesempenho, Lista, Activity, AuditLog, StoreAudit, StoreAuditItem, StoreAuditIssue, MetaMensalGlobal, SystemNotification, Cargo, Colaborador, HistoricoProfissional, PerformanceRH
+from .models import Complaint, Store, User, Department, Escala, IndicadorDesempenho, ObservacaoDesempenho, Lista, Activity, AuditLog, StoreAudit, StoreAuditItem, StoreAuditIssue, MetaMensalGlobal, SystemNotification, Cargo, Colaborador, HistoricoProfissional, PerformanceRH, Empresa
 from .forms import ComplaintForm, StoreForm
 
 
@@ -3117,4 +3117,31 @@ def rh_cadastro_funcionario_view(request, pk=None):
         'colaborador_id': colaborador_id,
         'user_id': user_id,
         'page_title': page_title,
+    })
+
+
+UF_CHOICES = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG',
+              'PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO']
+
+
+@login_required
+def rh_empresas_view(request):
+    """Lista de empresas cadastradas"""
+    return render(request, 'core/rh/empresas.html')
+
+
+@login_required
+def rh_cadastro_empresa_view(request, pk=None):
+    """Cria ou edita uma empresa"""
+    empresa = None
+    empresa_id = ''
+    if pk:
+        empresa = get_object_or_404(Empresa, pk=pk)
+        empresa_id = str(empresa.pk)
+    page_title = 'Editar Empresa' if empresa else 'Nova Empresa'
+    return render(request, 'core/rh/cadastro_empresa.html', {
+        'empresa': empresa,
+        'empresa_id': empresa_id,
+        'page_title': page_title,
+        'uf_choices': UF_CHOICES,
     })

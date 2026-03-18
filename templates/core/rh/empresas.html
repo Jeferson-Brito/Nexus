@@ -1,0 +1,234 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-3" style="max-width: 1200px;">
+
+    <!-- Header -->
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h4 class="fw-bold mb-0" style="color:#fff;">Empresas</h4>
+    </div>
+
+    <div class="card border-0 shadow-sm" style="border-radius:12px; overflow:hidden;">
+
+        <!-- Toolbar -->
+        <div class="card-body border-bottom py-3 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div class="d-flex align-items-center gap-2">
+                <span class="text-muted small">Mostrar</span>
+                <select id="perPageSelect" class="form-select form-select-sm" style="width:70px;">
+                    <option value="10" selected>10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                </select>
+                <span class="text-muted small">registros</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <div class="input-group input-group-sm" style="width:220px;">
+                    <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+                    <input type="text" id="searchInput" class="form-control border-start-0" placeholder="Buscar...">
+                </div>
+                <a href="{% url 'rh_cadastro_empresa' %}" class="btn btn-primary btn-sm px-3">
+                    <i class="bi bi-plus-lg me-1"></i> Adicionar
+                </a>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-light border" data-bs-toggle="dropdown">
+                        <i class="bi bi-three-dots"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item small" href="#" onclick="exportCSV()"><i class="bi bi-download me-2"></i>Exportar CSV</a></li>
+                        <li><a class="dropdown-item small" href="#" onclick="loadEmpresas()"><i class="bi bi-arrow-clockwise me-2"></i>Atualizar</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabela -->
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 small">
+                <thead style="background:#f8fafc;">
+                    <tr>
+                        <th class="px-4 py-3 text-muted fw-semibold" style="font-size:.75rem; letter-spacing:.04em; cursor:pointer;" onclick="sortBy('nome')">
+                            Nome <i class="bi bi-arrow-down-up ms-1 text-muted" style="font-size:.65rem;"></i>
+                        </th>
+                        <th class="py-3 text-muted fw-semibold" style="font-size:.75rem; letter-spacing:.04em; cursor:pointer;" onclick="sortBy('nome_fantasia')">
+                            Nome Fantasia <i class="bi bi-arrow-down-up ms-1 text-muted" style="font-size:.65rem;"></i>
+                        </th>
+                        <th class="py-3 text-muted fw-semibold" style="font-size:.75rem; letter-spacing:.04em; cursor:pointer;" onclick="sortBy('cnpj')">
+                            CNPJ <i class="bi bi-arrow-down-up ms-1 text-muted" style="font-size:.65rem;"></i>
+                        </th>
+                        <th class="py-3 text-muted fw-semibold" style="font-size:.75rem; letter-spacing:.04em;">
+                            Número de Funcionários
+                        </th>
+                        <th class="py-3" style="width:90px;"></th>
+                    </tr>
+                </thead>
+                <tbody id="empresasTbody">
+                    <tr>
+                        <td colspan="5" class="text-center py-5 text-muted">
+                            <div class="spinner-border spinner-border-sm me-2"></div> Carregando...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Footer paginação -->
+        <div class="card-footer bg-white border-top d-flex align-items-center justify-content-between px-4 py-2">
+            <small class="text-muted" id="countInfo">—</small>
+            <nav id="paginationNav" aria-label="Paginação"></nav>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmação de Exclusão -->
+<div class="modal fade" id="modalDelete" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-body text-center py-4">
+                <div class="mb-3" style="font-size:2rem; color:#ef4444;"><i class="bi bi-trash3"></i></div>
+                <h6 class="fw-bold mb-1">Excluir empresa?</h6>
+                <p class="text-muted small mb-3" id="deleteEmpresaNome">—</p>
+                <div class="d-flex gap-2 justify-content-center">
+                    <button class="btn btn-sm btn-light px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button class="btn btn-sm btn-danger px-4" id="btnConfirmDelete">Excluir</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let allEmpresas = [];
+let currentPage = 1;
+let perPage     = 10;
+let sortField   = 'nome';
+let sortAsc     = true;
+let deleteId    = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadEmpresas();
+    document.getElementById('searchInput').addEventListener('input', () => { currentPage = 1; render(); });
+    document.getElementById('perPageSelect').addEventListener('change', e => { perPage = +e.target.value; currentPage = 1; render(); });
+    document.getElementById('btnConfirmDelete').addEventListener('click', confirmDelete);
+});
+
+function loadEmpresas() {
+    fetch('/api/rh/empresas/')
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) { allEmpresas = data.empresas; render(); }
+            else showError('Erro ao carregar empresas.');
+        })
+        .catch(() => showError('Erro de rede.'));
+}
+
+function sortBy(field) {
+    if (sortField === field) sortAsc = !sortAsc;
+    else { sortField = field; sortAsc = true; }
+    render();
+}
+
+function render() {
+    const q = document.getElementById('searchInput').value.toLowerCase();
+    let data = allEmpresas.filter(e =>
+        (e.nome||'').toLowerCase().includes(q) ||
+        (e.nome_fantasia||'').toLowerCase().includes(q) ||
+        (e.cnpj||'').toLowerCase().includes(q)
+    );
+    data.sort((a,b) => {
+        const va = (a[sortField]||'').toString().toLowerCase();
+        const vb = (b[sortField]||'').toString().toLowerCase();
+        return sortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
+    });
+    const total = data.length;
+    const pages = Math.max(1, Math.ceil(total/perPage));
+    currentPage = Math.min(currentPage, pages);
+    const start = (currentPage-1)*perPage;
+    const slice = data.slice(start, start+perPage);
+
+    const tbody = document.getElementById('empresasTbody');
+    if (slice.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center py-5 text-muted">Nenhuma empresa encontrada.</td></tr>`;
+    } else {
+        tbody.innerHTML = slice.map(e => `
+            <tr>
+                <td class="px-4 fw-semibold" style="color:#111827;">${e.nome}</td>
+                <td class="text-muted">${e.nome_fantasia||'—'}</td>
+                <td class="text-muted">${e.cnpj||'—'}</td>
+                <td><span class="badge bg-light text-dark border">${e.num_funcionarios}</span></td>
+                <td class="text-end pe-3">
+                    <a href="/rh/empresas/${e.id}/editar/" class="btn btn-sm btn-light border me-1" title="Editar">
+                        <i class="bi bi-pencil-square text-primary"></i>
+                    </a>
+                    <button class="btn btn-sm btn-light border" title="Excluir" onclick="openDelete(${e.id},'${escHtml(e.nome)}')">
+                        <i class="bi bi-trash3 text-danger"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    document.getElementById('countInfo').textContent =
+        total === 0 ? '0 resultados' : `${start+1} a ${Math.min(start+perPage,total)} de ${total}`;
+    buildPagination(pages);
+}
+
+function buildPagination(pages) {
+    const nav = document.getElementById('paginationNav');
+    if (pages <= 1) { nav.innerHTML = ''; return; }
+    let html = `<ul class="pagination pagination-sm mb-0">`;
+    html += `<li class="page-item ${currentPage===1?'disabled':''}"><a class="page-link" href="#" onclick="goPage(${currentPage-1});return false;">‹</a></li>`;
+    for (let i=1;i<=pages;i++) {
+        html += `<li class="page-item ${i===currentPage?'active':''}"><a class="page-link" href="#" onclick="goPage(${i});return false;">${i}</a></li>`;
+    }
+    html += `<li class="page-item ${currentPage===pages?'disabled':''}"><a class="page-link" href="#" onclick="goPage(${currentPage+1});return false;">›</a></li></ul>`;
+    nav.innerHTML = html;
+}
+
+function goPage(p) { currentPage = p; render(); }
+
+function openDelete(id, nome) {
+    deleteId = id;
+    document.getElementById('deleteEmpresaNome').textContent = nome;
+    new bootstrap.Modal(document.getElementById('modalDelete')).show();
+}
+
+function confirmDelete() {
+    if (!deleteId) return;
+    fetch(`/api/rh/empresas/${deleteId}/delete/`, {
+        method: 'DELETE',
+        headers: { 'X-CSRFToken': getCsrf() }
+    })
+    .then(r => r.json())
+    .then(data => {
+        bootstrap.Modal.getInstance(document.getElementById('modalDelete')).hide();
+        if (data.success) {
+            allEmpresas = allEmpresas.filter(e => e.id !== deleteId);
+            deleteId = null;
+            render();
+        } else {
+            alert(data.error || 'Erro ao excluir.');
+        }
+    });
+}
+
+function exportCSV() {
+    const rows = [['Nome','Nome Fantasia','CNPJ','Nº Funcionários']];
+    allEmpresas.forEach(e => rows.push([e.nome, e.nome_fantasia||'', e.cnpj||'', e.num_funcionarios]));
+    const csv = rows.map(r => r.join(';')).join('\n');
+    const a = document.createElement('a');
+    a.href = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(csv);
+    a.download = 'empresas.csv';
+    a.click();
+}
+
+function showError(msg) {
+    document.getElementById('empresasTbody').innerHTML =
+        `<tr><td colspan="5" class="text-center py-5 text-danger">${msg}</td></tr>`;
+}
+
+function getCsrf() { return document.cookie.match(/csrftoken=([^;]+)/)?.[1] || ''; }
+function escHtml(s) { return (s||'').replace(/'/g, "\\'"); }
+</script>
+{% endblock %}

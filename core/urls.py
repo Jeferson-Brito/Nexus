@@ -115,6 +115,14 @@ urlpatterns = [
     path('rh/colaboradores/novo/', views.rh_cadastro_funcionario_view, name='rh_cadastro_funcionario'),
     path('rh/colaboradores/<int:pk>/', views.rh_colaborador_perfil_view, name='rh_colaborador_perfil'),
     path('rh/colaboradores/<int:pk>/editar/', views.rh_cadastro_funcionario_view, name='rh_editar_funcionario'),
+    # Empresas
+    path('rh/empresas/', views.rh_empresas_view, name='rh_empresas'),
+    path('rh/empresas/novo/', views.rh_cadastro_empresa_view, name='rh_cadastro_empresa'),
+    path('rh/empresas/<int:pk>/editar/', views.rh_cadastro_empresa_view, name='rh_editar_empresa'),
+    # API Empresas
+    path('api/rh/empresas/', api_rh.api_empresas_list, name='api_empresas_list'),
+    path('api/rh/empresas/save/', api_rh.api_save_empresa, name='api_save_empresa'),
+    path('api/rh/empresas/<int:pk>/delete/', api_rh.api_delete_empresa, name='api_delete_empresa'),
     path('rh/onboarding/', views.under_development, {
         'page_name': 'Acompanhamento de Onboarding',
         'description': 'Checklist interativo para garantir que todos os novos colaboradores recebam equipamentos, acessos e treinamentos necessários.'
