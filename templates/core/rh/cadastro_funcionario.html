@@ -103,7 +103,7 @@
                     <div class="col-lg-3 d-flex flex-column align-items-center justify-content-center">
                         <div class="position-relative mb-2">
                             <img id="previewFoto"
-                                 src="{{ colaborador.foto.url|default:'/static/img/avatar_placeholder.png' }}"
+                                 src="{% if colaborador.foto %}{{ colaborador.foto.url }}{% else %}{% static 'img/avatar_placeholder.png' %}{% endif %}"
                                  alt="Foto"
                                  style="width:130px; height:160px; object-fit:cover; border:2px solid #e5e7eb; border-radius:8px; background:#f3f4f6;">
                         </div>
