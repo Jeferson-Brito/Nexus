@@ -10,16 +10,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RenameIndex(
-            model_name='registroponto',
-            new_name='core_regist_colabor_e62bd2_idx',
-            old_name='ponto_colab_data_idx',
-        ),
-        migrations.RenameIndex(
-            model_name='registroponto',
-            new_name='core_regist_data_cea5e6_idx',
-            old_name='ponto_data_tipo_idx',
-        ),
         migrations.AddField(
             model_name='colaborador',
             name='matricula',
