@@ -12,9 +12,9 @@
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         :root {
-            --bg:       #f0f4f8;
-            --surface:  #ffffff;
-            --border:   #dde3ec;
+            --bg:       #ffffff;
+            --surface:  #f8fafc;
+            --border:   #e2e8f0;
             --text:     #1e293b;
             --muted:    #64748b;
             --blue:     #2563eb;
@@ -23,7 +23,7 @@
         }
 
         body {
-            background: var(--bg);
+            background: #ffffff;
             color: var(--text);
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             height: 100dvh;
@@ -38,7 +38,7 @@
             display: flex; flex-direction: column;
             align-items: center; justify-content: center;
             gap: 8px;
-            background: linear-gradient(160deg, #f0f4f8 0%, #e2eaf5 100%);
+            background: #ffffff;
         }
         .idle-logo { width: min(280px, 55vw); margin-bottom: 16px; }
         #idle-hora {
@@ -175,22 +175,25 @@
             position: relative;
         }
         .type-btn i { font-size: 1.6rem; }
-        .type-btn.entrada  { background: #f0fdf4; border-color: #bbf7d0; color: #166534; }
-        .type-btn.almoco   { background: #fefce8; border-color: #fde68a; color: #854d0e; }
-        .type-btn.retorno  { background: var(--blue-l); border-color: #bfdbfe; color: #1d4ed8; }
-        .type-btn.saida    { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
-        .type-btn.entrada:hover:not(:disabled)  { background:#dcfce7; border-color:#4ade80; }
-        .type-btn.almoco:hover:not(:disabled)   { background:#fef9c3; border-color:#eab308; }
-        .type-btn.retorno:hover:not(:disabled)  { background:#dbeafe; border-color:#3b82f6; }
-        .type-btn.saida:hover:not(:disabled)    { background:#fee2e2; border-color:#f87171; }
+        .type-btn.entrada  { background: #16a34a; border-color: #15803d; color: #fff; }
+        .type-btn.almoco   { background: #d97706; border-color: #b45309; color: #fff; }
+        .type-btn.retorno  { background: #2563eb; border-color: #1d4ed8; color: #fff; }
+        .type-btn.saida    { background: #dc2626; border-color: #b91c1c; color: #fff; }
+        .type-btn.entrada:hover:not(:disabled)  { background:#15803d; }
+        .type-btn.almoco:hover:not(:disabled)   { background:#b45309; }
+        .type-btn.retorno:hover:not(:disabled)  { background:#1d4ed8; }
+        .type-btn.saida:hover:not(:disabled)    { background:#b91c1c; }
 
         .type-btn:disabled {
-            opacity: .45; cursor: not-allowed;
+            opacity: .35;
+            cursor: not-allowed;
+            filter: grayscale(60%);
         }
         .type-btn:disabled::after {
             content: "Já registrado";
-            position: absolute; bottom: 6px;
-            font-size: .68rem; color: var(--muted); font-weight: 400;
+            position: absolute; bottom: 7px;
+            font-size: .68rem; color: rgba(255,255,255,.8); font-weight: 500;
+            background: rgba(0,0,0,.3); padding: 1px 6px; border-radius: 20px;
         }
 
         /* ── TELA CÂMERA ── */
@@ -520,30 +523,23 @@ async function submeterCPF() {
             ini.textContent = parts[0][0].toUpperCase() + (parts.length>1 ? parts[parts.length-1][0].toUpperCase() : '');
         }
 
-        // Verificar pontos já registrados hoje
-        await verificarPontosHoje();
+        // Aplicar tipos já registrados (retornados pela própria API)
+        aplicarTiposHoje(data.tipos_hoje || []);
         showScreen('screen-tipo');
     } catch(e) {
         Swal.fire({icon:'error', title:'Erro de conexão', text:'Tente novamente.', customClass:{popup:'ks-swal'}});
     }
 }
 
-// ─── Verificar pontos do dia ──────────────────────────────────────────
-async function verificarPontosHoje() {
-    const hoje = new Date().toISOString().split('T')[0];
-    try {
-        const res = await fetch(`/api/ponto/registros/?colaborador_id=${ST.colaboradorId}&data_inicio=${hoje}&data_fim=${hoje}`);
-        const data = await res.json();
-        const tiposRegistrados = (data.registros || []).map(r => r.tipo);
-        document.querySelectorAll('.type-btn').forEach(btn => {
-            const tipo = btn.getAttribute('data-type');
-            btn.disabled = tiposRegistrados.includes(tipo);
-        });
-    } catch(e) {
-        // Se falhar a verificação, deixa todos habilitados
-        document.querySelectorAll('.type-btn').forEach(b => b.disabled=false);
-    }
+
+// ─── Aplicar tipos já registrados ────────────────────────────
+function aplicarTiposHoje(tiposHoje) {
+    document.querySelectorAll('.type-btn').forEach(btn => {
+        const tipo = btn.getAttribute('data-type');
+        btn.disabled = (tiposHoje || []).includes(tipo);
+    });
 }
+
 
 // ─── Tipo de ponto ──────────────────────────────────────────────────
 document.querySelectorAll('.type-btn').forEach(btn => {

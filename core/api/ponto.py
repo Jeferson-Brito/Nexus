@@ -134,12 +134,22 @@ def buscar_colaborador(request):
     if encontrado.foto:
         foto_url = request.build_absolute_uri(encontrado.foto.url)
 
+    # Tipos já registrados hoje (para desabilitar botões no kiosk)
+    from datetime import date as _date
+    hoje = _date.today()
+    tipos_hoje = list(
+        RegistroPonto.objects.filter(
+            colaborador=encontrado, data=hoje
+        ).values_list('tipo', flat=True)
+    )
+
     return JsonResponse({
         'id': str(encontrado.id),
         'nome': encontrado.nome_completo,
         'cargo': encontrado.cargo_atual,
         'departamento': encontrado.department.name if encontrado.department else '',
         'foto_url': foto_url,
+        'tipos_hoje': tipos_hoje,
     })
 
 
