@@ -74,7 +74,7 @@
 {% endblock %}
 
 {% block content %}
-<div style="max-width:1400px; margin:0 auto; padding:24px 0;">
+<div style="max-width:1400px; margin:0 auto; padding:24px 16px;">
 
     <!-- Header -->
     <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:24px;">
@@ -84,7 +84,7 @@
             </h1>
             <p style="font-size:.875rem; color:#64748b; margin:4px 0 0;">Gestão de entradas, saídas e justificativas do dia.</p>
         </div>
-        <div style="display:flex; gap:8px;">
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
             <a href="{% url 'ponto_kiosk' %}" target="_blank"
                style="padding:8px 16px; background:#1e293b; color:#fff; border-radius:8px; font-size:.875rem; text-decoration:none; display:flex; align-items:center; gap:6px;">
                 <i class="fa-solid fa-tablet-screen-button"></i> Abrir Kiosk
@@ -96,8 +96,8 @@
         </div>
     </div>
 
-    <!-- KPIs — 4 colunas sempre juntas -->
-    <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px;">
+    <!-- KPIs — responsivo: 2 cols mobile, 4 desktop -->
+    <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-bottom:24px;" class="kpi-grid-responsive">
         <div class="kpi-card">
             <div class="kpi-icon bg-blue-light"><i class="fa-solid fa-users"></i></div>
             <div><p style="font-size:.75rem;color:#64748b;margin:0 0 2px;">Total</p>
@@ -119,6 +119,11 @@
                 <span id="kpi-finalizados" style="font-size:1.6rem;font-weight:700;color:#1e293b;">—</span></div>
         </div>
     </div>
+    <style>
+        @media (min-width: 768px) {
+            .kpi-grid-responsive { grid-template-columns: repeat(4, 1fr) !important; }
+        }
+    </style>
 
     <!-- Tabela -->
     <div style="background:#fff; border-radius:12px; border:1px solid #e2e8f0; box-shadow:0 2px 8px rgba(0,0,0,.04); overflow:hidden;">

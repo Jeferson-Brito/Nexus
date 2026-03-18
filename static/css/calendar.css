@@ -139,9 +139,9 @@
     font-weight: 700;
     color: var(--dark-color);
     margin: 0;
-    min-width: 220px;
+    min-width: 0;
     text-align: center;
-    padding: 0 16px;
+    padding: 0 8px;
 }
 
 .calendar-wrapper {
@@ -152,12 +152,13 @@
 
 .calendar-grid {
     flex: 1;
-    min-width: 800px;
+    min-width: 0;
     background: var(--white);
     border-radius: 16px;
     box-shadow: var(--shadow-md);
     padding: 24px;
     border: 1px solid var(--light-gray);
+    overflow-x: hidden;
 }
 
 .calendar-weekdays {
@@ -522,4 +523,121 @@
     color: var(--danger-color);
     border-color: var(--danger-color);
     background: #fef2f2;
+}
+
+/* ========== RESPONSIVO MOBILE ========== */
+@media (max-width: 768px) {
+    .calendar-container {
+        padding: 12px;
+    }
+
+    .calendar-header {
+        padding: 16px;
+        margin-bottom: 16px;
+    }
+
+    .calendar-header h1 {
+        font-size: 1.4rem;
+        margin-bottom: 12px;
+    }
+
+    .calendar-controls {
+        gap: 8px;
+    }
+
+    .calendar-nav-group {
+        padding: 4px;
+        gap: 4px;
+    }
+
+    .calendar-btn {
+        width: 36px;
+        height: 36px;
+        font-size: 14px;
+    }
+
+    .today-btn {
+        padding: 8px 12px;
+        font-size: 13px;
+    }
+
+    .calendar-month-year {
+        font-size: 1rem;
+        padding: 0 4px;
+    }
+
+    .calendar-actions {
+        margin-left: 0;
+        width: 100%;
+    }
+
+    .btn-add-event,
+    .btn-view-events {
+        padding: 8px 14px;
+        font-size: 13px;
+        flex: 1;
+        justify-content: center;
+    }
+
+    .calendar-wrapper {
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .calendar-grid {
+        padding: 12px 8px;
+    }
+
+    .calendar-weekday {
+        padding: 8px 2px;
+        font-size: 11px;
+        letter-spacing: 0;
+    }
+
+    .calendar-days {
+        gap: 4px;
+    }
+
+    .calendar-weekdays {
+        gap: 4px;
+    }
+
+    .calendar-day {
+        padding: 6px 4px;
+        min-height: 52px;
+        border-radius: 8px;
+        border-width: 1px;
+    }
+
+    .calendar-day:hover {
+        transform: none;
+    }
+
+    .day-number {
+        font-size: 0.8rem;
+    }
+
+    .event-dot {
+        width: 6px;
+        height: 6px;
+    }
+
+    .more-events {
+        font-size: 0.65rem;
+        padding: 1px 4px;
+    }
+
+    .calendar-legend {
+        flex: none;
+        width: 100%;
+        padding: 16px;
+    }
+
+    .calendar-modal-body {
+        padding: 16px;
+    }
+
+    .calendar-modal-header {
+        padding: 16px;
+    }
 }
