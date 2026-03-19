@@ -14,33 +14,28 @@ def departments(request):
             'current_department': selected_dept
         }
 
-    # Para Admins: buscar todos os departamentos (necessário para o seletor do sidebar)
-    # Usar cache de sessão para evitar queries em cascata quando admin navega entre páginas.
-    all_depts_ids = request.session.get('_all_depts_ids')
-    if all_depts_ids is None:
-        all_depts = list(Department.objects.filter(show_in_nav=True).order_by('name'))
-        request.session['_all_depts_ids'] = [d.id for d in all_depts]
-        # Guardar também no atributo da request para reutilização dentro da mesma request
-        request._cached_all_depts = all_depts
-    else:
-        # Carregar apenas se não estiver na memória da request
-        if not hasattr(request, '_cached_all_depts'):
-            all_depts = list(Department.objects.filter(show_in_nav=True).order_by('name'))
-            request._cached_all_depts = all_depts
-        all_depts = request._cached_all_depts
+    # Para Admins: buscar todos os departamentos marcados para exibição no menu
+    # Usar cache apenas na memória da request para evitar queries repetidas na mesma renderização
+    if not hasattr(request, '_cached_all_depts'):
+        request._cached_all_depts = list(Department.objects.filter(show_in_nav=True).order_by('name'))
+    
+    all_depts = request._cached_all_depts
 
     selected_dept = None
     selected_dept_id = request.session.get('selected_department_id')
 
     if selected_dept_id:
-        selected_dept = next((d for d in all_depts if d.id == int(selected_dept_id)), None)
+        try:
+            # Tentar encontrar o depto selecionado na lista permitida
+            selected_dept = next((d for d in all_depts if d.id == int(selected_dept_id)), None)
+        except (ValueError, TypeError):
+            selected_dept = None
 
-    # Se não houver depto na sessão, buscar o 'NRS Suporte' como padrão
-    if not selected_dept:
-        nrs_dept = next((d for d in all_depts if d.name == 'NRS Suporte'), None)
-        if nrs_dept:
-            selected_dept = nrs_dept
-            request.session['selected_department_id'] = nrs_dept.id
+    # Se não houver depto válido selecionado, buscar o 'NRS Suporte' ou o primeiro da lista
+    if not selected_dept and all_depts:
+        selected_dept = next((d for d in all_depts if d.name == 'NRS Suporte'), all_depts[0])
+        if selected_dept:
+            request.session['selected_department_id'] = selected_dept.id
 
     return {
         'all_departments': all_depts,
