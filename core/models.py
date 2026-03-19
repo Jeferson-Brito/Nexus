@@ -8,6 +8,8 @@ class Department(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
     slug = models.SlugField(unique=True)
+    fluxo_aprovacao = models.CharField(max_length=100, blank=True, verbose_name='Fluxo de Aprovação')
+    show_in_nav = models.BooleanField(default=False, verbose_name='Exibir no Menu de Navegação')
     created_at = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):
@@ -107,6 +109,21 @@ class Store(models.Model):
     
     def __str__(self):
         return f"{self.code} - {self.city}"
+
+    def save(self, *args, **kwargs):
+        # Se for uma atualização (já tem ID)
+        if self.pk:
+            try:
+                # Buscar o estado atual do banco
+                old_instance = Store.objects.get(pk=self.pk)
+                # Se mudou de Ativa para Suspensa
+                if old_instance.active and not self.active:
+                    # Remover todas as atribuições desta loja
+                    self.analyst_assignments.all().delete()
+            except Store.DoesNotExist:
+                pass
+        
+        super().save(*args, **kwargs)
 
 class Escala(models.Model):
     """Modelo legado ou simplificado para manter compatibilidade"""
@@ -2021,8 +2038,56 @@ class Cargo(models.Model):
         return f"{self.nome} ({self.department.name})"
 
 
+
+class Empresa(models.Model):
+    """Empresa cadastrada no sistema de ponto / RH"""
+    # Informações Gerais
+    nome = models.CharField(max_length=255, verbose_name='Nome')
+    nome_fantasia = models.CharField(max_length=255, blank=True, verbose_name='Nome Fantasia')
+    cnpj = models.CharField(max_length=18, blank=True, verbose_name='CNPJ')
+    cei = models.CharField(max_length=30, blank=True, verbose_name='CEI')
+    cep = models.CharField(max_length=10, blank=True)
+    endereco = models.CharField(max_length=255, blank=True, verbose_name='Endereço')
+    bairro = models.CharField(max_length=100, blank=True)
+    cidade = models.CharField(max_length=100, blank=True)
+    uf = models.CharField(max_length=2, blank=True, verbose_name='UF')
+    numero_folha = models.CharField(max_length=30, blank=True, verbose_name='Número da Folha')
+    inscricao_estadual = models.CharField(max_length=30, blank=True, verbose_name='Inscrição Estadual')
+    fluxo_aprovacao = models.CharField(max_length=100, blank=True, verbose_name='Fluxo de Aprovação')
+
+    # Responsável Legal
+    responsavel_cpf = models.CharField(max_length=14, blank=True, verbose_name='CPF do Responsável')
+    responsavel_nome = models.CharField(max_length=255, blank=True, verbose_name='Nome do Responsável')
+    responsavel_cargo = models.CharField(max_length=100, blank=True, verbose_name='Cargo do Responsável')
+    responsavel_email = models.EmailField(blank=True, verbose_name='E-mail do Responsável')
+
+    # Logo
+    logo = models.ImageField(upload_to='empresas_logos/', null=True, blank=True)
+
+    # Metadados
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Empresa'
+        verbose_name_plural = 'Empresas'
+        ordering = ['nome']
+
+    def __str__(self):
+        return self.nome_fantasia or self.nome
+
+    @property
+    def num_funcionarios(self):
+        try:
+            return self.colaboradores_empresa.count()
+        except Exception:
+            return 0
+
+
+
 class Colaborador(models.Model):
     """Modelo central do RH para gestão de informações do funcionário"""
+
     STATUS_CHOICES = [
         ('ativo', 'Ativo'),
         ('ferias', 'Férias'),
@@ -2044,8 +2109,16 @@ class Colaborador(models.Model):
     nome_completo = models.CharField(max_length=255)
     cpf = models.CharField(max_length=14, unique=True)
     rg = models.CharField(max_length=20, blank=True)
-    data_nascimento = models.DateField()
+    data_nascimento = models.DateField(null=True, blank=True)
     endereco = models.TextField(blank=True)
+    cep = models.CharField(max_length=10, blank=True)
+    bairro = models.CharField(max_length=100, blank=True)
+    cidade = models.CharField(max_length=100, blank=True)
+    uf = models.CharField(max_length=2, blank=True)
+    ramal = models.CharField(max_length=20, blank=True)
+    nome_pai = models.CharField(max_length=255, blank=True)
+    nome_mae = models.CharField(max_length=255, blank=True)
+    genero = models.CharField(max_length=1, blank=True, choices=[('M','Masculino'),('F','Feminino'),('O','Outro')])
     telefone = models.CharField(max_length=20, blank=True)
     email_pessoal = models.EmailField(blank=True)
     foto = models.ImageField(upload_to='colaboradores_fotos/', null=True, blank=True)
@@ -2055,10 +2128,24 @@ class Colaborador(models.Model):
     data_desligamento = models.DateField(null=True, blank=True)
     cargo_atual = models.CharField(max_length=100)
     department = models.ForeignKey(Department, on_delete=models.PROTECT, related_name='colaboradores_rh')
+    empresa = models.ForeignKey('Empresa', on_delete=models.SET_NULL, null=True, blank=True, related_name='colaboradores_empresa', verbose_name='Empresa')
     salario_atual = models.DecimalField(max_digits=10, decimal_places=2)
     tipo_contrato = models.CharField(max_length=20, choices=TIPO_CONTRATO_CHOICES, default='clt')
     jornada_trabalho = models.CharField(max_length=100, blank=True, help_text="Ex: 44h semanais, 10h às 19h")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='ativo')
+    pis = models.CharField(max_length=14, blank=True, verbose_name='PIS/NIS')
+    matricula = models.CharField(max_length=30, blank=True, verbose_name='Matrícula')
+    numero_folha = models.CharField(max_length=30, blank=True, verbose_name='Número da Folha')
+    ctps = models.CharField(max_length=30, blank=True, verbose_name='CTPS')
+    superior_direto = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='subordinados', verbose_name='Superior Direto')
+    cargo_inicial = models.CharField(max_length=100, blank=True, verbose_name='Cargo na Admissão')
+
+    # Identificação Web / App Mobile
+    email_acesso = models.EmailField(blank=True, verbose_name='E-mail de Acesso Web')
+    ponto_web_permitido = models.BooleanField(default=False, verbose_name='Permite marcação via Web')
+    ponto_web_foto = models.BooleanField(default=False, verbose_name='Exige foto na marcação')
+    ponto_web_inserir = models.BooleanField(default=False, verbose_name='Permite inserção de pontos')
+    ponto_web_justificativa = models.BooleanField(default=False, verbose_name='Permite inserção de justificativas')
     
     # Metadados
     created_at = models.DateTimeField(auto_now_add=True)
@@ -2252,8 +2339,8 @@ class RegistroPonto(models.Model):
         verbose_name_plural = 'Registros de Ponto'
         ordering = ['-data', '-hora']
         indexes = [
-            models.Index(fields=['colaborador', 'data']),
-            models.Index(fields=['data', 'tipo']),
+            models.Index(fields=['colaborador', 'data'], name='ponto_colab_data_idx'),
+            models.Index(fields=['data', 'tipo'], name='ponto_data_tipo_idx'),
         ]
 
     def __str__(self):

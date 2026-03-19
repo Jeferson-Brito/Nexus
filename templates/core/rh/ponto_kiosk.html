@@ -418,7 +418,15 @@
 
 <script>
 // ─── Estado ──────────────────────────────────────────────────────────
-const ST = { cpf:'', colaboradorId:null, tipoPonto:null, videoStream:null, fotoBase64:null };
+const ST = { 
+    cpf: '', 
+    colaboradorId: parseInt("{{ colaborador_data.id|default:0 }}") || null, 
+    tipoPonto: null, 
+    videoStream: null, 
+    fotoBase64: null,
+    isPersonal: "{{ personal_punch }}" === "True",
+    exigirFoto: "{{ colaborador_data.exigir_foto }}" === "True"
+};
 
 // ─── Relógio ──────────────────────────────────────────────────────────
 function tick() {
@@ -458,6 +466,10 @@ function abrirCPF() {
 }
 
 function voltarIdle() {
+    if (ST.isPersonal) {
+        window.location.href = '/';
+        return;
+    }
     pararCamera();
     ST.cpf=''; ST.colaboradorId=null; ST.tipoPonto=null; ST.fotoBase64=null;
     document.getElementById('cpf-input-real').value='';
@@ -508,27 +520,32 @@ async function submeterCPF() {
             return;
         }
         Swal.close();
-        ST.colaboradorId = data.id;
-
-        // Avatar
-        const av = document.getElementById('user-avatar');
-        const ini = document.getElementById('user-initials');
-        document.getElementById('user-name').textContent = data.nome;
-        document.getElementById('user-dept').textContent = `${data.cargo} • ${data.departamento}`;
-        if (data.foto_url) {
-            av.src = data.foto_url; av.style.display='block'; ini.textContent='';
-        } else {
-            av.style.display='none';
-            const parts = data.nome.split(' ');
-            ini.textContent = parts[0][0].toUpperCase() + (parts.length>1 ? parts[parts.length-1][0].toUpperCase() : '');
-        }
-
-        // Aplicar tipos já registrados (retornados pela própria API)
-        aplicarTiposHoje(data.tipos_hoje || []);
-        showScreen('screen-tipo');
+        ST.exigirFoto = data.exigir_foto === true;
+        carregarColaboradorNaUI(data);
     } catch(e) {
         Swal.fire({icon:'error', title:'Erro de conexão', text:'Tente novamente.', customClass:{popup:'ks-swal'}});
     }
+}
+
+function carregarColaboradorNaUI(data) {
+    ST.colaboradorId = data.id;
+
+    // Avatar
+    const av = document.getElementById('user-avatar');
+    const ini = document.getElementById('user-initials');
+    document.getElementById('user-name').textContent = data.nome;
+    document.getElementById('user-dept').textContent = `${data.cargo} • ${data.departamento}`;
+    if (data.foto_url) {
+        av.src = data.foto_url; av.style.display='block'; ini.textContent='';
+    } else {
+        av.style.display='none';
+        const parts = data.nome.split(' ');
+        ini.textContent = parts[0][0].toUpperCase() + (parts.length>1 ? parts[parts.length-1][0].toUpperCase() : '');
+    }
+
+    // Aplicar tipos já registrados (retornados pela própria API)
+    aplicarTiposHoje(data.tipos_hoje || []);
+    showScreen('screen-tipo');
 }
 
 
@@ -546,8 +563,14 @@ document.querySelectorAll('.type-btn').forEach(btn => {
     btn.addEventListener('click', () => {
         if (btn.disabled) return;
         ST.tipoPonto = btn.getAttribute('data-type');
-        showScreen('screen-camera');
-        startCamera();
+        
+        if (ST.exigirFoto) {
+            showScreen('screen-camera');
+            startCamera();
+        } else {
+            ST.fotoBase64 = null;
+            enviarRegistro();
+        }
     });
 });
 
@@ -643,6 +666,22 @@ function toggleFS() {
 document.addEventListener('keydown', e => {
     if (e.key==='F5' || (e.ctrlKey && e.key==='r')) e.preventDefault();
 });
+
+// Auto-start se for Web Punch pessoal
+if (ST.isPersonal) {
+    // Pegar tipos_hoje do context
+    const tiposHojeArr = "{{ colaborador_data.tipos_hoje|join:',' }}".split(',').filter(x => x);
+    
+    carregarColaboradorNaUI({
+        id: ST.colaboradorId,
+        nome: "{{ colaborador_data.nome|escapejs }}",
+        cargo: "{{ colaborador_data.cargo|escapejs }}",
+        departamento: "{{ colaborador_data.departamento|escapejs }}",
+        foto_url: "{{ colaborador_data.foto_url|escapejs }}" || null,
+        tipos_hoje: tiposHojeArr
+    });
+}
+
 </script>
 </body>
 </html>

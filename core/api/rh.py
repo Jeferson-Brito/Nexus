@@ -2,7 +2,7 @@
 APIs para o Módulo de RH - Gestão de Colaboradores
 """
 
-from django.http import JsonResponse
+from django.http import JsonResponse, Http404
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
 from django.shortcuts import get_object_or_404
@@ -13,7 +13,7 @@ import logging
 
 from ..models import (
     Colaborador, Department, HistoricoProfissional, 
-    PerformanceRH, User, DocumentoColaborador
+    PerformanceRH, User, DocumentoColaborador, Empresa, Cargo
 )
 
 logger = logging.getLogger(__name__)
@@ -21,12 +21,17 @@ logger = logging.getLogger(__name__)
 
 def parse_decimal(value):
     """Auxiliar para converter valores decimais que podem vir com vírgula da UI"""
-    if not value:
+    if not value or str(value).strip() == '':
         return None
     try:
-        # Resolve problema de locale: 3120,00 -> 3120.00
         if isinstance(value, str):
-            value = value.replace('.', '').replace(',', '.')
+            value = value.strip()
+            if '.' in value and ',' not in value:
+                pass
+            elif ',' in value and '.' not in value:
+                value = value.replace(',', '.')
+            elif '.' in value and ',' in value:
+                value = value.replace('.', '').replace(',', '.')
         return float(value)
     except (ValueError, TypeError):
         return None
@@ -35,6 +40,9 @@ def parse_decimal(value):
 @require_http_methods(["GET"])
 def api_colaboradores_list(request):
     """Retorna listagem de colaboradores + usuários Nexus que ainda não têm ficha RH"""
+    if not (request.user.is_gestor() or request.user.is_administrador() or getattr(request.user.department, 'name', '') == 'RH'):
+        return JsonResponse({'erro': 'Acesso negado'}, status=403)
+        
     status_filter = request.GET.get('status', 'ativo')
     dept_filter = request.GET.get('department')
 
@@ -99,6 +107,9 @@ def api_colaboradores_list(request):
 @require_http_methods(["GET"])
 def api_colaborador_detail(request, pk):
     """Retorna detalhes completos de um colaborador (Dossiê)"""
+    if not (request.user.is_gestor() or request.user.is_administrador() or getattr(request.user.department, 'name', '') == 'RH'):
+        return JsonResponse({'erro': 'Acesso negado'}, status=403)
+        
     colaborador = get_object_or_404(Colaborador.objects.select_related('department', 'user'), pk=pk)
     
     # Histórico Profissional
@@ -147,15 +158,17 @@ def api_colaborador_detail(request, pk):
             'nome_completo': colaborador.nome_completo,
             'cpf': colaborador.cpf,
             'rg': colaborador.rg,
-            'data_nascimento': colaborador.data_nascimento.strftime('%d/%m/%Y'),
+            'data_nascimento': colaborador.data_nascimento.strftime('%d/%m/%Y') if colaborador.data_nascimento else None,
             'endereco': colaborador.endereco,
             'telefone': colaborador.telefone,
             'email_pessoal': colaborador.email_pessoal,
-            'data_admissao': colaborador.data_admissao.strftime('%d/%m/%Y'),
+            'data_admissao': colaborador.data_admissao.strftime('%d/%m/%Y') if colaborador.data_admissao else None,
             'data_desligamento': colaborador.data_desligamento.strftime('%d/%m/%Y') if colaborador.data_desligamento else None,
             'cargo_atual': colaborador.cargo_atual,
-            'department': colaborador.department.name,
-            'department_id': str(colaborador.department.id),
+            'department': colaborador.department.name if colaborador.department else '',
+            'department_id': str(colaborador.department.id) if colaborador.department_id else '',
+            'empresa_id': str(colaborador.empresa_id) if colaborador.empresa_id else '',
+            'empresa': colaborador.empresa.nome if colaborador.empresa else '',
             'salario_atual': float(colaborador.salario_atual),
             'tipo_contrato': colaborador.tipo_contrato,
             'jornada': colaborador.jornada_trabalho,
@@ -177,6 +190,8 @@ def api_save_colaborador(request):
         # Nota: multipart/form-data para fotos
         data = request.POST
         pk = data.get('id')
+        if pk:
+            pk = str(pk).replace('.', '').replace(',', '')  # Failsafe for localized IDs
         
         with transaction.atomic():
             if pk:
@@ -197,16 +212,43 @@ def api_save_colaborador(request):
             colaborador.nome_completo = data.get('nome_completo')
             colaborador.cpf = data.get('cpf')
             colaborador.rg = data.get('rg', '')
-            colaborador.data_nascimento = data.get('data_nascimento')
+            dn = data.get('data_nascimento', '')
+            colaborador.data_nascimento = dn if dn else None
             colaborador.data_admissao = data.get('data_admissao')
             colaborador.cargo_atual = data.get('cargo')
+            colaborador.cargo_inicial = data.get('cargo_inicial', '')
             colaborador.department_id = data.get('department_id')
+            empresa_id = data.get('empresa_id') or None
+            colaborador.empresa_id = empresa_id if empresa_id else None
             colaborador.salario_atual = parse_decimal(data.get('salario_atual'))
             colaborador.status = data.get('status', 'ativo')
             colaborador.tipo_contrato = data.get('tipo_contrato', 'clt')
             colaborador.email_pessoal = data.get('email_pessoal', '')
             colaborador.telefone = data.get('telefone', '')
+            colaborador.ramal = data.get('ramal', '')
             colaborador.endereco = data.get('endereco', '')
+            colaborador.cep = data.get('cep', '')
+            colaborador.bairro = data.get('bairro', '')
+            colaborador.cidade = data.get('cidade', '')
+            colaborador.uf = data.get('uf', '')
+            colaborador.nome_pai = data.get('nome_pai', '')
+            colaborador.nome_mae = data.get('nome_mae', '')
+            colaborador.genero = data.get('genero', '')
+            colaborador.jornada_trabalho = data.get('jornada_trabalho', '')
+            colaborador.pis = data.get('pis', '')
+            colaborador.matricula = data.get('matricula', '')
+            colaborador.numero_folha = data.get('numero_folha', '')
+            colaborador.ctps = data.get('ctps', '')
+            sup_id = data.get('superior_direto_id')
+            colaborador.superior_direto_id = sup_id if sup_id else None
+            dd = data.get('data_desligamento', '')
+            colaborador.data_desligamento = dd if dd else None
+            # Identificação Web
+            colaborador.email_acesso = data.get('email_acesso', '')
+            colaborador.ponto_web_permitido = data.get('ponto_web_permitido') == 'on'
+            colaborador.ponto_web_foto = data.get('ponto_web_foto') == 'on'
+            colaborador.ponto_web_inserir = data.get('ponto_web_inserir') == 'on'
+            colaborador.ponto_web_justificativa = data.get('ponto_web_justificativa') == 'on'
             
             if 'foto' in request.FILES:
                 colaborador.foto = request.FILES['foto']
@@ -253,6 +295,8 @@ def api_save_colaborador(request):
                 
             return JsonResponse({'success': True, 'id': str(colaborador.id), 'message': 'Dados salvos com sucesso'})
             
+    except Http404:
+        return JsonResponse({'success': False, 'error': 'Colaborador não encontrado.'}, status=404)
     except Exception as e:
         logger.error(f"Erro ao salvar colaborador: {str(e)}")
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
@@ -262,7 +306,11 @@ def api_save_colaborador(request):
 @require_http_methods(["GET"])
 def api_rh_auxiliar_data(request):
     """Dados auxiliares para formulários (Cargos, Departamentos, Opções)"""
-    cargos = []
+    cargos = list(Cargo.objects.all().values('id', 'nome', 'department_id'))
+    for c in cargos:
+        c['id'] = str(c['id'])
+        c['department_id'] = str(c['department_id'])
+    
     depts = list(Department.objects.all().values('id', 'name'))
     for dept in depts:
         dept['id'] = str(dept['id'])
@@ -407,3 +455,229 @@ def api_delete_documento(request, pk):
     except Exception as e:
         logger.error(f"Erro ao deletar documento: {str(e)}")
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+# ─────────────────────────────────────────────
+#  EMPRESAS
+# ─────────────────────────────────────────────
+
+@login_required
+@require_http_methods(["GET"])
+def api_empresas_list(request):
+    """Lista todas as empresas"""
+    try:
+        empresas = Empresa.objects.all()
+        return JsonResponse({'success': True, 'empresas': [
+            {
+                'id': str(e.id),  # string to avoid JS precision loss on large CockroachDB IDs
+                'nome': e.nome,
+                'nome_fantasia': e.nome_fantasia,
+                'cnpj': e.cnpj,
+                'num_funcionarios': e.num_funcionarios,
+                'logo_url': e.logo.url if e.logo else None,
+            } for e in empresas
+        ]})
+    except Exception as ex:
+        return JsonResponse({'success': False, 'error': str(ex)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def api_save_empresa(request):
+    """Cria ou atualiza uma empresa"""
+    try:
+        data = request.POST
+        pk = data.get('id')
+        if pk:
+            pk = str(pk).replace('.', '').replace(',', '')  # Failsafe for localized IDs
+        with transaction.atomic():
+            if pk:
+                empresa = get_object_or_404(Empresa, pk=pk)
+            else:
+                empresa = Empresa()
+
+            empresa.nome = data.get('nome', '')
+            empresa.nome_fantasia = data.get('nome_fantasia', '')
+            empresa.cnpj = data.get('cnpj', '')
+            empresa.cei = data.get('cei', '')
+            empresa.cep = data.get('cep', '')
+            empresa.endereco = data.get('endereco', '')
+            empresa.bairro = data.get('bairro', '')
+            empresa.cidade = data.get('cidade', '')
+            empresa.uf = data.get('uf', '')
+            empresa.numero_folha = data.get('numero_folha', '')
+            empresa.inscricao_estadual = data.get('inscricao_estadual', '')
+            empresa.fluxo_aprovacao = data.get('fluxo_aprovacao', '')
+            empresa.responsavel_cpf = data.get('responsavel_cpf', '')
+            empresa.responsavel_nome = data.get('responsavel_nome', '')
+            empresa.responsavel_cargo = data.get('responsavel_cargo', '')
+            empresa.responsavel_email = data.get('responsavel_email', '')
+
+            if data.get('logo_delete') == '1':
+                empresa.logo = None
+            elif 'logo' in request.FILES:
+                empresa.logo = request.FILES['logo']
+
+            empresa.save()
+
+        return JsonResponse({'success': True, 'message': 'Empresa salva com sucesso.', 'id': str(empresa.id)})
+    except Http404:
+        return JsonResponse({'success': False, 'error': 'Empresa não encontrada.'}, status=404)
+    except Exception as ex:
+        logger.error(f"Erro ao salvar empresa: {ex}")
+        return JsonResponse({'success': False, 'error': str(ex)}, status=500)
+
+
+@login_required
+@require_http_methods(["DELETE"])
+def api_delete_empresa(request, pk):
+    """Exclui uma empresa"""
+    try:
+        empresa = get_object_or_404(Empresa, pk=pk)
+        empresa.delete()
+        return JsonResponse({'success': True, 'message': 'Empresa excluída com sucesso.'})
+    except Http404:
+        return JsonResponse({'success': False, 'error': 'Empresa não encontrada.'}, status=404)
+    except Exception as ex:
+        logger.error(f"Erro ao excluir empresa: {ex}")
+        return JsonResponse({'success': False, 'error': str(ex)}, status=500)
+
+# ─────────────────────────────────────────────
+#  DEPARTAMENTOS
+# ─────────────────────────────────────────────
+
+@login_required
+@require_http_methods(["GET"])
+def api_departamentos_list(request):
+    """Lista todos os departamentos com contagem de funcionários"""
+    try:
+        from django.db.models import Count
+        depts = Department.objects.annotate(num_funcionarios=Count('colaboradores_rh'))
+        return JsonResponse({'success': True, 'departamentos': [
+            {
+                'id': str(d.id),
+                'name': d.name,
+                'description': d.description,
+                'fluxo_aprovacao': d.fluxo_aprovacao,
+                'show_in_nav': d.show_in_nav,
+                'num_funcionarios': d.num_funcionarios,
+            } for d in depts
+        ]})
+    except Exception as ex:
+        return JsonResponse({'success': False, 'error': str(ex)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def api_save_departamento(request):
+    """Cria ou atualiza um departamento"""
+    try:
+        data = json.loads(request.body)
+        pk = data.get('id')
+        
+        with transaction.atomic():
+            if pk:
+                dept = get_object_or_404(Department, pk=pk)
+            else:
+                dept = Department()
+            
+            dept.name = data.get('name', '')
+            dept.description = data.get('description', '')
+            dept.fluxo_aprovacao = data.get('fluxo_aprovacao', '')
+            dept.show_in_nav = data.get('show_in_nav', False)
+            
+            # Gerar slug se for novo
+            if not pk:
+                from django.utils.text import slugify
+                dept.slug = slugify(dept.name)
+                # Garantir unicidade
+                base_slug = dept.slug
+                counter = 1
+                while Department.objects.filter(slug=dept.slug).exists():
+                    dept.slug = f"{base_slug}-{counter}"
+                    counter += 1
+            
+            dept.save()
+
+        return JsonResponse({'success': True, 'message': 'Departamento salvo com sucesso.', 'id': str(dept.id)})
+    except Exception as ex:
+        logger.error(f"Erro ao salvar departamento: {ex}")
+        return JsonResponse({'success': False, 'error': str(ex)}, status=500)
+
+
+@login_required
+@require_http_methods(["DELETE"])
+def api_delete_departamento(request, pk):
+    """Exclui um departamento"""
+    try:
+        dept = get_object_or_404(Department, pk=pk)
+        # Verificar se existem colaboradores vinculados
+        if dept.colaboradores_rh.exists():
+            return JsonResponse({'success': False, 'error': 'Não é possível excluir um departamento que possui colaboradores.'}, status=400)
+        
+        dept.delete()
+        return JsonResponse({'success': True, 'message': 'Departamento excluído com sucesso.'})
+    except Exception as ex:
+        logger.error(f"Erro ao excluir departamento: {ex}")
+        return JsonResponse({'success': False, 'error': str(ex)}, status=500)
+
+
+# ─────────────────────────────────────────────
+#  CARGOS
+# ─────────────────────────────────────────────
+
+@login_required
+@require_http_methods(["GET"])
+def api_cargos_list(request):
+    """Lista todos os cargos"""
+    try:
+        cargos = Cargo.objects.all().select_related('department')
+        return JsonResponse({'success': True, 'cargos': [
+            {
+                'id': str(c.id),
+                'nome': c.nome,
+                'department_id': str(c.department_id),
+                'department_name': c.department.name if c.department else '',
+                'descricao': c.descricao,
+            } for c in cargos
+        ]})
+    except Exception as ex:
+        return JsonResponse({'success': False, 'error': str(ex)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def api_save_cargo(request):
+    """Cria ou atualiza um cargo"""
+    try:
+        data = json.loads(request.body)
+        pk = data.get('id')
+        
+        with transaction.atomic():
+            if pk:
+                cargo = get_object_or_404(Cargo, pk=pk)
+            else:
+                cargo = Cargo()
+            
+            cargo.nome = data.get('nome', '')
+            cargo.department_id = data.get('department_id')
+            cargo.descricao = data.get('descricao', '')
+            cargo.save()
+
+        return JsonResponse({'success': True, 'message': 'Cargo salvo com sucesso.', 'id': str(cargo.id)})
+    except Exception as ex:
+        logger.error(f"Erro ao salvar cargo: {ex}")
+        return JsonResponse({'success': False, 'error': str(ex)}, status=500)
+
+
+@login_required
+@require_http_methods(["DELETE"])
+def api_delete_cargo(request, pk):
+    """Exclui um cargo"""
+    try:
+        cargo = get_object_or_404(Cargo, pk=pk)
+        cargo.delete()
+        return JsonResponse({'success': True, 'message': 'Cargo excluído com sucesso.'})
+    except Exception as ex:
+        logger.error(f"Erro ao excluir cargo: {ex}")
+        return JsonResponse({'success': False, 'error': str(ex)}, status=500)

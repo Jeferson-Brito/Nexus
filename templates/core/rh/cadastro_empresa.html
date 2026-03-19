@@ -1,0 +1,352 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-3" style="max-width: 1100px;">
+
+    <!-- Breadcrumb -->
+    <nav class="mb-3" aria-label="breadcrumb">
+        <ol class="breadcrumb small mb-0">
+            <li class="breadcrumb-item"><a href="{% url 'rh_empresas' %}" class="text-decoration-none text-primary">Empresas</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ page_title }}</li>
+        </ol>
+    </nav>
+
+    <div class="card border-0 shadow-sm" style="border-radius:12px; overflow:hidden;">
+
+        <!-- Header azul -->
+        <div class="card-header border-0 py-3 px-4 d-flex align-items-center justify-content-between"
+             style="background: linear-gradient(135deg,#2563eb 0%,#1d4ed8 100%);">
+            <h5 class="fw-bold mb-0 text-white">{{ page_title }}</h5>
+            <a href="{% url 'rh_empresas' %}" class="btn btn-sm"
+               style="background:rgba(255,255,255,0.2); color:#fff; border:1.5px solid rgba(255,255,255,0.6);">
+                <i class="bi bi-arrow-left me-1"></i> Voltar
+            </a>
+        </div>
+
+        <form id="formEmpresa" enctype="multipart/form-data">
+            {% csrf_token %}
+            {% load l10n %}
+            <input type="hidden" name="id" value="{{ empresa_id|unlocalize|default:'' }}">
+
+            <div class="card-body p-4">
+
+                <!-- TABS -->
+                <ul class="nav nav-underline mb-4" id="empresaTabs">
+                    <li class="nav-item">
+                        <button class="nav-link active fw-semibold" type="button" data-bs-toggle="tab" data-bs-target="#tabGeral">
+                            Informações Gerais
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link fw-semibold" type="button" data-bs-toggle="tab" data-bs-target="#tabResponsavel">
+                            Responsável Legal
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link fw-semibold" type="button" data-bs-toggle="tab" data-bs-target="#tabLogo">
+                            Logo
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content">
+
+                    <!-- ──────── TAB: Informações Gerais ──────── -->
+                    <div class="tab-pane fade show active" id="tabGeral">
+                        <div class="row g-4">
+
+                            <!-- Linha 1: Nome | Fantasia | CNPJ -->
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:.72rem; letter-spacing:.05em;">Nome <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <input type="text" name="nome" class="form-control" placeholder="Nome" required
+                                           value="{{ empresa.nome|default:'' }}">
+                                    <span class="input-group-text bg-light"><i class="bi bi-person text-muted"></i></span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:.72rem; letter-spacing:.05em;">Fantasia</label>
+                                <div class="input-group">
+                                    <input type="text" name="nome_fantasia" class="form-control" placeholder="Fantasia"
+                                           value="{{ empresa.nome_fantasia|default:'' }}">
+                                    <span class="input-group-text bg-light"><i class="bi bi-pencil-square text-muted"></i></span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:.72rem; letter-spacing:.05em;">CNPJ</label>
+                                <div class="input-group">
+                                    <input type="text" name="cnpj" id="inputCnpj" class="form-control" placeholder="00.000.000/0000-00"
+                                           value="{{ empresa.cnpj|default:'' }}">
+                                    <span class="input-group-text bg-light"><i class="bi bi-pencil-square text-muted"></i></span>
+                                </div>
+                            </div>
+
+                            <!-- Linha 2: CEI | CEP | Endereço -->
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:.72rem; letter-spacing:.05em;">CEI</label>
+                                <div class="input-group">
+                                    <input type="text" name="cei" class="form-control" placeholder="CEI"
+                                           value="{{ empresa.cei|default:'' }}">
+                                    <span class="input-group-text bg-light"><i class="bi bi-bookmark text-muted"></i></span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:.72rem; letter-spacing:.05em;">CEP</label>
+                                <div class="input-group">
+                                    <input type="text" name="cep" id="inputCep" class="form-control" placeholder="CEP"
+                                           value="{{ empresa.cep|default:'' }}">
+                                    <button type="button" class="btn btn-outline-secondary" onclick="buscarCep()" title="Buscar">
+                                        <i class="bi bi-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:.72rem; letter-spacing:.05em;">Endereço</label>
+                                <div class="input-group">
+                                    <input type="text" name="endereco" id="inputEndereco" class="form-control" placeholder="Endereço"
+                                           value="{{ empresa.endereco|default:'' }}">
+                                    <span class="input-group-text bg-light"><i class="bi bi-geo-alt text-muted"></i></span>
+                                </div>
+                            </div>
+
+                            <!-- Linha 3: Bairro | Cidade | UF -->
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:.72rem; letter-spacing:.05em;">Bairro</label>
+                                <div class="input-group">
+                                    <input type="text" name="bairro" id="inputBairro" class="form-control" placeholder="Bairro"
+                                           value="{{ empresa.bairro|default:'' }}">
+                                    <span class="input-group-text bg-light"><i class="bi bi-bookmark text-muted"></i></span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:.72rem; letter-spacing:.05em;">Cidade</label>
+                                <div class="input-group">
+                                    <input type="text" name="cidade" id="inputCidade" class="form-control" placeholder="Cidade"
+                                           value="{{ empresa.cidade|default:'' }}">
+                                    <span class="input-group-text bg-light"><i class="bi bi-bookmark text-muted"></i></span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:.72rem; letter-spacing:.05em;">UF</label>
+                                <select name="uf" id="inputUf" class="form-select">
+                                    <option value="">—</option>
+                                    {% for uf_code in uf_choices %}
+                                    <option value="{{ uf_code }}" {% if empresa.uf == uf_code %}selected{% endif %}>{{ uf_code }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <!-- Linha 4: Nº Folha | Inscrição Estadual | Fluxo de Aprovação -->
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:.72rem; letter-spacing:.05em;">Número da Folha</label>
+                                <div class="input-group">
+                                    <input type="text" name="numero_folha" class="form-control" placeholder="Número da Folha"
+                                           value="{{ empresa.numero_folha|default:'' }}">
+                                    <span class="input-group-text bg-light"><i class="bi bi-bookmark text-muted"></i></span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:.72rem; letter-spacing:.05em;">Inscrição Estadual</label>
+                                <div class="input-group">
+                                    <input type="text" name="inscricao_estadual" class="form-control" placeholder="Inscrição Estadual"
+                                           value="{{ empresa.inscricao_estadual|default:'' }}">
+                                    <span class="input-group-text bg-light"><i class="bi bi-pencil-square text-muted"></i></span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:.72rem; letter-spacing:.05em;">Fluxo de Aprovação</label>
+                                <select name="fluxo_aprovacao" class="form-select">
+                                    <option value="">—</option>
+                                    <option value="padrao" {% if empresa.fluxo_aprovacao == 'padrao' %}selected{% endif %}>Padrão</option>
+                                    <option value="gestor" {% if empresa.fluxo_aprovacao == 'gestor' %}selected{% endif %}>Via Gestor</option>
+                                    <option value="rh" {% if empresa.fluxo_aprovacao == 'rh' %}selected{% endif %}>Via RH</option>
+                                </select>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- ──────── TAB: Responsável Legal ──────── -->
+                    <div class="tab-pane fade" id="tabResponsavel">
+                        <div class="row g-4">
+
+                            <!-- Linha 1: CPF | Nome | Cargo -->
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:.72rem; letter-spacing:.05em;">CPF do responsável</label>
+                                <input type="text" name="responsavel_cpf" class="form-control" placeholder="CPF do responsável"
+                                       value="{{ empresa.responsavel_cpf|default:'' }}">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:.72rem; letter-spacing:.05em;">Nome do responsável pela empresa</label>
+                                <input type="text" name="responsavel_nome" class="form-control" placeholder="Nome do responsável pela empresa"
+                                       value="{{ empresa.responsavel_nome|default:'' }}">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:.72rem; letter-spacing:.05em;">Cargo do responsável pela empresa</label>
+                                <input type="text" name="responsavel_cargo" class="form-control" placeholder="Cargo do responsável pela empresa"
+                                       value="{{ empresa.responsavel_cargo|default:'' }}">
+                            </div>
+
+                            <!-- Linha 2: E-mail -->
+                            <div class="col-md-5">
+                                <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:.72rem; letter-spacing:.05em;">E-mail do responsável pela empresa</label>
+                                <input type="email" name="responsavel_email" class="form-control" placeholder="E-mail do responsável pela empresa"
+                                       value="{{ empresa.responsavel_email|default:'' }}">
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- ──────── TAB: Logo ──────── -->
+                    <div class="tab-pane fade" id="tabLogo">
+                        <div class="d-flex align-items-center gap-4 py-3">
+
+                            <!-- Preview -->
+                            <div class="border rounded d-flex align-items-center justify-content-center"
+                                 style="width:220px; height:120px; background:#f8fafc; flex-shrink:0;">
+                                {% if empresa.logo %}
+                                <img id="previewLogo" src="{{ empresa.logo.url }}" alt="Logo"
+                                     style="max-width:200px; max-height:110px; object-fit:contain;">
+                                {% else %}
+                                <img id="previewLogo" src="" alt="Logo"
+                                     style="max-width:200px; max-height:110px; object-fit:contain; display:none;">
+                                {% endif %}
+                                <span id="logoPlaceholder" class="text-muted small" {% if empresa.logo %}style="display:none"{% endif %}>
+                                    <i class="bi bi-image" style="font-size:2rem;"></i>
+                                </span>
+                            </div>
+
+                            <!-- Ações -->
+                            <div class="d-flex flex-column gap-2">
+                                <label for="inputLogo" class="text-primary" style="cursor:pointer; font-size:.9rem;">
+                                    <i class="bi bi-upload me-1"></i> Selecionar arquivo
+                                </label>
+                                <input type="file" id="inputLogo" name="logo" class="d-none" accept="image/*">
+                                <a href="#" class="text-muted" style="font-size:.9rem;" onclick="cancelLogo(); return false;">
+                                    Cancelar
+                                </a>
+                                {% if empresa.logo %}
+                                <a href="#" class="text-danger" style="font-size:.9rem;" onclick="deleteLogo(); return false;">
+                                    <i class="bi bi-trash3 me-1"></i> Excluir imagem
+                                </a>
+                                <input type="hidden" name="logo_delete" id="logoDeleteFlag" value="">
+                                {% else %}
+                                <input type="hidden" name="logo_delete" id="logoDeleteFlag" value="">
+                                {% endif %}
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div><!-- /.tab-content -->
+            </div><!-- /.card-body -->
+
+            <!-- Footer -->
+            <div class="card-footer bg-white border-top d-flex justify-content-start gap-2 py-3 px-4">
+                <button type="submit" class="btn btn-primary px-4">
+                    <i class="bi bi-check-lg me-1"></i> Salvar
+                </button>
+                <a href="{% url 'rh_empresas' %}" class="btn btn-light px-4">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .nav-underline .nav-link { color: #6b7280; font-size: 0.875rem; }
+    .nav-underline .nav-link.active { color: #2563eb; border-bottom-color: #2563eb; }
+    .nav-underline .nav-link:hover:not(.active) { color: #374151; }
+</style>
+
+<script>
+// Máscara CNPJ
+document.getElementById('inputCnpj')?.addEventListener('input', function() {
+    let v = this.value.replace(/\D/g,'').slice(0,14);
+    v = v.replace(/^(\d{2})(\d)/,'$1.$2')
+         .replace(/^(\d{2})\.(\d{3})(\d)/,'$1.$2.$3')
+         .replace(/\.(\d{3})(\d)/,'.$1/$2')
+         .replace(/(\d{4})(\d)/,'$1-$2');
+    this.value = v;
+});
+
+// Busca CEP
+function buscarCep() {
+    const cep = document.getElementById('inputCep').value.replace(/\D/g,'');
+    if (cep.length !== 8) return;
+    fetch(`https://viacep.com.br/ws/${cep}/json/`)
+        .then(r => r.json())
+        .then(d => {
+            if (d.erro) { alert('CEP não encontrado.'); return; }
+            document.getElementById('inputEndereco').value = d.logradouro||'';
+            document.getElementById('inputBairro').value   = d.bairro||'';
+            document.getElementById('inputCidade').value   = d.localidade||'';
+            const sel = document.getElementById('inputUf');
+            for (let o of sel.options) { if (o.value===d.uf) { o.selected=true; break; } }
+        });
+}
+
+// Preview de logo
+document.getElementById('inputLogo')?.addEventListener('change', function() {
+    if (!this.files[0]) return;
+    const preview = document.getElementById('previewLogo');
+    const ph = document.getElementById('logoPlaceholder');
+    preview.src = URL.createObjectURL(this.files[0]);
+    preview.style.display = '';
+    if (ph) ph.style.display = 'none';
+});
+
+function cancelLogo() {
+    const inp = document.getElementById('inputLogo');
+    if (inp) inp.value = '';
+    // reverte preview
+    const preview = document.getElementById('previewLogo');
+    if (preview && !preview.src.startsWith('blob')) return;
+    preview.src = '';
+    preview.style.display = 'none';
+    const ph = document.getElementById('logoPlaceholder');
+    if (ph) ph.style.display = '';
+}
+
+function deleteLogo() {
+    document.getElementById('logoDeleteFlag').value = '1';
+    const preview = document.getElementById('previewLogo');
+    if (preview) { preview.src=''; preview.style.display='none'; }
+    const ph = document.getElementById('logoPlaceholder');
+    if (ph) ph.style.display = '';
+}
+
+// Submit
+document.getElementById('formEmpresa').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const btn = this.querySelector('[type="submit"]');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Salvando...';
+
+    fetch('/api/rh/empresas/save/', {
+        method: 'POST',
+        body: new FormData(this),
+        headers: { 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value }
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire({
+                icon: 'success', title: 'Salvo!',
+                text: data.message || 'Empresa salva com sucesso.',
+                timer: 2000, showConfirmButton: false
+            }).then(() => { window.location.href = '{% url "rh_empresas" %}'; });
+        } else {
+            Swal.fire({ icon: 'error', title: 'Erro', text: data.error });
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Salvar';
+        }
+    })
+    .catch(() => {
+        Swal.fire({ icon: 'error', title: 'Erro de rede', text: 'Tente novamente.' });
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Salvar';
+    });
+});
+</script>
+{% endblock %}

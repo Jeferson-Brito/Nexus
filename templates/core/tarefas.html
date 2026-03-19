@@ -758,6 +758,26 @@
     </div>
 </div>
 
+<!-- Modal Visualizar Solicitação de Inatividade -->
+<div class="modal fade" id="viewChatRequestModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title"><i class="bi bi-info-circle"></i> Detalhes da Solicitação</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="view-chat-details-content">
+                    <!-- Preenchido via JS -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}
@@ -897,7 +917,7 @@
                         <i class="bi bi-pencil"></i>
                     </button>
                     <button class="btn btn-sm btn-outline-danger" title="Excluir"
-                        onclick="deleteTask(${t.id})">
+                        onclick="deleteTask('${t.id}')">
                         <i class="bi bi-trash"></i>
                     </button>
                 ` : '';
@@ -907,7 +927,7 @@
                     <td class="text-center">
                         <input class="form-check-input" type="checkbox" 
                             ${t.status === 'concluida' ? 'checked' : ''}
-                            onchange="toggleTask(${t.id}, this.checked)">
+                            onchange="toggleTask('${t.id}', this.checked)">
                     </td>
                     <td>
                         <span class="${t.status === 'concluida' ? 'text-decoration-line-through text-muted' : ''}">${t.title}</span>
@@ -1365,7 +1385,7 @@
                     <td><small>${viewedInfo}</small></td>
                     <td><small>${date}</small></td>
                     <td>
-                        <button class="btn btn-sm btn-outline-primary" onclick="openRefundDetail(${r.id})" title="Ver Detalhes">
+                        <button class="btn btn-sm btn-outline-primary" onclick="openRefundDetail('${r.id}')" title="Ver Detalhes">
                             <i class="bi bi-eye"></i>
                         </button>
                     </td>
@@ -1385,12 +1405,16 @@
     }
 
     async function openRefundDetail(id) {
+        console.log('Opening refund detail for ID:', id);
         document.getElementById('refund-detail-id').textContent = id;
 
         try {
+            console.log('Fetching refund data...');
             const res = await fetch(`/api/refunds/${id}/`);
+            console.log('Response status:', res.status);
             if (res.ok) {
                 const data = await res.json();
+                console.log('Refund data received:', data);
                 const r = data.refund;
 
                 let attachmentsHtml = '';
@@ -1454,17 +1478,17 @@
 
                 // Botão de edição para quem tem permissão (NRS Suporte, gestor, admin)
                 if (r.can_edit && r.status === 'aberta') {
-                    footerButtons = `<button class="btn btn-primary me-2" onclick="openEditRefundModal(${r.id})"><i class="bi bi-pencil"></i> Editar</button>` + footerButtons;
+                    footerButtons = `<button class="btn btn-primary me-2" onclick="openEditRefundModal('${r.id}')"><i class="bi bi-pencil"></i> Editar</button>` + footerButtons;
                 }
 
                 // Botão de cancelamento para gestores
                 if (isManager && r.status === 'aberta' && !r.cancellation_requested) {
-                    footerButtons += `<button type="button" class="btn btn-warning ms-2" onclick="requestCancellation(${r.id})"><i class="bi bi-x-circle"></i> Solicitar Cancelamento</button>`;
+                    footerButtons += `<button type="button" class="btn btn-warning ms-2" onclick="requestCancellation('${r.id}')"><i class="bi bi-x-circle"></i> Solicitar Cancelamento</button>`;
                 }
 
                 // Botão de exclusão para gestores e administradores
                 if (isManager) {
-                    footerButtons += `<button type="button" class="btn btn-danger ms-2" onclick="confirmDeleteRefund(${r.id})"><i class="bi bi-trash"></i> Excluir</button>`;
+                    footerButtons += `<button type="button" class="btn btn-danger ms-2" onclick="confirmDeleteRefund('${r.id}')"><i class="bi bi-trash"></i> Excluir</button>`;
                 }
                 document.getElementById('refund-detail-footer').innerHTML = footerButtons;
 
@@ -1820,9 +1844,15 @@
                 // Update card count
                 const statPending = document.getElementById('stat-pending');
                 if (statPending) statPending.textContent = data.length;
+            } else {
+                console.error('Erro na resposta da API:', res.status);
+                const tbody = document.getElementById('chat-inactivity-list');
+                if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4"><i class="bi bi-exclamation-triangle"></i> Erro ao carregar dados.</td></tr>';
             }
         } catch (e) {
             console.error('Erro ao carregar solicitações de chat', e);
+            const tbody = document.getElementById('chat-inactivity-list');
+            if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4"><i class="bi bi-wifi-off"></i> Erro de conexão.</td></tr>';
         }
     }
 
@@ -1889,7 +1919,11 @@
                 ? `<a href="${r.chat_link}" target="_blank" class="btn btn-xs btn-outline-info py-0 px-1" title="Ver Chat"><i class="bi bi-link-45deg"></i></a>`
                 : '';
 
-            let actions = '';
+            let actions = `
+                <button class="btn btn-sm btn-outline-primary" onclick="openChatInactivityDetail('${r.id}')" title="Ver Detalhes">
+                    <i class="bi bi-eye"></i>
+                </button>
+            `;
             if (isManager) {
                 actions += `
                     <button class="btn btn-sm btn-info" onclick="openReviewChatModal('${r.id}', '${r.chat_id}', '${r.analyst_name}')" title="Revisar / Alterar">
@@ -1939,6 +1973,47 @@
         `;
         document.getElementById('review-chat-notes').value = '';
         new bootstrap.Modal(document.getElementById('reviewChatInactivityModal')).show();
+    }
+
+    function openChatInactivityDetail(id) {
+        const req = allChatRequests.find(r => r.id === id);
+        if (!req) return;
+
+        const statusBadge = getChatStatusBadge(req.status);
+        const reviewedBy = req.reviewed_by_name || '-';
+        const reviewedAt = req.reviewed_at || '-';
+        const notes = req.review_notes || '<i class="text-muted">Nenhuma observação informada.</i>';
+
+        document.getElementById('view-chat-details-content').innerHTML = `
+            <div class="mb-3">
+                <div class="row mb-2">
+                    <div class="col-6"><strong>Analista:</strong><br>${req.analyst_name}</div>
+                    <div class="col-6"><strong>Chat ID:</strong><br>${req.chat_id}</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-6"><strong>Data do Chat:</strong><br>${req.chat_date}</div>
+                    <div class="col-6"><strong>Criação:</strong><br>${req.created_at}</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-6"><strong>Status:</strong><br>${statusBadge}</div>
+                </div>
+            </div>
+            
+            <div class="p-3 bg-light rounded border mb-0">
+                <p class="mb-2 fw-bold text-primary">Detalhamento da Revisão</p>
+                <div class="small mb-2">
+                    <strong>Revisado por:</strong> ${reviewedBy} 
+                    ${req.reviewed_at ? `em ${reviewedAt}` : ''}
+                </div>
+                <hr class="my-2">
+                <strong>Observações do Gestor:</strong>
+                <div class="mt-1 p-2 bg-white rounded border small" style="min-height: 60px;">
+                    ${notes}
+                </div>
+            </div>
+        `;
+
+        new bootstrap.Modal(document.getElementById('viewChatRequestModal')).show();
     }
 
     async function submitChatReview(action) {

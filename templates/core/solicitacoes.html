@@ -301,17 +301,17 @@
                     <td>${statusBadge}</td>
                     <td>${date}</td>
                     <td>
-                        <button class="btn btn-sm btn-outline-primary" onclick="openDetail(${r.id})" title="Ver Detalhes">
+                        <button class="btn btn-sm btn-outline-primary" onclick="openDetail('${r.id}')" title="Ver Detalhes">
                             <i class="bi bi-eye"></i>
                         </button>
-                        <button class="btn btn-sm btn-outline-warning" onclick="openEditModal(${r.id})" title="Editar">
+                        <button class="btn btn-sm btn-outline-warning" onclick="openEditModal('${r.id}')" title="Editar">
                             <i class="bi bi-pencil"></i>
                         </button>
-                        <button class="btn btn-sm btn-outline-secondary" onclick="openAttachmentModal(${r.id})" title="Anexar">
+                        <button class="btn btn-sm btn-outline-secondary" onclick="openAttachmentModal('${r.id}')" title="Anexar">
                             <i class="bi bi-paperclip"></i>
                         </button>
                         {% if user.role == 'gestor' or user.role == 'administrador' %}
-                        <button class="btn btn-sm btn-outline-danger" onclick="deleteRefund(${r.id})" title="Excluir">
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteRefund('${r.id}')" title="Excluir">
                             <i class="bi bi-trash"></i>
                         </button>
                         {% endif %}

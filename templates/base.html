@@ -171,10 +171,91 @@
             </a>
 
             <div class="nav-group-title">Gestão de Pessoas</div>
-            <a href="{% url 'rh_colaboradores' %}"
-                class="nav-link {% if 'rh_colaboradores' in request.resolver_match.url_name or 'rh_colaborador_perfil' in request.resolver_match.url_name %}active{% endif %}">
-                <i class="bi bi-people"></i>
-                <span class="link-text">Colaboradores</span>
+            <a href="#rhCadastrosSubmenu"
+                class="nav-link dropdown-toggle-custom {% if 'rh_colaboradores' in request.resolver_match.url_name or 'rh_colaborador_perfil' in request.resolver_match.url_name or 'rh_empresas' in request.resolver_match.url_name or 'rh_departamentos' in request.resolver_match.url_name or 'rh_cargos' in request.resolver_match.url_name %}active{% endif %}"
+                data-bs-toggle="collapse"
+                aria-expanded="{% if 'rh_colaboradores' in request.resolver_match.url_name or 'rh_colaborador_perfil' in request.resolver_match.url_name or 'rh_empresas' in request.resolver_match.url_name or 'rh_departamentos' in request.resolver_match.url_name or 'rh_cargos' in request.resolver_match.url_name %}true{% else %}false{% endif %}"
+                aria-controls="rhCadastrosSubmenu">
+                <i class="bi bi-layers"></i>
+                <span class="link-text">Cadastros</span>
+                <i class="bi bi-chevron-down ms-auto arrow-icon"></i>
+            </a>
+            <div class="collapse nav-submenu-container {% if 'rh_colaboradores' in request.resolver_match.url_name or 'rh_colaborador_perfil' in request.resolver_match.url_name or 'rh_empresas' in request.resolver_match.url_name or 'rh_departamentos' in request.resolver_match.url_name or 'rh_cargos' in request.resolver_match.url_name %}show{% endif %}"
+                id="rhCadastrosSubmenu">
+                <div class="nav-submenu">
+                    <a href="{% url 'rh_colaboradores' %}"
+                        class="nav-link sub-link {% if 'rh_colaboradores' in request.resolver_match.url_name or 'rh_colaborador_perfil' in request.resolver_match.url_name %}active{% endif %}"
+                        title="Funcionários">
+                        <i class="bi bi-person-badge"></i>
+                        <span class="link-text">Funcionários</span>
+                    </a>
+                    <a href="{% url 'rh_empresas' %}"
+                        class="nav-link sub-link {% if 'rh_empresas' in request.resolver_match.url_name or 'rh_cadastro_empresa' in request.resolver_match.url_name or 'rh_editar_empresa' in request.resolver_match.url_name %}active{% endif %}"
+                        title="Empresas">
+                        <i class="bi bi-building"></i>
+                        <span class="link-text">Empresas</span>
+                    </a>
+                    <a href="{% url 'rh_departamentos' %}" 
+                        class="nav-link sub-link {% if 'rh_departamentos' in request.resolver_match.url_name %}active{% endif %}" 
+                        title="Departamentos">
+                        <i class="bi bi-diagram-3"></i>
+                        <span class="link-text">Departamentos</span>
+                    </a>
+                    <a href="{% url 'rh_cargos' %}" 
+                        class="nav-link sub-link {% if 'rh_cargos' in request.resolver_match.url_name %}active{% endif %}" 
+                        title="Cargos">
+                        <i class="bi bi-briefcase"></i>
+                        <span class="link-text">Cargos</span>
+                    </a>
+                    <a href="#" class="nav-link sub-link disabled opacity-50" title="Em breve">
+                        <i class="bi bi-currency-dollar"></i>
+                        <span class="link-text">Centros de Custo</span>
+                    </a>
+                    <a href="#" class="nav-link sub-link disabled opacity-50" title="Em breve">
+                        <i class="bi bi-door-open"></i>
+                        <span class="link-text">Motivos de Demissão</span>
+                    </a>
+                    <a href="#" class="nav-link sub-link disabled opacity-50" title="Em breve">
+                        <i class="bi bi-calendar-heart"></i>
+                        <span class="link-text">Feriados</span>
+                    </a>
+                    <a href="#" class="nav-link sub-link disabled opacity-50" title="Em breve">
+                        <i class="bi bi-file-text"></i>
+                        <span class="link-text">Layouts TXT para Folha</span>
+                    </a>
+                    <a href="#" class="nav-link sub-link disabled opacity-50" title="Em breve">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <span class="link-text">Tipos de Inconsistência</span>
+                    </a>
+                    <a href="#" class="nav-link sub-link disabled opacity-50" title="Em breve">
+                        <i class="bi bi-journal-check"></i>
+                        <span class="link-text">Tipos de Justificativa</span>
+                    </a>
+                    <a href="#" class="nav-link sub-link disabled opacity-50" title="Em breve">
+                        <i class="bi bi-people-fill"></i>
+                        <span class="link-text">Atribuições em Massa</span>
+                    </a>
+                    <a href="#" class="nav-link sub-link disabled opacity-50" title="Em breve">
+                        <i class="bi bi-geo-alt"></i>
+                        <span class="link-text">Locais de Trabalho</span>
+                    </a>
+                    <a href="#" class="nav-link sub-link disabled opacity-50" title="Em breve">
+                        <i class="bi bi-check2-all"></i>
+                        <span class="link-text">Fluxos de Aprovação</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Equipamentos -->
+            <a href="#" class="nav-link disabled opacity-50" title="Em breve">
+                <i class="bi bi-hdd-stack"></i>
+                <span class="link-text">Equipamentos</span>
+            </a>
+
+            <!-- Config Horário -->
+            <a href="#" class="nav-link disabled opacity-50" title="Em breve">
+                <i class="bi bi-clock-fill"></i>
+                <span class="link-text">Config Horário</span>
             </a>
 
             <div class="nav-group-title">Operacional RH</div>
@@ -199,7 +280,32 @@
                 <span class="link-text">Onboarding</span>
             </a>
 
-            {% elif current_department.name == 'NRS Suporte' or current_department.name == 'NRP' %}
+            <!-- Apuração e Cálculo -->
+            <a href="#" class="nav-link disabled opacity-50" title="Em breve">
+                <i class="bi bi-calculator"></i>
+                <span class="link-text">Apuração e Cálculo</span>
+            </a>
+
+            <div class="nav-group-title">Análise</div>
+            <!-- Relatórios -->
+            <a href="#" class="nav-link disabled opacity-50" title="Em breve">
+                <i class="bi bi-file-earmark-bar-graph"></i>
+                <span class="link-text">Relatórios</span>
+            </a>
+
+            <!-- Portaria 1510 -->
+            <a href="#" class="nav-link disabled opacity-50" title="Em breve">
+                <i class="bi bi-pin-map"></i>
+                <span class="link-text">Portaria 1510</span>
+            </a>
+
+            <!-- Operadores -->
+            <a href="#" class="nav-link disabled opacity-50" title="Em breve">
+                <i class="bi bi-person-gear"></i>
+                <span class="link-text">Operadores</span>
+            </a>
+
+            {% elif current_department.slug == 'nrs-suporte' or current_department.slug == 'nrp' or current_department.name == 'NRS Suporte' or current_department.name == 'NRP' %}
             <!-- NRS Suporte / NRP -->
             <div class="nav-group-title">Operação</div>
             <a href="{% url 'escala' %}"
@@ -284,7 +390,7 @@
             {% endif %}
 
 
-            {% elif current_department.name == 'Onboarding' %}
+            {% elif current_department.slug == 'onboarding' or current_department.name == 'Onboarding' %}
             <!-- Onboarding -->
             <div class="nav-group-title">Implantação</div>
             <a href="{% url 'onboarding_dev_1' %}"
@@ -304,7 +410,7 @@
             </a>
 
 
-            {% elif current_department.name == 'CS Clientes' %}
+            {% elif current_department.slug == 'cs-clientes' or current_department.name == 'CS Clientes' %}
 
             <!-- CS Clientes -->
             <div class="nav-group-title">Operação</div>
@@ -363,6 +469,25 @@
                 <span class="link-text">Solicitações</span>
             </a>
 
+            {% elif current_department.slug == 'logistica' or current_department.name == 'Logística' %}
+            <!-- Logística -->
+            <div class="nav-group-title">Logística</div>
+            <a href="{% url 'escala' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'escala' %}active{% endif %}">
+                <i class="bi bi-calendar-event"></i>
+                <span class="link-text">Escala</span>
+            </a>
+            <a href="{% url 'tasks_view' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'tasks_view' %}active{% endif %}">
+                <i class="bi bi-list-check"></i>
+                <span class="link-text">Tarefas e Solicitações</span>
+            </a>
+            <div class="alert alert-info mx-3 my-2"
+                style="font-size: 0.75rem; border: none; background: #f0f7ff; color: #004085;">
+                <i class="bi bi-info-circle me-1"></i>
+                Outras funcionalidades de Logística em desenvolvimento.
+            </div>
+
             {% else %}
             <!-- Outros Departamentos (Em Breve) -->
             <div class="nav-group-title">{{ current_department.name }}</div>
@@ -397,6 +522,18 @@
             <button class="btn btn-link text-secondary p-0 d-lg-none" id="mobileToggle" title="Alternar Menu">
                 <i class="bi bi-list fs-4"></i>
             </button>
+            
+            <!-- Botão Bater Ponto Web -->
+            {% if request.user.is_authenticated and request.user.colaborador_perfil %}
+                {% if request.user.colaborador_perfil.ponto_web_permitido %}
+                <a href="{% url 'ponto_kiosk' %}" class="btn btn-primary btn-sm rounded-pill fw-semibold px-3 shadow-sm d-flex align-items-center gap-1 me-1"
+                        style="font-size: 0.85rem;">
+                    <i class="bi bi-fingerprint"></i>
+                    <span class="d-none d-md-inline" style="margin-top: 1px;">Bater Ponto</span>
+                </a>
+                {% endif %}
+            {% endif %}
+
             <!-- Notification Dropdown -->
             <div class="dropdown">
                 <button class="btn btn-link text-secondary p-0 position-relative" title="Notificações"
@@ -943,6 +1080,9 @@
             modal.show();
         }
     </script>
+    
+
+    
 </body>
 
 

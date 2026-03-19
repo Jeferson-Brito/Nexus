@@ -37,10 +37,10 @@
                         </p>
                     </div>
                     <div class="mb-3 d-flex gap-2">
-                        <button type="button" class="btn btn-outline-primary btn-sm"
-                            onclick="editcolaborador('{% localize off %}{{ colaborador.id }}{% endlocalize %}')">
+                        <a href="/rh/colaboradores/{% localize off %}{{ colaborador.id }}{% endlocalize %}/editar/"
+                           class="btn btn-outline-primary btn-sm">
                             <i class="bi bi-pencil-square"></i> Editar Dados
-                        </button>
+                        </a>
                         <button type="button" class="btn btn-outline-danger btn-sm"
                             onclick="deletecolaborador('{% localize off %}{{ colaborador.id }}{% endlocalize %}', '{{ colaborador.nome_completo }}')">
                             <i class="bi bi-trash"></i> Excluir
@@ -223,11 +223,13 @@
                 <div class="tab-pane fade" id="tab-pessoais">
                     <div class="card border-0 shadow-sm">
                         <div class="card-body p-4">
-                            <h6 class="fw-bold mb-4">Dados de Identificação</h6>
-                            <div class="row g-4">
+
+                            <!-- Dados de Identificação -->
+                            <h6 class="fw-bold mb-3">Dados de Identificação</h6>
+                            <div class="row g-3 mb-4">
                                 <div class="col-md-4">
                                     <label class="text-muted small d-block">CPF</label>
-                                    <span class="fw-bold">{{ colaborador.cpf }}</span>
+                                    <span class="fw-bold">{{ colaborador.cpf|default:"—" }}</span>
                                 </div>
                                 <div class="col-md-4">
                                     <label class="text-muted small d-block">RG</label>
@@ -235,21 +237,111 @@
                                 </div>
                                 <div class="col-md-4">
                                     <label class="text-muted small d-block">NASCIMENTO</label>
-                                    <span class="fw-bold">{{ colaborador.data_nascimento|date:"d/m/Y" }}</span>
+                                    <span class="fw-bold">{{ colaborador.data_nascimento|date:"d/m/Y"|default:"—" }}</span>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="text-muted small d-block">GÊNERO</label>
+                                    <span class="fw-bold">{{ colaborador.get_genero_display|default:"Não informado" }}</span>
                                 </div>
                                 <div class="col-md-4">
                                     <label class="text-muted small d-block">TELEFONE</label>
                                     <span class="fw-bold">{{ colaborador.telefone|default:"Não informado" }}</span>
                                 </div>
+                                <div class="col-md-4">
+                                    <label class="text-muted small d-block">RAMAL</label>
+                                    <span class="fw-bold">{{ colaborador.ramal|default:"—" }}</span>
+                                </div>
                                 <div class="col-md-8">
                                     <label class="text-muted small d-block">EMAIL PESSOAL</label>
                                     <span class="fw-bold">{{ colaborador.email_pessoal|default:"Não informado" }}</span>
                                 </div>
-                                <div class="col-md-12">
+                                <div class="col-md-4">
+                                    <label class="text-muted small d-block">PIS/NIS</label>
+                                    <span class="fw-bold">{{ colaborador.pis|default:"—" }}</span>
+                                </div>
+                            </div>
+
+                            <hr class="my-3">
+
+                            <!-- Filiação -->
+                            <h6 class="fw-bold mb-3">Filiação</h6>
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label class="text-muted small d-block">NOME DO PAI</label>
+                                    <span class="fw-bold">{{ colaborador.nome_pai|default:"Não informado" }}</span>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="text-muted small d-block">NOME DA MÃE</label>
+                                    <span class="fw-bold">{{ colaborador.nome_mae|default:"Não informado" }}</span>
+                                </div>
+                            </div>
+
+                            <hr class="my-3">
+
+                            <!-- Endereço -->
+                            <h6 class="fw-bold mb-3">Endereço</h6>
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-2">
+                                    <label class="text-muted small d-block">CEP</label>
+                                    <span class="fw-bold">{{ colaborador.cep|default:"—" }}</span>
+                                </div>
+                                <div class="col-md-6">
                                     <label class="text-muted small d-block">ENDEREÇO</label>
                                     <span class="fw-bold">{{ colaborador.endereco|default:"Não informado" }}</span>
                                 </div>
+                                <div class="col-md-4">
+                                    <label class="text-muted small d-block">BAIRRO</label>
+                                    <span class="fw-bold">{{ colaborador.bairro|default:"—" }}</span>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="text-muted small d-block">CIDADE</label>
+                                    <span class="fw-bold">{{ colaborador.cidade|default:"—" }}</span>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="text-muted small d-block">UF</label>
+                                    <span class="fw-bold">{{ colaborador.uf|default:"—" }}</span>
+                                </div>
                             </div>
+
+                            <hr class="my-3">
+
+                            <!-- Identificação Web -->
+                            <h6 class="fw-bold mb-3">Identificação Web</h6>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="text-muted small d-block">E-MAIL DE ACESSO</label>
+                                    <span class="fw-bold">{{ colaborador.email_acesso|default:"Não configurado" }}</span>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="text-muted small d-block">SENHA</label>
+                                    <span class="fw-bold text-muted">••••••••</span>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="text-muted small d-block">MARCAÇÃO VIA WEB</label>
+                                    <span class="badge {% if colaborador.ponto_web_permitido %}bg-success{% else %}bg-secondary{% endif %}">
+                                        {% if colaborador.ponto_web_permitido %}Permitido{% else %}Não permitido{% endif %}
+                                    </span>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="text-muted small d-block">EXIGE FOTO</label>
+                                    <span class="badge {% if colaborador.ponto_web_foto %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+                                        {% if colaborador.ponto_web_foto %}Sim{% else %}Não{% endif %}
+                                    </span>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="text-muted small d-block">INSERÇÃO DE PONTOS</label>
+                                    <span class="badge {% if colaborador.ponto_web_inserir %}bg-success{% else %}bg-secondary{% endif %}">
+                                        {% if colaborador.ponto_web_inserir %}Permitido{% else %}Não permitido{% endif %}
+                                    </span>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="text-muted small d-block">JUSTIFICATIVAS</label>
+                                    <span class="badge {% if colaborador.ponto_web_justificativa %}bg-success{% else %}bg-secondary{% endif %}">
+                                        {% if colaborador.ponto_web_justificativa %}Permitido{% else %}Não permitido{% endif %}
+                                    </span>
+                                </div>
+                            </div>
+
                         </div>
                     </div>
                 </div>

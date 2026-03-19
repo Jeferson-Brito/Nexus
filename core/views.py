@@ -17,7 +17,7 @@ import re
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment
 from datetime import datetime
-from .models import Complaint, Store, User, Department, Escala, IndicadorDesempenho, ObservacaoDesempenho, Lista, Activity, AuditLog, StoreAudit, StoreAuditItem, StoreAuditIssue, MetaMensalGlobal, SystemNotification, Cargo, Colaborador, HistoricoProfissional, PerformanceRH
+from .models import Complaint, Store, User, Department, Escala, IndicadorDesempenho, ObservacaoDesempenho, Lista, Activity, AuditLog, StoreAudit, StoreAuditItem, StoreAuditIssue, MetaMensalGlobal, SystemNotification, Cargo, Colaborador, HistoricoProfissional, PerformanceRH, Empresa
 from .forms import ComplaintForm, StoreForm
 
 
@@ -100,31 +100,31 @@ def change_department(request, dept_id):
 
 @login_required
 def dashboard(request):
-    # Filtro por departamento
+    # Identificar o departamento atual (da sessão para admins, do usuário para outros)
     selected_dept_id = request.session.get('selected_department_id')
+    from .models import Department
     
-    if not request.user.is_administrador():
-        # Redirecionar usuários do NRS Suporte, RH e NRP para a escala
-        if request.user.department and request.user.department.name in ['NRS Suporte', 'RH', 'NRP']:
+    current_dept = None
+    if request.user.is_administrador() and selected_dept_id:
+        current_dept = Department.objects.filter(id=selected_dept_id).first()
+    elif request.user.department:
+        current_dept = request.user.department
+
+    # Redirecionamentos para departamentos com módulos próprios
+    if current_dept:
+        if current_dept.name in ['NRS Suporte', 'RH', 'NRP']:
             return redirect('escala')
-        queryset = Complaint.objects.filter(department=request.user.department)
-    else:
-        # Se houver depto na sessão, verificar se é o NRS Suporte, RH ou NRP para redirecionar
-        if selected_dept_id:
-            from .models import Department
-            current_dept = Department.objects.filter(id=selected_dept_id).first()
-            if current_dept and current_dept.name in ['NRS Suporte', 'RH', 'NRP']:
-                return redirect('escala')
-            queryset = Complaint.objects.filter(department_id=selected_dept_id)
-        else:
-            # Se é admin mas não tem depto na sessão (primeiro acesso), 
-            # tenta buscar o NRS Suporte e redirecionar
-            from .models import Department
-            nrs_dept = Department.objects.filter(name='NRS Suporte').first()
-            if nrs_dept:
-                request.session['selected_department_id'] = nrs_dept.id
-                return redirect('escala')
-            queryset = Complaint.objects.all()
+        if current_dept.name == 'Onboarding':
+            return redirect('onboarding_dev_1')
+    
+    # Se não houver depto OU se o depto não for o 'CS Clientes' (único que usa o dashboard de RA atualmente)
+    # ou se for explicitamente um depto sem módulo, mostrar tela de Boas-vindas
+    active_dashboard_depts = ['CS Clientes', 'Reclame Aqui']
+    if not current_dept or (current_dept.name not in active_dashboard_depts):
+        return render(request, 'core/welcome.html', {'current_department': current_dept})
+
+    # Se chegou aqui, é CS Clientes ou Reclame Aqui -> Mostrar Dashboard de Reclamações
+    queryset = Complaint.objects.filter(department=current_dept)
         
     # OTIMIZAÇÃO: Usar aggregate para buscar contadores em uma única query
     stats = queryset.aggregate(
@@ -1115,9 +1115,9 @@ def user_create(request):
         last_name = request.POST.get('last_name', '')
         profile_photo = request.FILES.get('profile_photo')
         
-        # Restrições de Gestor
-        if (request.user.is_gestor() or request.user.is_administrador()):
-            role = 'analista' # Gestor só cria analista
+        # Restrições de Gestor (Administrador pode tudo, Gestor só cria analista no seu depto)
+        if request.user.is_gestor() and not request.user.is_administrador():
+            role = 'analista'
             department_id = str(request.user.department_id) if request.user.department_id else None
             
         department = None
@@ -1227,10 +1227,15 @@ def user_edit(request, pk):
         user_to_edit.email = request.POST.get('email')
         role = request.POST.get('role')
         department_id = request.POST.get('department')
+        if department_id:
+            # Remover pontos de formatação (caso venham do template localizado)
+            department_id = str(department_id).replace('.', '').replace(',', '').strip()
+            
         profile_photo = request.FILES.get('profile_photo')
         
-        # Administrador pode mudar tudo, Gestor não muda role nem depto
+        # Diferentes permissões para Administrador e Gestor
         if request.user.is_administrador():
+            # Administrador pode mudar role e departamento livremente
             user_to_edit.role = role
             if department_id:
                 try:
@@ -1239,6 +1244,10 @@ def user_edit(request, pk):
                     user_to_edit.department = None
             else:
                 user_to_edit.department = None
+        elif request.user.is_gestor():
+            # Gestor NÃO muda role (conforme regra de negócio preexistente)
+            # Mas garante que o depto do usuário seja o mesmo do gestor
+            user_to_edit.department = request.user.department
         
         user_to_edit.ativo = request.POST.get('is_active') == 'on'
         user_to_edit.first_name = request.POST.get('first_name', '')
@@ -2057,7 +2066,7 @@ def escala_view(request):
     
     # Preparar dados para JSON
     turnos_data = [{
-        'id': t.id,
+        'id': str(t.id),
         'nome': t.nome,
         'horario': t.horario,
         'cor': t.cor,
@@ -2065,7 +2074,7 @@ def escala_view(request):
     } for t in turnos]
     
     analistas_data = [{
-        'id': a.id,
+        'id': str(a.id),
         'nome': a.nome,
         'turno': a.turno.nome if a.turno else None,
         'turno_id': a.turno.id if a.turno else None,
@@ -3086,15 +3095,95 @@ def api_get_system_notifications(request):
 @login_required
 def rh_colaboradores_view(request):
     """Página de listagem geral de colaboradores (Cards)"""
+    if not (request.user.is_gestor() or request.user.is_administrador() or getattr(request.user.department, 'name', '') == 'RH'):
+        messages.error(request, 'Acesso restrito para Gestores ou Departamento de RH.')
+        return redirect('dashboard')
+    
     return render(request, 'core/rh/colaboradores.html')
 
 
 @login_required
 def rh_colaborador_perfil_view(request, pk):
     """Página de perfil detalhado do colaborador (Dossiê)"""
+    if not (request.user.is_gestor() or request.user.is_administrador() or getattr(request.user.department, 'name', '') == 'RH'):
+        messages.error(request, 'Acesso restrito para Gestores ou Departamento de RH.')
+        return redirect('dashboard')
+        
     colaborador = get_object_or_404(Colaborador, pk=pk)
     departments_all = Department.objects.all().order_by('name')
     return render(request, 'core/rh/colaborador_perfil.html', {
         'colaborador': colaborador,
         'departments_all': departments_all,
     })
+
+
+@login_required
+def rh_cadastro_funcionario_view(request, pk=None):
+    """Página de cadastro/edição de funcionário (full-page, estilo Control iD)"""
+    if not (request.user.is_gestor() or request.user.is_administrador() or getattr(request.user.department, 'name', '') == 'RH'):
+        messages.error(request, 'Acesso restrito para Gestores ou Departamento de RH.')
+        return redirect('dashboard')
+        
+    colaborador = None
+    colaborador_id = ''
+    user_id = ''
+    if pk:
+        colaborador = get_object_or_404(
+            Colaborador.objects.select_related('department', 'empresa', 'superior_direto'),
+            pk=pk
+        )
+        colaborador_id = str(colaborador.pk)
+    if request.GET.get('user_id'):
+        user_id = request.GET.get('user_id')
+    page_title = 'Editar Funcionário' if colaborador else 'Novo Funcionário'
+    return render(request, 'core/rh/cadastro_funcionario.html', {
+        'colaborador': colaborador,
+        'colaborador_id': colaborador_id,
+        'user_id': user_id,
+        'page_title': page_title,
+    })
+
+
+UF_CHOICES = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG',
+              'PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO']
+
+
+@login_required
+def rh_empresas_view(request):
+    """Lista de empresas cadastradas"""
+    return render(request, 'core/rh/empresas.html')
+
+
+@login_required
+def rh_cadastro_empresa_view(request, pk=None):
+    """Cria ou edita uma empresa"""
+    empresa = None
+    empresa_id = ''
+    if pk:
+        empresa = get_object_or_404(Empresa, pk=pk)
+        empresa_id = str(empresa.pk)
+    page_title = 'Editar Empresa' if empresa else 'Nova Empresa'
+    return render(request, 'core/rh/cadastro_empresa.html', {
+        'empresa': empresa,
+        'empresa_id': empresa_id,
+        'page_title': page_title,
+        'uf_choices': UF_CHOICES,
+    })
+
+
+@login_required
+def rh_departamentos_view(request):
+    """Tela de gestão de departamentos"""
+    if not (request.user.is_gestor() or request.user.is_administrador() or getattr(request.user.department, 'name', '') == 'RH'):
+        messages.error(request, 'Acesso restrito para Gestores ou Departamento de RH.')
+        return redirect('dashboard')
+    return render(request, 'core/rh/departamentos_list.html')
+
+
+@login_required
+def rh_cargos_view(request):
+    """Tela de gestão de cargos"""
+    if not (request.user.is_gestor() or request.user.is_administrador() or getattr(request.user.department, 'name', '') == 'RH'):
+        messages.error(request, 'Acesso restrito para Gestores ou Departamento de RH.')
+        return redirect('dashboard')
+    return render(request, 'core/rh/cargos_list.html')

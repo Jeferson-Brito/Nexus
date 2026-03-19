@@ -3,57 +3,102 @@
 
 {% block content %}
 <div class="container-fluid py-4">
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h2 class="fw-bold mb-1 text-dark">Gestão de Colaboradores</h2>
-            <p class="text-muted small mb-0">Gerencie o ciclo de vida e performance do time RH</p>
-        </div>
-        <button class="btn btn-primary d-flex align-items-center gap-2" data-bs-toggle="modal"
-            data-bs-target="#modalColaborador">
-            <i class="bi bi-person-plus-fill"></i>
-            Novo Colaborador
-        </button>
-    </div>
 
-    <!-- Barra de filtros e busca -->
-    <div class="card border-0 shadow-sm mb-4 barra-filtros-colab">
-        <div class="card-body py-3 px-4">
-            <div class="row g-2 g-md-3 align-items-center">
-                <div class="col-12 col-md-4 col-lg-4">
-                    <div class="input-group input-group-sm input-group-bar">
-                        <span class="input-group-text bg-white text-muted border-end-0 rounded-start"><i class="bi bi-search"></i></span>
-                        <input type="text" id="searchColaborador" class="form-control border-start-0 rounded-end"
-                            placeholder="Buscar por nome, cargo ou CPF...">
-                    </div>
-                </div>
-                <div class="col-6 col-md-3 col-lg-2">
-                    <select id="filterDept" class="form-select form-select-sm">
-                        <option value="">Todos Departamentos</option>
-                    </select>
-                </div>
-                <div class="col-6 col-md-2 col-lg-2">
-                    <select id="filterStatus" class="form-select form-select-sm">
-                        <option value="ativo">Ativos</option>
-                        <option value="ferias">Em Férias</option>
-                        <option value="afastado">Afastados</option>
-                        <option value="desligado">Desligados</option>
-                        <option value="todos">Todos</option>
-                    </select>
-                </div>
-                <div class="col-12 col-md-3 col-lg-4 d-flex align-items-center justify-content-end gap-2">
-                    <span class="text-muted small" id="resultCount">0 de 0</span>
-                    <button class="btn btn-outline-secondary btn-sm" id="btnRefresh" title="Recarregar">
-                        <i class="bi bi-arrow-clockwise"></i>
+    <!-- Painel principal -->
+    <div class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
+        <!-- Header do painel -->
+        <div class="card-header border-0 d-flex align-items-center justify-content-between py-3 px-4" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
+            <h5 class="fw-bold mb-0 text-white">Funcionários</h5>
+            <div class="d-flex gap-2">
+                <a href="{% url 'rh_cadastro_funcionario' %}" class="btn d-flex align-items-center gap-2"
+                    style="background:rgba(255,255,255,0.2); color:#fff; border:1.5px solid rgba(255,255,255,0.6); font-weight:600; text-decoration:none;">
+                    <i class="bi bi-plus-lg"></i> Adicionar
+                </a>
+                <div class="dropdown">
+                    <button class="btn" data-bs-toggle="dropdown"
+                        style="background:rgba(255,255,255,0.15); color:#fff; border:1.5px solid rgba(255,255,255,0.6); width:38px; height:38px; padding:0; display:flex; align-items:center; justify-content:center;">
+                        <i class="bi bi-three-dots"></i>
                     </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="#" id="btnExportCSV"><i class="bi bi-download me-2"></i>Exportar CSV</a></li>
+                        <li><a class="dropdown-item" href="#" id="btnRefresh"><i class="bi bi-arrow-clockwise me-2"></i>Recarregar</a></li>
+                    </ul>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Grid de Colaboradores -->
-    <div class="row g-4" id="colaboradoresGrid">
-        <!-- Renderizado via JS -->
+        <!-- Toolbar: mostrar + filtros + busca -->
+        <div class="card-body border-bottom py-3 px-4">
+            <div class="d-flex flex-wrap align-items-center gap-3">
+                <!-- Mostrar X registros -->
+                <div class="d-flex align-items-center gap-2 text-muted small">
+                    Mostrar
+                    <select id="perPageSelect" class="form-select form-select-sm" style="width: auto;">
+                        <option value="10">10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                    registros
+                </div>
+
+                <!-- Filtro departamento -->
+                <select id="filterDept" class="form-select form-select-sm" style="width: auto; min-width: 160px;">
+                    <option value="">Todos Departamentos</option>
+                </select>
+
+                <!-- Filtro status -->
+                <select id="filterStatus" class="form-select form-select-sm" style="width: auto;">
+                    <option value="ativo">Ativos</option>
+                    <option value="ferias">Em Férias</option>
+                    <option value="afastado">Afastados</option>
+                    <option value="desligado">Desligados</option>
+                    <option value="todos">Todos</option>
+                </select>
+
+                <!-- Busca à direita -->
+                <div class="ms-auto d-flex align-items-center gap-2">
+                    <label class="text-muted small mb-0">Buscar:</label>
+                    <input type="text" id="searchColaborador" class="form-control form-control-sm"
+                        placeholder="Nome, cargo, CPF..." style="width: 220px;">
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabela -->
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" id="colaboradoresTable">
+                <thead class="table-light">
+                    <tr>
+                        <th class="px-4 py-3" style="min-width: 200px;">
+                            Nome
+                            <i class="bi bi-arrow-down-up text-muted ms-1" style="font-size: 0.75rem;"></i>
+                        </th>
+                        <th class="py-3">Empresa</th>
+                        <th class="py-3">Departamento</th>
+                        <th class="py-3">Cargo</th>
+                        <th class="py-3">Tempo de Casa</th>
+                        <th class="py-3">Status</th>
+                        <th class="py-3 text-end pe-4"></th>
+                    </tr>
+                </thead>
+                <tbody id="colaboradoresTbody">
+                    <tr>
+                        <td colspan="7" class="text-center py-5 text-muted">
+                            <div class="spinner-border spinner-border-sm me-2"></div> Carregando...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Footer: contagem + paginação -->
+        <div class="card-footer bg-white border-top d-flex align-items-center justify-content-between py-3 px-4">
+            <span class="text-muted small" id="paginacaoInfo">—</span>
+            <nav>
+                <ul class="pagination pagination-sm mb-0 gap-1" id="paginacaoControles"></ul>
+            </nav>
+        </div>
     </div>
 </div>
 
@@ -62,7 +107,7 @@
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content border shadow">
             <div class="modal-header bg-primary text-white border-0">
-                <h5 class="modal-title fw-bold" id="modalTitle">Cadastrar Colaborador</h5>
+                <h5 class="modal-title fw-bold" id="modalTitle">Cadastrar Funcionário</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
                     aria-label="Close"></button>
             </div>
@@ -149,294 +194,329 @@
 </div>
 
 <style>
-    .barra-filtros-colab .card-body { border-radius: 10px; }
-    .barra-filtros-colab .form-control,
-    .barra-filtros-colab .form-select { border-radius: 8px; }
-    .barra-filtros-colab .input-group-bar .input-group-text { border-radius: 8px 0 0 8px; }
-    .barra-filtros-colab .input-group-bar .form-control { border-radius: 0 8px 8px 0; }
-    .barra-filtros-colab #resultCount { min-width: 4rem; font-size: 0.8rem; }
-    .colaborador-card {
-        transition: transform 0.2s, box-shadow 0.2s;
-        border-radius: 12px;
-        overflow: hidden;
-    }
-    .colaborador-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08) !important;
-    }
+    /* Badge de status */
     .status-badge {
-        font-size: 0.7rem;
-        padding: 4px 10px;
+        font-size: 0.72rem;
+        padding: 3px 10px;
         border-radius: 20px;
         font-weight: 600;
-        text-transform: uppercase;
+        text-transform: capitalize;
+        display: inline-block;
     }
-    .badge-ativo { background: #d1fae5; color: #065f46; }
-    .badge-ferias { background: #dbeafe; color: #1e40af; }
+    .badge-ativo    { background: #d1fae5; color: #065f46; }
+    .badge-ferias   { background: #dbeafe; color: #1e40af; }
     .badge-afastado { background: #fef3c7; color: #92400e; }
-    .badge-desligado { background: #fee2e2; color: #991b1b; }
-    .card-usuario-sem-ficha { border: 1px dashed #dee2e6; background: #fafbfc; }
-    .card-usuario-sem-ficha:hover { border-color: #0d6efd; }
+    .badge-desligado{ background: #fee2e2; color: #991b1b; }
+    .badge-sem-ficha{ background: #f3f4f6; color: #374151; }
+
+    /* Botões de ação na linha */
+    .btn-row-action {
+        width: 32px; height: 32px;
+        border-radius: 6px;
+        border: 1px solid #e5e7eb;
+        background: #fff;
+        color: #6b7280;
+        display: inline-flex; align-items: center; justify-content: center;
+        cursor: pointer; transition: all 0.15s;
+        font-size: 0.85rem;
+        text-decoration: none;
+    }
+    .btn-row-action:hover { background: #f3f4f6; color: #2563eb; border-color: #2563eb; }
+    .btn-row-action.danger:hover { background: #fee2e2; color: #dc2626; border-color: #dc2626; }
+
+    /* Avatar miniatura */
+    .avatar-mini {
+        width: 36px; height: 36px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid #e5e7eb;
+    }
+
+    /* Paginação */
+    .pagination .page-item .page-link {
+        border-radius: 8px !important;
+        min-width: 32px; text-align: center;
+        font-size: 0.85rem;
+    }
+    .pagination .page-item.active .page-link {
+        background: #2563eb; border-color: #2563eb;
+    }
+
+    /* Linha da tabela */
+    #colaboradoresTable tbody tr { cursor: default; }
+    #colaboradoresTable thead th { font-size: 0.82rem; font-weight: 600; color: #374151; border-bottom: 1px solid #e5e7eb; }
 </style>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const grid = document.getElementById('colaboradoresGrid');
-        const searchInput = document.getElementById('searchColaborador');
-        const filterDept = document.getElementById('filterDept');
-        const filterStatus = document.getElementById('filterStatus');
-        const form = document.getElementById('formColaborador');
-        const inputFoto = document.getElementById('inputFoto');
-        const previewFoto = document.getElementById('previewFoto');
+document.addEventListener('DOMContentLoaded', function () {
+    const tbody        = document.getElementById('colaboradoresTbody');
+    const searchInput  = document.getElementById('searchColaborador');
+    const filterDept   = document.getElementById('filterDept');
+    const filterStatus = document.getElementById('filterStatus');
+    const perPage      = document.getElementById('perPageSelect');
+    const form         = document.getElementById('formColaborador');
+    const inputFoto    = document.getElementById('inputFoto');
+    const previewFoto  = document.getElementById('previewFoto');
 
-        fetch('/api/rh/auxiliar/')
-            .then(res => res.json())
+    let currentPage    = 1;
+
+    // ─── Auxiliares (departamentos, status, tipo_contrato) ───────────────────
+    fetch('/api/rh/auxiliar/')
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) return;
+            (data.departments || []).forEach(dept => {
+                const opt = `<option value="${dept.id}">${dept.name}</option>`;
+                filterDept.innerHTML += opt;
+                const fd = document.getElementById('formDept');
+                if (fd) fd.innerHTML += opt;
+            });
+            Object.entries(data.status_choices || {}).forEach(([v, l]) => {
+                const s = document.getElementById('formStatus');
+                if (s) s.innerHTML += `<option value="${v}">${l}</option>`;
+            });
+            Object.entries(data.tipo_contrato_choices || {}).forEach(([v, l]) => {
+                const s = document.getElementById('formTipoContrato');
+                if (s) s.innerHTML += `<option value="${v}">${l}</option>`;
+            });
+        });
+
+    // ─── Carregar colaboradores ───────────────────────────────────────────────
+    function loadColaboradores() {
+        currentPage = 1;
+        const params = new URLSearchParams({
+            status: filterStatus.value,
+            department: filterDept.value
+        });
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-muted">
+            <div class="spinner-border spinner-border-sm me-2"></div> Carregando...</td></tr>`;
+
+        fetch(`/api/rh/colaboradores/?${params.toString()}`)
+            .then(r => r.json())
             .then(data => {
                 if (data.success) {
-                    (data.departments || []).forEach(dept => {
-                        const opt = `<option value="${dept.id}">${dept.name}</option>`;
-                        filterDept.innerHTML += opt;
-                        const formDept = document.getElementById('formDept');
-                        if (formDept) formDept.innerHTML += opt;
-                    });
-                    Object.entries(data.status_choices || {}).forEach(([val, label]) => {
-                        const sel = document.getElementById('formStatus');
-                        if (sel) sel.innerHTML += `<option value="${val}">${label}</option>`;
-                    });
-                    Object.entries(data.tipo_contrato_choices || {}).forEach(([val, label]) => {
-                        const sel = document.getElementById('formTipoContrato');
-                        if (sel) sel.innerHTML += `<option value="${val}">${label}</option>`;
-                    });
+                    const colab    = data.colaboradores || [];
+                    const semFicha = data.usuarios_sem_ficha || [];
+                    const mostra   = (filterStatus.value === 'ativo' || filterStatus.value === 'todos');
+                    window.allColaboradores = colab.concat(mostra ? semFicha : []);
+                    renderTable(window.allColaboradores);
                 }
             });
+    }
 
-        function loadColaboradores() {
-            const params = new URLSearchParams({
-                status: filterStatus.value,
-                department: filterDept.value
-            });
-            fetch(`/api/rh/colaboradores/?${params.toString()}`)
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        const colab = data.colaboradores || [];
-                        const semFicha = data.usuarios_sem_ficha || [];
-                        const mostraUsuariosSemFicha = (filterStatus.value === 'ativo' || filterStatus.value === 'todos');
-                        window.allColaboradores = colab.concat(mostraUsuariosSemFicha ? semFicha : []);
-                        renderGrid(window.allColaboradores);
-                    }
-                });
-        }
+    // ─── Renderizar tabela com filtro + paginação ─────────────────────────────
+    function renderTable(todos) {
+        const searchTerm = (searchInput.value || '').toLowerCase().trim();
+        const searchDig  = (searchTerm.match(/\d/g) || []).join('');
 
-        function renderGrid(colaboradores) {
-            const searchTerm = (searchInput.value || '').toLowerCase().trim();
-            const reNumber = /\d/g;
-            const searchDigits = searchTerm.match(reNumber) ? searchTerm.match(reNumber).join('') : '';
-            const filtered = colaboradores.filter(c => {
-                if (!searchTerm) return true;
-                const matchNome = (c.nome || '').toLowerCase().includes(searchTerm);
-                const matchCargo = (c.cargo || '').toLowerCase().includes(searchTerm);
-                const matchCpf = searchDigits.length >= 6 && (c.cpf || '').replace(/\D/g, '').includes(searchDigits);
-                const matchEmail = (c.email || '').toLowerCase().includes(searchTerm);
-                const matchUsername = (c.username || '').toLowerCase().includes(searchTerm);
-                return matchNome || matchCargo || matchCpf || matchEmail || matchUsername;
-            });
+        const filtered = todos.filter(c => {
+            if (!searchTerm) return true;
+            return (c.nome      || '').toLowerCase().includes(searchTerm)
+                || (c.cargo     || '').toLowerCase().includes(searchTerm)
+                || (c.email     || '').toLowerCase().includes(searchTerm)
+                || (c.username  || '').toLowerCase().includes(searchTerm)
+                || (searchDig.length >= 6 && (c.cpf || '').replace(/\D/g, '').includes(searchDig));
+        });
 
-            const statusDisplay = (c) => c.status_display || c.status || '—';
-            const countEl = document.getElementById('resultCount');
-            if (countEl) countEl.textContent = filtered.length + ' de ' + colaboradores.length;
+        const pp       = parseInt(perPage.value) || 10;
+        const total    = filtered.length;
+        const totalPag = Math.max(1, Math.ceil(total / pp));
+        if (currentPage > totalPag) currentPage = totalPag;
 
-            grid.innerHTML = filtered.map(c => {
-                if (c.tipo === 'usuario_sem_ficha') {
-                    return `
-                <div class="col-xl-3 col-lg-4 col-md-6">
-                    <div class="card colaborador-card card-usuario-sem-ficha h-100">
-                        <div class="card-body text-center p-4">
-                            <img src="${c.foto_url || '{% static "img/avatar_placeholder.png" %}'}"
-                                 class="rounded-circle mb-3 border p-1"
-                                 style="width: 80px; height: 80px; object-fit: cover;">
-                            <h6 class="fw-bold mb-0">${c.nome || '—'}</h6>
-                            <p class="text-muted small mb-2">${c.cargo || 'Usuário Nexus'}</p>
-                            <div class="mb-3">
-                                <span class="badge bg-secondary">Sem ficha RH</span>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center bg-light rounded p-2 small mb-3">
-                                <div class="text-start">
-                                    <span class="text-muted d-block" style="font-size: 0.65rem;">DEPARTAMENTO</span>
-                                    <span class="fw-bold">${c.department || '—'}</span>
-                                </div>
-                            </div>
-                            <button type="button" class="btn btn-primary btn-sm w-100" onclick="criarFichaParaUsuario('${(c.user_id || '').toString().replace(/'/g, "\\'")}')">
-                                <i class="bi bi-person-plus me-1"></i> Criar ficha de colaborador
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                    `;
-                }
-                return `
-                <div class="col-xl-3 col-lg-4 col-md-6">
-                    <div class="card colaborador-card shadow-sm h-100">
-                        <div class="card-body text-center p-4">
-                            <div class="dropdown position-absolute top-0 end-0 m-2">
-                                <button class="btn btn-link text-muted p-0" data-bs-toggle="dropdown">
-                                    <i class="bi bi-three-dots-vertical"></i>
-                                </button>
-                                <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" href="/rh/colaboradores/${c.id}/">Ver Dossiê</a></li>
-                                    <li><a class="dropdown-item" href="#" onclick="editColaborador('${c.id}'); return false;">Editar</a></li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item text-danger" href="#" onclick="deleteColaborador('${c.id}', '${(c.nome || '').replace(/'/g, "\\'")}'); return false;">Excluir</a></li>
-                                </ul>
-                            </div>
-                            <img src="${c.foto_url || '{% static "img/avatar_placeholder.png" %}'}"
-                                 class="rounded-circle mb-3 border p-1"
-                                 style="width: 80px; height: 80px; object-fit: cover;">
-                            <h6 class="fw-bold mb-0">${c.nome || '—'}</h6>
-                            <p class="text-muted small mb-2">${c.cargo || '—'}</p>
-                            <div class="mb-3">
-                                <span class="status-badge badge-${c.status}">${statusDisplay(c)}</span>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center bg-light rounded p-2 small">
-                                <div class="text-start">
-                                    <span class="text-muted d-block" style="font-size: 0.65rem;">DEPARTAMENTO</span>
-                                    <span class="fw-bold">${c.department || '—'}</span>
-                                </div>
-                                <div class="text-end">
-                                    <span class="text-muted d-block" style="font-size: 0.65rem;">TEMPO</span>
-                                    <span class="fw-bold text-primary">${c.tempo_empresa || '—'}</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="card-footer bg-white border-0 p-0">
-                            <a href="/rh/colaboradores/${c.id}/" class="btn btn-light w-100 rounded-0 border-top py-2 small fw-bold">
-                                Ver Perfil Completo
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                `;
-            }).join('');
+        const inicio = (currentPage - 1) * pp;
+        const pagina = filtered.slice(inicio, inicio + pp);
 
-            if (filtered.length === 0) {
-                if (countEl) countEl.textContent = '0 de ' + colaboradores.length;
-                grid.innerHTML = '<div class="col-12 text-center py-5"><p class="text-muted">Nenhum colaborador ou usuário encontrado.</p></div>';
+        // Info
+        const info = document.getElementById('paginacaoInfo');
+        if (info) {
+            if (total === 0) {
+                info.textContent = '0 registros';
+            } else {
+                info.textContent = `${inicio + 1} a ${Math.min(inicio + pp, total)} de ${total}`;
             }
         }
 
-        window.criarFichaParaUsuario = function(userId) {
-            const userObj = (window.allColaboradores || []).find(function(x) { return x.tipo === 'usuario_sem_ficha' && x.user_id === userId; });
-            if (!userObj) return;
-            document.getElementById('colaboradorId').value = '';
-            document.getElementById('colaboradorUserId').value = userObj.user_id || '';
-            form.reset();
-            document.querySelector('[name="nome_completo"]').value = userObj.nome || '';
-            document.querySelector('[name="department_id"]').value = userObj.department_id || '';
-            document.getElementById('colaboradorUserId').value = userObj.user_id || '';
-            document.getElementById('divCargoInicial').style.display = 'none';
-            document.getElementById('modalTitle').textContent = 'Criar ficha RH para ' + (userObj.nome || 'usuário');
-            document.getElementById('previewFoto').src = userObj.foto_url || "{% static 'img/avatar_placeholder.png' %}";
-            new bootstrap.Modal(document.getElementById('modalColaborador')).show();
-        };
+        // Paginação
+        renderPaginacao(totalPag);
 
-        filterStatus.addEventListener('change', loadColaboradores);
-        filterDept.addEventListener('change', loadColaboradores);
-        searchInput.addEventListener('input', () => renderGrid(window.allColaboradores || []));
-        document.getElementById('btnRefresh').addEventListener('click', loadColaboradores);
+        // Linhas
+        if (pagina.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" class="text-center py-5 text-muted">
+                Nenhum funcionário encontrado.</td></tr>`;
+            return;
+        }
 
-        inputFoto.addEventListener('change', function (e) {
-            if (e.target.files[0]) previewFoto.src = URL.createObjectURL(e.target.files[0]);
-        });
+        tbody.innerHTML = pagina.map(c => {
+            // Usuário sem ficha
+            if (c.tipo === 'usuario_sem_ficha') {
+                return `<tr>
+                    <td class="px-4 py-3">
+                        <div class="d-flex align-items-center gap-3">
+                            <img src="${c.foto_url || '{% static "img/avatar_placeholder.png" %}'}"
+                                 class="avatar-mini" alt="">
+                            <span class="fw-semibold text-dark">${c.nome || '—'}</span>
+                        </div>
+                    </td>
+                    <td class="text-muted small">—</td>
+                    <td class="text-muted small">${c.department || '—'}</td>
+                    <td class="text-muted small">${c.cargo || 'Usuário Nexus'}</td>
+                    <td class="text-muted small">—</td>
+                    <td><span class="status-badge badge-sem-ficha">Sem ficha RH</span></td>
+                    <td class="text-end pe-4">
+                        <a href="{% url 'rh_cadastro_funcionario' %}?user_id=${c.user_id}" class="btn-row-action" title="Criar ficha RH">
+                            <i class="bi bi-person-plus"></i>
+                        </a>
+                    </td>
+                </tr>`;
+            }
 
-        form.addEventListener('submit', function (e) {
-            e.preventDefault();
-            const formData = new FormData(this);
-            fetch('/api/rh/colaboradores/save/', {
-                method: 'POST',
-                body: formData,
-                headers: { 'X-CSRFToken': '{{ csrf_token }}' }
-            })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        bootstrap.Modal.getInstance(document.getElementById('modalColaborador')).hide();
-                        Swal.fire({ icon: 'success', title: 'Sucesso!', text: data.message || 'Cadastro realizado com sucesso.', timer: 2000, showConfirmButton: false });
-                        loadColaboradores();
-                        form.reset();
-                        previewFoto.src = "{% static 'img/avatar_placeholder.png' %}";
-                        document.getElementById('modalTitle').textContent = 'Cadastrar Colaborador';
-                    } else {
-                        Swal.fire({ icon: 'error', title: 'Erro', text: data.error });
-                    }
-                });
-        });
+            // Colaborador com ficha
+            const statusLabel = c.status_display || c.status || '—';
+            return `<tr>
+                <td class="px-4 py-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <img src="${c.foto_url || '{% static "img/avatar_placeholder.png" %}'}"
+                             class="avatar-mini" alt="">
+                        <a href="/rh/colaboradores/${c.id}/" class="fw-semibold text-dark text-decoration-none">
+                            ${c.nome || '—'}
+                        </a>
+                    </div>
+                </td>
+                <td class="text-muted small">${c.empresa || '—'}</td>
+                <td class="text-muted small">${c.department || '—'}</td>
+                <td class="text-muted small">${c.cargo || '—'}</td>
+                <td class="text-muted small" style="white-space: nowrap;">${c.tempo_empresa || '—'}</td>
+                <td><span class="status-badge badge-${c.status}">${statusLabel}</span></td>
+                <td class="text-end pe-4">
+                    <div class="d-flex gap-1 justify-content-end">
+                        <a href="/rh/colaboradores/${c.id}/" class="btn-row-action" title="Ver Dossiê">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                        <button class="btn-row-action" title="Editar"
+                            onclick="editColaborador('${c.id}')">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn-row-action danger" title="Excluir"
+                            onclick="deleteColaborador('${c.id}', '${(c.nome || '').replace(/'/g, "\\'")}')">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>`;
+        }).join('');
+    }
 
-        document.querySelectorAll('[data-bs-target="#modalColaborador"]').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.getElementById('colaboradorUserId').value = '';
-                document.getElementById('colaboradorId').value = '';
-                document.getElementById('divCargoInicial').style.display = '';
-                form.reset();
-                document.getElementById('colaboradorUserId').value = '';
-                previewFoto.src = "{% static 'img/avatar_placeholder.png' %}";
-                document.getElementById('modalTitle').textContent = 'Cadastrar Colaborador';
-            });
-        });
+    // ─── Paginação ────────────────────────────────────────────────────────────
+    function renderPaginacao(total) {
+        const ul = document.getElementById('paginacaoControles');
+        if (!ul) return;
+        ul.innerHTML = '';
 
-        loadColaboradores();
+        const prev = document.createElement('li');
+        prev.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+        prev.innerHTML = `<button class="page-link" ${currentPage === 1 ? 'disabled' : ''}>‹</button>`;
+        prev.querySelector('button').onclick = () => { if (currentPage > 1) { currentPage--; renderTable(window.allColaboradores || []); } };
+        ul.appendChild(prev);
+
+        // Máx 7 páginas visíveis
+        const start = Math.max(1, currentPage - 3);
+        const end   = Math.min(total, start + 6);
+        for (let p = start; p <= end; p++) {
+            const li = document.createElement('li');
+            li.className = `page-item ${p === currentPage ? 'active' : ''}`;
+            li.innerHTML = `<button class="page-link">${p}</button>`;
+            const pg = p;
+            li.querySelector('button').onclick = () => { currentPage = pg; renderTable(window.allColaboradores || []); };
+            ul.appendChild(li);
+        }
+
+        const next = document.createElement('li');
+        next.className = `page-item ${currentPage === total ? 'disabled' : ''}`;
+        next.innerHTML = `<button class="page-link" ${currentPage === total ? 'disabled' : ''}>›</button>`;
+        next.querySelector('button').onclick = () => { if (currentPage < total) { currentPage++; renderTable(window.allColaboradores || []); } };
+        ul.appendChild(next);
+    }
+
+
+    // ─── Listeners ───────────────────────────────────────────────────────────
+    filterStatus.addEventListener('change', loadColaboradores);
+    filterDept.addEventListener('change',   loadColaboradores);
+    perPage.addEventListener('change',      () => { currentPage = 1; renderTable(window.allColaboradores || []); });
+    searchInput.addEventListener('input',   () => { currentPage = 1; renderTable(window.allColaboradores || []); });
+    document.getElementById('btnRefresh').addEventListener('click', loadColaboradores);
+
+    inputFoto.addEventListener('change', e => {
+        if (e.target.files[0]) previewFoto.src = URL.createObjectURL(e.target.files[0]);
     });
 
-    window.editColaborador = function (id) {
-        document.getElementById('colaboradorUserId').value = '';
-        fetch(`/api/rh/colaboradores/${id}/`)
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    const c = data.colaborador;
-                    const form = document.getElementById('formColaborador');
-                    form.querySelector('[name="id"]').value = c.id;
-                    form.querySelector('[name="nome_completo"]').value = c.nome_completo || '';
-                    form.querySelector('[name="cpf"]').value = c.cpf || '';
-                    form.querySelector('[name="rg"]').value = c.rg || '';
-                    const dtNasc = c.data_nascimento || '';
-                    form.querySelector('[name="data_nascimento"]').value = dtNasc.includes('/') ? dtNasc.split('/').reverse().join('-') : dtNasc;
-                    const dtAdm = c.data_admissao || '';
-                    form.querySelector('[name="data_admissao"]').value = dtAdm.includes('/') ? dtAdm.split('/').reverse().join('-') : dtAdm;
-                    form.querySelector('[name="department_id"]').value = c.department_id || '';
-                    form.querySelector('[name="cargo"]').value = c.cargo_atual || '';
-                    form.querySelector('[name="salario_atual"]').value = c.salario_atual || '';
-                    form.querySelector('[name="status"]').value = c.status || 'ativo';
-                    document.getElementById('divCargoInicial').style.display = 'none';
-                    document.getElementById('previewFoto').src = c.foto_url || "{% static 'img/avatar_placeholder.png' %}";
-                    document.getElementById('modalTitle').textContent = 'Editar Colaborador';
-                    new bootstrap.Modal(document.getElementById('modalColaborador')).show();
-                }
-            });
-    };
+    // Reset modal ao abrir para novo cadastro
+    document.querySelectorAll('[data-bs-target="#modalColaborador"]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.getElementById('colaboradorUserId').value = '';
+            document.getElementById('colaboradorId').value = '';
+            document.getElementById('divCargoInicial').style.display = '';
+            form.reset();
+            previewFoto.src = "{% static 'img/avatar_placeholder.png' %}";
+            document.getElementById('modalTitle').textContent = 'Cadastrar Funcionário';
+        });
+    });
 
-    window.deleteColaborador = function (id, nome) {
-        Swal.fire({
-            title: 'Tem certeza?',
-            text: `Deseja realmente excluir o colaborador ${nome}? Esta ação não pode ser desfeita.`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Sim, excluir!',
-            cancelButtonText: 'Cancelar'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                fetch(`/api/rh/colaboradores/${id}/delete/`, {
-                    method: 'POST',
-                    headers: { 'X-CSRFToken': '{{ csrf_token }}' }
-                })
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.success) { Swal.fire('Excluído!', data.message, 'success'); location.reload(); }
-                        else { Swal.fire('Erro!', data.error, 'error'); }
-                    });
+    // ─── Submit do form ───────────────────────────────────────────────────────
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        fetch('/api/rh/colaboradores/save/', {
+            method: 'POST',
+            body: formData,
+            headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                bootstrap.Modal.getInstance(document.getElementById('modalColaborador')).hide();
+                Swal.fire({ icon: 'success', title: 'Sucesso!', text: data.message || 'Cadastro realizado.', timer: 2000, showConfirmButton: false });
+                loadColaboradores();
+                form.reset();
+                previewFoto.src = "{% static 'img/avatar_placeholder.png' %}";
+                document.getElementById('modalTitle').textContent = 'Cadastrar Funcionário';
+            } else {
+                Swal.fire({ icon: 'error', title: 'Erro', text: data.error });
             }
         });
-    };
+    });
+
+    loadColaboradores();
+});
+
+// ─── Editar ───────────────────────────────────────────────────────────────────
+window.editColaborador = function (id) {
+    window.location.href = `/rh/colaboradores/${id}/editar/`;
+};
+
+// ─── Excluir ──────────────────────────────────────────────────────────────────
+window.deleteColaborador = function (id, nome) {
+    Swal.fire({
+        title: 'Tem certeza?',
+        text: `Deseja excluir o colaborador ${nome}? Esta ação não pode ser desfeita.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc2626',
+        cancelButtonColor:  '#6b7280',
+        confirmButtonText: 'Sim, excluir!',
+        cancelButtonText: 'Cancelar'
+    }).then(result => {
+        if (result.isConfirmed) {
+            fetch(`/api/rh/colaboradores/${id}/delete/`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) { Swal.fire('Excluído!', data.message, 'success'); location.reload(); }
+                else              { Swal.fire('Erro!', data.error, 'error'); }
+            });
+        }
+    });
+};
 </script>
 {% endblock %}

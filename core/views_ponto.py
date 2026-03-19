@@ -6,15 +6,49 @@ from django.contrib.auth.decorators import login_required
 def ponto_kiosk(request):
     """
     Tela kiosk (tablet) para registro de ponto.
-    Acesso permitido para role='tablet' ou admin/gestores que precisem testar.
-    No kiosk, não há menu lateral nem barra superior.
+    Acesso permitido para role='tablet', gestores ou colaboradores com ponto_web_permitido.
     """
-    # Se quiser forçar acesso apenas para tablet ou gestor, podemos checar
-    role = getattr(request.user, 'role', '')
-    if role not in ('tablet', 'administrador', 'gestor'):
-        return render(request, 'core/403.html')  # Pode redirecionar para outro lugar
+    from django.contrib.auth import logout
+    from django.shortcuts import redirect
     
-    return render(request, 'core/rh/ponto_kiosk.html')
+    user = request.user
+    role = getattr(user, 'role', '')
+    colaborador = getattr(user, 'colaborador_perfil', None)
+    
+    is_tablet = role == 'tablet'
+    is_staff = role in ('administrador', 'gestor')
+    can_web_punch = colaborador and colaborador.ponto_web_permitido
+    
+    if not (is_tablet or is_staff or can_web_punch):
+        logout(request)
+        return redirect('login')
+    
+    colaborador_data = None
+    if can_web_punch:
+        from core.models import RegistroPonto
+        import datetime
+        hoje = datetime.date.today()
+        tipos_hoje = list(RegistroPonto.objects.filter(
+            colaborador=colaborador, 
+            data=hoje
+        ).values_list('tipo', flat=True))
+        
+        colaborador_data = {
+            'id': colaborador.id,
+            'nome': colaborador.nome_completo,
+            'cargo': colaborador.cargo_atual,
+            'departamento': colaborador.department.name if colaborador.department else '',
+            'foto_url': colaborador.foto.url if colaborador.foto else None,
+            'tipos_hoje': tipos_hoje,
+            'exigir_foto': colaborador.ponto_web_foto,
+        }
+    
+    context = {
+        'personal_punch': can_web_punch and not is_tablet and not is_staff,
+        'colaborador_data': colaborador_data
+    }
+    
+    return render(request, 'core/rh/ponto_kiosk.html', context)
 
 
 @login_required

@@ -1,0 +1,321 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Formulário Add/Edit (Inicialmente Oculto) -->
+    <div id="deptFormContainer" class="mb-4" style="display: none;">
+        <div class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
+            <div class="card-header border-0 py-3 px-4" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
+                <h5 class="fw-bold mb-0 text-white" id="formTitle">Novo Departamento</h5>
+            </div>
+            <div class="card-body p-4">
+                <form id="deptForm">
+                    <input type="hidden" name="id" id="deptId">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Nome *</label>
+                            <input type="text" name="name" id="deptName" class="form-control" required placeholder="Digite o nome do departamento">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Fluxo de Aprovação</label>
+                            <input type="text" name="fluxo_aprovacao" id="deptFluxo" class="form-control" placeholder="Ex: Gestor -> RH">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-bold">Descrição</label>
+                            <textarea name="description" id="deptDesc" class="form-control" rows="3" placeholder="Breve descrição do departamento"></textarea>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check form-switch mt-2">
+                                <input class="form-check-input" type="checkbox" id="deptShowNav">
+                                <label class="form-check-label small fw-bold" for="deptShowNav">Exibir no Menu de Navegação</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-top d-flex gap-2">
+                        <button type="button" class="btn btn-primary px-4" id="btnSaveDept">
+                            <i class="bi bi-check-lg"></i> Salvar Departamento
+                        </button>
+                        <button type="button" class="btn btn-light border px-4" onclick="hideForm()">
+                            Cancelar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabela de Departamentos -->
+    <div id="deptListContainer" class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
+        <!-- Header -->
+        <div class="card-header border-0 d-flex align-items-center justify-content-between py-3 px-4"
+             style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
+            <h5 class="fw-bold mb-0 text-white">Departamentos</h5>
+            <button class="btn d-flex align-items-center gap-2" onclick="showForm()"
+               style="background:rgba(255,255,255,0.2); color:#fff; border:1.5px solid rgba(255,255,255,0.6); font-weight:600;">
+                <i class="bi bi-plus-lg"></i> Adicionar
+            </button>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="card-body border-bottom py-3 px-4">
+            <div class="d-flex flex-wrap align-items-center gap-3">
+                <!-- Mostrar X registros -->
+                <div class="d-flex align-items-center gap-2 text-muted small">
+                    Mostrar
+                    <select id="perPageSelect" class="form-select form-select-sm" style="width: auto;">
+                        <option value="10">10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                    registros
+                </div>
+
+                <div class="ms-auto d-flex align-items-center gap-2">
+                    <label class="text-muted small mb-0">Buscar:</label>
+                    <input type="text" id="searchInput" class="form-control form-control-sm"
+                           placeholder="Nome..." style="width: 220px;">
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabela -->
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" id="deptTable">
+                <thead class="table-light">
+                    <tr>
+                        <th class="px-4 py-3">Nome</th>
+                        <th class="py-3">Descrição</th>
+                        <th class="py-3">Fluxo de Aprovação</th>
+                        <th class="py-3 text-center">Menu?</th>
+                        <th class="py-3 text-center">Funcionários</th>
+                        <th class="py-3 text-end pe-4">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="deptTbody">
+                    <tr>
+                        <td colspan="6" class="text-center py-5 text-muted">
+                            <div class="spinner-border spinner-border-sm me-2"></div> Carregando...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Footer: contagem + paginação -->
+        <div class="card-footer bg-white border-top d-flex align-items-center justify-content-between py-3 px-4">
+            <span class="text-muted small" id="paginacaoInfo">—</span>
+            <nav>
+                <ul class="pagination pagination-sm mb-0 gap-1" id="paginacaoControles"></ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Delete -->
+<div class="modal fade" id="modalDelete" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-body text-center py-4">
+                <div class="mb-3" style="font-size:2rem; color:#ef4444;"><i class="bi bi-trash3"></i></div>
+                <h6 class="fw-bold mb-1">Excluir departamento?</h6>
+                <p class="text-muted small mb-3" id="deleteDeptNome">—</p>
+                <div class="d-flex gap-2 justify-content-center">
+                    <button class="btn btn-sm btn-light px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button class="btn btn-sm btn-danger px-4" id="btnConfirmDelete">Excluir</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let allDepts = [];
+let deleteId = null;
+let currentPage = 1;
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadDepts();
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('add') === '1') showForm();
+    document.getElementById('searchInput').addEventListener('input', () => { currentPage = 1; render(); });
+    document.getElementById('perPageSelect').addEventListener('change', () => { currentPage = 1; render(); });
+    document.getElementById('btnSaveDept').addEventListener('click', saveDept);
+    document.getElementById('btnConfirmDelete').addEventListener('click', confirmDelete);
+});
+
+function loadDepts() {
+    fetch('/api/rh/departamentos/')
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) { allDepts = data.departamentos; render(); }
+            else showError('Erro ao carregar departamentos.');
+        })
+        .catch(() => showError('Erro ao carregar departamentos.'));
+}
+
+function render() {
+    const q = document.getElementById('searchInput').value.toLowerCase();
+    const filtered = allDepts.filter(d => (d.name||'').toLowerCase().includes(q));
+    
+    const pp = parseInt(document.getElementById('perPageSelect').value) || 10;
+    const total = filtered.length;
+    const totalPag = Math.max(1, Math.ceil(total / pp));
+    if (currentPage > totalPag) currentPage = totalPag;
+
+    const inicio = (currentPage - 1) * pp;
+    const pagina = filtered.slice(inicio, inicio + pp);
+
+    // Info
+    const info = document.getElementById('paginacaoInfo');
+    if (info) {
+        if (total === 0) info.textContent = '0 registros';
+        else info.textContent = `${inicio + 1} a ${Math.min(inicio + pp, total)} de ${total}`;
+    }
+
+    // Paginação
+    renderPaginacao(totalPag);
+
+    const tbody = document.getElementById('deptTbody');
+    if (pagina.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-5 text-muted">Nenhum departamento encontrado.</td></tr>`;
+    } else {
+        tbody.innerHTML = pagina.map(d => `
+            <tr>
+                <td class="px-4 fw-semibold" style="color:#111827;">${d.name}</td>
+                <td class="text-muted small">${d.description || '—'}</td>
+                <td class="text-muted">${d.fluxo_aprovacao || '—'}</td>
+                <td class="text-center">
+                    ${d.show_in_nav ? '<span class="badge bg-success" style="font-size:10px;">SIM</span>' : '<span class="badge bg-light text-muted border" style="font-size:10px;">NÃO</span>'}
+                </td>
+                <td class="text-center"><span class="badge bg-light text-dark border">${d.num_funcionarios}</span></td>
+                <td class="text-end pe-4">
+                    <button class="btn btn-sm btn-light border me-1" onclick="showForm('${d.id}')">
+                        <i class="bi bi-pencil-square text-primary"></i>
+                    </button>
+                    <button class="btn btn-sm btn-light border" onclick="openModalDelete('${d.id}', '${d.name.replace(/'/g, "\\'")}')">
+                        <i class="bi bi-trash3 text-danger"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    }
+}
+
+function renderPaginacao(total) {
+    const ul = document.getElementById('paginacaoControles');
+    if (!ul) return;
+    ul.innerHTML = '';
+
+    const prev = document.createElement('li');
+    prev.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+    prev.innerHTML = `<button class="page-link" ${currentPage === 1 ? 'disabled' : ''}>‹</button>`;
+    prev.querySelector('button').onclick = () => { if (currentPage > 1) { currentPage--; render(); } };
+    ul.appendChild(prev);
+
+    const start = Math.max(1, currentPage - 3);
+    const end = Math.min(total, start + 6);
+    for (let p = start; p <= end; p++) {
+        const li = document.createElement('li');
+        li.className = `page-item ${p === currentPage ? 'active' : ''}`;
+        li.innerHTML = `<button class="page-link">${p}</button>`;
+        const pg = p;
+        li.querySelector('button').onclick = () => { currentPage = pg; render(); };
+        ul.appendChild(li);
+    }
+
+    const next = document.createElement('li');
+    next.className = `page-item ${currentPage === total ? 'disabled' : ''}`;
+    next.innerHTML = `<button class="page-link" ${currentPage === total ? 'disabled' : ''}>›</button>`;
+    next.querySelector('button').onclick = () => { if (currentPage < total) { currentPage++; render(); } };
+    ul.appendChild(next);
+}
+
+function showForm(id = null) {
+    if (id) {
+        const d = allDepts.find(x => x.id === id);
+        if (!d) return;
+        document.getElementById('formTitle').textContent = 'Editar Departamento';
+        document.getElementById('deptId').value = d.id;
+        document.getElementById('deptName').value = d.name;
+        document.getElementById('deptDesc').value = d.description || '';
+        document.getElementById('deptFluxo').value = d.fluxo_aprovacao || '';
+        document.getElementById('deptShowNav').checked = !!d.show_in_nav;
+    } else {
+        document.getElementById('formTitle').textContent = 'Novo Departamento';
+        document.getElementById('deptId').value = '';
+        document.getElementById('deptForm').reset();
+    }
+    document.getElementById('deptListContainer').style.display = 'none';
+    document.getElementById('deptFormContainer').style.display = 'block';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function hideForm() {
+    document.getElementById('deptFormContainer').style.display = 'none';
+    document.getElementById('deptListContainer').style.display = 'block';
+}
+
+function saveDept() {
+    const id = document.getElementById('deptId').value;
+    const data = {
+        id: id || null,
+        name: document.getElementById('deptName').value,
+        description: document.getElementById('deptDesc').value,
+        fluxo_aprovacao: document.getElementById('deptFluxo').value,
+        show_in_nav: document.getElementById('deptShowNav').checked
+    };
+
+    if (!data.name) return alert('Nome é obrigatório.');
+
+    fetch('/api/rh/departamentos/save/', {
+        method: 'POST',
+        headers: { 
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrf() 
+        },
+        body: JSON.stringify(data)
+    })
+    .then(r => r.json())
+    .then(res => {
+        if (res.success) {
+            hideForm();
+            loadDepts();
+        } else {
+            alert(res.error || 'Erro ao salvar.');
+        }
+    });
+}
+
+function openModalDelete(id, nome) {
+    deleteId = id;
+    document.getElementById('deleteDeptNome').textContent = nome;
+    new bootstrap.Modal(document.getElementById('modalDelete')).show();
+}
+
+function confirmDelete() {
+    if (!deleteId) return;
+    fetch(`/api/rh/departamentos/${deleteId}/delete/`, {
+        method: 'DELETE',
+        headers: { 'X-CSRFToken': getCsrf() }
+    })
+    .then(r => r.json())
+    .then(data => {
+        bootstrap.Modal.getInstance(document.getElementById('modalDelete')).hide();
+        if (data.success) {
+            loadDepts();
+        } else {
+            alert(data.error || 'Erro ao excluir.');
+        }
+    });
+}
+
+function showError(msg) {
+    document.getElementById('deptTbody').innerHTML = `<tr><td colspan="5" class="text-center py-5 text-danger">${msg}</td></tr>`;
+}
+
+function getCsrf() { return document.cookie.match(/csrftoken=([^;]+)/)?.[1] || ''; }
+</script>
+{% endblock %}

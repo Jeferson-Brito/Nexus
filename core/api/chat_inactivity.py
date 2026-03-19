@@ -1,4 +1,4 @@
-﻿from django.http import JsonResponse
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
@@ -53,7 +53,7 @@ def api_chat_inactivity_list(request):
             'id': str(r.id),
             'chat_id': r.chat_id,
             'chat_link': r.chat_link,
-            'chat_date': r.chat_date.strftime('%d/%m/%Y'),
+            'chat_date': r.chat_date.strftime('%d/%m/%Y') if r.chat_date else '-',
             'was_inactivity': r.was_inactivity,
             'analyst_name': r.analyst.get_full_name() or r.analyst.username,
             'status': r.status,

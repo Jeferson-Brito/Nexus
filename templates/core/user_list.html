@@ -1,8 +1,10 @@
 {% extends 'base.html' %}
+{% load l10n %}
 
 {% block title %}Usuários - Nexus{% endblock %}
 
 {% block content %}
+<div class="container-fluid py-4" style="max-width: 1400px; margin: 0 auto;">
 <div class="page-header fade-in">
     <div class="row align-items-center">
         <div class="col-md-8">
@@ -57,9 +59,11 @@
                 <select name="department" class="form-control">
                     <option value="">Todos os departamentos</option>
                     {% for dept in departments %}
+                    {% localize off %}
                     <option value="{{ dept.id }}" {% if request.GET.department == dept.id|stringformat:"i" %}selected{% endif %}>
                         {{ dept.name }}
                     </option>
+                    {% endlocalize %}
                     {% endfor %}
                 </select>
             </div>
@@ -221,5 +225,6 @@
         </div>
         {% endif %}
     </div>
+</div>
 </div>
 {% endblock %}
