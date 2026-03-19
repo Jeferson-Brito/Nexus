@@ -18,14 +18,15 @@ def departments(request):
     # Usar cache de sessão para evitar queries em cascata quando admin navega entre páginas.
     all_depts_ids = request.session.get('_all_depts_ids')
     if all_depts_ids is None:
-        all_depts = list(Department.objects.all().order_by('name'))
+        all_depts = list(Department.objects.filter(show_in_nav=True).order_by('name'))
         request.session['_all_depts_ids'] = [d.id for d in all_depts]
         # Guardar também no atributo da request para reutilização dentro da mesma request
         request._cached_all_depts = all_depts
     else:
         # Carregar apenas se não estiver na memória da request
         if not hasattr(request, '_cached_all_depts'):
-            request._cached_all_depts = list(Department.objects.all().order_by('name'))
+            all_depts = list(Department.objects.filter(show_in_nav=True).order_by('name'))
+            request._cached_all_depts = all_depts
         all_depts = request._cached_all_depts
 
     selected_dept = None

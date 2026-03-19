@@ -758,6 +758,26 @@
     </div>
 </div>
 
+<!-- Modal Visualizar Solicitação de Inatividade -->
+<div class="modal fade" id="viewChatRequestModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title"><i class="bi bi-info-circle"></i> Detalhes da Solicitação</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="view-chat-details-content">
+                    <!-- Preenchido via JS -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}
@@ -1889,7 +1909,11 @@
                 ? `<a href="${r.chat_link}" target="_blank" class="btn btn-xs btn-outline-info py-0 px-1" title="Ver Chat"><i class="bi bi-link-45deg"></i></a>`
                 : '';
 
-            let actions = '';
+            let actions = `
+                <button class="btn btn-sm btn-outline-primary" onclick="openChatInactivityDetail('${r.id}')" title="Ver Detalhes">
+                    <i class="bi bi-eye"></i>
+                </button>
+            `;
             if (isManager) {
                 actions += `
                     <button class="btn btn-sm btn-info" onclick="openReviewChatModal('${r.id}', '${r.chat_id}', '${r.analyst_name}')" title="Revisar / Alterar">
@@ -1939,6 +1963,47 @@
         `;
         document.getElementById('review-chat-notes').value = '';
         new bootstrap.Modal(document.getElementById('reviewChatInactivityModal')).show();
+    }
+
+    function openChatInactivityDetail(id) {
+        const req = allChatRequests.find(r => r.id === id);
+        if (!req) return;
+
+        const statusBadge = getChatStatusBadge(req.status);
+        const reviewedBy = req.reviewed_by_name || '-';
+        const reviewedAt = req.reviewed_at || '-';
+        const notes = req.review_notes || '<i class="text-muted">Nenhuma observação informada.</i>';
+
+        document.getElementById('view-chat-details-content').innerHTML = `
+            <div class="mb-3">
+                <div class="row mb-2">
+                    <div class="col-6"><strong>Analista:</strong><br>${req.analyst_name}</div>
+                    <div class="col-6"><strong>Chat ID:</strong><br>${req.chat_id}</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-6"><strong>Data do Chat:</strong><br>${req.chat_date}</div>
+                    <div class="col-6"><strong>Criação:</strong><br>${req.created_at}</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-6"><strong>Status:</strong><br>${statusBadge}</div>
+                </div>
+            </div>
+            
+            <div class="p-3 bg-light rounded border mb-0">
+                <p class="mb-2 fw-bold text-primary">Detalhamento da Revisão</p>
+                <div class="small mb-2">
+                    <strong>Revisado por:</strong> ${reviewedBy} 
+                    ${req.reviewed_at ? `em ${reviewedAt}` : ''}
+                </div>
+                <hr class="my-2">
+                <strong>Observações do Gestor:</strong>
+                <div class="mt-1 p-2 bg-white rounded border small" style="min-height: 60px;">
+                    ${notes}
+                </div>
+            </div>
+        `;
+
+        new bootstrap.Modal(document.getElementById('viewChatRequestModal')).show();
     }
 
     async function submitChatReview(action) {

@@ -9,6 +9,7 @@ class Department(models.Model):
     description = models.TextField(blank=True)
     slug = models.SlugField(unique=True)
     fluxo_aprovacao = models.CharField(max_length=100, blank=True, verbose_name='Fluxo de Aprovação')
+    show_in_nav = models.BooleanField(default=False, verbose_name='Exibir no Menu de Navegação')
     created_at = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):

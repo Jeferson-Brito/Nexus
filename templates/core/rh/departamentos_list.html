@@ -33,6 +33,7 @@
                         <th class="px-4 py-3">Nome</th>
                         <th class="py-3">Descrição</th>
                         <th class="py-3">Fluxo de Aprovação</th>
+                        <th class="py-3 text-center">Menu?</th>
                         <th class="py-3 text-center">Funcionários</th>
                         <th class="py-3 text-end pe-4">Ações</th>
                     </tr>
@@ -68,9 +69,13 @@
                         <label class="form-label small fw-bold">Descrição</label>
                         <textarea name="description" id="deptDesc" class="form-control form-control-sm" rows="2"></textarea>
                     </div>
-                    <div class="mb-0">
+                    <div class="mb-3">
                         <label class="form-label small fw-bold">Fluxo de Aprovação</label>
                         <input type="text" name="fluxo_aprovacao" id="deptFluxo" class="form-control form-control-sm" placeholder="Ex: Gestor -> RH">
+                    </div>
+                    <div class="form-check form-switch mb-0">
+                        <input class="form-check-input" type="checkbox" id="deptShowNav">
+                        <label class="form-check-label small fw-bold" for="deptShowNav">Exibir no Menu de Navegação</label>
                     </div>
                 </form>
             </div>
@@ -133,6 +138,9 @@ function render() {
                 <td class="px-4 fw-semibold" style="color:#111827;">${d.name}</td>
                 <td class="text-muted small">${d.description || '—'}</td>
                 <td class="text-muted">${d.fluxo_aprovacao || '—'}</td>
+                <td class="text-center">
+                    ${d.show_in_nav ? '<span class="badge bg-success" style="font-size:10px;">SIM</span>' : '<span class="badge bg-light text-muted border" style="font-size:10px;">NÃO</span>'}
+                </td>
                 <td class="text-center"><span class="badge bg-light text-dark border">${d.num_funcionarios}</span></td>
                 <td class="text-end pe-4">
                     <button class="btn btn-sm btn-light border me-1" onclick="openModalEdit('${d.id}')">
@@ -162,6 +170,7 @@ function openModalEdit(id) {
     document.getElementById('deptName').value = d.name;
     document.getElementById('deptDesc').value = d.description || '';
     document.getElementById('deptFluxo').value = d.fluxo_aprovacao || '';
+    document.getElementById('deptShowNav').checked = !!d.show_in_nav;
     new bootstrap.Modal(document.getElementById('modalDept')).show();
 }
 
@@ -171,7 +180,8 @@ function saveDept() {
         id: id || null,
         name: document.getElementById('deptName').value,
         description: document.getElementById('deptDesc').value,
-        fluxo_aprovacao: document.getElementById('deptFluxo').value
+        fluxo_aprovacao: document.getElementById('deptFluxo').value,
+        show_in_nav: document.getElementById('deptShowNav').checked
     };
 
     if (!data.name) return alert('Nome é obrigatório.');
