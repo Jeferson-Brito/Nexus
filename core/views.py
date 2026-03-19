@@ -1285,7 +1285,9 @@ def user_edit(request, pk):
             detalhes_json={'username': user_to_edit.username, 'role': user_to_edit.role}
         )
         
-        messages.success(request, f'Usuário {user_to_edit.username} atualizado!')
+        # Debug info
+        dept_name = user_to_edit.department.name if user_to_edit.department else "Nenhum"
+        messages.success(request, f'Usuário {user_to_edit.username} atualizado! Depto salvo: {dept_name} (ID recebido: {department_id})')
         return redirect('user_list')
     
     return render(request, 'core/user_form.html', {
