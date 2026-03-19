@@ -1115,9 +1115,9 @@ def user_create(request):
         last_name = request.POST.get('last_name', '')
         profile_photo = request.FILES.get('profile_photo')
         
-        # Restrições de Gestor
-        if (request.user.is_gestor() or request.user.is_administrador()):
-            role = 'analista' # Gestor só cria analista
+        # Restrições de Gestor (Administrador pode tudo, Gestor só cria analista no seu depto)
+        if request.user.is_gestor() and not request.user.is_administrador():
+            role = 'analista'
             department_id = str(request.user.department_id) if request.user.department_id else None
             
         department = None
@@ -1229,8 +1229,9 @@ def user_edit(request, pk):
         department_id = request.POST.get('department')
         profile_photo = request.FILES.get('profile_photo')
         
-        # Administrador pode mudar tudo, Gestor não muda role nem depto
+        # Diferentes permissões para Administrador e Gestor
         if request.user.is_administrador():
+            # Administrador pode mudar role e departamento livremente
             user_to_edit.role = role
             if department_id:
                 try:
@@ -1239,6 +1240,10 @@ def user_edit(request, pk):
                     user_to_edit.department = None
             else:
                 user_to_edit.department = None
+        elif request.user.is_gestor():
+            # Gestor NÃO muda role (conforme regra de negócio preexistente)
+            # Mas garante que o depto do usuário seja o mesmo do gestor
+            user_to_edit.department = request.user.department
         
         user_to_edit.ativo = request.POST.get('is_active') == 'on'
         user_to_edit.first_name = request.POST.get('first_name', '')

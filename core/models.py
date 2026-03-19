@@ -109,6 +109,21 @@ class Store(models.Model):
     def __str__(self):
         return f"{self.code} - {self.city}"
 
+    def save(self, *args, **kwargs):
+        # Se for uma atualização (já tem ID)
+        if self.pk:
+            try:
+                # Buscar o estado atual do banco
+                old_instance = Store.objects.get(pk=self.pk)
+                # Se mudou de Ativa para Suspensa
+                if old_instance.active and not self.active:
+                    # Remover todas as atribuições desta loja
+                    self.analyst_assignments.all().delete()
+            except Store.DoesNotExist:
+                pass
+        
+        super().save(*args, **kwargs)
+
 class Escala(models.Model):
     """Modelo legado ou simplificado para manter compatibilidade"""
     nome = models.CharField(max_length=100)
