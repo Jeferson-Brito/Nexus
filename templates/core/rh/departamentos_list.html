@@ -17,6 +17,18 @@
         <!-- Toolbar -->
         <div class="card-body border-bottom py-3 px-4">
             <div class="d-flex flex-wrap align-items-center gap-3">
+                <!-- Mostrar X registros -->
+                <div class="d-flex align-items-center gap-2 text-muted small">
+                    Mostrar
+                    <select id="perPageSelect" class="form-select form-select-sm" style="width: auto;">
+                        <option value="10">10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                    registros
+                </div>
+
                 <div class="ms-auto d-flex align-items-center gap-2">
                     <label class="text-muted small mb-0">Buscar:</label>
                     <input type="text" id="searchInput" class="form-control form-control-sm"
@@ -46,6 +58,14 @@
                     </tr>
                 </tbody>
             </table>
+        </div>
+
+        <!-- Footer: contagem + paginação -->
+        <div class="card-footer bg-white border-top d-flex align-items-center justify-content-between py-3 px-4">
+            <span class="text-muted small" id="paginacaoInfo">—</span>
+            <nav>
+                <ul class="pagination pagination-sm mb-0 gap-1" id="paginacaoControles"></ul>
+            </nav>
         </div>
     </div>
 </div>
@@ -107,10 +127,12 @@
 <script>
 let allDepts = [];
 let deleteId = null;
+let currentPage = 1;
 
 document.addEventListener('DOMContentLoaded', () => {
     loadDepts();
-    document.getElementById('searchInput').addEventListener('input', render);
+    document.getElementById('searchInput').addEventListener('input', () => { currentPage = 1; render(); });
+    document.getElementById('perPageSelect').addEventListener('change', () => { currentPage = 1; render(); });
     document.getElementById('btnSaveDept').addEventListener('click', saveDept);
     document.getElementById('btnConfirmDelete').addEventListener('click', confirmDelete);
 });
@@ -129,11 +151,29 @@ function render() {
     const q = document.getElementById('searchInput').value.toLowerCase();
     const filtered = allDepts.filter(d => (d.name||'').toLowerCase().includes(q));
     
+    const pp = parseInt(document.getElementById('perPageSelect').value) || 10;
+    const total = filtered.length;
+    const totalPag = Math.max(1, Math.ceil(total / pp));
+    if (currentPage > totalPag) currentPage = totalPag;
+
+    const inicio = (currentPage - 1) * pp;
+    const pagina = filtered.slice(inicio, inicio + pp);
+
+    // Info
+    const info = document.getElementById('paginacaoInfo');
+    if (info) {
+        if (total === 0) info.textContent = '0 registros';
+        else info.textContent = `${inicio + 1} a ${Math.min(inicio + pp, total)} de ${total}`;
+    }
+
+    // Paginação
+    renderPaginacao(totalPag);
+
     const tbody = document.getElementById('deptTbody');
-    if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="text-center py-5 text-muted">Nenhum departamento encontrado.</td></tr>`;
+    if (pagina.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-5 text-muted">Nenhum departamento encontrado.</td></tr>`;
     } else {
-        tbody.innerHTML = filtered.map(d => `
+        tbody.innerHTML = pagina.map(d => `
             <tr>
                 <td class="px-4 fw-semibold" style="color:#111827;">${d.name}</td>
                 <td class="text-muted small">${d.description || '—'}</td>
@@ -153,6 +193,35 @@ function render() {
             </tr>
         `).join('');
     }
+}
+
+function renderPaginacao(total) {
+    const ul = document.getElementById('paginacaoControles');
+    if (!ul) return;
+    ul.innerHTML = '';
+
+    const prev = document.createElement('li');
+    prev.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+    prev.innerHTML = `<button class="page-link" ${currentPage === 1 ? 'disabled' : ''}>‹</button>`;
+    prev.querySelector('button').onclick = () => { if (currentPage > 1) { currentPage--; render(); } };
+    ul.appendChild(prev);
+
+    const start = Math.max(1, currentPage - 3);
+    const end = Math.min(total, start + 6);
+    for (let p = start; p <= end; p++) {
+        const li = document.createElement('li');
+        li.className = `page-item ${p === currentPage ? 'active' : ''}`;
+        li.innerHTML = `<button class="page-link">${p}</button>`;
+        const pg = p;
+        li.querySelector('button').onclick = () => { currentPage = pg; render(); };
+        ul.appendChild(li);
+    }
+
+    const next = document.createElement('li');
+    next.className = `page-item ${currentPage === total ? 'disabled' : ''}`;
+    next.innerHTML = `<button class="page-link" ${currentPage === total ? 'disabled' : ''}>›</button>`;
+    next.querySelector('button').onclick = () => { if (currentPage < total) { currentPage++; render(); } };
+    ul.appendChild(next);
 }
 
 function openModalAdd() {
