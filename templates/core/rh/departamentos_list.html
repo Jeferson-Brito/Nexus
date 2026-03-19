@@ -3,12 +3,56 @@
 
 {% block content %}
 <div class="container-fluid py-4">
-    <div class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
+    <!-- Formulário Add/Edit (Inicialmente Oculto) -->
+    <div id="deptFormContainer" class="mb-4" style="display: none;">
+        <div class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
+            <div class="card-header border-0 py-3 px-4" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
+                <h5 class="fw-bold mb-0 text-white" id="formTitle">Novo Departamento</h5>
+            </div>
+            <div class="card-body p-4">
+                <form id="deptForm">
+                    <input type="hidden" name="id" id="deptId">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Nome *</label>
+                            <input type="text" name="name" id="deptName" class="form-control" required placeholder="Digite o nome do departamento">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Fluxo de Aprovação</label>
+                            <input type="text" name="fluxo_aprovacao" id="deptFluxo" class="form-control" placeholder="Ex: Gestor -> RH">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-bold">Descrição</label>
+                            <textarea name="description" id="deptDesc" class="form-control" rows="3" placeholder="Breve descrição do departamento"></textarea>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check form-switch mt-2">
+                                <input class="form-check-input" type="checkbox" id="deptShowNav">
+                                <label class="form-check-label small fw-bold" for="deptShowNav">Exibir no Menu de Navegação</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-top d-flex gap-2">
+                        <button type="button" class="btn btn-primary px-4" id="btnSaveDept">
+                            <i class="bi bi-check-lg"></i> Salvar Departamento
+                        </button>
+                        <button type="button" class="btn btn-light border px-4" onclick="hideForm()">
+                            Cancelar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabela de Departamentos -->
+    <div id="deptListContainer" class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
         <!-- Header -->
         <div class="card-header border-0 d-flex align-items-center justify-content-between py-3 px-4"
              style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
             <h5 class="fw-bold mb-0 text-white">Departamentos</h5>
-            <button class="btn d-flex align-items-center gap-2" onclick="openModalAdd()"
+            <button class="btn d-flex align-items-center gap-2" onclick="showForm()"
                style="background:rgba(255,255,255,0.2); color:#fff; border:1.5px solid rgba(255,255,255,0.6); font-weight:600;">
                 <i class="bi bi-plus-lg"></i> Adicionar
             </button>
@@ -52,7 +96,7 @@
                 </thead>
                 <tbody id="deptTbody">
                     <tr>
-                        <td colspan="5" class="text-center py-5 text-muted">
+                        <td colspan="6" class="text-center py-5 text-muted">
                             <div class="spinner-border spinner-border-sm me-2"></div> Carregando...
                         </td>
                     </tr>
@@ -66,43 +110,6 @@
             <nav>
                 <ul class="pagination pagination-sm mb-0 gap-1" id="paginacaoControles"></ul>
             </nav>
-        </div>
-    </div>
-</div>
-
-<!-- Modal Add/Edit -->
-<div class="modal fade" id="modalDept" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow">
-            <div class="modal-header border-bottom-0 pb-0">
-                <h5 class="modal-title fw-bold" id="modalTitle">Novo Departamento</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body pt-2">
-                <form id="deptForm">
-                    <input type="hidden" name="id" id="deptId">
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold">Nome *</label>
-                        <input type="text" name="name" id="deptName" class="form-control form-control-sm" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold">Descrição</label>
-                        <textarea name="description" id="deptDesc" class="form-control form-control-sm" rows="2"></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold">Fluxo de Aprovação</label>
-                        <input type="text" name="fluxo_aprovacao" id="deptFluxo" class="form-control form-control-sm" placeholder="Ex: Gestor -> RH">
-                    </div>
-                    <div class="form-check form-switch mb-0">
-                        <input class="form-check-input" type="checkbox" id="deptShowNav">
-                        <label class="form-check-label small fw-bold" for="deptShowNav">Exibir no Menu de Navegação</label>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer border-top-0 pt-0">
-                <button type="button" class="btn btn-sm btn-light px-4" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-sm btn-primary px-4" id="btnSaveDept">Salvar</button>
-            </div>
         </div>
     </div>
 </div>
@@ -131,6 +138,8 @@ let currentPage = 1;
 
 document.addEventListener('DOMContentLoaded', () => {
     loadDepts();
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('add') === '1') showForm();
     document.getElementById('searchInput').addEventListener('input', () => { currentPage = 1; render(); });
     document.getElementById('perPageSelect').addEventListener('change', () => { currentPage = 1; render(); });
     document.getElementById('btnSaveDept').addEventListener('click', saveDept);
@@ -183,7 +192,7 @@ function render() {
                 </td>
                 <td class="text-center"><span class="badge bg-light text-dark border">${d.num_funcionarios}</span></td>
                 <td class="text-end pe-4">
-                    <button class="btn btn-sm btn-light border me-1" onclick="openModalEdit('${d.id}')">
+                    <button class="btn btn-sm btn-light border me-1" onclick="showForm('${d.id}')">
                         <i class="bi bi-pencil-square text-primary"></i>
                     </button>
                     <button class="btn btn-sm btn-light border" onclick="openModalDelete('${d.id}', '${d.name.replace(/'/g, "\\'")}')">
@@ -224,23 +233,29 @@ function renderPaginacao(total) {
     ul.appendChild(next);
 }
 
-function openModalAdd() {
-    document.getElementById('modalTitle').textContent = 'Novo Departamento';
-    document.getElementById('deptId').value = '';
-    document.getElementById('deptForm').reset();
-    new bootstrap.Modal(document.getElementById('modalDept')).show();
+function showForm(id = null) {
+    if (id) {
+        const d = allDepts.find(x => x.id === id);
+        if (!d) return;
+        document.getElementById('formTitle').textContent = 'Editar Departamento';
+        document.getElementById('deptId').value = d.id;
+        document.getElementById('deptName').value = d.name;
+        document.getElementById('deptDesc').value = d.description || '';
+        document.getElementById('deptFluxo').value = d.fluxo_aprovacao || '';
+        document.getElementById('deptShowNav').checked = !!d.show_in_nav;
+    } else {
+        document.getElementById('formTitle').textContent = 'Novo Departamento';
+        document.getElementById('deptId').value = '';
+        document.getElementById('deptForm').reset();
+    }
+    document.getElementById('deptListContainer').style.display = 'none';
+    document.getElementById('deptFormContainer').style.display = 'block';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-function openModalEdit(id) {
-    const d = allDepts.find(x => x.id === id);
-    if (!d) return;
-    document.getElementById('modalTitle').textContent = 'Editar Departamento';
-    document.getElementById('deptId').value = d.id;
-    document.getElementById('deptName').value = d.name;
-    document.getElementById('deptDesc').value = d.description || '';
-    document.getElementById('deptFluxo').value = d.fluxo_aprovacao || '';
-    document.getElementById('deptShowNav').checked = !!d.show_in_nav;
-    new bootstrap.Modal(document.getElementById('modalDept')).show();
+function hideForm() {
+    document.getElementById('deptFormContainer').style.display = 'none';
+    document.getElementById('deptListContainer').style.display = 'block';
 }
 
 function saveDept() {
@@ -266,7 +281,7 @@ function saveDept() {
     .then(r => r.json())
     .then(res => {
         if (res.success) {
-            bootstrap.Modal.getInstance(document.getElementById('modalDept')).hide();
+            hideForm();
             loadDepts();
         } else {
             alert(res.error || 'Erro ao salvar.');

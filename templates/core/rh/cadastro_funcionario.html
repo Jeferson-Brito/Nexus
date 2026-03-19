@@ -169,7 +169,7 @@
                                 <select name="department_id" id="formDept" class="form-select" required>
                                     <option value="">Selecione</option>
                                 </select>
-                                <a href="{% url 'rh_departamentos' %}" class="btn btn-sm btn-primary mt-2 rounded-pill px-3"
+                                <a href="{% url 'rh_departamentos' %}?add=1" class="btn btn-sm btn-primary mt-2 rounded-pill px-3"
                                         style="font-size:.75rem;">
                                     <i class="bi bi-plus-lg me-1"></i> Criar novo departamento
                                 </a>
@@ -191,7 +191,7 @@
                                 <select name="cargo" id="formCargo" class="form-select" required>
                                     <option value="">Selecione o departamento primeiro</option>
                                 </select>
-                                <a href="{% url 'rh_cargos' %}" class="btn btn-sm btn-primary mt-2 rounded-pill px-3"
+                                <a href="{% url 'rh_cargos' %}?add=1" class="btn btn-sm btn-primary mt-2 rounded-pill px-3"
                                         style="font-size:.75rem;">
                                     <i class="bi bi-plus-lg me-1"></i> Criar novo cargo
                                 </a>

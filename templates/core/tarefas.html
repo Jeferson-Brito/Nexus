@@ -917,7 +917,7 @@
                         <i class="bi bi-pencil"></i>
                     </button>
                     <button class="btn btn-sm btn-outline-danger" title="Excluir"
-                        onclick="deleteTask(${t.id})">
+                        onclick="deleteTask('${t.id}')">
                         <i class="bi bi-trash"></i>
                     </button>
                 ` : '';
@@ -927,7 +927,7 @@
                     <td class="text-center">
                         <input class="form-check-input" type="checkbox" 
                             ${t.status === 'concluida' ? 'checked' : ''}
-                            onchange="toggleTask(${t.id}, this.checked)">
+                            onchange="toggleTask('${t.id}', this.checked)">
                     </td>
                     <td>
                         <span class="${t.status === 'concluida' ? 'text-decoration-line-through text-muted' : ''}">${t.title}</span>
@@ -1385,7 +1385,7 @@
                     <td><small>${viewedInfo}</small></td>
                     <td><small>${date}</small></td>
                     <td>
-                        <button class="btn btn-sm btn-outline-primary" onclick="openRefundDetail(${r.id})" title="Ver Detalhes">
+                        <button class="btn btn-sm btn-outline-primary" onclick="openRefundDetail('${r.id}')" title="Ver Detalhes">
                             <i class="bi bi-eye"></i>
                         </button>
                     </td>
@@ -1474,17 +1474,17 @@
 
                 // Botão de edição para quem tem permissão (NRS Suporte, gestor, admin)
                 if (r.can_edit && r.status === 'aberta') {
-                    footerButtons = `<button class="btn btn-primary me-2" onclick="openEditRefundModal(${r.id})"><i class="bi bi-pencil"></i> Editar</button>` + footerButtons;
+                    footerButtons = `<button class="btn btn-primary me-2" onclick="openEditRefundModal('${r.id}')"><i class="bi bi-pencil"></i> Editar</button>` + footerButtons;
                 }
 
                 // Botão de cancelamento para gestores
                 if (isManager && r.status === 'aberta' && !r.cancellation_requested) {
-                    footerButtons += `<button type="button" class="btn btn-warning ms-2" onclick="requestCancellation(${r.id})"><i class="bi bi-x-circle"></i> Solicitar Cancelamento</button>`;
+                    footerButtons += `<button type="button" class="btn btn-warning ms-2" onclick="requestCancellation('${r.id}')"><i class="bi bi-x-circle"></i> Solicitar Cancelamento</button>`;
                 }
 
                 // Botão de exclusão para gestores e administradores
                 if (isManager) {
-                    footerButtons += `<button type="button" class="btn btn-danger ms-2" onclick="confirmDeleteRefund(${r.id})"><i class="bi bi-trash"></i> Excluir</button>`;
+                    footerButtons += `<button type="button" class="btn btn-danger ms-2" onclick="confirmDeleteRefund('${r.id}')"><i class="bi bi-trash"></i> Excluir</button>`;
                 }
                 document.getElementById('refund-detail-footer').innerHTML = footerButtons;
 

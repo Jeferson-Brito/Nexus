@@ -3,12 +3,52 @@
 
 {% block content %}
 <div class="container-fluid py-4">
-    <div class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
+    <!-- Formulário Add/Edit (Inicialmente Oculto) -->
+    <div id="cargoFormContainer" class="mb-4" style="display: none;">
+        <div class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
+            <div class="card-header border-0 py-3 px-4" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
+                <h5 class="fw-bold mb-0 text-white" id="formTitle">Novo Cargo</h5>
+            </div>
+            <div class="card-body p-4">
+                <form id="cargoForm">
+                    <input type="hidden" name="id" id="cargoId">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Nome do Cargo *</label>
+                            <input type="text" name="nome" id="cargoNome" class="form-control" required placeholder="Ex: Analista de Suporte">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Departamento *</label>
+                            <select name="department_id" id="cargoDept" class="form-select" required>
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-bold">Descrição</label>
+                            <textarea name="descricao" id="cargoDesc" class="form-control" rows="3" placeholder="Descrição das responsabilidades do cargo"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-top d-flex gap-2">
+                        <button type="button" class="btn btn-primary px-4" id="btnSaveCargo">
+                            <i class="bi bi-check-lg"></i> Salvar Cargo
+                        </button>
+                        <button type="button" class="btn btn-light border px-4" onclick="hideForm()">
+                            Cancelar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabela de Cargos -->
+    <div id="cargoListContainer" class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
         <!-- Header -->
         <div class="card-header border-0 d-flex align-items-center justify-content-between py-3 px-4"
              style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
             <h5 class="fw-bold mb-0 text-white">Cargos</h5>
-            <button class="btn d-flex align-items-center gap-2" onclick="openModalAdd()"
+            <button class="btn d-flex align-items-center gap-2" onclick="showForm()"
                style="background:rgba(255,255,255,0.2); color:#fff; border:1.5px solid rgba(255,255,255,0.6); font-weight:600;">
                 <i class="bi bi-plus-lg"></i> Adicionar
             </button>
@@ -68,41 +108,6 @@
     </div>
 </div>
 
-<!-- Modal Add/Edit -->
-<div class="modal fade" id="modalCargo" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow">
-            <div class="modal-header border-bottom-0 pb-0">
-                <h5 class="modal-title fw-bold" id="modalTitle">Novo Cargo</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body pt-2">
-                <form id="cargoForm">
-                    <input type="hidden" name="id" id="cargoId">
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold">Nome do Cargo *</label>
-                        <input type="text" name="nome" id="cargoNome" class="form-control form-control-sm" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold">Departamento *</label>
-                        <select name="department_id" id="cargoDept" class="form-select form-select-sm" required>
-                            <option value="">Selecione...</option>
-                        </select>
-                    </div>
-                    <div class="mb-0">
-                        <label class="form-label small fw-bold">Descrição</label>
-                        <textarea name="descricao" id="cargoDesc" class="form-control form-control-sm" rows="3"></textarea>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer border-top-0 pt-0">
-                <button type="button" class="btn btn-sm btn-light px-4" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-sm btn-primary px-4" id="btnSaveCargo">Salvar</button>
-            </div>
-        </div>
-    </div>
-</div>
-
 <!-- Modal Delete -->
 <div class="modal fade" id="modalDelete" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered modal-sm">
@@ -128,6 +133,8 @@ let currentPage = 1;
 
 document.addEventListener('DOMContentLoaded', () => {
     loadData();
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('add') === '1') showForm();
     document.getElementById('searchInput').addEventListener('input', () => { currentPage = 1; render(); });
     document.getElementById('perPageSelect').addEventListener('change', () => { currentPage = 1; render(); });
     document.getElementById('btnSaveCargo').addEventListener('click', saveCargo);
@@ -189,7 +196,7 @@ function render() {
                 <td><span class="badge bg-light text-primary border">${c.department_name}</span></td>
                 <td class="text-muted small">${c.descricao || '—'}</td>
                 <td class="text-end pe-4">
-                    <button class="btn btn-sm btn-light border me-1" onclick="openModalEdit('${c.id}')">
+                    <button class="btn btn-sm btn-light border me-1" onclick="showForm('${c.id}')">
                         <i class="bi bi-pencil-square text-primary"></i>
                     </button>
                     <button class="btn btn-sm btn-light border" onclick="openModalDelete('${c.id}', '${c.nome.replace(/'/g, "\\'")}')">
@@ -230,22 +237,28 @@ function renderPaginacao(total) {
     ul.appendChild(next);
 }
 
-function openModalAdd() {
-    document.getElementById('modalTitle').textContent = 'Novo Cargo';
-    document.getElementById('cargoId').value = '';
-    document.getElementById('cargoForm').reset();
-    new bootstrap.Modal(document.getElementById('modalCargo')).show();
+function showForm(id = null) {
+    if (id) {
+        const c = allCargos.find(x => x.id === id);
+        if (!c) return;
+        document.getElementById('formTitle').textContent = 'Editar Cargo';
+        document.getElementById('cargoId').value = c.id;
+        document.getElementById('cargoNome').value = c.nome;
+        document.getElementById('cargoDept').value = c.department_id;
+        document.getElementById('cargoDesc').value = c.descricao || '';
+    } else {
+        document.getElementById('formTitle').textContent = 'Novo Cargo';
+        document.getElementById('cargoId').value = '';
+        document.getElementById('cargoForm').reset();
+    }
+    document.getElementById('cargoListContainer').style.display = 'none';
+    document.getElementById('cargoFormContainer').style.display = 'block';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-function openModalEdit(id) {
-    const c = allCargos.find(x => x.id === id);
-    if (!c) return;
-    document.getElementById('modalTitle').textContent = 'Editar Cargo';
-    document.getElementById('cargoId').value = c.id;
-    document.getElementById('cargoNome').value = c.nome;
-    document.getElementById('cargoDept').value = c.department_id;
-    document.getElementById('cargoDesc').value = c.descricao || '';
-    new bootstrap.Modal(document.getElementById('modalCargo')).show();
+function hideForm() {
+    document.getElementById('cargoFormContainer').style.display = 'none';
+    document.getElementById('cargoListContainer').style.display = 'block';
 }
 
 function saveCargo() {
@@ -270,7 +283,7 @@ function saveCargo() {
     .then(r => r.json())
     .then(res => {
         if (res.success) {
-            bootstrap.Modal.getInstance(document.getElementById('modalCargo')).hide();
+            hideForm();
             loadData();
         } else {
             alert(res.error || 'Erro ao salvar.');

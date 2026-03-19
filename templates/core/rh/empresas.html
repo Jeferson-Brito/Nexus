@@ -190,15 +190,25 @@ function render() {
 
     // Paginação
     const ul = document.getElementById('paginacaoControles');
-    if (pages <= 1) { ul.innerHTML = ''; return; }
-    let html = `<li class="page-item ${currentPage===1?'disabled':''}">
-        <a class="page-link" href="#" onclick="goPage(${currentPage-1});return false;">‹</a></li>`;
+    if (!ul) return;
+    
+    let html = `<li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+        <a class="page-link" href="#" onclick="goPage(${currentPage-1});return false;" aria-label="Anterior">
+            <span aria-hidden="true">‹</span>
+        </a>
+    </li>`;
+    
     for (let i = 1; i <= pages; i++) {
-        html += `<li class="page-item ${i===currentPage?'active':''}">
-            <a class="page-link" href="#" onclick="goPage(${i});return false;">${i}</a></li>`;
+        html += `<li class="page-item ${i === currentPage ? 'active' : ''}">
+            <a class="page-link" href="#" onclick="goPage(${i});return false;">${i}</a>
+        </li>`;
     }
-    html += `<li class="page-item ${currentPage===pages?'disabled':''}">
-        <a class="page-link" href="#" onclick="goPage(${currentPage+1});return false;">›</a></li>`;
+    
+    html += `<li class="page-item ${currentPage === pages ? 'disabled' : ''}">
+        <a class="page-link" href="#" onclick="goPage(${currentPage+1});return false;" aria-label="Próximo">
+            <span aria-hidden="true">›</span>
+        </a>
+    </li>`;
     ul.innerHTML = html;
 }
 
