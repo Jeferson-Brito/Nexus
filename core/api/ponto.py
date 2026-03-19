@@ -150,6 +150,7 @@ def buscar_colaborador(request):
         'departamento': encontrado.department.name if encontrado.department else '',
         'foto_url': foto_url,
         'tipos_hoje': tipos_hoje,
+        'exigir_foto': encontrado.ponto_web_foto,
     })
 
 
@@ -183,8 +184,14 @@ def registrar_ponto(request):
 
     try:
         colaborador = Colaborador.objects.get(id=int(colaborador_id), status='ativo')
-    except (Colaborador.DoesNotExist, ValueError, TypeError):
-        return JsonResponse({'erro': 'Colaborador não encontrado'}, status=404)
+    except Colaborador.DoesNotExist:
+        return JsonResponse({'erro': f'Colaborador não encontrado para id "{colaborador_id}".'}, status=404)
+    except ValueError:
+        return JsonResponse({'erro': f'ValueError: id "{colaborador_id}" não é inteiro.'}, status=404)
+    except TypeError:
+        return JsonResponse({'erro': f'TypeError: id "{colaborador_id}" é inválido.'}, status=404)
+    except Exception as e:
+        return JsonResponse({'erro': f'Unknown Error: {str(e)}'}, status=500)
 
     agora = timezone.localtime(timezone.now())
     data_hoje = agora.date()

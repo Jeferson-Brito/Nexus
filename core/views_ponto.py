@@ -39,7 +39,8 @@ def ponto_kiosk(request):
             'cargo': colaborador.cargo_atual,
             'departamento': colaborador.department.name if colaborador.department else '',
             'foto_url': colaborador.foto.url if colaborador.foto else None,
-            'tipos_hoje': tipos_hoje
+            'tipos_hoje': tipos_hoje,
+            'exigir_foto': colaborador.ponto_web_foto,
         }
     
     context = {

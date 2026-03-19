@@ -537,3 +537,143 @@ def api_delete_empresa(request, pk):
     except Exception as ex:
         logger.error(f"Erro ao excluir empresa: {ex}")
         return JsonResponse({'success': False, 'error': str(ex)}, status=500)
+
+# ─────────────────────────────────────────────
+#  DEPARTAMENTOS
+# ─────────────────────────────────────────────
+
+@login_required
+@require_http_methods(["GET"])
+def api_departamentos_list(request):
+    """Lista todos os departamentos com contagem de funcionários"""
+    try:
+        from django.db.models import Count
+        depts = Department.objects.annotate(num_funcionarios=Count('colaboradores_rh'))
+        return JsonResponse({'success': True, 'departamentos': [
+            {
+                'id': str(d.id),
+                'name': d.name,
+                'description': d.description,
+                'fluxo_aprovacao': d.fluxo_aprovacao,
+                'num_funcionarios': d.num_funcionarios,
+            } for d in depts
+        ]})
+    except Exception as ex:
+        return JsonResponse({'success': False, 'error': str(ex)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def api_save_departamento(request):
+    """Cria ou atualiza um departamento"""
+    try:
+        data = json.loads(request.body)
+        pk = data.get('id')
+        
+        with transaction.atomic():
+            if pk:
+                dept = get_object_or_404(Department, pk=pk)
+            else:
+                dept = Department()
+            
+            dept.name = data.get('name', '')
+            dept.description = data.get('description', '')
+            dept.fluxo_aprovacao = data.get('fluxo_aprovacao', '')
+            
+            # Gerar slug se for novo
+            if not pk:
+                from django.utils.text import slugify
+                dept.slug = slugify(dept.name)
+                # Garantir unicidade
+                base_slug = dept.slug
+                counter = 1
+                while Department.objects.filter(slug=dept.slug).exists():
+                    dept.slug = f"{base_slug}-{counter}"
+                    counter += 1
+            
+            dept.save()
+
+        return JsonResponse({'success': True, 'message': 'Departamento salvo com sucesso.', 'id': str(dept.id)})
+    except Exception as ex:
+        logger.error(f"Erro ao salvar departamento: {ex}")
+        return JsonResponse({'success': False, 'error': str(ex)}, status=500)
+
+
+@login_required
+@require_http_methods(["DELETE"])
+def api_delete_departamento(request, pk):
+    """Exclui um departamento"""
+    try:
+        dept = get_object_or_404(Department, pk=pk)
+        # Verificar se existem colaboradores vinculados
+        if dept.colaboradores_rh.exists():
+            return JsonResponse({'success': False, 'error': 'Não é possível excluir um departamento que possui colaboradores.'}, status=400)
+        
+        dept.delete()
+        return JsonResponse({'success': True, 'message': 'Departamento excluído com sucesso.'})
+    except Exception as ex:
+        logger.error(f"Erro ao excluir departamento: {ex}")
+        return JsonResponse({'success': False, 'error': str(ex)}, status=500)
+
+
+# ─────────────────────────────────────────────
+#  CARGOS
+# ─────────────────────────────────────────────
+
+from ..models import Cargo
+
+@login_required
+@require_http_methods(["GET"])
+def api_cargos_list(request):
+    """Lista todos os cargos"""
+    try:
+        cargos = Cargo.objects.all().select_related('department')
+        return JsonResponse({'success': True, 'cargos': [
+            {
+                'id': str(c.id),
+                'nome': c.nome,
+                'department_id': str(c.department_id),
+                'department_name': c.department.name if c.department else '',
+                'descricao': c.descricao,
+            } for c in cargos
+        ]})
+    except Exception as ex:
+        return JsonResponse({'success': False, 'error': str(ex)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def api_save_cargo(request):
+    """Cria ou atualiza um cargo"""
+    try:
+        data = json.loads(request.body)
+        pk = data.get('id')
+        
+        with transaction.atomic():
+            if pk:
+                cargo = get_object_or_404(Cargo, pk=pk)
+            else:
+                cargo = Cargo()
+            
+            cargo.nome = data.get('nome', '')
+            cargo.department_id = data.get('department_id')
+            cargo.descricao = data.get('descricao', '')
+            cargo.save()
+
+        return JsonResponse({'success': True, 'message': 'Cargo salvo com sucesso.', 'id': str(cargo.id)})
+    except Exception as ex:
+        logger.error(f"Erro ao salvar cargo: {ex}")
+        return JsonResponse({'success': False, 'error': str(ex)}, status=500)
+
+
+@login_required
+@require_http_methods(["DELETE"])
+def api_delete_cargo(request, pk):
+    """Exclui um cargo"""
+    try:
+        cargo = get_object_or_404(Cargo, pk=pk)
+        cargo.delete()
+        return JsonResponse({'success': True, 'message': 'Cargo excluído com sucesso.'})
+    except Exception as ex:
+        logger.error(f"Erro ao excluir cargo: {ex}")
+        return JsonResponse({'success': False, 'error': str(ex)}, status=500)

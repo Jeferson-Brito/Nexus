@@ -8,6 +8,7 @@ class Department(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
     slug = models.SlugField(unique=True)
+    fluxo_aprovacao = models.CharField(max_length=100, blank=True, verbose_name='Fluxo de Aprovação')
     created_at = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):

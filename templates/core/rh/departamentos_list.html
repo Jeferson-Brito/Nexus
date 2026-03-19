@@ -1,0 +1,227 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
+        <!-- Header -->
+        <div class="card-header border-0 d-flex align-items-center justify-content-between py-3 px-4"
+             style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
+            <h5 class="fw-bold mb-0 text-white">Departamentos</h5>
+            <button class="btn d-flex align-items-center gap-2" onclick="openModalAdd()"
+               style="background:rgba(255,255,255,0.2); color:#fff; border:1.5px solid rgba(255,255,255,0.6); font-weight:600;">
+                <i class="bi bi-plus-lg"></i> Adicionar
+            </button>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="card-body border-bottom py-3 px-4">
+            <div class="d-flex flex-wrap align-items-center gap-3">
+                <div class="ms-auto d-flex align-items-center gap-2">
+                    <label class="text-muted small mb-0">Buscar:</label>
+                    <input type="text" id="searchInput" class="form-control form-control-sm"
+                           placeholder="Nome..." style="width: 220px;">
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabela -->
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" id="deptTable">
+                <thead class="table-light">
+                    <tr>
+                        <th class="px-4 py-3">Nome</th>
+                        <th class="py-3">Descrição</th>
+                        <th class="py-3">Fluxo de Aprovação</th>
+                        <th class="py-3 text-center">Funcionários</th>
+                        <th class="py-3 text-end pe-4">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="deptTbody">
+                    <tr>
+                        <td colspan="5" class="text-center py-5 text-muted">
+                            <div class="spinner-border spinner-border-sm me-2"></div> Carregando...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Add/Edit -->
+<div class="modal fade" id="modalDept" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title fw-bold" id="modalTitle">Novo Departamento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body pt-2">
+                <form id="deptForm">
+                    <input type="hidden" name="id" id="deptId">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Nome *</label>
+                        <input type="text" name="name" id="deptName" class="form-control form-control-sm" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Descrição</label>
+                        <textarea name="description" id="deptDesc" class="form-control form-control-sm" rows="2"></textarea>
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label small fw-bold">Fluxo de Aprovação</label>
+                        <input type="text" name="fluxo_aprovacao" id="deptFluxo" class="form-control form-control-sm" placeholder="Ex: Gestor -> RH">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-top-0 pt-0">
+                <button type="button" class="btn btn-sm btn-light px-4" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-sm btn-primary px-4" id="btnSaveDept">Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Delete -->
+<div class="modal fade" id="modalDelete" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-body text-center py-4">
+                <div class="mb-3" style="font-size:2rem; color:#ef4444;"><i class="bi bi-trash3"></i></div>
+                <h6 class="fw-bold mb-1">Excluir departamento?</h6>
+                <p class="text-muted small mb-3" id="deleteDeptNome">—</p>
+                <div class="d-flex gap-2 justify-content-center">
+                    <button class="btn btn-sm btn-light px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button class="btn btn-sm btn-danger px-4" id="btnConfirmDelete">Excluir</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let allDepts = [];
+let deleteId = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadDepts();
+    document.getElementById('searchInput').addEventListener('input', render);
+    document.getElementById('btnSaveDept').addEventListener('click', saveDept);
+    document.getElementById('btnConfirmDelete').addEventListener('click', confirmDelete);
+});
+
+function loadDepts() {
+    fetch('/api/rh/departamentos/')
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) { allDepts = data.departamentos; render(); }
+            else showError('Erro ao carregar departamentos.');
+        })
+        .catch(() => showError('Erro ao carregar departamentos.'));
+}
+
+function render() {
+    const q = document.getElementById('searchInput').value.toLowerCase();
+    const filtered = allDepts.filter(d => (d.name||'').toLowerCase().includes(q));
+    
+    const tbody = document.getElementById('deptTbody');
+    if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center py-5 text-muted">Nenhum departamento encontrado.</td></tr>`;
+    } else {
+        tbody.innerHTML = filtered.map(d => `
+            <tr>
+                <td class="px-4 fw-semibold" style="color:#111827;">${d.name}</td>
+                <td class="text-muted small">${d.description || '—'}</td>
+                <td class="text-muted">${d.fluxo_aprovacao || '—'}</td>
+                <td class="text-center"><span class="badge bg-light text-dark border">${d.num_funcionarios}</span></td>
+                <td class="text-end pe-4">
+                    <button class="btn btn-sm btn-light border me-1" onclick="openModalEdit('${d.id}')">
+                        <i class="bi bi-pencil-square text-primary"></i>
+                    </button>
+                    <button class="btn btn-sm btn-light border" onclick="openModalDelete('${d.id}', '${d.name.replace(/'/g, "\\'")}')">
+                        <i class="bi bi-trash3 text-danger"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    }
+}
+
+function openModalAdd() {
+    document.getElementById('modalTitle').textContent = 'Novo Departamento';
+    document.getElementById('deptId').value = '';
+    document.getElementById('deptForm').reset();
+    new bootstrap.Modal(document.getElementById('modalDept')).show();
+}
+
+function openModalEdit(id) {
+    const d = allDepts.find(x => x.id === id);
+    if (!d) return;
+    document.getElementById('modalTitle').textContent = 'Editar Departamento';
+    document.getElementById('deptId').value = d.id;
+    document.getElementById('deptName').value = d.name;
+    document.getElementById('deptDesc').value = d.description || '';
+    document.getElementById('deptFluxo').value = d.fluxo_aprovacao || '';
+    new bootstrap.Modal(document.getElementById('modalDept')).show();
+}
+
+function saveDept() {
+    const id = document.getElementById('deptId').value;
+    const data = {
+        id: id || null,
+        name: document.getElementById('deptName').value,
+        description: document.getElementById('deptDesc').value,
+        fluxo_aprovacao: document.getElementById('deptFluxo').value
+    };
+
+    if (!data.name) return alert('Nome é obrigatório.');
+
+    fetch('/api/rh/departamentos/save/', {
+        method: 'POST',
+        headers: { 
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrf() 
+        },
+        body: JSON.stringify(data)
+    })
+    .then(r => r.json())
+    .then(res => {
+        if (res.success) {
+            bootstrap.Modal.getInstance(document.getElementById('modalDept')).hide();
+            loadDepts();
+        } else {
+            alert(res.error || 'Erro ao salvar.');
+        }
+    });
+}
+
+function openModalDelete(id, nome) {
+    deleteId = id;
+    document.getElementById('deleteDeptNome').textContent = nome;
+    new bootstrap.Modal(document.getElementById('modalDelete')).show();
+}
+
+function confirmDelete() {
+    if (!deleteId) return;
+    fetch(`/api/rh/departamentos/${deleteId}/delete/`, {
+        method: 'DELETE',
+        headers: { 'X-CSRFToken': getCsrf() }
+    })
+    .then(r => r.json())
+    .then(data => {
+        bootstrap.Modal.getInstance(document.getElementById('modalDelete')).hide();
+        if (data.success) {
+            loadDepts();
+        } else {
+            alert(data.error || 'Erro ao excluir.');
+        }
+    });
+}
+
+function showError(msg) {
+    document.getElementById('deptTbody').innerHTML = `<tr><td colspan="5" class="text-center py-5 text-danger">${msg}</td></tr>`;
+}
+
+function getCsrf() { return document.cookie.match(/csrftoken=([^;]+)/)?.[1] || ''; }
+</script>
+{% endblock %}

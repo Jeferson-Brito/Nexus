@@ -3160,3 +3160,21 @@ def rh_cadastro_empresa_view(request, pk=None):
         'page_title': page_title,
         'uf_choices': UF_CHOICES,
     })
+
+
+@login_required
+def rh_departamentos_view(request):
+    """Tela de gestão de departamentos"""
+    if not (request.user.is_gestor() or request.user.is_administrador() or getattr(request.user.department, 'name', '') == 'RH'):
+        messages.error(request, 'Acesso restrito para Gestores ou Departamento de RH.')
+        return redirect('dashboard')
+    return render(request, 'core/rh/departamentos_list.html')
+
+
+@login_required
+def rh_cargos_view(request):
+    """Tela de gestão de cargos"""
+    if not (request.user.is_gestor() or request.user.is_administrador() or getattr(request.user.department, 'name', '') == 'RH'):
+        messages.error(request, 'Acesso restrito para Gestores ou Departamento de RH.')
+        return redirect('dashboard')
+    return render(request, 'core/rh/cargos_list.html')

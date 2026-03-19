@@ -424,7 +424,8 @@ const ST = {
     tipoPonto: null, 
     videoStream: null, 
     fotoBase64: null,
-    isPersonal: "{{ personal_punch }}" === "True"
+    isPersonal: "{{ personal_punch }}" === "True",
+    exigirFoto: "{{ colaborador_data.exigir_foto }}" === "True"
 };
 
 // ─── Relógio ──────────────────────────────────────────────────────────
@@ -519,6 +520,7 @@ async function submeterCPF() {
             return;
         }
         Swal.close();
+        ST.exigirFoto = data.exigir_foto === true;
         carregarColaboradorNaUI(data);
     } catch(e) {
         Swal.fire({icon:'error', title:'Erro de conexão', text:'Tente novamente.', customClass:{popup:'ks-swal'}});
@@ -561,8 +563,14 @@ document.querySelectorAll('.type-btn').forEach(btn => {
     btn.addEventListener('click', () => {
         if (btn.disabled) return;
         ST.tipoPonto = btn.getAttribute('data-type');
-        showScreen('screen-camera');
-        startCamera();
+        
+        if (ST.exigirFoto) {
+            showScreen('screen-camera');
+            startCamera();
+        } else {
+            ST.fotoBase64 = null;
+            enviarRegistro();
+        }
     });
 });
 
