@@ -109,7 +109,7 @@
 
         <!-- Menu de NavegaÃ§Ã£o -->
         <nav class="sidebar-nav">
-            {% if current_department.name == 'Reclame Aqui' %}
+            {% if current_department.slug == 'cs-clientes' or current_department.name == 'Reclame Aqui' %}
             <!-- Reclame Aqui -->
             <div class="nav-group-title">OperaÃ§Ã£o</div>
 
@@ -306,7 +306,7 @@
                 <span class="link-text">Operadores</span>
             </a>
 
-            {% elif current_department.name == 'NRS Suporte' or current_department.name == 'NRP' %}
+            {% elif current_department.slug == 'nrs-suporte' or current_department.slug == 'nrp' or current_department.name == 'NRS Suporte' or current_department.name == 'NRP' %}
             <!-- NRS Suporte / NRP -->
             <div class="nav-group-title">Operação</div>
             <a href="{% url 'escala' %}"
@@ -391,7 +391,7 @@
             {% endif %}
 
 
-            {% elif current_department.name == 'Onboarding' %}
+            {% elif current_department.slug == 'onboarding' or current_department.name == 'Onboarding' %}
             <!-- Onboarding -->
             <div class="nav-group-title">Implantação</div>
             <a href="{% url 'onboarding_dev_1' %}"
@@ -411,7 +411,7 @@
             </a>
 
 
-            {% elif current_department.name == 'CS Clientes' %}
+            {% elif current_department.slug == 'cs-clientes' or current_department.name == 'CS Clientes' %}
 
             <!-- CS Clientes -->
             <div class="nav-group-title">Operação</div>
@@ -469,6 +469,25 @@
                 <i class="bi bi-receipt-cutoff"></i>
                 <span class="link-text">Solicitações</span>
             </a>
+
+            {% elif current_department.slug == 'logistica' or current_department.name == 'Logística' %}
+            <!-- Logística -->
+            <div class="nav-group-title">Logística</div>
+            <a href="{% url 'escala' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'escala' %}active{% endif %}">
+                <i class="bi bi-calendar-event"></i>
+                <span class="link-text">Escala</span>
+            </a>
+            <a href="{% url 'tasks_view' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'tasks_view' %}active{% endif %}">
+                <i class="bi bi-list-check"></i>
+                <span class="link-text">Tarefas e Solicitações</span>
+            </a>
+            <div class="alert alert-info mx-3 my-2"
+                style="font-size: 0.75rem; border: none; background: #f0f7ff; color: #004085;">
+                <i class="bi bi-info-circle me-1"></i>
+                Outras funcionalidades de Logística em desenvolvimento.
+            </div>
 
             {% else %}
             <!-- Outros Departamentos (Em Breve) -->
