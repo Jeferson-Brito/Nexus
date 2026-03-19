@@ -1276,7 +1276,7 @@
                         if (d.getMonth() === mesTarget) {
                             const dia = d.getDate();
                             const cellData = getCellData(analista, turno, d.getFullYear(), d.getMonth(), dia);
-                            const clickHandler = isAdmin ? `onclick="openEditCellModal(${analista.id}, ${dia}, ${d.getMonth() + 1}, ${d.getFullYear()})"` : '';
+                            const clickHandler = isAdmin ? `onclick="openEditCellModal('${analista.id}', ${dia}, ${d.getMonth() + 1}, ${d.getFullYear()})"` : '';
                             rows += `<td class="${cellData.class}" ${clickHandler}>${cellData.text}</td>`;
                         } else {
                             rows += '<td class="dia-vazio"></td>';
@@ -1397,8 +1397,8 @@
                 </div>
             </div>
             <div class="item-card-actions">
-                <button class="btn-icon edit" onclick="editShift(${t.id})"><i class="fa-solid fa-edit"></i></button>
-                <button class="btn-icon delete" onclick="deleteShift(${t.id})"><i class="fa-solid fa-trash"></i></button>
+                <button class="btn-icon edit" onclick="editShift('${t.id}')"><i class="fa-solid fa-edit"></i></button>
+                <button class="btn-icon delete" onclick="deleteShift('${t.id}')"><i class="fa-solid fa-trash"></i></button>
             </div>
         </div>
     `).join('');
@@ -1641,8 +1641,8 @@
                                     </div>
                                 </div>
                                 <div class="item-card-actions">
-                                    <button class="btn-icon edit" onclick="editAnalyst(${a.id})"><i class="fa-solid fa-edit"></i></button>
-                                    <button class="btn-icon delete" onclick="deleteAnalyst(${a.id})"><i class="fa-solid fa-trash"></i></button>
+                                    <button class="btn-icon edit" onclick="editAnalyst('${a.id}')"><i class="fa-solid fa-edit"></i></button>
+                                    <button class="btn-icon delete" onclick="deleteAnalyst('${a.id}')"><i class="fa-solid fa-trash"></i></button>
                                 </div>
                             </div>
                         `).join('')}

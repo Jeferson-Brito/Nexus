@@ -2066,7 +2066,7 @@ def escala_view(request):
     
     # Preparar dados para JSON
     turnos_data = [{
-        'id': t.id,
+        'id': str(t.id),
         'nome': t.nome,
         'horario': t.horario,
         'cor': t.cor,
@@ -2074,7 +2074,7 @@ def escala_view(request):
     } for t in turnos]
     
     analistas_data = [{
-        'id': a.id,
+        'id': str(a.id),
         'nome': a.nome,
         'turno': a.turno.nome if a.turno else None,
         'turno_id': a.turno.id if a.turno else None,

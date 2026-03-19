@@ -176,13 +176,13 @@
             <!-- Seção de Gestão de Analistas -->
             {% if user.is_gestor or user.is_administrador or user.is_analista %}
             <div class="card mb-4 border-0 shadow-sm">
-                <div class="card-header bg-white py-3">
+                <div class="card-header bg-primary py-3">
                     <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0 fw-bold text-dark">
+                        <h5 class="mb-0 fw-bold text-white">
                             {% if user.is_gestor or user.is_administrador %}
-                            <i class="bi bi-people me-2 text-primary"></i> Gestão de Analistas
+                            <i class="bi bi-people me-2"></i> Gestão de Analistas
                             {% else %}
-                            <i class="bi bi-trophy me-2 text-warning"></i> Minhas Metas Semanais
+                            <i class="bi bi-trophy me-2"></i> Minhas Metas Semanais
                             {% endif %}
                         </h5>
                         {% if user.is_gestor or user.is_administrador %}
@@ -388,9 +388,9 @@
             <!-- Manager KPI Dashboard -->
             {% if user.is_gestor or user.is_administrador %}
             <div class="card mb-4 border-0 shadow-sm">
-                <div class="card-header bg-white py-3 border-bottom">
-                    <h6 class="mb-0 fw-bold text-dark">
-                        <i class="bi bi-graph-up-arrow me-2 text-primary"></i> Desempenho Mensal da Equipe
+                <div class="card-header bg-primary py-3 border-bottom">
+                    <h6 class="mb-0 fw-bold text-white">
+                        <i class="bi bi-graph-up-arrow me-2"></i> Desempenho Mensal da Equipe
                     </h6>
                 </div>
                 <div class="card-body bg-light bg-opacity-50">
@@ -418,8 +418,8 @@
             {% if pending_issues %}
             <!-- Pending Issues for Managers -->
             <div class="card mb-4 border-0 shadow-sm" style="border-left: 5px solid #f59e0b !important;">
-                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0 fw-bold text-dark"><i class="bi bi-megaphone me-2 text-warning"></i> Pendências
+                <div class="card-header bg-primary py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold text-white"><i class="bi bi-megaphone me-2"></i> Pendências
                         Solicitadas
                     </h5>
                     <span class="badge bg-warning text-dark px-3 rounded-pill">{{ pending_issues_count }}
@@ -751,8 +751,8 @@
     <!-- Tab: History -->
     <div class="tab-pane fade {% if tab == 'history' %}show active{% endif %}" id="history" role="tabpanel">
         <div class="card mb-4 border-0 shadow-sm">
-            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                <h5 class="mb-0 fw-bold text-dark"><i class="bi bi-clock-history me-2 text-primary"></i> Histórico de
+            <div class="card-header bg-primary py-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold text-white"><i class="bi bi-clock-history me-2"></i> Histórico de
                     Auditorias</h5>
                 <div class="d-flex gap-2">
                     <button class="btn btn-sm btn-outline-success"
