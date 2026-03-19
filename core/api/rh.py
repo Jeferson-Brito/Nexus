@@ -13,7 +13,7 @@ import logging
 
 from ..models import (
     Colaborador, Department, HistoricoProfissional, 
-    PerformanceRH, User, DocumentoColaborador, Empresa
+    PerformanceRH, User, DocumentoColaborador, Empresa, Cargo
 )
 
 logger = logging.getLogger(__name__)
@@ -306,7 +306,11 @@ def api_save_colaborador(request):
 @require_http_methods(["GET"])
 def api_rh_auxiliar_data(request):
     """Dados auxiliares para formulários (Cargos, Departamentos, Opções)"""
-    cargos = []
+    cargos = list(Cargo.objects.all().values('id', 'nome', 'department_id'))
+    for c in cargos:
+        c['id'] = str(c['id'])
+        c['department_id'] = str(c['department_id'])
+    
     depts = list(Department.objects.all().values('id', 'name'))
     for dept in depts:
         dept['id'] = str(dept['id'])
@@ -621,8 +625,6 @@ def api_delete_departamento(request, pk):
 # ─────────────────────────────────────────────
 #  CARGOS
 # ─────────────────────────────────────────────
-
-from ..models import Cargo
 
 @login_required
 @require_http_methods(["GET"])

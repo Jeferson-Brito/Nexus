@@ -169,10 +169,10 @@
                                 <select name="department_id" id="formDept" class="form-select" required>
                                     <option value="">Selecione</option>
                                 </select>
-                                <button type="button" class="btn btn-sm btn-primary mt-2 rounded-pill px-3"
-                                        style="font-size:.75rem;" onclick="alert('Criar departamento — em breve')">
+                                <a href="{% url 'rh_departamentos' %}" class="btn btn-sm btn-primary mt-2 rounded-pill px-3"
+                                        style="font-size:.75rem;">
                                     <i class="bi bi-plus-lg me-1"></i> Criar novo departamento
-                                </button>
+                                </a>
                             </div>
 
                             <div class="col-md-4">
@@ -188,13 +188,13 @@
 
                             <div class="col-md-4">
                                 <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">Cargo</label>
-                                <input type="text" name="cargo" id="formCargo" class="form-control"
-                                       placeholder="Ex: Analista de RH" required
-                                       value="{{ colaborador.cargo_atual|default:'' }}">
-                                <button type="button" class="btn btn-sm btn-primary mt-2 rounded-pill px-3"
-                                        style="font-size:.75rem;" onclick="alert('Criar cargo — em breve')">
+                                <select name="cargo" id="formCargo" class="form-select" required>
+                                    <option value="">Selecione o departamento primeiro</option>
+                                </select>
+                                <a href="{% url 'rh_cargos' %}" class="btn btn-sm btn-primary mt-2 rounded-pill px-3"
+                                        style="font-size:.75rem;">
                                     <i class="bi bi-plus-lg me-1"></i> Criar novo cargo
-                                </button>
+                                </a>
                             </div>
 
                             <!-- Linha 2: Nº Folha | CTPS | Superior Direto -->
@@ -242,10 +242,10 @@
 
                             <div class="col-md-4">
                                 <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">Cargo na Admissão</label>
-                                <input type="text" name="cargo_inicial" class="form-control"
-                                       placeholder="Igual ao atual se vazio"
-                                       value="{{ colaborador.cargo_inicial|default:'' }}">
-                                <small class="text-muted" style="font-size:0.7rem;">Deixe vazio se for o mesmo cargo</small>
+                                <select name="cargo_inicial" id="formCargoInicial" class="form-select">
+                                    <option value="">Igual ao atual</option>
+                                </select>
+                                <small class="text-muted" style="font-size:0.7rem;">Deixe como "Igual ao atual" se for o mesmo cargo</small>
                             </div>
 
                             <!-- Linha 4: Salário Atual | Jornada | Data Desligamento -->
@@ -651,7 +651,8 @@ document.addEventListener('DOMContentLoaded', function () {
         if (e.target.files[0]) previewFoto.src = URL.createObjectURL(e.target.files[0]);
     });
 
-    // Auxiliares (departamentos, tipo_contrato, colaboradores para superior)
+    // Auxiliares (departamentos, cargos, tipo_contrato, colaboradores para superior)
+    let allCargos = [];
     fetch('/api/rh/auxiliar/')
         .then(r => r.json())
         .then(data => {
@@ -664,6 +665,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 deptSel.add(opt);
             });
 
+            allCargos = data.cargos || [];
+            updateCargosSelects();
+
             const tcSel = document.getElementById('formTipoContrato');
             tcSel.add(new Option('Selecione', ''));
             Object.entries(data.tipo_contrato_choices || {}).forEach(([v, l]) => {
@@ -672,6 +676,35 @@ document.addEventListener('DOMContentLoaded', function () {
                 tcSel.add(opt);
             });
         });
+
+    function updateCargosSelects() {
+        const deptId = document.getElementById('formDept').value;
+        const cargoSel = document.getElementById('formCargo');
+        const cargoIniSel = document.getElementById('formCargoInicial');
+        
+        const currentCargo = '{{ colaborador.cargo_atual|default:"" }}';
+        const currentCargoIni = '{{ colaborador.cargo_inicial|default:"" }}';
+
+        [cargoSel, cargoIniSel].forEach((sel, idx) => {
+            const isInicial = idx === 1;
+            sel.innerHTML = isInicial ? '<option value="">Igual ao atual</option>' : '<option value="">Selecione</option>';
+            
+            const filtered = allCargos.filter(c => !deptId || c.department_id === deptId);
+            
+            filtered.forEach(c => {
+                const opt = new Option(c.nome, c.nome); // Usamos o nome como valor para compatibilidade com CharField
+                if (!isInicial && c.nome === currentCargo) opt.selected = true;
+                if (isInicial && c.nome === currentCargoIni) opt.selected = true;
+                sel.add(opt);
+            });
+
+            if (!deptId && !isInicial) {
+                sel.innerHTML = '<option value="">Selecione o departamento primeiro</option>';
+            }
+        });
+    }
+
+    document.getElementById('formDept').addEventListener('change', updateCargosSelects);
 
     // Load empresas para o select
     fetch('/api/rh/empresas/')
