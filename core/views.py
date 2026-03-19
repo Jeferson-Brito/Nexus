@@ -1227,6 +1227,10 @@ def user_edit(request, pk):
         user_to_edit.email = request.POST.get('email')
         role = request.POST.get('role')
         department_id = request.POST.get('department')
+        if department_id:
+            # Remover pontos de formatação (caso venham do template localizado)
+            department_id = str(department_id).replace('.', '').replace(',', '').strip()
+            
         profile_photo = request.FILES.get('profile_photo')
         
         # Diferentes permissões para Administrador e Gestor
@@ -1285,9 +1289,7 @@ def user_edit(request, pk):
             detalhes_json={'username': user_to_edit.username, 'role': user_to_edit.role}
         )
         
-        # Debug info
-        dept_name = user_to_edit.department.name if user_to_edit.department else "Nenhum"
-        messages.success(request, f'Usuário {user_to_edit.username} atualizado! Depto salvo: {dept_name} (ID recebido: {department_id})')
+        messages.success(request, f'Usuário {user_to_edit.username} atualizado!')
         return redirect('user_list')
     
     return render(request, 'core/user_form.html', {

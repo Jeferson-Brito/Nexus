@@ -137,9 +137,11 @@
                             <select class="form-control" name="department" {% if request.user.is_gestor %}disabled{% endif %}>
                                 <option value="">Nenhum</option>
                                 {% for dept in departments %}
+                                {% l10n off %}
                                 <option value="{{ dept.id }}" {% if target_user and target_user.department_id == dept.id %}selected{% elif form_data and form_data.department_id|add:"0" == dept.id %}selected{% elif request.user.is_gestor and request.user.department_id == dept.id %}selected{% endif %}>
                                     {{ dept.name }}
                                 </option>
+                                {% endl10n %}
                                 {% endfor %}
                             </select>
                             {% if request.user.is_gestor %}
