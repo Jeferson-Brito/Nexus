@@ -100,31 +100,31 @@ def change_department(request, dept_id):
 
 @login_required
 def dashboard(request):
-    # Filtro por departamento
+    # Identificar o departamento atual (da sessão para admins, do usuário para outros)
     selected_dept_id = request.session.get('selected_department_id')
+    from .models import Department
     
-    if not request.user.is_administrador():
-        # Redirecionar usuários do NRS Suporte, RH e NRP para a escala
-        if request.user.department and request.user.department.name in ['NRS Suporte', 'RH', 'NRP']:
+    current_dept = None
+    if request.user.is_administrador() and selected_dept_id:
+        current_dept = Department.objects.filter(id=selected_dept_id).first()
+    elif request.user.department:
+        current_dept = request.user.department
+
+    # Redirecionamentos para departamentos com módulos próprios
+    if current_dept:
+        if current_dept.name in ['NRS Suporte', 'RH', 'NRP']:
             return redirect('escala')
-        queryset = Complaint.objects.filter(department=request.user.department)
-    else:
-        # Se houver depto na sessão, verificar se é o NRS Suporte, RH ou NRP para redirecionar
-        if selected_dept_id:
-            from .models import Department
-            current_dept = Department.objects.filter(id=selected_dept_id).first()
-            if current_dept and current_dept.name in ['NRS Suporte', 'RH', 'NRP']:
-                return redirect('escala')
-            queryset = Complaint.objects.filter(department_id=selected_dept_id)
-        else:
-            # Se é admin mas não tem depto na sessão (primeiro acesso), 
-            # tenta buscar o NRS Suporte e redirecionar
-            from .models import Department
-            nrs_dept = Department.objects.filter(name='NRS Suporte').first()
-            if nrs_dept:
-                request.session['selected_department_id'] = nrs_dept.id
-                return redirect('escala')
-            queryset = Complaint.objects.all()
+        if current_dept.name == 'Onboarding':
+            return redirect('onboarding_dev_1')
+    
+    # Se não houver depto OU se o depto não for o 'CS Clientes' (único que usa o dashboard de RA atualmente)
+    # ou se for explicitamente um depto sem módulo, mostrar tela de Boas-vindas
+    active_dashboard_depts = ['CS Clientes', 'Reclame Aqui']
+    if not current_dept or (current_dept.name not in active_dashboard_depts):
+        return render(request, 'core/welcome.html', {'current_department': current_dept})
+
+    # Se chegou aqui, é CS Clientes ou Reclame Aqui -> Mostrar Dashboard de Reclamações
+    queryset = Complaint.objects.filter(department=current_dept)
         
     # OTIMIZAÇÃO: Usar aggregate para buscar contadores em uma única query
     stats = queryset.aggregate(

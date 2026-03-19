@@ -1405,12 +1405,16 @@
     }
 
     async function openRefundDetail(id) {
+        console.log('Opening refund detail for ID:', id);
         document.getElementById('refund-detail-id').textContent = id;
 
         try {
+            console.log('Fetching refund data...');
             const res = await fetch(`/api/refunds/${id}/`);
+            console.log('Response status:', res.status);
             if (res.ok) {
                 const data = await res.json();
+                console.log('Refund data received:', data);
                 const r = data.refund;
 
                 let attachmentsHtml = '';
@@ -1840,9 +1844,15 @@
                 // Update card count
                 const statPending = document.getElementById('stat-pending');
                 if (statPending) statPending.textContent = data.length;
+            } else {
+                console.error('Erro na resposta da API:', res.status);
+                const tbody = document.getElementById('chat-inactivity-list');
+                if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4"><i class="bi bi-exclamation-triangle"></i> Erro ao carregar dados.</td></tr>';
             }
         } catch (e) {
             console.error('Erro ao carregar solicitações de chat', e);
+            const tbody = document.getElementById('chat-inactivity-list');
+            if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4"><i class="bi bi-wifi-off"></i> Erro de conexão.</td></tr>';
         }
     }
 
