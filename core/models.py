@@ -2322,8 +2322,8 @@ class RegistroPonto(models.Model):
         verbose_name_plural = 'Registros de Ponto'
         ordering = ['-data', '-hora']
         indexes = [
-            models.Index(fields=['colaborador', 'data']),
-            models.Index(fields=['data', 'tipo']),
+            models.Index(fields=['colaborador', 'data'], name='ponto_colab_data_idx'),
+            models.Index(fields=['data', 'tipo'], name='ponto_data_tipo_idx'),
         ]
 
     def __str__(self):
