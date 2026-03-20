@@ -122,6 +122,7 @@
             caret-color: var(--blue); outline: none;
             transition: border-color .2s, box-shadow .2s;
             -webkit-appearance: none;
+            appearance: none;
         }
         #cpf-input-real:focus { border-color: var(--blue); box-shadow: 0 0 0 4px rgba(37,99,235,.12); }
         #cpf-input-real::placeholder { color: var(--border); letter-spacing: 6px; font-size: 1.4rem; }
@@ -296,6 +297,13 @@
 
 <!-- ══ SCREENSAVER ══ -->
 <div id="screen-idle">
+    <!-- Help info (nexus-style) -->
+    <div style="position: absolute; top: 20px; right: 20px; max-width: 250px; z-index: 100; text-align: right;">
+        <p style="font-size: 0.75rem; color: var(--muted); background: rgba(255,255,255,0.8); padding: 8px 12px; border-radius: 12px; border: 1px solid var(--border);">
+            <i class="fa-solid fa-circle-info" style="color: var(--blue); margin-right: 4px;"></i>
+            Terminal de registro de ponto. Clique em Iniciar para começar.
+        </p>
+    </div>
     <img src="{% static 'img/logo_nexus_horizontal.png' %}" alt="Nexus" class="idle-logo">
     <div id="idle-hora">00:00:00</div>
     <div id="idle-data">--</div>

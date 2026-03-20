@@ -44,24 +44,35 @@
                 
                 <!-- ABA HORÁRIOS (GRID) -->
                 <div class="tab-pane fade show active" id="horario-grid" role="tabpanel">
+                    <div class="alert alert-light border shadow-sm mb-4">
+                        <div class="d-flex align-items-start gap-2">
+                            <i class="bi bi-info-circle text-primary mt-1"></i>
+                            <div class="small text-muted">
+                                <strong class="text-dark d-block mb-1">Sobre esta aba: Horários e Jornada</strong>
+                                Defina os parâmetros básicos (nome, sigla, tipo) e configure os períodos de trabalho para cada dia. 
+                                No tipo <strong>Semanal</strong>, defina os horários de segunda a domingo. No tipo <strong>Cíclico</strong>, defina a sequência de dias. 
+                                Use o botão <i class="bi bi-copy text-primary"></i> para replicar um horário para todos os outros dias rapidamente.
+                            </div>
+                        </div>
+                    </div>
                     <!-- Conteúdo que era do Principal -->
                     <div class="row g-4 mb-4 pb-4 border-bottom">
                         <div class="col-md-6">
                             <label class="form-label fw-bold small">Nome do Horário *</label>
-                            <input type="text" id="hor_nome" class="form-control" placeholder="Ex: Administrativo Seg-Sex">
+                            <input type="text" id="hor_nome" class="form-control" placeholder="Ex: Administrativo Seg-Sex" title="Nome identificador do horário (Ex: Administrativo 44h)">
                         </div>
                         <div class="col-md-3">
                             <label class="form-label fw-bold small">Sigla *</label>
-                            <input type="text" id="hor_sigla" class="form-control" placeholder="Ex: ADM" maxlength="10">
+                            <input type="text" id="hor_sigla" class="form-control" placeholder="Ex: ADM" maxlength="10" title="Abreviação para exibição em espaços reduzidos na escala">
                         </div>
                         <div class="col-md-3">
                             <label class="form-label fw-bold small">Cor de Exibição</label>
-                            <input type="color" id="hor_cor" class="form-control form-control-color w-100" value="#2563eb">
+                            <input type="color" id="hor_cor" class="form-control form-control-color w-100" value="#2563eb" title="Cor que representará este horário no calendário e escala">
                         </div>
 
                         <div class="col-md-4">
                             <label class="form-label fw-bold small">Tipo de Horário *</label>
-                            <select id="hor_tipo" class="form-select" onchange="toggleTipoFields()">
+                            <select id="hor_tipo" class="form-select" onchange="toggleTipoFields()" title="Determina se o horário é baseado em dias da semana (Semanal), ciclos de dias (Cíclico) ou se varia livremente (Móvel)">
                                 <option value="semanal">Semanal</option>
                                 <option value="ciclico">Cíclico</option>
                                 <option value="jornada">Jornada (Móvel)</option>
@@ -115,32 +126,55 @@
 
                 <!-- ABA TOLERÂNCIAS -->
                 <div class="tab-pane fade" id="tolerancias" role="tabpanel">
+                    <div class="alert alert-light border shadow-sm mb-4">
+                        <div class="d-flex align-items-start gap-2">
+                            <i class="bi bi-info-circle text-primary mt-1"></i>
+                            <div class="small text-muted">
+                                <strong class="text-dark d-block mb-1">Sobre esta aba: Tolerâncias</strong>
+                                Configure o limite de minutos que o sistema deve ignorar tanto no atraso quanto na saída antecipada. 
+                                Conforme o Art. 58 da CLT, o padrão é de 5 minutos por batida, com limite de 10 minutos diários.
+                            </div>
+                        </div>
+                    </div>
                     <div class="row g-4 max-w-600">
                         <div class="col-md-6">
                             <label class="form-label fw-bold small">Tolerância Entrada (minutos)</label>
-                            <input type="number" id="hor_tol_entrada" class="form-control" value="5">
+                            <input type="number" id="hor_tol_entrada" class="form-control" value="5" title="Minutos de atraso permitidos na entrada que não serão descontados">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-bold small">Tolerância Saída (minutos)</label>
-                            <input type="number" id="hor_tol_saida" class="form-control" value="5">
+                            <input type="number" id="hor_tol_saida" class="form-control" value="5" title="Minutos de saída antecipada permitidos que não serão descontados">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-bold small">Tolerância Intervalo (minutos)</label>
-                            <input type="number" id="hor_tol_intervalo" class="form-control" value="5">
+                            <label class="form-label fw-bold small">Tolerância Adic. Intervalo</label>
+                            <input type="number" id="hor_tol_adic_intervalo" class="form-control" value="0" title="Tolerância para tempo excedente de intervalo">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">Tolerância Falta Intervalo</label>
+                            <input type="number" id="hor_tol_falta_intervalo" class="form-control" value="0" title="Tolerância para tempo de intervalo não usufruído">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-bold small">Tolerância Diária Acumulada (minutos)</label>
-                            <input type="number" id="hor_tol_diaria" class="form-control" value="10">
+                            <input type="number" id="hor_tol_diaria" class="form-control" value="10" title="Limite máximo de tolerância diária acumulada (entrada + saída)">
                         </div>
                     </div>
                 </div>
 
                 <!-- ABA DSR -->
                 <div class="tab-pane fade" id="dsr" role="tabpanel">
+                    <div class="alert alert-light border shadow-sm mb-4">
+                        <div class="d-flex align-items-start gap-2">
+                            <i class="bi bi-info-circle text-primary mt-1"></i>
+                            <div class="small text-muted">
+                                <strong class="text-dark d-block mb-1">Sobre esta aba: DSR (Descanso Semanal Remunerado)</strong>
+                                Defina as regras para o cálculo do descanso semanal. O sistema utilizará estas configurações para identificar se o colaborador tem direito ao recebimento do descanso ou se deve haver desconto em caso de faltas injustificadas.
+                            </div>
+                        </div>
+                    </div>
                     <div class="row g-4 max-w-600">
                         <div class="col-md-6">
                             <label class="form-label fw-bold small">Dia do DSR</label>
-                            <select id="hor_dia_dsr" class="form-select">
+                            <select id="hor_dia_dsr" class="form-select" title="Dia da semana em que o descanso semanal é preferencialmente concedido (geralmente Domingo)">
                                 <option value="0">Domingo</option>
                                 <option value="1">Segunda</option>
                                 <option value="2">Terça</option>
@@ -151,13 +185,13 @@
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-bold small">Mínimo de Horas para DSR</label>
-                            <input type="number" id="hor_minimo_horas_dsr" class="form-control" step="0.1" value="0">
+                            <label class="form-label fw-bold small">Valor DSR (horas)</label>
+                            <input type="number" id="hor_valor_dsr" class="form-control" value="7.33" step="0.01" title="Quantidade de horas a serem pagas como descanso (Ex: 7.33 para jornada de 44h semanais)">
                         </div>
                         <div class="col-12">
                             <div class="form-check form-switch mt-2">
-                                <input class="form-check-input" type="checkbox" id="hor_descontar_faltas_dsr" checked>
-                                <label class="form-check-label fw-bold small" for="hor_descontar_faltas_dsr">Descontar faltas do DSR</label>
+                                <input class="form-check-input" type="checkbox" id="hor_desconta_dsr" checked>
+                                <label class="form-check-label fw-bold small" for="hor_desconta_dsr" title="Se ativado, faltas injustificadas durante a semana resultarão no desconto do valor do DSR">Desconta DSR em caso de falta</label>
                             </div>
                         </div>
                     </div>
@@ -165,57 +199,74 @@
 
                 <!-- ABA EXTRAS / BANCO -->
                 <div class="tab-pane fade" id="extras" role="tabpanel">
+                    <div class="alert alert-light border shadow-sm mb-4">
+                        <div class="d-flex align-items-start gap-2">
+                            <i class="bi bi-info-circle text-primary mt-1"></i>
+                            <div class="small text-muted">
+                                <strong class="text-dark d-block mb-1">Sobre esta aba: Horas Extras e Banco</strong>
+                                Configure como o sistema deve tratar o tempo trabalhado além da jornada. 
+                                No <strong>Banco de Horas</strong>, as horas são acumuladas para compensação futura. 
+                                Se desativado, as horas serão calculadas como <strong>Extras</strong> com os percentuais definidos (ex: 50% ou 100%).
+                            </div>
+                        </div>
+                    </div>
                     <div class="row g-4">
                         <div class="col-md-6">
                             <div class="form-check form-switch mb-4">
                                 <input class="form-check-input" type="checkbox" id="hor_utiliza_banco_horas">
-                                <label class="form-check-label fw-bold small" for="hor_utiliza_banco_horas">Utiliza Banco de Horas</label>
+                                <label class="form-check-label fw-bold small" for="hor_utiliza_banco_horas" title="Se ativado, as horas excedentes serão acumuladas em banco para compensação em vez de serem pagas como extras">Utiliza Banco de Horas</label>
                             </div>
-                            
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small">Extra Seg-Sex (%)</label>
+                            <input type="number" id="hor_extra_seg_sex" class="form-control" value="50" title="Percentual de adicional para horas extras de segunda a sexta (Padrão 50%)">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small">Extra Sábado (%)</label>
+                            <input type="number" id="hor_extra_sab" class="form-control" value="50" title="Percentual de adicional para horas extras aos sábados">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small">Extra Dom/Fer (%)</label>
+                            <input type="number" id="hor_extra_dom" class="form-control" value="100" title="Percentual de adicional para horas extras em domingos e feriados (Padrão 100%)">
+                        </div>
+                        <div class="col-md-6">
                             <label class="form-label fw-bold small">Modo de Cálculo de Extras</label>
-                            <select id="hor_modo_extra" class="form-select mb-3">
+                            <select id="hor_modo_extra" class="form-select mb-3" title="Define como as horas extras são calculadas: diariamente, semanalmente ou mensalmente">
                                 <option value="simples">Simples (Diário)</option>
                                 <option value="semanal">Semanal</option>
                                 <option value="mensal">Mensal</option>
                             </select>
-                        </div>
-                        
-                        <div class="col-md-6">
-                            <div class="p-3 bg-light rounded border">
-                                <h6 class="fw-bold small mb-3">Percentuais Standard</h6>
-                                <div class="row g-3">
-                                    <div class="col-6">
-                                        <label class="form-label small">Extra Diurno (%)</label>
-                                        <input type="number" id="hor_perc_diurno" class="form-control" value="50">
-                                    </div>
-                                    <div class="col-6">
-                                        <label class="form-label small">Extra Noturno (%)</label>
-                                        <input type="number" id="hor_perc_noturno" class="form-control" value="50">
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- ABA ADICIONAL NOTURNO -->
                 <div class="tab-pane fade" id="noturno" role="tabpanel">
+                    <div class="alert alert-light border shadow-sm mb-4">
+                        <div class="d-flex align-items-start gap-2">
+                            <i class="bi bi-info-circle text-primary mt-1"></i>
+                            <div class="small text-muted">
+                                <strong class="text-dark d-block mb-1">Sobre esta aba: Adicional Noturno</strong>
+                                Configure o período considerado noturno (padrão 22:00 às 05:00) e o fator de redução da hora noturna (padrão 52.5 min, representado aqui pelo fator 60). O <strong>Fechamento Global</strong> define o horário limite para encerramento da jornada do dia.
+                            </div>
+                        </div>
+                    </div>
                     <div class="row g-4 max-w-600">
                         <div class="col-md-6">
                             <label class="form-label fw-bold small">Início Adicional Noturno</label>
-                            <input type="time" id="hor_inicio_noturno" class="form-control" value="22:00">
+                            <input type="time" id="hor_inicio_noturno" class="form-control" value="22:00" title="Horário de início do adicional noturno segundo a CLT (Padrão 22:00)">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-bold small">Fim Adicional Noturno</label>
-                            <input type="time" id="hor_fim_noturno" class="form-control" value="05:00">
+                            <input type="time" id="hor_fim_noturno" class="form-control" value="05:00" title="Horário de término do adicional noturno (Padrão 05:00)">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-bold small">Fator Redução Noturna (ex: 60 ou 52.5)</label>
-                            <input type="number" id="hor_fator_noturno" class="form-control" value="60" step="0.1">
+                            <label class="form-label fw-bold small">Fator Redução (minutos)</label>
+                            <input type="number" id="hor_fator_noturno" class="form-control" value="52.5" step="0.1" title="Duração da hora noturna em minutos (Padrão 52.5)">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-bold small">Fechamento Noturno Padrão</label>
-                            <input type="time" id="hor_fech_global" class="form-control" value="00:00">
+                            <label class="form-label fw-bold small">Fechamento Global</label>
+                            <input type="time" id="hor_fechamento_global" class="form-control" value="04:00" title="Define o limite para que batidas da madrugada sejam contabilizadas no dia anterior (Ex: jornada que termina às 02:00)">
                         </div>
                     </div>
                 </div>
