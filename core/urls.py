@@ -129,6 +129,8 @@ urlpatterns = [
     path('rh/feriados/', views.rh_feriados_view, name='rh_feriados'),
     path('rh/atribuicoes-massa/', views.rh_atribuicoes_massa_view, name='rh_atribuicoes_massa'),
     path('rh/horarios/', views.rh_horarios_view, name='rh_horarios'),
+    path('rh/horarios/add/', views.rh_cadastro_horario_view, name='rh_cadastro_horario_add'),
+    path('rh/horarios/<int:pk>/', views.rh_cadastro_horario_view, name='rh_cadastro_horario'),
     # API Empresas
     path('api/rh/empresas/', api_rh.api_empresas_list, name='api_empresas_list'),
     path('api/rh/empresas/save/', api_rh.api_save_empresa, name='api_save_empresa'),
