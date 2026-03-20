@@ -203,6 +203,11 @@
                                 <option value="">Selecione</option>
                             </select>
                         </div>
+                        <div class="col-md-4">
+                            <label class="filter-label">Horários</label>
+                            <select id="filter_horarios" class="form-select form-select-custom" multiple style="height: 100px;">
+                            </select>
+                        </div>
                     </div>
                 </div>
 
@@ -388,6 +393,11 @@
         populateSelect('filter_depto', auxData.departments, d => `<option value="${d.id}">${d.name}</option>`);
         populateSelect('filter_centro', auxData.centros_custo, c => `<option value="${c.id}">${c.nome}</option>`);
         populateSelect('filter_cargo', auxData.cargos, c => `<option value="${c.nome}">${c.nome}</option>`);
+        
+        const horSelect = document.getElementById('filter_horarios');
+        if (horSelect) {
+            horSelect.innerHTML = (auxData.horarios || []).map(h => `<option value="${h.id}">${h.nome}</option>`).join('');
+        }
         console.log("Passo 2 populado.");
     }
 
@@ -479,9 +489,12 @@
             colaborador_ids: filter_colab,
             horario_id: null, // Removido conforme solicitado
             empresa_id: document.getElementById('filter_empresa').value,
-            department_id: document.getElementById('filter_depto').value,
-            centro_custo_id: document.getElementById('filter_centro').value,
-            cargo: document.getElementById('filter_cargo').value
+            department_id: document.getElementById('filter_depto').value, // Keeping existing single select for now
+            departamentos: getSelectedValues('filter_departments'),
+            horarios: getSelectedValues('filter_horarios'),
+            centros_custo_id: document.getElementById('filter_centro').value,
+            cargo: document.getElementById('filter_cargo').value, // Keeping existing single select for now
+            cargos: getSelectedValues('filter_cargos')
         };
 
         const payload = {};

@@ -2327,6 +2327,92 @@ class JustificativaPonto(models.Model):
         return self.nome
 
 
+class Horario(models.Model):
+    """Modelo principal para definição de regras de cálculo e tipos de horário"""
+    TIPO_CHOICES = [
+        ('semanal', 'Semanal'),
+        ('ciclico', 'Cíclico'),
+        ('jornada', 'Jornada'),
+    ]
+    
+    nome = models.CharField(max_length=100)
+    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, default='semanal')
+    
+    # Campos específicos para Jornada
+    sigla = models.CharField(max_length=10, blank=True, null=True)
+    cor = models.CharField(max_length=20, default='#2563eb')
+    
+    # Campos específicos para Cíclico
+    data_inicio = models.DateField(null=True, blank=True)
+    dias_ciclo = models.IntegerField(null=True, blank=True)
+    
+    # Parâmetros Básicos
+    folga_nos_intervalos = models.BooleanField(default=False, verbose_name="Folga nos Intervalos (não refeição)")
+    almoço_livre_global = models.BooleanField(default=False)
+    compensado_global = models.BooleanField(default=False)
+    neutro_global = models.BooleanField(default=False)
+    
+    # Tolerâncias (Art. 58 CLT padrão: 5 min/batida, 10 min/dia)
+    tol_entrada = models.IntegerField(default=5)
+    tol_saida = models.IntegerField(default=5)
+    tol_intervalo = models.IntegerField(default=5)
+    tol_diaria = models.IntegerField(default=10)
+    
+    # DSR
+    dia_dsr = models.IntegerField(default=6, choices=[(0, 'Segunda'), (1, 'Terça'), (2, 'Quarta'), (3, 'Quinta'), (4, 'Sexta'), (5, 'Sábado'), (6, 'Domingo')])
+    minimo_horas_dsr = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    descontar_faltas_dsr = models.BooleanField(default=True)
+    
+    # Horas Extras
+    utiliza_banco_horas = models.BooleanField(default=False)
+    modo_extra = models.CharField(max_length=20, choices=[('simples', 'Simples'), ('avançado', 'Avançado')], default='simples')
+    percentual_diurno = models.DecimalField(max_digits=5, decimal_places=2, default=50)
+    percentual_noturno = models.DecimalField(max_digits=5, decimal_places=2, default=50)
+    
+    # Noturno
+    inicio_noturno = models.TimeField(default='22:00')
+    fim_noturno = models.TimeField(default='05:00')
+    fator_noturno = models.IntegerField(default=60) # em minutos
+    fechamento_noturno_global = models.TimeField(default='00:00')
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Horário"
+        verbose_name_plural = "Horários"
+        ordering = ['nome']
+
+    def __str__(self):
+        return f"{self.nome} ({self.get_tipo_display()})"
+
+
+class HorarioDetalhe(models.Model):
+    """Configuração diária do horário (entradas, saídas e flags)"""
+    horario = models.ForeignKey(Horario, on_delete=models.CASCADE, related_name='detalhes')
+    dia_index = models.IntegerField() # 0-6 para semanal, 1-N para cíclico, 1 para jornada
+    nome_dia = models.CharField(max_length=20, blank=True) # Ex: "Segunda-feira"
+    
+    entrada_1 = models.TimeField(null=True, blank=True)
+    saida_1 = models.TimeField(null=True, blank=True)
+    entrada_2 = models.TimeField(null=True, blank=True)
+    saida_2 = models.TimeField(null=True, blank=True)
+    
+    total_horas = models.CharField(max_length=10, default="00:00")
+    
+    almoco_livre = models.BooleanField(default=False)
+    compensado = models.BooleanField(default=False)
+    neutro = models.BooleanField(default=False)
+    fechamento_noturno = models.TimeField(default='00:00')
+
+    class Meta:
+        ordering = ['dia_index']
+        unique_together = ['horario', 'dia_index']
+
+    def __str__(self):
+        return f"{self.horario.nome} - Dia {self.dia_index}"
+
+
 class EscalaMensal(models.Model):
     """Armazena a escala/jornada diária pintada para o colaborador"""
     TIPO_CHOICES = [
@@ -2340,7 +2426,7 @@ class EscalaMensal(models.Model):
 
     colaborador = models.ForeignKey(Colaborador, on_delete=models.CASCADE, related_name='escalas_mensais')
     data = models.DateField()
-    turno = models.ForeignKey(Turno, on_delete=models.SET_NULL, null=True, blank=True, related_name='escalas_mensais')
+    horario_previsto = models.ForeignKey(Horario, on_delete=models.SET_NULL, null=True, blank=True, related_name='escalas_mensais')
     tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, default='trabalho')
     justificativa = models.ForeignKey(JustificativaPonto, on_delete=models.SET_NULL, null=True, blank=True)
     observacao = models.TextField(blank=True)

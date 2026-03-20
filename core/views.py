@@ -19,7 +19,7 @@ import re
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment
 from datetime import datetime
-from .models import Complaint, Store, User, Department, Escala, IndicadorDesempenho, ObservacaoDesempenho, Lista, Activity, AuditLog, StoreAudit, StoreAuditItem, StoreAuditIssue, MetaMensalGlobal, SystemNotification, Cargo, Colaborador, HistoricoProfissional, PerformanceRH, Empresa, Turno, JustificativaPonto, EscalaMensal
+from .models import Complaint, Store, User, Department, Escala, IndicadorDesempenho, ObservacaoDesempenho, Lista, Activity, AuditLog, StoreAudit, StoreAuditItem, StoreAuditIssue, MetaMensalGlobal, SystemNotification, Cargo, Colaborador, HistoricoProfissional, PerformanceRH, Empresa, Turno, JustificativaPonto, EscalaMensal, Horario, HorarioDetalhe
 from .forms import ComplaintForm, StoreForm
 
 
@@ -3233,3 +3233,31 @@ def rh_atribuicoes_massa_view(request):
         'active_menu': 'rh_atribuicoes'
     }
     return render(request, 'core/rh/atribuicoes_massa.html', context)
+@login_required
+def rh_horarios_view(request):
+    """Tela de listagem de horários"""
+    if not (request.user.is_gestor() or request.user.is_administrador() or getattr(request.user.department, 'name', '') == 'RH'):
+        messages.error(request, 'Acesso restrito para Gestores ou Departamento de RH.')
+        return redirect('dashboard')
+    return render(request, 'core/rh/horarios_list.html')
+
+
+@login_required
+def rh_cadastro_horario_view(request, pk=None):
+    """Página de cadastro/edição de horário"""
+    if not (request.user.is_gestor() or request.user.is_administrador() or getattr(request.user.department, 'name', '') == 'RH'):
+        messages.error(request, 'Acesso restrito para Gestores ou Departamento de RH.')
+        return redirect('dashboard')
+        
+    horario = None
+    horario_id = ''
+    if pk:
+        horario = get_object_or_404(Horario, pk=pk)
+        horario_id = str(horario.pk)
+        
+    page_title = 'Editar Horário' if horario else 'Novo Horário'
+    return render(request, 'core/rh/horarios_form.html', {
+        'horario': horario,
+        'horario_id': horario_id,
+        'page_title': page_title,
+    })

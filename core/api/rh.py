@@ -14,8 +14,8 @@ import logging
 from datetime import datetime, timedelta
 from ..models import (
     Colaborador, Department, HistoricoProfissional, 
-    PerformanceRH, User, DocumentoColaborador, Empresa, Cargo,
-    CentroCusto, Holiday, Turno, JustificativaPonto, EscalaMensal
+    PerformanceRH, User, DocumentoColaborador,    Empresa, Cargo, CentroCusto, Holiday, Turno, 
+    JustificativaPonto, EscalaMensal, Horario, HorarioDetalhe
 )
 
 logger = logging.getLogger(__name__)
@@ -357,6 +357,10 @@ def api_rh_auxiliar_data(request):
     colabs = list(Colaborador.objects.filter(status='ativo').values('id', 'nome_completo'))
     for c in colabs:
         c['id'] = str(c['id'])
+        
+    horarios = list(Horario.objects.all().values('id', 'nome', 'tipo'))
+    for h in horarios:
+        h['id'] = str(h['id'])
 
     response_data = {
         'success': True,
@@ -365,12 +369,14 @@ def api_rh_auxiliar_data(request):
         'centros_custo': centros,
         'empresas': empresas,
         'turnos': turnos,
+        'horarios': horarios,
         'justificativas': justificativas,
         'colaboradores': colabs,
         'status_choices': dict(Colaborador.STATUS_CHOICES),
         'tipo_contrato_choices': dict(Colaborador.TIPO_CONTRATO_CHOICES),
         'tipo_evento_choices': dict(HistoricoProfissional.TIPO_EVENTO_CHOICES),
-        'tipo_performance_choices': dict(PerformanceRH.TIPO_CHOICES)
+        'tipo_performance_choices': dict(PerformanceRH.TIPO_CHOICES),
+        'tipo_horario_choices': dict(Horario.TIPO_CHOICES)
     }
     
     # Cache por 2 horas - Invalida cache anterior pra garantir que venha os novos campos
@@ -796,8 +802,186 @@ def api_delete_centro_custo(request, pk):
 
 
 # ─────────────────────────────────────────────
-#  FERIADOS
+#  HORÁRIOS
 # ─────────────────────────────────────────────
+
+@login_required
+@require_http_methods(["GET"])
+def api_rh_horarios_list(request):
+    """Lista todos os horários cadastrados"""
+    try:
+        horarios = Horario.objects.all()
+        data = []
+        for h in horarios:
+            # Resumo do horário
+            detalhes = h.detalhes.all()
+            resumo = ""
+            if h.tipo == 'semanal':
+                # Ex: Seg Ter Qua Qui Sex: 08:00-12:00 13:00-17:00
+                ... # Lógica de resumo será refinada no frontend ou aqui
+            
+            data.append({
+                'id': str(h.id),
+                'nome': h.nome,
+                'tipo': h.tipo,
+                'tipo_display': h.get_tipo_display(),
+                'cor': h.cor,
+                'sigla': h.sigla,
+                'resumo': resumo
+            })
+        return JsonResponse({'success': True, 'horarios': data})
+    except Exception as ex:
+        return JsonResponse({'success': False, 'error': str(ex)}, status=500)
+
+
+@login_required
+@require_http_methods(["GET"])
+def api_rh_horario_detail(request, pk):
+    """Retorna detalhes completos de um horário específico"""
+    try:
+        h = get_object_or_404(Horario, pk=pk)
+        detalhes = []
+        for d in h.detalhes.all():
+            detalhes.append({
+                'id': d.id,
+                'dia_index': d.dia_index,
+                'nome_dia': d.nome_dia,
+                'entrada_1': d.entrada_1.strftime('%H:%M') if d.entrada_1 else '',
+                'saida_1': d.saida_1.strftime('%H:%M') if d.saida_1 else '',
+                'entrada_2': d.entrada_2.strftime('%H:%M') if d.entrada_2 else '',
+                'saida_2': d.saida_2.strftime('%H:%M') if d.saida_2 else '',
+                'total_horas': d.total_horas,
+                'almoco_livre': d.almoco_livre,
+                'compensado': d.compensado,
+                'neutro': d.neutro,
+                'fechamento_noturno': d.fechamento_noturno.strftime('%H:%M') if d.fechamento_noturno else '00:00'
+            })
+            
+        return JsonResponse({
+            'success': True,
+            'horario': {
+                'id': str(h.id),
+                'nome': h.nome,
+                'tipo': h.tipo,
+                'sigla': h.sigla,
+                'cor': h.cor,
+                'data_inicio': h.data_inicio.strftime('%Y-%m-%d') if h.data_inicio else '',
+                'dias_ciclo': h.dias_ciclo,
+                'folga_nos_intervalos': h.folga_nos_intervalos,
+                'tol_entrada': h.tol_entrada,
+                'tol_saida': h.tol_saida,
+                'tol_intervalo': h.tol_intervalo,
+                'tol_diaria': h.tol_diaria,
+                'dia_dsr': h.dia_dsr,
+                'minimo_horas_dsr': float(h.minimo_horas_dsr),
+                'descontar_faltas_dsr': h.descontar_faltas_dsr,
+                'utiliza_banco_horas': h.utiliza_banco_horas,
+                'modo_extra': h.modo_extra,
+                'percentual_diurno': float(h.percentual_diurno),
+                'percentual_noturno': float(h.percentual_noturno),
+                'inicio_noturno': h.inicio_noturno.strftime('%H:%M'),
+                'fim_noturno': h.fim_noturno.strftime('%H:%M'),
+                'fator_noturno': h.fator_noturno,
+                'fechamento_noturno_global': h.fechamento_noturno_global.strftime('%H:%M'),
+                'detalhes': detalhes
+            }
+        })
+    except Exception as ex:
+        return JsonResponse({'success': False, 'error': str(ex)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def api_save_horario(request):
+    """Salva ou atualiza um horário e seus detalhes"""
+    try:
+        data = json.loads(request.body)
+        pk = data.get('id')
+        
+        with transaction.atomic():
+            if pk:
+                h = get_object_or_404(Horario, pk=pk)
+            else:
+                h = Horario()
+            
+            h.nome = data.get('nome')
+            h.tipo = data.get('tipo', 'semanal')
+            h.sigla = data.get('sigla')
+            h.cor = data.get('cor', '#2563eb')
+            
+            di = data.get('data_inicio')
+            h.data_inicio = di if di else None
+            h.dias_ciclo = data.get('dias_ciclo')
+            
+            h.folga_nos_intervalos = data.get('folga_nos_intervalos', False)
+            h.tol_entrada = data.get('tol_entrada', 5)
+            h.tol_saida = data.get('tol_saida', 5)
+            h.tol_intervalo = data.get('tol_intervalo', 5)
+            h.tol_diaria = data.get('tol_diaria', 10)
+            
+            h.dia_dsr = data.get('dia_dsr', 6)
+            h.minimo_horas_dsr = data.get('minimo_horas_dsr', 0)
+            h.descontar_faltas_dsr = data.get('descontar_faltas_dsr', True)
+            
+            h.utiliza_banco_horas = data.get('utiliza_banco_horas', False)
+            h.modo_extra = data.get('modo_extra', 'simples')
+            h.percentual_diurno = data.get('percentual_diurno', 50)
+            h.percentual_noturno = data.get('percentual_noturno', 50)
+            
+            h.inicio_noturno = data.get('inicio_noturno', '22:00')
+            h.fim_noturno = data.get('fim_noturno', '05:00')
+            h.fator_noturno = data.get('fator_noturno', 60)
+            h.fechamento_noturno_global = data.get('fechamento_noturno_global', '00:00')
+            
+            h.save()
+            
+            # Detalhes
+            if 'detalhes' in data:
+                # Se for cíclico e o nº de dias mudou, talvez queira limpar?
+                # Por simplicidade, vamos atualizar/criar
+                for d_data in data['detalhes']:
+                    detalhe, _ = HorarioDetalhe.objects.get_or_create(
+                        horario=h, 
+                        dia_index=d_data['dia_index']
+                    )
+                    detalhe.nome_dia = d_data.get('nome_dia', '')
+                    
+                    e1 = d_data.get('entrada_1')
+                    detalhe.entrada_1 = e1 if e1 else None
+                    s1 = d_data.get('saida_1')
+                    detalhe.saida_1 = s1 if s1 else None
+                    e2 = d_data.get('entrada_2')
+                    detalhe.entrada_2 = e2 if e2 else None
+                    s2 = d_data.get('saida_2')
+                    detalhe.saida_2 = s2 if s2 else None
+                    
+                    detalhe.total_horas = d_data.get('total_horas', '00:00')
+                    detalhe.almoco_livre = d_data.get('almoco_livre', False)
+                    detalhe.compensado = d_data.get('compensado', False)
+                    detalhe.neutro = d_data.get('neutro', False)
+                    detalhe.fechamento_noturno = d_data.get('fechamento_noturno', '00:00')
+                    detalhe.save()
+
+        # Invalidar cache de dados auxiliares
+        cache.delete('aux_data:all')
+        
+        return JsonResponse({'success': True, 'message': 'Horário salvo com sucesso', 'id': str(h.id)})
+    except Exception as ex:
+        logger.error(f"Erro ao salvar horario: {str(ex)}")
+        return JsonResponse({'success': False, 'error': str(ex)}, status=500)
+
+
+@login_required
+@require_http_methods(["DELETE"])
+def api_delete_horario(request, pk):
+    """Exclui um horário"""
+    try:
+        h = get_object_or_404(Horario, pk=pk)
+        h.delete()
+        cache.delete('aux_data:all')
+        return JsonResponse({'success': True, 'message': 'Horário removido com sucesso'})
+    except Exception as ex:
+        return JsonResponse({'success': False, 'error': str(ex)}, status=500)
 
 @login_required
 @require_http_methods(["GET"])
