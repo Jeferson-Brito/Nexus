@@ -278,7 +278,7 @@
             </a>
             <div class="collapse nav-submenu-container" id="configHorarioSubmenu">
                 <div class="nav-submenu">
-                    <a href="#" class="nav-link sub-link disabled opacity-50" title="Em breve">
+                    <a href="{% url 'rh_horarios' %}" class="nav-link sub-link {% if 'rh_horarios' in request.resolver_match.url_name %}active{% endif %}" title="Horários">
                         <i class="bi bi-clock"></i>
                         <span class="link-text">Horários</span>
                     </a>
@@ -320,7 +320,7 @@
             </a>
             <div class="collapse nav-submenu-container" id="apuracaoCalculoSubmenu">
                 <div class="nav-submenu">
-                    <a href="#" class="nav-link sub-link disabled opacity-50" title="Em breve">
+                    <a href="{% url 'rh_atribuicoes_massa' %}" class="nav-link sub-link {% if 'rh_atribuicoes_massa' in request.resolver_match.url_name %}active{% endif %}" title="Atribuições em massa">
                         <i class="bi bi-people-fill"></i>
                         <span class="link-text">Atribuições em massa</span>
                     </a>
