@@ -41,7 +41,7 @@
         }
 
         /* Toast Position and Visibility */
-        #toast-container {
+        #toastContainer {
             position: fixed;
             bottom: 24px;
             right: 24px;
@@ -51,7 +51,7 @@
             display: block !important;
         }
 
-        #toast-container .toast {
+        #toastContainer .toast {
             pointer-events: auto;
             margin-bottom: 0.75rem;
         }
@@ -663,8 +663,7 @@
     </div>
 
     <!-- Toast Container -->
-    <!-- Toast Container (Bottom Right via style.css) -->
-    <div id="toast-container" class="toast-container"></div>
+    <div id="toastContainer" class="toast-container"></div>
 
     <!-- Processar mensagens do Django e mostrar como toast -->
     {% if messages %}
@@ -888,7 +887,7 @@
                 type = tmp;
             }
 
-            const container = document.getElementById('toast-container');
+            const container = document.getElementById('toastContainer');
             if (!container) {
                 console.warn('Toast container não encontrado');
                 return;
@@ -915,11 +914,11 @@
             const toastId = 'toast-' + Date.now();
 
             const toastHTML = `
-                <div id="${toastId}" class="toast align-items-center border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true" style="display: none; opacity: 0; transition: opacity 0.3s ease;">
+                <div id="${toastId}" class="toast align-items-center border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true">
                     <div class="d-flex">
-                        <div class="toast-body d-flex align-items-center bg-white" style="border-left: 5px solid ${borderColor}; border-radius: 6px; padding: 14px 18px; width: 100%;">
-                            <i class="bi ${icon} me-3" style="font-size: 1.4rem;"></i>
-                            <div class="text-dark fw-bold" style="font-size: 0.95rem;">${message}</div>
+                        <div class="toast-body d-flex align-items-center bg-white" style="border-left: 5px solid ${borderColor}; border-radius: 4px; padding: 12px 16px; width: 100%;">
+                            <i class="bi ${icon} me-3" style="font-size: 1.3rem;"></i>
+                            <div class="text-dark fw-semibold" style="font-size: 0.95rem;">${message}</div>
                         </div>
                         <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
                     </div>
@@ -929,17 +928,14 @@
             container.insertAdjacentHTML('beforeend', toastHTML);
             const toastElement = document.getElementById(toastId);
 
-            // Garantir que o bootstrap está disponível
             if (typeof bootstrap === 'undefined') {
-                console.error('Bootstrap JS não carregado para Toasts');
+                console.warn('Bootstrap JS não carregado para Toasts');
                 toastElement.style.display = 'block';
-                toastElement.style.opacity = '1';
                 setTimeout(() => toastElement.remove(), duration);
                 return;
             }
 
             const toast = new bootstrap.Toast(toastElement, { delay: duration, autohide: true });
-            toastElement.style.display = 'block'; // Necessário para animação do bootstrap
             toast.show();
 
             toastElement.addEventListener('hidden.bs.toast', () => {
