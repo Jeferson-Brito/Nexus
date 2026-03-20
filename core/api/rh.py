@@ -8,12 +8,14 @@ from django.views.decorators.http import require_http_methods
 from django.shortcuts import get_object_or_404
 from django.db import transaction
 from django.utils import timezone
+from django.core.cache import cache
 import json
 import logging
-
+from datetime import datetime, timedelta
 from ..models import (
     Colaborador, Department, HistoricoProfissional, 
-    PerformanceRH, User, DocumentoColaborador, Empresa, Cargo
+    PerformanceRH, User, DocumentoColaborador,    Empresa, Cargo, CentroCusto, Holiday, Turno, 
+    JustificativaPonto, EscalaMensal, Horario, HorarioDetalhe
 )
 
 logger = logging.getLogger(__name__)
@@ -45,15 +47,24 @@ def api_colaboradores_list(request):
         
     status_filter = request.GET.get('status', 'ativo')
     dept_filter = request.GET.get('department')
+    empresa_filter = request.GET.get('empresa')
+    cargo_filter = request.GET.get('cargo')
+    centro_filter = request.GET.get('centro_custo')
 
     colaboradores = Colaborador.objects.all()
     if status_filter != 'todos':
         colaboradores = colaboradores.filter(status=status_filter)
     if dept_filter:
         colaboradores = colaboradores.filter(department_id=dept_filter)
+    if empresa_filter:
+        colaboradores = colaboradores.filter(empresa_id=empresa_filter)
+    if cargo_filter:
+        colaboradores = colaboradores.filter(cargo_atual=cargo_filter)
+    if centro_filter:
+        colaboradores = colaboradores.filter(centro_custo_id=centro_filter)
 
     data = []
-    for c in colaboradores.select_related('department'):
+    for c in colaboradores.select_related('department', 'empresa', 'centro_custo'):
         data.append({
             'tipo': 'colaborador',
             'id': str(c.id),
@@ -62,8 +73,12 @@ def api_colaboradores_list(request):
             'cargo': c.cargo_atual,
             'cargo_atual': c.cargo_atual,
             'cpf': c.cpf or '',
-            'department': c.department.name,
+            'department': c.department.name if c.department else '—',
             'department_id': c.department_id,
+            'empresa': c.empresa.nome if c.empresa else '—',
+            'empresa_id': c.empresa_id,
+            'centro_custo': c.centro_custo.nome if c.centro_custo else '—',
+            'centro_custo_id': c.centro_custo_id,
             'status': c.status,
             'status_display': c.get_status_display(),
             'data_admissao': c.data_admissao.strftime('%d/%m/%Y'),
@@ -218,6 +233,8 @@ def api_save_colaborador(request):
             colaborador.cargo_atual = data.get('cargo')
             colaborador.cargo_inicial = data.get('cargo_inicial', '')
             colaborador.department_id = data.get('department_id')
+            centro_custo_id = data.get('centro_custo') or None
+            colaborador.centro_custo_id = centro_custo_id if centro_custo_id else None
             empresa_id = data.get('empresa_id') or None
             colaborador.empresa_id = empresa_id if empresa_id else None
             colaborador.salario_atual = parse_decimal(data.get('salario_atual'))
@@ -305,25 +322,68 @@ def api_save_colaborador(request):
 @login_required
 @require_http_methods(["GET"])
 def api_rh_auxiliar_data(request):
-    """Dados auxiliares para formulários (Cargos, Departamentos, Opções)"""
+    """Retorna dados para combos e listas auxiliares do RH"""
+    cache_key = 'aux_data:all'
+    cached_data = cache.get(cache_key)
+    
+    if cached_data:
+        return JsonResponse(cached_data)
+
     cargos = list(Cargo.objects.all().values('id', 'nome', 'department_id'))
-    for c in cargos:
+    for cargo in cargos:
+        cargo['id'] = str(cargo['id'])
+        cargo['department_id'] = str(cargo['department_id'])
+    
+    centros = list(CentroCusto.objects.all().values('id', 'nome'))
+    for c in centros:
         c['id'] = str(c['id'])
-        c['department_id'] = str(c['department_id'])
     
     depts = list(Department.objects.all().values('id', 'name'))
     for dept in depts:
         dept['id'] = str(dept['id'])
     
-    return JsonResponse({
+    empresas = list(Empresa.objects.all().values('id', 'nome', 'nome_fantasia'))
+    for e in empresas:
+        e['id'] = str(e['id'])
+        
+    turnos = list(Turno.objects.all().values('id', 'nome', 'horario'))
+    for t in turnos:
+        t['id'] = str(t['id'])
+
+    justificativas = list(JustificativaPonto.objects.all().values('id', 'nome'))
+    for j in justificativas:
+        j['id'] = str(j['id'])
+
+    colabs = list(Colaborador.objects.filter(status='ativo').values('id', 'nome_completo'))
+    for c in colabs:
+        c['id'] = str(c['id'])
+        
+    horarios = list(Horario.objects.all().values('id', 'nome', 'tipo'))
+    for h in horarios:
+        h['id'] = str(h['id'])
+
+    response_data = {
         'success': True,
         'cargos': cargos,
         'departments': depts,
+        'centros_custo': centros,
+        'empresas': empresas,
+        'turnos': turnos,
+        'horarios': horarios,
+        'justificativas': justificativas,
+        'colaboradores': colabs,
         'status_choices': dict(Colaborador.STATUS_CHOICES),
         'tipo_contrato_choices': dict(Colaborador.TIPO_CONTRATO_CHOICES),
         'tipo_evento_choices': dict(HistoricoProfissional.TIPO_EVENTO_CHOICES),
-        'tipo_performance_choices': dict(PerformanceRH.TIPO_CHOICES)
-    })
+        'tipo_performance_choices': dict(PerformanceRH.TIPO_CHOICES),
+        'tipo_horario_choices': dict(Horario.TIPO_CHOICES)
+    }
+    
+    # Cache por 2 horas - Invalida cache anterior pra garantir que venha os novos campos
+    cache.delete(cache_key)
+    cache.set(cache_key, response_data, 7200)
+    
+    return JsonResponse(response_data)
 
 
 @login_required
@@ -629,18 +689,22 @@ def api_delete_departamento(request, pk):
 @login_required
 @require_http_methods(["GET"])
 def api_cargos_list(request):
-    """Lista todos os cargos"""
+    """Lista todos os cargos com contagem de funcionários"""
     try:
         cargos = Cargo.objects.all().select_related('department')
-        return JsonResponse({'success': True, 'cargos': [
-            {
+        data = []
+        for c in cargos:
+            # Contagem baseada no nome do cargo no modelo Colaborador
+            count = Colaborador.objects.filter(cargo_atual=c.nome).count()
+            data.append({
                 'id': str(c.id),
                 'nome': c.nome,
                 'department_id': str(c.department_id),
-                'department_name': c.department.name if c.department else '',
+                'department_name': c.department.name if c.department else '—',
                 'descricao': c.descricao,
-            } for c in cargos
-        ]})
+                'count_colaboradores': count
+            })
+        return JsonResponse({'success': True, 'cargos': data})
     except Exception as ex:
         return JsonResponse({'success': False, 'error': str(ex)}, status=500)
 
@@ -680,4 +744,423 @@ def api_delete_cargo(request, pk):
         return JsonResponse({'success': True, 'message': 'Cargo excluído com sucesso.'})
     except Exception as ex:
         logger.error(f"Erro ao excluir cargo: {ex}")
+        return JsonResponse({'success': False, 'error': str(ex)}, status=500)
+
+# ─────────────────────────────────────────────
+#  CENTROS DE CUSTO
+# ─────────────────────────────────────────────
+
+@login_required
+@require_http_methods(["GET"])
+def api_centros_custo_list(request):
+    """Lista todos os centros de custo com contagem de funcionários"""
+    try:
+        from django.db.models import Count
+        centros = CentroCusto.objects.annotate(num_funcionarios=Count('colaboradores'))
+        return JsonResponse({'success': True, 'centros': [
+            {
+                'id': str(c.id),
+                'nome': c.nome,
+                'num_funcionarios': c.num_funcionarios,
+            } for c in centros
+        ]})
+    except Exception as ex:
+        return JsonResponse({'success': False, 'error': str(ex)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def api_save_centro_custo(request):
+    """Cria ou atualiza um centro de custo"""
+    try:
+        data = json.loads(request.body)
+        pk = data.get('id')
+        
+        if pk:
+            centro = get_object_or_404(CentroCusto, pk=pk)
+        else:
+            centro = CentroCusto()
+        
+        centro.nome = data.get('nome', '')
+        centro.save()
+        
+        return JsonResponse({'success': True, 'message': 'Centro de custo salvo com sucesso.', 'id': str(centro.id)})
+    except Exception as ex:
+        return JsonResponse({'success': False, 'error': str(ex)}, status=500)
+
+
+@login_required
+@require_http_methods(["DELETE"])
+def api_delete_centro_custo(request, pk):
+    """Exclui um centro de custo"""
+    try:
+        centro = get_object_or_404(CentroCusto, pk=pk)
+        centro.delete()
+        return JsonResponse({'success': True, 'message': 'Centro de custo excluído com sucesso.'})
+    except Exception as ex:
+        return JsonResponse({'success': False, 'error': str(ex)}, status=500)
+
+
+# ─────────────────────────────────────────────
+#  HORÁRIOS
+# ─────────────────────────────────────────────
+
+@login_required
+@require_http_methods(["GET"])
+def api_rh_horarios_list(request):
+    """Lista todos os horários cadastrados"""
+    try:
+        horarios = Horario.objects.all()
+        data = []
+        for h in horarios:
+            # Resumo do horário
+            detalhes = h.detalhes.all()
+            resumo = ""
+            if h.tipo == 'semanal':
+                # Ex: Seg Ter Qua Qui Sex: 08:00-12:00 13:00-17:00
+                ... # Lógica de resumo será refinada no frontend ou aqui
+            
+            data.append({
+                'id': str(h.id),
+                'nome': h.nome,
+                'tipo': h.tipo,
+                'tipo_display': h.get_tipo_display(),
+                'cor': h.cor,
+                'sigla': h.sigla,
+                'resumo': resumo
+            })
+        return JsonResponse({'success': True, 'horarios': data})
+    except Exception as ex:
+        return JsonResponse({'success': False, 'error': str(ex)}, status=500)
+
+
+@login_required
+@require_http_methods(["GET"])
+def api_rh_horario_detail(request, pk):
+    """Retorna detalhes completos de um horário específico"""
+    try:
+        h = get_object_or_404(Horario, pk=pk)
+        detalhes = []
+        for d in h.detalhes.all():
+            detalhes.append({
+                'id': d.id,
+                'dia_index': d.dia_index,
+                'nome_dia': d.nome_dia,
+                'entrada_1': d.entrada_1.strftime('%H:%M') if d.entrada_1 else '',
+                'saida_1': d.saida_1.strftime('%H:%M') if d.saida_1 else '',
+                'entrada_2': d.entrada_2.strftime('%H:%M') if d.entrada_2 else '',
+                'saida_2': d.saida_2.strftime('%H:%M') if d.saida_2 else '',
+                'total_horas': d.total_horas,
+                'almoco_livre': d.almoco_livre,
+                'compensado': d.compensado,
+                'neutro': d.neutro,
+                'fechamento_noturno': d.fechamento_noturno.strftime('%H:%M') if d.fechamento_noturno else '00:00'
+            })
+            
+        return JsonResponse({
+            'success': True,
+            'horario': {
+                'id': str(h.id),
+                'nome': h.nome,
+                'tipo': h.tipo,
+                'sigla': h.sigla,
+                'cor': h.cor,
+                'data_inicio': h.data_inicio.strftime('%Y-%m-%d') if h.data_inicio else '',
+                'dias_ciclo': h.dias_ciclo,
+                'folga_nos_intervalos': h.folga_nos_intervalos,
+                'tol_entrada': h.tol_entrada,
+                'tol_saida': h.tol_saida,
+                'tol_intervalo': h.tol_intervalo,
+                'tol_diaria': h.tol_diaria,
+                'dia_dsr': h.dia_dsr,
+                'minimo_horas_dsr': float(h.minimo_horas_dsr),
+                'descontar_faltas_dsr': h.descontar_faltas_dsr,
+                'utiliza_banco_horas': h.utiliza_banco_horas,
+                'modo_extra': h.modo_extra,
+                'percentual_diurno': float(h.percentual_diurno),
+                'percentual_noturno': float(h.percentual_noturno),
+                'inicio_noturno': h.inicio_noturno.strftime('%H:%M'),
+                'fim_noturno': h.fim_noturno.strftime('%H:%M'),
+                'fator_noturno': h.fator_noturno,
+                'fechamento_noturno_global': h.fechamento_noturno_global.strftime('%H:%M'),
+                'detalhes': detalhes
+            }
+        })
+    except Exception as ex:
+        return JsonResponse({'success': False, 'error': str(ex)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def api_save_horario(request):
+    """Salva ou atualiza um horário e seus detalhes"""
+    try:
+        data = json.loads(request.body)
+        pk = data.get('id')
+        
+        with transaction.atomic():
+            if pk:
+                h = get_object_or_404(Horario, pk=pk)
+            else:
+                h = Horario()
+            
+            h.nome = data.get('nome')
+            h.tipo = data.get('tipo', 'semanal')
+            h.sigla = data.get('sigla')
+            h.cor = data.get('cor', '#2563eb')
+            
+            di = data.get('data_inicio')
+            h.data_inicio = di if di else None
+            h.dias_ciclo = data.get('dias_ciclo')
+            
+            h.folga_nos_intervalos = data.get('folga_nos_intervalos', False)
+            h.tol_entrada = data.get('tol_entrada', 5)
+            h.tol_saida = data.get('tol_saida', 5)
+            h.tol_intervalo = data.get('tol_intervalo', 5)
+            h.tol_diaria = data.get('tol_diaria', 10)
+            
+            h.dia_dsr = data.get('dia_dsr', 6)
+            h.minimo_horas_dsr = data.get('minimo_horas_dsr', 0)
+            h.descontar_faltas_dsr = data.get('descontar_faltas_dsr', True)
+            
+            h.utiliza_banco_horas = data.get('utiliza_banco_horas', False)
+            h.modo_extra = data.get('modo_extra', 'simples')
+            h.percentual_diurno = data.get('percentual_diurno', 50)
+            h.percentual_noturno = data.get('percentual_noturno', 50)
+            
+            h.inicio_noturno = data.get('inicio_noturno', '22:00')
+            h.fim_noturno = data.get('fim_noturno', '05:00')
+            h.fator_noturno = data.get('fator_noturno', 60)
+            h.fechamento_noturno_global = data.get('fechamento_noturno_global', '00:00')
+            
+            h.save()
+            
+            # Detalhes
+            if 'detalhes' in data:
+                # Se for cíclico e o nº de dias mudou, talvez queira limpar?
+                # Por simplicidade, vamos atualizar/criar
+                for d_data in data['detalhes']:
+                    detalhe, _ = HorarioDetalhe.objects.get_or_create(
+                        horario=h, 
+                        dia_index=d_data['dia_index']
+                    )
+                    detalhe.nome_dia = d_data.get('nome_dia', '')
+                    
+                    e1 = d_data.get('entrada_1')
+                    detalhe.entrada_1 = e1 if e1 else None
+                    s1 = d_data.get('saida_1')
+                    detalhe.saida_1 = s1 if s1 else None
+                    e2 = d_data.get('entrada_2')
+                    detalhe.entrada_2 = e2 if e2 else None
+                    s2 = d_data.get('saida_2')
+                    detalhe.saida_2 = s2 if s2 else None
+                    
+                    detalhe.total_horas = d_data.get('total_horas', '00:00')
+                    detalhe.almoco_livre = d_data.get('almoco_livre', False)
+                    detalhe.compensado = d_data.get('compensado', False)
+                    detalhe.neutro = d_data.get('neutro', False)
+                    detalhe.fechamento_noturno = d_data.get('fechamento_noturno', '00:00')
+                    detalhe.save()
+
+        # Invalidar cache de dados auxiliares
+        cache.delete('aux_data:all')
+        
+        return JsonResponse({'success': True, 'message': 'Horário salvo com sucesso', 'id': str(h.id)})
+    except Exception as ex:
+        logger.error(f"Erro ao salvar horario: {str(ex)}")
+        return JsonResponse({'success': False, 'error': str(ex)}, status=500)
+
+
+@login_required
+@require_http_methods(["DELETE"])
+def api_delete_horario(request, pk):
+    """Exclui um horário"""
+    try:
+        h = get_object_or_404(Horario, pk=pk)
+        h.delete()
+        cache.delete('aux_data:all')
+        return JsonResponse({'success': True, 'message': 'Horário removido com sucesso'})
+    except Exception as ex:
+        return JsonResponse({'success': False, 'error': str(ex)}, status=500)
+
+@login_required
+@require_http_methods(["GET"])
+def api_feriados_list(request):
+    """Lista todos os feriados"""
+    try:
+        feriados = Holiday.objects.all().order_by('date')
+        data = []
+        for f in feriados:
+            data.append({
+                'id': str(f.id),
+                'name': f.name,
+                'date': f.date.isoformat(),
+                'date_display': f.date.strftime('%d/%m/%Y') if not f.repeats_annually else f.date.strftime('%d/%m'),
+                'repeats_annually': f.repeats_annually,
+                'apply_to_all': f.apply_to_all,
+                'target_companies': list(f.target_companies.values_list('id', flat=True)),
+                'target_departments': list(f.target_departments.values_list('id', flat=True)),
+                'target_turnos': list(f.target_turnos.values_list('id', flat=True)),
+            })
+        return JsonResponse({'success': True, 'feriados': data})
+    except Exception as ex:
+        return JsonResponse({'success': False, 'error': str(ex)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def api_save_feriado(request):
+    """Cria ou atualiza um feriado"""
+    try:
+        data = json.loads(request.body)
+        pk = data.get('id')
+        
+        with transaction.atomic():
+            if pk:
+                feriado = get_object_or_404(Holiday, pk=pk)
+            else:
+                feriado = Holiday()
+            
+            feriado.name = data.get('name')
+            feriado.date = data.get('date')
+            feriado.repeats_annually = data.get('repeats_annually', True)
+            feriado.apply_to_all = data.get('apply_to_all', True)
+            feriado.save()
+            
+            # ManyToMany fields
+            if not feriado.apply_to_all:
+                feriado.target_companies.set(data.get('target_companies', []))
+                feriado.target_departments.set(data.get('target_departments', []))
+                feriado.target_turnos.set(data.get('target_turnos', []))
+            else:
+                feriado.target_companies.clear()
+                feriado.target_departments.clear()
+                feriado.target_turnos.clear()
+
+        return JsonResponse({'success': True, 'message': 'Feriado salvo com sucesso.', 'id': str(feriado.id)})
+    except Exception as ex:
+        logger.error(f"Erro ao salvar feriado: {ex}")
+        return JsonResponse({'success': False, 'error': str(ex)}, status=500)
+
+
+@login_required
+@require_http_methods(["DELETE"])
+def api_delete_feriado(request, pk):
+    """Exclui um feriado"""
+    try:
+        feriado = get_object_or_404(Holiday, pk=pk)
+        feriado.delete()
+        return JsonResponse({'success': True, 'message': 'Feriado excluído com sucesso.'})
+    except Exception as ex:
+        logger.error(f"Erro ao excluir feriado: {ex}")
+        return JsonResponse({'success': False, 'error': str(ex)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def api_execute_atribuicao_massa(request):
+    """Executa a atribuição em massa baseada no tipo e nos filtros selecionados"""
+    try:
+        data = json.loads(request.body)
+        filters = data.get('filters', {})
+        payload = data.get('payload', {})
+        tipo_atribuicao = data.get('tipo_atribuicao')
+        
+        # Iniciar query base
+        colaboradores = Colaborador.objects.all()
+        
+        # Se houver IDs específicos, usar apenas eles
+        colab_ids = filters.get('colaborador_ids', [])
+        if colab_ids:
+            colaboradores = colaboradores.filter(id__in=colab_ids)
+        else:
+            # Caso contrário, aplicar filtros cumulativos
+            if filters.get('empresa_id'):
+                colaboradores = colaboradores.filter(empresa_id=filters.get('empresa_id'))
+            if filters.get('department_id'):
+                colaboradores = colaboradores.filter(department_id=filters.get('department_id'))
+            if filters.get('centro_custo_id'):
+                colaboradores = colaboradores.filter(centro_custo_id=filters.get('centro_custo_id'))
+            if filters.get('cargo'):
+                colaboradores = colaboradores.filter(cargo_atual=filters.get('cargo'))
+            if filters.get('horario_id'):
+                # Filtro por turno (baseado na string jornada_trabalho ou similar)
+                # Como os colaboradores guardam a jornada como string, tentamos um match parcial
+                turno = Turno.objects.filter(id=filters.get('horario_id')).first()
+                if turno:
+                    colaboradores = colaboradores.filter(jornada_trabalho__icontains=turno.nome)
+
+        if not colaboradores.exists():
+            return JsonResponse({'success': False, 'error': 'Nenhum colaborador encontrado com os filtros selecionados.'}, status=400)
+
+        with transaction.atomic():
+            # A partir daqui a lógica continua a mesma, mas usando o queryset 'colaboradores' filtrado
+            
+            if tipo_atribuicao == 'horario':
+                # Atribuição de Turno (Horário)
+                turno_id = payload.get('turno_id')
+                if not turno_id:
+                    return JsonResponse({'success': False, 'error': 'Turno não selecionado.'}, status=400)
+                
+                turno = Turno.objects.filter(id=turno_id).first()
+                if turno:
+                    colaboradores.update(jornada_trabalho=f"{turno.nome} ({turno.horario})")
+            
+            elif tipo_atribuicao == 'jornada':
+                # Atribuição de Jornada (Painting Grid)
+                pinturas = payload.get('pinturas', [])
+                for colab in colaboradores:
+                    for pintura in pinturas:
+                        EscalaMensal.objects.update_or_create(
+                            colaborador=colab,
+                            data=pintura.get('data'),
+                            defaults={
+                                'turno_id': pintura.get('turno_id'),
+                                'tipo': pintura.get('tipo', 'trabalho'),
+                                'justificativa_id': pintura.get('justificativa_id')
+                            }
+                        )
+            
+            elif tipo_atribuicao == 'grupos_cargos':
+                # Atualização de Empresa, Depto, Cargo, etc.
+                updates = {}
+                if payload.get('empresa_id'): updates['empresa_id'] = payload.get('empresa_id')
+                if payload.get('department_id'): updates['department_id'] = payload.get('department_id')
+                if payload.get('cargo'): updates['cargo_atual'] = payload.get('cargo')
+                if payload.get('centro_custo_id'): updates['centro_custo_id'] = payload.get('centro_custo_id')
+                if payload.get('status'): updates['status'] = payload.get('status')
+                
+                if updates:
+                    colaboradores.update(**updates)
+            
+            elif tipo_atribuicao == 'justificativa':
+                # Aplicação de Justificativa em massa para um período
+                justificativa_id = payload.get('justificativa_id')
+                data_inicio = payload.get('data_inicio')
+                data_fim = payload.get('data_fim')
+                
+                if not all([justificativa_id, data_inicio, data_fim]):
+                    return JsonResponse({'success': False, 'error': 'Dados incompletos para justificativa.'}, status=400)
+                
+                # Converter datas
+                d_inicio = datetime.strptime(data_inicio, '%Y-%m-%d').date()
+                d_fim = datetime.strptime(data_fim, '%Y-%m-%d').date()
+                curr_date = d_inicio
+                
+                while curr_date <= d_fim:
+                    for colab in colaboradores:
+                        EscalaMensal.objects.update_or_create(
+                            colaborador=colab,
+                            data=curr_date,
+                            defaults={
+                                'justificativa_id': justificativa_id,
+                                'tipo': 'afastamento'
+                            }
+                        )
+                    curr_date += timedelta(days=1)
+
+        return JsonResponse({'success': True, 'message': f'Atribuição de "{tipo_atribuicao}" executada com sucesso para {colaboradores.count()} colaboradores.'})
+    
+    except Exception as ex:
+        logger.error(f"Erro na atribuição em massa: {ex}")
         return JsonResponse({'success': False, 'error': str(ex)}, status=500)

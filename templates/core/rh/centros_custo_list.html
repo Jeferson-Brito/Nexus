@@ -4,38 +4,24 @@
 {% block content %}
 <div class="container-fluid py-4">
     <!-- Formulário Add/Edit (Inicialmente Oculto) -->
-    <div id="deptFormContainer" class="mb-4" style="display: none;">
+    <div id="costCenterFormContainer" class="mb-4" style="display: none;">
         <div class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
             <div class="card-header border-0 py-3 px-4" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
-                <h5 class="fw-bold mb-0 text-white" id="formTitle">Novo Departamento</h5>
+                <h5 class="fw-bold mb-0 text-white" id="formTitle">Novo Centro de Custo</h5>
             </div>
             <div class="card-body p-4">
-                <form id="deptForm">
-                    <input type="hidden" name="id" id="deptId">
+                <form id="costCenterForm">
+                    <input type="hidden" name="id" id="costCenterId">
                     <div class="row g-3">
-                        <div class="col-md-6">
+                        <div class="col-md-12">
                             <label class="form-label small fw-bold">Nome *</label>
-                            <input type="text" name="name" id="deptName" class="form-control" required placeholder="Digite o nome do departamento">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label small fw-bold">Fluxo de Aprovação</label>
-                            <input type="text" name="fluxo_aprovacao" id="deptFluxo" class="form-control" placeholder="Ex: Gestor -> RH">
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label small fw-bold">Descrição</label>
-                            <textarea name="description" id="deptDesc" class="form-control" rows="3" placeholder="Breve descrição do departamento"></textarea>
-                        </div>
-                        <div class="col-12">
-                            <div class="form-check form-switch mt-2">
-                                <input class="form-check-input" type="checkbox" id="deptShowNav">
-                                <label class="form-check-label small fw-bold" for="deptShowNav">Exibir no Menu de Navegação</label>
-                            </div>
+                            <input type="text" name="nome" id="costCenterName" class="form-control" required placeholder="Digite o nome do centro de custo">
                         </div>
                     </div>
 
                     <div class="mt-4 pt-3 border-top d-flex gap-2">
-                        <button type="button" class="btn btn-primary px-4" id="btnSaveDept">
-                            <i class="bi bi-check-lg"></i> Salvar Departamento
+                        <button type="button" class="btn btn-primary px-4" id="btnSaveCostCenter">
+                            <i class="bi bi-check-lg"></i> Salvar Centro de Custo
                         </button>
                         <button type="button" class="btn btn-light border px-4" onclick="hideForm()">
                             Cancelar
@@ -46,12 +32,12 @@
         </div>
     </div>
 
-    <!-- Tabela de Departamentos -->
-    <div id="deptListContainer" class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
+    <!-- Tabela de Centros de Custo -->
+    <div id="costCenterListContainer" class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
         <!-- Header -->
         <div class="card-header border-0 d-flex align-items-center justify-content-between py-3 px-4"
              style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
-            <h5 class="fw-bold mb-0 text-white">Departamentos</h5>
+            <h5 class="fw-bold mb-0 text-white">Centros de Custo</h5>
             <button class="btn d-flex align-items-center gap-2" onclick="showForm()"
                style="background:rgba(255,255,255,0.2); color:#fff; border:1.5px solid rgba(255,255,255,0.6); font-weight:600;">
                 <i class="bi bi-plus-lg"></i> Adicionar
@@ -83,20 +69,17 @@
 
         <!-- Tabela -->
         <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0" id="deptTable">
+            <table class="table table-hover align-middle mb-0" id="costCenterTable">
                 <thead class="table-light">
                     <tr>
                         <th class="px-4 py-3">Nome</th>
-                        <th class="py-3">Descrição</th>
-                        <th class="py-3">Fluxo de Aprovação</th>
-                        <th class="py-3 text-center">Menu?</th>
                         <th class="py-3 text-center">Funcionários</th>
                         <th class="py-3 text-end pe-4">Ações</th>
                     </tr>
                 </thead>
-                <tbody id="deptTbody">
+                <tbody id="costCenterTbody">
                     <tr>
-                        <td colspan="6" class="text-center py-5 text-muted">
+                        <td colspan="3" class="text-center py-5 text-muted">
                             <div class="spinner-border spinner-border-sm me-2"></div> Carregando...
                         </td>
                     </tr>
@@ -120,8 +103,8 @@
         <div class="modal-content border-0 shadow">
             <div class="modal-body text-center py-4">
                 <div class="mb-3" style="font-size:2rem; color:#ef4444;"><i class="bi bi-trash3"></i></div>
-                <h6 class="fw-bold mb-1">Excluir departamento?</h6>
-                <p class="text-muted small mb-3" id="deleteDeptNome">—</p>
+                <h6 class="fw-bold mb-1">Excluir centro de custo?</h6>
+                <p class="text-muted small mb-3" id="deleteCostCenterNome">—</p>
                 <div class="d-flex gap-2 justify-content-center">
                     <button class="btn btn-sm btn-light px-4" data-bs-dismiss="modal">Cancelar</button>
                     <button class="btn btn-sm btn-danger px-4" id="btnConfirmDelete">Excluir</button>
@@ -132,37 +115,37 @@
 </div>
 
 <script>
-let allDepts = [];
+let allCentros = [];
 let deleteId = null;
 let currentPage = 1;
 
 document.addEventListener('DOMContentLoaded', () => {
-    loadDepts();
+    loadCentros();
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('add') === '1') showForm();
     document.getElementById('searchInput').addEventListener('input', () => { currentPage = 1; render(); });
     document.getElementById('perPageSelect').addEventListener('change', () => { currentPage = 1; render(); });
-    document.getElementById('btnSaveDept').addEventListener('click', saveDept);
+    document.getElementById('btnSaveCostCenter').addEventListener('click', saveCostCenter);
     document.getElementById('btnConfirmDelete').addEventListener('click', confirmDelete);
 });
 
-function loadDepts() {
-    fetch('/api/rh/departamentos/')
+function loadCentros() {
+    fetch('/api/rh/centros-custo/')
         .then(r => r.json())
         .then(data => {
             if (data.success) { 
-                allDepts = data.departamentos; 
+                allCentros = data.centros; 
                 render(); 
             } else {
-                showToast('error', 'Erro ao carregar departamentos.');
+                showToast('error', 'Erro ao carregar centros de custo.');
             }
         })
-        .catch(() => showToast('error', 'Erro de conexão ao carregar departamentos.'));
+        .catch(() => showToast('error', 'Erro de conexão ao carregar centros de custo.'));
 }
 
 function render() {
     const q = document.getElementById('searchInput').value.toLowerCase();
-    const filtered = allDepts.filter(d => (d.name||'').toLowerCase().includes(q));
+    const filtered = allCentros.filter(c => (c.nome||'').toLowerCase().includes(q));
     
     const pp = parseInt(document.getElementById('perPageSelect').value) || 10;
     const total = filtered.length;
@@ -172,42 +155,35 @@ function render() {
     const inicio = (currentPage - 1) * pp;
     const pagina = filtered.slice(inicio, inicio + pp);
 
-    // Info
     const info = document.getElementById('paginacaoInfo');
     if (info) {
         if (total === 0) info.textContent = '0 registros';
         else info.textContent = `${inicio + 1} a ${Math.min(inicio + pp, total)} de ${total}`;
     }
 
-    // Paginação
     renderPaginacao(totalPag);
 
-    const tbody = document.getElementById('deptTbody');
+    const tbody = document.getElementById('costCenterTbody');
     if (pagina.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-5 text-muted">Nenhum departamento encontrado.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="3" class="text-center py-5 text-muted">Nenhum centro de custo encontrado.</td></tr>`;
     } else {
-        tbody.innerHTML = pagina.map(d => `
+        tbody.innerHTML = pagina.map(c => `
             <tr>
                 <td class="px-4 fw-semibold">
-                    <a href="{% url 'rh_colaboradores' %}?department_id=${d.id}" class="text-dark text-decoration-none hover-link">
-                        ${d.name}
+                    <a href="{% url 'rh_colaboradores' %}?centro_custo_id=${c.id}" class="text-dark text-decoration-none hover-link">
+                        ${c.nome}
                     </a>
                 </td>
-                <td class="text-muted small">${d.description || '—'}</td>
-                <td class="text-muted">${d.fluxo_aprovacao || '—'}</td>
                 <td class="text-center">
-                    ${d.show_in_nav ? '<span class="badge bg-success" style="font-size:10px;">SIM</span>' : '<span class="badge bg-light text-muted border" style="font-size:10px;">NÃO</span>'}
-                </td>
-                <td class="text-center">
-                    <a href="{% url 'rh_colaboradores' %}?department_id=${d.id}" class="badge bg-light text-dark border text-decoration-none hover-link">
-                        ${d.num_funcionarios}
+                    <a href="{% url 'rh_colaboradores' %}?centro_custo_id=${c.id}" class="badge bg-light text-dark border text-decoration-none hover-link">
+                        ${c.num_funcionarios}
                     </a>
                 </td>
                 <td class="text-end pe-4">
-                    <button class="btn btn-sm btn-light border me-1" onclick="showForm('${d.id}')">
+                    <button class="btn btn-sm btn-light border me-1" onclick="showForm('${c.id}')">
                         <i class="bi bi-pencil-square text-primary"></i>
                     </button>
-                    <button class="btn btn-sm btn-light border" onclick="openModalDelete('${d.id}', '${d.name.replace(/'/g, "\\'")}')">
+                    <button class="btn btn-sm btn-light border" onclick="openModalDelete('${c.id}', '${c.nome.replace(/'/g, "\\'")}')">
                         <i class="bi bi-trash3 text-danger"></i>
                     </button>
                 </td>
@@ -247,42 +223,37 @@ function renderPaginacao(total) {
 
 function showForm(id = null) {
     if (id) {
-        const d = allDepts.find(x => x.id === id);
-        if (!d) return;
-        document.getElementById('formTitle').textContent = 'Editar Departamento';
-        document.getElementById('deptId').value = d.id;
-        document.getElementById('deptName').value = d.name;
-        document.getElementById('deptDesc').value = d.description || '';
-        document.getElementById('deptFluxo').value = d.fluxo_aprovacao || '';
-        document.getElementById('deptShowNav').checked = !!d.show_in_nav;
+        const c = allCentros.find(x => x.id === id);
+        if (!c) return;
+        document.getElementById('formTitle').textContent = 'Editar Centro de Custo';
+        document.getElementById('costCenterId').value = c.id;
+        document.getElementById('costCenterName').value = c.nome;
     } else {
-        document.getElementById('formTitle').textContent = 'Novo Departamento';
-        document.getElementById('deptId').value = '';
-        document.getElementById('deptForm').reset();
+        document.getElementById('formTitle').textContent = 'Novo Centro de Custo';
+        document.getElementById('costCenterId').value = '';
+        document.getElementById('costCenterName').value = '';
+        document.getElementById('costCenterForm').reset();
     }
-    document.getElementById('deptListContainer').style.display = 'none';
-    document.getElementById('deptFormContainer').style.display = 'block';
+    document.getElementById('costCenterListContainer').style.display = 'none';
+    document.getElementById('costCenterFormContainer').style.display = 'block';
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function hideForm() {
-    document.getElementById('deptFormContainer').style.display = 'none';
-    document.getElementById('deptListContainer').style.display = 'block';
+    document.getElementById('costCenterFormContainer').style.display = 'none';
+    document.getElementById('costCenterListContainer').style.display = 'block';
 }
 
-function saveDept() {
-    const id = document.getElementById('deptId').value;
+function saveCostCenter() {
+    const id = document.getElementById('costCenterId').value;
     const data = {
         id: id || null,
-        name: document.getElementById('deptName').value,
-        description: document.getElementById('deptDesc').value,
-        fluxo_aprovacao: document.getElementById('deptFluxo').value,
-        show_in_nav: document.getElementById('deptShowNav').checked
+        nome: document.getElementById('costCenterName').value
     };
 
-    if (!data.name) return alert('Nome é obrigatório.');
+    if (!data.nome) return showToast('error', 'Nome é obrigatório.');
 
-    fetch('/api/rh/departamentos/save/', {
+    fetch('/api/rh/centros-custo/save/', {
         method: 'POST',
         headers: { 
             'Content-Type': 'application/json',
@@ -293,9 +264,9 @@ function saveDept() {
     .then(r => r.json())
     .then(res => {
         if (res.success) {
-            showToast('success', res.message || 'Departamento salvo!');
+            showToast('success', res.message || 'Centro de custo salvo!');
             hideForm();
-            loadDepts();
+            loadCentros();
         } else {
             showToast('error', res.error || 'Erro ao salvar.');
         }
@@ -304,13 +275,13 @@ function saveDept() {
 
 function openModalDelete(id, nome) {
     deleteId = id;
-    document.getElementById('deleteDeptNome').textContent = nome;
+    document.getElementById('deleteCostCenterNome').textContent = nome;
     new bootstrap.Modal(document.getElementById('modalDelete')).show();
 }
 
 function confirmDelete() {
     if (!deleteId) return;
-    fetch(`/api/rh/departamentos/${deleteId}/delete/`, {
+    fetch(`/api/rh/centros-custo/delete/${deleteId}/`, {
         method: 'DELETE',
         headers: { 'X-CSRFToken': getCsrf() }
     })
@@ -318,8 +289,8 @@ function confirmDelete() {
     .then(data => {
         bootstrap.Modal.getInstance(document.getElementById('modalDelete')).hide();
         if (data.success) {
-            showToast('success', 'Departamento excluído!');
-            loadDepts();
+            showToast('success', 'Centro de custo excluído!');
+            loadCentros();
         } else {
             showToast('error', data.error || 'Erro ao excluir.');
         }
@@ -327,7 +298,7 @@ function confirmDelete() {
 }
 
 function showError(msg) {
-    document.getElementById('deptTbody').innerHTML = `<tr><td colspan="6" class="text-center py-5 text-danger">${msg}</td></tr>`;
+    document.getElementById('costCenterTbody').innerHTML = `<tr><td colspan="3" class="text-center py-5 text-danger">${msg}</td></tr>`;
 }
 
 function getCsrf() { return document.cookie.match(/csrftoken=([^;]+)/)?.[1] || ''; }

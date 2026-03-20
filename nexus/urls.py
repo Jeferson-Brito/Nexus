@@ -1,5 +1,5 @@
 """
-URL configuration for gestao_reclame_aqui project.
+URL configuration for nexus project.
 """
 from django.contrib import admin
 from django.urls import path, include, re_path

@@ -1,0 +1,236 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Tabela de Horários -->
+    <div id="horarioListContainer" class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
+        <!-- Header -->
+        <div class="card-header border-0 d-flex align-items-center justify-content-between py-3 px-4"
+            style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
+            <h5 class="fw-bold mb-0 text-white">Cadastro de Horários</h5>
+            <a href="{% url 'rh_horarios' %}add/" class="btn d-flex align-items-center gap-2"
+                style="background:rgba(255,255,255,0.2); color:#fff; border:1.5px solid rgba(255,255,255,0.6); font-weight:600;">
+                <i class="bi bi-plus-lg"></i> Adicionar
+            </a>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="card-body border-bottom py-3 px-4">
+            <div class="d-flex flex-wrap align-items-center gap-3">
+                <div class="d-flex align-items-center gap-2 text-muted small">
+                    Mostrar
+                    <select id="perPageSelect" class="form-select form-select-sm" style="width: auto;">
+                        <option value="10">10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                    </select>
+                    registros
+                </div>
+
+                <div class="ms-auto d-flex align-items-center gap-2">
+                    <label class="text-muted small mb-0">Buscar:</label>
+                    <input type="text" id="searchInput" class="form-control form-control-sm"
+                        placeholder="Nome do horário..." style="width: 220px;">
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabela -->
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" id="horarioTable">
+                <thead class="table-light">
+                    <tr>
+                        <th class="px-4 py-3" style="width: 80px;">Sigla</th>
+                        <th class="py-3">Nome</th>
+                        <th class="py-3">Tipo</th>
+                        <th class="py-3">Resumo / Horários</th>
+                        <th class="py-3 text-end pe-4">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="horarioTbody">
+                    <tr>
+                        <td colspan="5" class="text-center py-5 text-muted">
+                            <div class="spinner-border spinner-border-sm me-2"></div> Carregando...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Footer -->
+        <div class="card-footer bg-white border-top d-flex align-items-center justify-content-between py-3 px-4">
+            <span class="text-muted small" id="paginacaoInfo">—</span>
+            <nav>
+                <ul class="pagination pagination-sm mb-0 gap-1" id="paginacaoControles"></ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Delete -->
+<div class="modal fade" id="modalDelete" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-body text-center py-4">
+                <div class="mb-3" style="font-size:2rem; color:#ef4444;"><i class="bi bi-trash3"></i></div>
+                <h6 class="fw-bold mb-1">Excluir horário?</h6>
+                <p class="text-muted small mb-3" id="deleteHorarioNome">—</p>
+                <div class="d-flex gap-2 justify-content-center">
+                    <button class="btn btn-sm btn-light px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button class="btn btn-sm btn-danger px-4" id="btnConfirmDelete">Excluir</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .sigla-badge {
+        width: 40px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+        font-weight: 700;
+        font-size: 0.7rem;
+        color: #fff;
+        text-transform: uppercase;
+    }
+</style>
+
+<script>
+    let allHorarios = [];
+    let deleteId = null;
+    let currentPage = 1;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadData();
+        document.getElementById('searchInput').addEventListener('input', () => { currentPage = 1; render(); });
+        document.getElementById('perPageSelect').addEventListener('change', () => { currentPage = 1; render(); });
+        document.getElementById('btnConfirmDelete').addEventListener('click', confirmDelete);
+    });
+
+    async function loadData() {
+        try {
+            const response = await fetch('/api/rh/horarios/');
+            const data = await response.json();
+            if (data.success) {
+                allHorarios = data.horarios;
+                render();
+            } else {
+                showError(data.error || 'Erro ao carregar horários.');
+            }
+        } catch (e) {
+            showError('Erro ao carregar dados.');
+        }
+    }
+
+    function render() {
+        const q = document.getElementById('searchInput').value.toLowerCase();
+        const filtered = allHorarios.filter(h =>
+            (h.nome || '').toLowerCase().includes(q) ||
+            (h.sigla || '').toLowerCase().includes(q)
+        );
+
+        const pp = parseInt(document.getElementById('perPageSelect').value) || 10;
+        const total = filtered.length;
+        const totalPag = Math.max(1, Math.ceil(total / pp));
+        if (currentPage > totalPag) currentPage = totalPag;
+
+        const inicio = (currentPage - 1) * pp;
+        const pagina = filtered.slice(inicio, inicio + pp);
+
+        const info = document.getElementById('paginacaoInfo');
+        if (info) {
+            if (total === 0) info.textContent = '0 registros';
+            else info.textContent = `${inicio + 1} a ${Math.min(inicio + pp, total)} de ${total}`;
+        }
+
+        renderPaginacao(totalPag);
+
+        const tbody = document.getElementById('horarioTbody');
+        if (pagina.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" class="text-center py-5 text-muted">Nenhum horário encontrado.</td></tr>`;
+        } else {
+            tbody.innerHTML = pagina.map(h => `
+            <tr>
+                <td class="px-4">
+                    <div class="sigla-badge" style="background-color: ${h.cor || '#2563eb'}">${h.sigla || '—'}</div>
+                </td>
+                <td class="fw-semibold">${h.nome}</td>
+                <td><span class="text-capitalize">${h.tipo_display}</span></td>
+                <td class="small text-muted">${h.resumo || '—'}</td>
+                <td class="text-end pe-4">
+                    <a href="{% url 'rh_horarios' %}${h.id}/" class="btn btn-sm btn-light border me-1">
+                        <i class="bi bi-pencil-square text-primary"></i>
+                    </a>
+                    <button class="btn btn-sm btn-light border" onclick="openModalDelete('${h.id}', '${h.nome.replace(/'/g, "\\'")}')">
+                        <i class="bi bi-trash3 text-danger"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+        }
+    }
+
+    function renderPaginacao(total) {
+        const ul = document.getElementById('paginacaoControles');
+        if (!ul) return;
+        ul.innerHTML = '';
+
+        const prev = document.createElement('li');
+        prev.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+        prev.innerHTML = `<button class="page-link" ${currentPage === 1 ? 'disabled' : ''}>‹</button>`;
+        prev.querySelector('button').onclick = () => { if (currentPage > 1) { currentPage--; render(); } };
+        ul.appendChild(prev);
+
+        for (let p = 1; p <= total; p++) {
+            const li = document.createElement('li');
+            li.className = `page-item ${p === currentPage ? 'active' : ''}`;
+            li.innerHTML = `<button class="page-link">${p}</button>`;
+            const pg = p;
+            li.querySelector('button').onclick = () => { currentPage = pg; render(); };
+            ul.appendChild(li);
+        }
+
+        const next = document.createElement('li');
+        next.className = `page-item ${currentPage === total ? 'disabled' : ''}`;
+        next.innerHTML = `<button class="page-link" ${currentPage === total ? 'disabled' : ''}>›</button>`;
+        next.querySelector('button').onclick = () => { if (currentPage < total) { currentPage++; render(); } };
+        ul.appendChild(next);
+    }
+
+    function openModalDelete(id, nome) {
+        deleteId = id;
+        document.getElementById('deleteHorarioNome').textContent = nome;
+        new bootstrap.Modal(document.getElementById('modalDelete')).show();
+    }
+
+    function confirmDelete() {
+        if (!deleteId) return;
+        fetch(`/api/rh/horarios/${deleteId}/delete/`, {
+            method: 'DELETE',
+            headers: { 'X-CSRFToken': getCsrf() }
+        })
+            .then(r => r.json())
+            .then(data => {
+                bootstrap.Modal.getInstance(document.getElementById('modalDelete')).hide();
+                if (data.success) {
+                    if (window.showToast) showToast('success', 'Horário excluído!');
+                    loadData();
+                } else {
+                    alert(data.error || 'Erro ao excluir.');
+                }
+            });
+    }
+
+    function showError(msg) {
+        const tbody = document.getElementById('horarioTbody');
+        if (tbody) tbody.innerHTML = `<tr><td colspan="5" class="text-center py-5 text-danger">${msg}</td></tr>`;
+    }
+
+    function getCsrf() { return document.cookie.match(/csrftoken=([^;]+)/)?.[1] || ''; }
+</script>
+{% endblock %}

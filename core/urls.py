@@ -121,8 +121,16 @@ urlpatterns = [
     path('rh/empresas/<int:pk>/editar/', views.rh_cadastro_empresa_view, name='rh_editar_empresa'),
     # Departamentos
     path('rh/departamentos/', views.rh_departamentos_view, name='rh_departamentos'),
+    # Centros de Custo
+    path('rh/centros-custo/', views.rh_centros_custo_view, name='rh_centros_custo'),
     # Cargos
     path('rh/cargos/', views.rh_cargos_view, name='rh_cargos'),
+    # Feriados e Atribuições
+    path('rh/feriados/', views.rh_feriados_view, name='rh_feriados'),
+    path('rh/atribuicoes-massa/', views.rh_atribuicoes_massa_view, name='rh_atribuicoes_massa'),
+    path('rh/horarios/', views.rh_horarios_view, name='rh_horarios'),
+    path('rh/horarios/add/', views.rh_cadastro_horario_view, name='rh_cadastro_horario_add'),
+    path('rh/horarios/<int:pk>/', views.rh_cadastro_horario_view, name='rh_cadastro_horario'),
     # API Empresas
     path('api/rh/empresas/', api_rh.api_empresas_list, name='api_empresas_list'),
     path('api/rh/empresas/save/', api_rh.api_save_empresa, name='api_save_empresa'),
@@ -135,6 +143,14 @@ urlpatterns = [
     path('api/rh/cargos/', api_rh.api_cargos_list, name='api_cargos_list'),
     path('api/rh/cargos/save/', api_rh.api_save_cargo, name='api_save_cargo'),
     path('api/rh/cargos/<int:pk>/delete/', api_rh.api_delete_cargo, name='api_delete_cargo'),
+    # API Centros de Custo
+    path('api/rh/centros-custo/', api_rh.api_centros_custo_list, name='api_centros_custo_list'),
+    path('api/rh/centros-custo/save/', api_rh.api_save_centro_custo, name='api_save_centro_custo'),
+    path('api/rh/centros-custo/delete/<int:pk>/', api_rh.api_delete_centro_custo, name='api_delete_centro_custo'),
+    # API Feriados
+    path('api/rh/feriados/', api_rh.api_feriados_list, name='api_feriados_list'),
+    path('api/rh/feriados/save/', api_rh.api_save_feriado, name='api_save_feriado'),
+    path('api/rh/feriados/<int:pk>/delete/', api_rh.api_delete_feriado, name='api_delete_feriado'),
     path('rh/onboarding/', views.under_development, {
         'page_name': 'Acompanhamento de Onboarding',
         'description': 'Checklist interativo para garantir que todos os novos colaboradores recebam equipamentos, acessos e treinamentos necessários.'
@@ -289,11 +305,17 @@ urlpatterns = [
     path('api/chat-inactivity/<str:pk>/action/', api_chat_inactivity.api_chat_inactivity_action, name='api_chat_inactivity_action'),
 
     # API RH - Colaboradores
-    path('api/rh/auxiliar/', api_rh.api_rh_auxiliar_data, name='api_rh_auxiliar_data'),
+    path('api/rh/auxiliar-data/', api_rh.api_rh_auxiliar_data, name='api_rh_auxiliar_data'),
     path('api/rh/colaboradores/', api_rh.api_colaboradores_list, name='api_rh_colaboradores_list'),
     path('api/rh/colaboradores/save/', api_rh.api_save_colaborador, name='api_rh_save_colaborador'),
     path('api/rh/colaboradores/<int:pk>/', api_rh.api_colaborador_detail, name='api_rh_colaborador_detail'),
     path('api/rh/colaboradores/<int:pk>/delete/', api_rh.api_delete_colaborador, name='api_rh_delete_colaborador'),
+    
+    # API RH - Horários
+    path('api/rh/horarios/', api_rh.api_rh_horarios_list, name='api_rh_horarios_list'),
+    path('api/rh/horarios/save/', api_rh.api_save_horario, name='api_rh_save_horario'),
+    path('api/rh/horarios/<int:pk>/', api_rh.api_rh_horario_detail, name='api_rh_horario_detail'),
+    path('api/rh/horarios/<int:pk>/delete/', api_rh.api_delete_horario, name='api_rh_delete_horario'),
     path('api/rh/colaboradores/historico/save/', api_rh.api_save_historico, name='api_rh_save_historico'),
     path('api/rh/colaboradores/historico/<int:pk>/delete/', api_rh.api_delete_historico, name='api_rh_delete_historico'),
     path('api/rh/colaboradores/performance/save/', api_rh.api_save_performance, name='api_rh_save_performance'),
@@ -306,6 +328,7 @@ urlpatterns = [
     path('rh/ponto/relatorios/', views_ponto.ponto_relatorios, name='ponto_relatorios'),
 
     # Ponto Eletrônico - API
+    path('api/rh/atribuicoes-massa/execute/', api_rh.api_execute_atribuicao_massa, name='api_rh_execute_atribuicao_massa'),
     path('api/ponto/buscar-colaborador/', api_ponto.buscar_colaborador, name='api_ponto_buscar_colaborador'),
     path('api/ponto/registrar/', api_ponto.registrar_ponto, name='api_ponto_registrar_ponto'),
     path('api/ponto/registros/', api_ponto.listar_registros, name='api_ponto_listar_registros'),

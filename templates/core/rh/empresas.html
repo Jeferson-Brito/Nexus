@@ -167,10 +167,18 @@ function render() {
                         : `<div style="width:40px;height:40px;border-radius:6px;border:1px solid #e5e7eb;background:#f3f4f6;display:flex;align-items:center;justify-content:center;"><i class="bi bi-building text-muted" style="font-size:1.2rem;"></i></div>`
                     }
                 </td>
-                <td class="px-4 fw-semibold" style="color:#111827;">${e.nome}</td>
+                <td class="px-4 fw-semibold">
+                    <a href="{% url 'rh_colaboradores' %}?empresa_id=${e.id}" class="text-dark text-decoration-none hover-link">
+                        ${e.nome}
+                    </a>
+                </td>
                 <td class="text-muted">${e.nome_fantasia || '—'}</td>
                 <td class="text-muted">${e.cnpj || '—'}</td>
-                <td>${e.num_funcionarios}</td>
+                <td>
+                    <a href="{% url 'rh_colaboradores' %}?empresa_id=${e.id}" class="badge bg-light text-dark border text-decoration-none hover-link">
+                        ${e.num_funcionarios}
+                    </a>
+                </td>
                 <td class="text-end pe-4">
                     <a href="/rh/empresas/${e.id}/editar/" class="btn btn-sm btn-light border me-1" title="Editar">
                         <i class="bi bi-pencil-square text-primary"></i>
@@ -230,11 +238,12 @@ function confirmDelete() {
     .then(data => {
         bootstrap.Modal.getInstance(document.getElementById('modalDelete')).hide();
         if (data.success) {
+            showToast('success', 'Empresa excluída com sucesso!');
             allEmpresas = allEmpresas.filter(e => e.id !== deleteId);
             deleteId = null;
             render();
         } else {
-            alert(data.error || 'Erro ao excluir.');
+            showToast('error', data.error || 'Erro ao excluir.');
         }
     });
 }
@@ -257,4 +266,10 @@ function showError(msg) {
 function getCsrf() { return document.cookie.match(/csrftoken=([^;]+)/)?.[1] || ''; }
 function escHtml(s) { return (s||'').replace(/'/g, "\\'"); }
 </script>
+<style>
+    .hover-link:hover {
+        color: #2563eb !important;
+        text-decoration: underline !important;
+    }
+</style>
 {% endblock %}

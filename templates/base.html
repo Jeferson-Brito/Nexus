@@ -39,6 +39,22 @@
             border-color: #e5e7eb !important;
             min-height: 150px !important;
         }
+
+        /* Toast Position and Visibility */
+        #toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 10000;
+            min-width: 320px;
+            pointer-events: none;
+            display: block !important;
+        }
+
+        #toast-container .toast {
+            pointer-events: auto;
+            margin-bottom: 0.75rem;
+        }
     </style>
 </head>
 
@@ -172,15 +188,15 @@
 
             <div class="nav-group-title">Gestão de Pessoas</div>
             <a href="#rhCadastrosSubmenu"
-                class="nav-link dropdown-toggle-custom {% if 'rh_colaboradores' in request.resolver_match.url_name or 'rh_colaborador_perfil' in request.resolver_match.url_name or 'rh_empresas' in request.resolver_match.url_name or 'rh_departamentos' in request.resolver_match.url_name or 'rh_cargos' in request.resolver_match.url_name %}active{% endif %}"
+                class="nav-link dropdown-toggle-custom {% if 'rh_colaboradores' in request.resolver_match.url_name or 'rh_colaborador_perfil' in request.resolver_match.url_name or 'rh_empresas' in request.resolver_match.url_name or 'rh_departamentos' in request.resolver_match.url_name or 'rh_cargos' in request.resolver_match.url_name or 'rh_feriados' in request.resolver_match.url_name %}active{% endif %}"
                 data-bs-toggle="collapse"
-                aria-expanded="{% if 'rh_colaboradores' in request.resolver_match.url_name or 'rh_colaborador_perfil' in request.resolver_match.url_name or 'rh_empresas' in request.resolver_match.url_name or 'rh_departamentos' in request.resolver_match.url_name or 'rh_cargos' in request.resolver_match.url_name %}true{% else %}false{% endif %}"
+                aria-expanded="{% if 'rh_colaboradores' in request.resolver_match.url_name or 'rh_colaborador_perfil' in request.resolver_match.url_name or 'rh_empresas' in request.resolver_match.url_name or 'rh_departamentos' in request.resolver_match.url_name or 'rh_cargos' in request.resolver_match.url_name or 'rh_feriados' in request.resolver_match.url_name %}true{% else %}false{% endif %}"
                 aria-controls="rhCadastrosSubmenu">
                 <i class="bi bi-layers"></i>
                 <span class="link-text">Cadastros</span>
                 <i class="bi bi-chevron-down ms-auto arrow-icon"></i>
             </a>
-            <div class="collapse nav-submenu-container {% if 'rh_colaboradores' in request.resolver_match.url_name or 'rh_colaborador_perfil' in request.resolver_match.url_name or 'rh_empresas' in request.resolver_match.url_name or 'rh_departamentos' in request.resolver_match.url_name or 'rh_cargos' in request.resolver_match.url_name %}show{% endif %}"
+            <div class="collapse nav-submenu-container {% if 'rh_colaboradores' in request.resolver_match.url_name or 'rh_colaborador_perfil' in request.resolver_match.url_name or 'rh_empresas' in request.resolver_match.url_name or 'rh_departamentos' in request.resolver_match.url_name or 'rh_cargos' in request.resolver_match.url_name or 'rh_feriados' in request.resolver_match.url_name %}show{% endif %}"
                 id="rhCadastrosSubmenu">
                 <div class="nav-submenu">
                     <a href="{% url 'rh_colaboradores' %}"
@@ -195,27 +211,27 @@
                         <i class="bi bi-building"></i>
                         <span class="link-text">Empresas</span>
                     </a>
-                    <a href="{% url 'rh_departamentos' %}" 
-                        class="nav-link sub-link {% if 'rh_departamentos' in request.resolver_match.url_name %}active{% endif %}" 
+                    <a href="{% url 'rh_departamentos' %}"
+                        class="nav-link sub-link {% if 'rh_departamentos' in request.resolver_match.url_name %}active{% endif %}"
                         title="Departamentos">
                         <i class="bi bi-diagram-3"></i>
                         <span class="link-text">Departamentos</span>
                     </a>
-                    <a href="{% url 'rh_cargos' %}" 
-                        class="nav-link sub-link {% if 'rh_cargos' in request.resolver_match.url_name %}active{% endif %}" 
+                    <a href="{% url 'rh_cargos' %}"
+                        class="nav-link sub-link {% if 'rh_cargos' in request.resolver_match.url_name %}active{% endif %}"
                         title="Cargos">
                         <i class="bi bi-briefcase"></i>
                         <span class="link-text">Cargos</span>
                     </a>
-                    <a href="#" class="nav-link sub-link disabled opacity-50" title="Em breve">
+                    <a href="{% url 'rh_centros_custo' %}"
+                        class="nav-link sub-link {% if 'rh_centros_custo' in request.resolver_match.url_name %}active{% endif %}"
+                        title="Centros de Custo">
                         <i class="bi bi-currency-dollar"></i>
                         <span class="link-text">Centros de Custo</span>
                     </a>
-                    <a href="#" class="nav-link sub-link disabled opacity-50" title="Em breve">
-                        <i class="bi bi-door-open"></i>
-                        <span class="link-text">Motivos de Demissão</span>
-                    </a>
-                    <a href="#" class="nav-link sub-link disabled opacity-50" title="Em breve">
+                    <a href="{% url 'rh_feriados' %}"
+                        class="nav-link sub-link {% if 'rh_feriados' in request.resolver_match.url_name %}active{% endif %}"
+                        title="Feriados">
                         <i class="bi bi-calendar-heart"></i>
                         <span class="link-text">Feriados</span>
                     </a>
@@ -231,7 +247,7 @@
                         <i class="bi bi-journal-check"></i>
                         <span class="link-text">Tipos de Justificativa</span>
                     </a>
-                    <a href="#" class="nav-link sub-link disabled opacity-50" title="Em breve">
+                    <a href="{% url 'rh_atribuicoes_massa' %}" class="nav-link sub-link {% if 'rh_atribuicoes_massa' in request.resolver_match.url_name %}active{% endif %}" title="Atribuições em Massa">
                         <i class="bi bi-people-fill"></i>
                         <span class="link-text">Atribuições em Massa</span>
                     </a>
@@ -253,10 +269,24 @@
             </a>
 
             <!-- Config Horário -->
-            <a href="#" class="nav-link disabled opacity-50" title="Em breve">
+            <a href="#configHorarioSubmenu" class="nav-link dropdown-toggle-custom" data-bs-toggle="collapse"
+                aria-expanded="false" aria-controls="configHorarioSubmenu">
                 <i class="bi bi-clock-fill"></i>
                 <span class="link-text">Config Horário</span>
+                <i class="bi bi-chevron-down ms-auto arrow-icon"></i>
             </a>
+            <div class="collapse nav-submenu-container" id="configHorarioSubmenu">
+                <div class="nav-submenu">
+                    <a href="{% url 'rh_horarios' %}" class="nav-link sub-link {% if 'rh_horarios' in request.resolver_match.url_name %}active{% endif %}" title="Horários">
+                        <i class="bi bi-clock"></i>
+                        <span class="link-text">Horários</span>
+                    </a>
+                    <a href="{% url 'rh_atribuicoes_massa' %}" class="nav-link sub-link {% if 'rh_atribuicoes_massa' in request.resolver_match.url_name %}active{% endif %}" title="Atribuições em massa">
+                        <i class="bi bi-people-fill"></i>
+                        <span class="link-text">Atribuições em massa</span>
+                    </a>
+                </div>
+            </div>
 
             <div class="nav-group-title">Operacional RH</div>
             <a href="{% url 'ponto_admin' %}"
@@ -264,27 +294,46 @@
                 <i class="bi bi-clock-history"></i>
                 <span class="link-text">Ponto e Frequência</span>
             </a>
-            <a href="{% url 'rh_ferias_folgas' %}"
-                class="nav-link {% if request.resolver_match.url_name == 'rh_ferias_folgas' %}active{% endif %}">
-                <i class="bi bi-calendar-check"></i>
-                <span class="link-text">Férias e Folgas</span>
-            </a>
-            <a href="{% url 'rh_absenteismo' %}"
-                class="nav-link {% if request.resolver_match.url_name == 'rh_absenteismo' %}active{% endif %}">
-                <i class="bi bi-graph-down-arrow"></i>
-                <span class="link-text">Absenteísmo</span>
-            </a>
-            <a href="{% url 'rh_onboarding' %}"
-                class="nav-link {% if request.resolver_match.url_name == 'rh_onboarding' %}active{% endif %}">
-                <i class="bi bi-person-plus"></i>
-                <span class="link-text">Onboarding</span>
-            </a>
 
             <!-- Apuração e Cálculo -->
-            <a href="#" class="nav-link disabled opacity-50" title="Em breve">
+            <a href="#apuracaoCalculoSubmenu" class="nav-link dropdown-toggle-custom" data-bs-toggle="collapse"
+                aria-expanded="false" aria-controls="apuracaoCalculoSubmenu">
                 <i class="bi bi-calculator"></i>
                 <span class="link-text">Apuração e Cálculo</span>
+                <i class="bi bi-chevron-down ms-auto arrow-icon"></i>
             </a>
+            <div class="collapse nav-submenu-container" id="apuracaoCalculoSubmenu">
+                <div class="nav-submenu">
+                    <a href="#" class="nav-link sub-link disabled opacity-50" title="Em breve">
+                        <i class="bi bi-clipboard-data"></i>
+                        <span class="link-text">Apuração de Ponto</span>
+                    </a>
+                    <a href="#" class="nav-link sub-link disabled opacity-50" title="Em breve">
+                        <i class="bi bi-calendar-day"></i>
+                        <span class="link-text">Ponto Diário</span>
+                    </a>
+                    <a href="#" class="nav-link sub-link disabled opacity-50" title="Em breve">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <span class="link-text">Inconsistências</span>
+                    </a>
+                    <a href="#" class="nav-link sub-link disabled opacity-50" title="Em breve">
+                        <i class="bi bi-bank"></i>
+                        <span class="link-text">Banco de Horas</span>
+                    </a>
+                    <a href="#" class="nav-link sub-link disabled opacity-50" title="Em breve">
+                        <i class="bi bi-archive"></i>
+                        <span class="link-text">Arquivar Cálculo</span>
+                    </a>
+                    <a href="{% url 'rh_atribuicoes_massa' %}" class="nav-link sub-link {% if 'rh_atribuicoes_massa' in request.resolver_match.url_name %}active{% endif %}" title="Atribuições em massa">
+                        <i class="bi bi-people-fill"></i>
+                        <span class="link-text">Atribuições em Massa</span>
+                    </a>
+                    <a href="#" class="nav-link sub-link disabled opacity-50" title="Em breve">
+                        <i class="bi bi-person-check"></i>
+                        <span class="link-text">Pendências Aprovação</span>
+                    </a>
+                </div>
+            </div>
 
             <div class="nav-group-title">Análise</div>
             <!-- Relatórios -->
@@ -522,16 +571,17 @@
             <button class="btn btn-link text-secondary p-0 d-lg-none" id="mobileToggle" title="Alternar Menu">
                 <i class="bi bi-list fs-4"></i>
             </button>
-            
+
             <!-- Botão Bater Ponto Web -->
             {% if request.user.is_authenticated and request.user.colaborador_perfil %}
-                {% if request.user.colaborador_perfil.ponto_web_permitido %}
-                <a href="{% url 'ponto_kiosk' %}" class="btn btn-primary btn-sm rounded-pill fw-semibold px-3 shadow-sm d-flex align-items-center gap-1 me-1"
-                        style="font-size: 0.85rem;">
-                    <i class="bi bi-fingerprint"></i>
-                    <span class="d-none d-md-inline" style="margin-top: 1px;">Bater Ponto</span>
-                </a>
-                {% endif %}
+            {% if request.user.colaborador_perfil.ponto_web_permitido %}
+            <a href="{% url 'ponto_kiosk' %}"
+                class="btn btn-primary btn-sm rounded-pill fw-semibold px-3 shadow-sm d-flex align-items-center gap-1 me-1"
+                style="font-size: 0.85rem;">
+                <i class="bi bi-fingerprint"></i>
+                <span class="d-none d-md-inline" style="margin-top: 1px;">Bater Ponto</span>
+            </a>
+            {% endif %}
             {% endif %}
 
             <!-- Notification Dropdown -->
@@ -826,36 +876,77 @@
 
 
         // --------------------------------------------------
-        // Sistema de Toast Notifications (Premium SweetAlert2)
+        // Sistema de Toast Notifications (Premium Global)
+        // Design inspirado no NRS Suporte
         // --------------------------------------------------
-        function showGlobalToast(message, type = 'info') {
-            const Toast = Swal.mixin({
-                toast: true,
-                position: 'bottom-end',
-                showConfirmButton: false,
-                timer: 3000,
-                timerProgressBar: true,
-                didOpen: (toast) => {
-                    toast.addEventListener('mouseenter', Swal.stopTimer)
-                    toast.addEventListener('mouseleave', Swal.resumeTimer)
-                }
-            });
+        function showGlobalToast(message, type = 'info', duration = 4000) {
+            // Suporte para assinaturas invertidas (type, message) comum em alguns módulos
+            if (['success', 'error', 'warning', 'info', 'danger'].includes(message) && typeof type === 'string') {
+                const tmp = message;
+                message = type;
+                type = tmp;
+            }
 
-            const typeMap = {
-                'success': 'success',
-                'error': 'error',
-                'danger': 'error',
-                'warning': 'warning',
-                'info': 'info'
+            const container = document.getElementById('toast-container');
+            if (!container) {
+                console.warn('Toast container não encontrado');
+                return;
+            }
+
+            const iconMap = {
+                'success': 'bi-check-circle-fill text-success',
+                'error': 'bi-x-circle-fill text-danger',
+                'danger': 'bi-x-circle-fill text-danger',
+                'warning': 'bi-exclamation-triangle-fill text-warning',
+                'info': 'bi-info-circle-fill text-info'
             };
 
-            Toast.fire({
-                icon: typeMap[type] || 'info',
-                title: message
+            const borderMap = {
+                'success': '#198754',
+                'error': '#dc3545',
+                'danger': '#dc3545',
+                'warning': '#ffc107',
+                'info': '#0dcaf0'
+            };
+
+            const icon = iconMap[type] || iconMap['info'];
+            const borderColor = borderMap[type] || borderMap['info'];
+            const toastId = 'toast-' + Date.now();
+
+            const toastHTML = `
+                <div id="${toastId}" class="toast align-items-center border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true" style="display: none; opacity: 0; transition: opacity 0.3s ease;">
+                    <div class="d-flex">
+                        <div class="toast-body d-flex align-items-center bg-white" style="border-left: 5px solid ${borderColor}; border-radius: 6px; padding: 14px 18px; width: 100%;">
+                            <i class="bi ${icon} me-3" style="font-size: 1.4rem;"></i>
+                            <div class="text-dark fw-bold" style="font-size: 0.95rem;">${message}</div>
+                        </div>
+                        <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                </div>
+            `;
+
+            container.insertAdjacentHTML('beforeend', toastHTML);
+            const toastElement = document.getElementById(toastId);
+
+            // Garantir que o bootstrap está disponível
+            if (typeof bootstrap === 'undefined') {
+                console.error('Bootstrap JS não carregado para Toasts');
+                toastElement.style.display = 'block';
+                toastElement.style.opacity = '1';
+                setTimeout(() => toastElement.remove(), duration);
+                return;
+            }
+
+            const toast = new bootstrap.Toast(toastElement, { delay: duration, autohide: true });
+            toastElement.style.display = 'block'; // Necessário para animação do bootstrap
+            toast.show();
+
+            toastElement.addEventListener('hidden.bs.toast', () => {
+                toastElement.remove();
             });
         }
 
-        // Alias for compatibility
+        // Alias para compatibilidade global
         window.showToast = showGlobalToast;
 
 
@@ -1080,9 +1171,9 @@
             modal.show();
         }
     </script>
-    
 
-    
+
+
 </body>
 
 

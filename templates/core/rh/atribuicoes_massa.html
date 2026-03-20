@@ -1,0 +1,534 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    .wizard-step { display: none; }
+    .wizard-step.active { display: block; }
+    
+    /* Wizard Progress - RHiD Style */
+    .wizard-progress {
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        margin-bottom: 3rem;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 1rem;
+    }
+    .progress-step {
+        font-size: 0.9rem;
+        color: #999;
+        font-weight: 500;
+        position: relative;
+        padding: 0 10px;
+        transition: all 0.3s ease;
+    }
+    .progress-step.active {
+        color: #6366f1;
+        font-weight: bold;
+    }
+    .progress-step.active::after {
+        content: "";
+        position: absolute;
+        bottom: -1.1rem;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: #6366f1;
+        border-radius: 2px;
+    }
+    .progress-step.completed {
+        color: #333;
+    }
+
+    .selection-card {
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+    }
+    .selection-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+    }
+    .selection-card.selected {
+        border: 2px solid #2563eb;
+        background-color: #eff6ff;
+    }
+    .selection-card i {
+        font-size: 2rem;
+        color: #2563eb;
+    }
+
+    /* Step 2 Form Styling */
+    .filter-label {
+        font-weight: 600;
+        color: #4b5563;
+        font-size: 0.85rem;
+        margin-bottom: 0.4rem;
+    }
+    .form-select-custom {
+        border-radius: 8px;
+        border: 1px solid #d1d5db;
+        padding: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    /* Grid de Jornada */
+    .jornada-grid-container {
+        overflow-x: auto;
+        max-height: 500px;
+    }
+    .jornada-table th, .jornada-table td {
+        min-width: 40px;
+        text-align: center;
+        padding: 5px;
+        border: 1px solid #e2e8f0;
+        font-size: 0.75rem;
+    }
+    .day-cell {
+        cursor: pointer;
+        transition: background 0.1s;
+    }
+    .day-cell:hover {
+        background-color: #f1f5f9;
+    }
+    .day-cell.painted {
+        background-color: #2563eb;
+        color: white;
+    }
+
+    /* Buttons bottom left */
+    .wizard-footer {
+        margin-top: 3rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid #f3f4f6;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
+        <div class="card-header border-0 py-3 px-4" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
+            <h5 class="fw-bold mb-0 text-white">Atribuições em massa</h5>
+        </div>
+        
+        <div class="card-body p-4">
+            <!-- Wizard Progress Tracking -->
+            <div class="wizard-progress">
+                <div class="progress-step active" data-step="1">Passo 1: Escolher atribuição</div>
+                <div class="progress-step" data-step="2">Passo 2: Filtrar</div>
+                <div class="progress-step" data-step="3">Passo 3: Fazer alteração</div>
+            </div>
+
+            <form id="wizardForm">
+                <!-- STEP 1: Escolher Atribuição -->
+                <div class="wizard-step active" id="step1">
+                    <h6 class="text-muted mb-4">Selecione o tipo de alteração que deseja realizar</h6>
+                    <div class="row g-4 justify-content-center">
+                        <div class="col-md-4 col-lg-2">
+                            <div class="card h-100 selection-card p-3 text-center" data-type="horario">
+                                <i class="bi bi-clock-history mb-3"></i>
+                                <h6 class="fw-bold mb-0">Horários</h6>
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-lg-2">
+                            <div class="card h-100 selection-card p-3 text-center" data-type="jornada">
+                                <i class="bi bi-calendar-range mb-3"></i>
+                                <h6 class="fw-bold mb-0">Jornadas</h6>
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-lg-2">
+                            <div class="card h-100 selection-card p-3 text-center" data-type="batidas">
+                                <i class="bi bi-fingerprint mb-3"></i>
+                                <h6 class="fw-bold mb-0">Batidas de Ponto</h6>
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-lg-2">
+                            <div class="card h-100 selection-card p-3 text-center" data-type="grupos_cargos">
+                                <i class="bi bi-people mb-3"></i>
+                                <h6 class="fw-bold mb-0">Grupos e Cargos</h6>
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-lg-2">
+                            <div class="card h-100 selection-card p-3 text-center" data-type="justificativa">
+                                <i class="bi bi-journal-text mb-3"></i>
+                                <h6 class="fw-bold mb-0">Justificativas</h6>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 2: Filtrar -->
+                <div class="wizard-step" id="step2">
+                    <h6 class="text-muted mb-4">Filtre os funcionários que participarão da alteração</h6>
+                    
+                    <div class="row g-4">
+                        <!-- Row 1 -->
+                        <div class="col-md-12">
+                            <label class="filter-label">Funcionários (Selecione um ou mais)</label>
+                            <div class="border rounded p-2 bg-light" style="max-height: 150px; overflow-y: auto; border-radius: 8px !important;">
+                                <div id="colab_checkbox_list" class="d-flex flex-column gap-1">
+                                    <!-- Preenchido via JS -->
+                                    <small class="text-muted p-2">Carregando funcionários...</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Row 2 -->
+                        <div class="col-md-12">
+                            <label class="filter-label">Empresa</label>
+                            <select id="filter_empresa" class="form-select form-select-custom">
+                                <option value="">Selecione</option>
+                            </select>
+                        </div>
+
+                        <!-- Row 3 -->
+                        <div class="col-md-4">
+                            <label class="filter-label">Departamento</label>
+                            <select id="filter_depto" class="form-select form-select-custom">
+                                <option value="">Selecione</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="filter-label">Centro de custo</label>
+                            <select id="filter_centro" class="form-select form-select-custom">
+                                <option value="">Selecione</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="filter-label">Cargo</label>
+                            <select id="filter_cargo" class="form-select form-select-custom">
+                                <option value="">Selecione</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="filter-label">Horários</label>
+                            <select id="filter_horarios" class="form-select form-select-custom" multiple style="height: 100px;">
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 3: Fazer Alteração -->
+                <div class="wizard-step" id="step3">
+                    <div id="step3_content">
+                        <!-- Conteúdo carregado via JS -->
+                    </div>
+                </div>
+            </form>
+
+            <!-- Navigation Buttons - RHiD Style (Bottom Left) -->
+            <div class="wizard-footer d-flex gap-2">
+                <button type="button" class="btn btn-outline-secondary px-4" id="btnPrev" style="display: none;">
+                    Anterior
+                </button>
+                <button type="button" class="btn btn-primary px-4" id="btnNext" style="background-color: #6366f1; border-color: #6366f1;">
+                    Próximo
+                </button>
+                <button type="button" class="btn btn-success px-4" id="btnSave" style="display: none;">
+                    Salvar atribuição
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Template Container -->
+<div id="templates" style="display: none;">
+    <div id="tpl_horario">
+        <h6 class="fw-bold mb-4">Definição de Horário</h6>
+        <div class="row">
+            <div class="col-md-6">
+                <label class="filter-label">Escolha o Novo Horário (Turno)</label>
+                <select id="payload_turno" class="form-select form-select-custom"></select>
+            </div>
+        </div>
+    </div>
+
+    <div id="tpl_grupos">
+        <h6 class="fw-bold mb-4">Alteração de Grupos e Cargos</h6>
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="filter-label">Nova Empresa</label>
+                <select id="payload_empresa" class="form-select form-select-custom"><option value="">Não alterar</option></select>
+            </div>
+            <div class="col-md-4">
+                <label class="filter-label">Novo Departamento</label>
+                <select id="payload_depto" class="form-select form-select-custom"><option value="">Não alterar</option></select>
+            </div>
+            <div class="col-md-4">
+                <label class="filter-label">Novo Cargo</label>
+                <select id="payload_cargo" class="form-select form-select-custom"><option value="">Não alterar</option></select>
+            </div>
+        </div>
+    </div>
+
+    <div id="tpl_justificativa">
+        <h6 class="fw-bold mb-4">Lançar Justificativa em Massa</h6>
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="filter-label">Tipo de Justificativa</label>
+                <select id="payload_justificativa" class="form-select form-select-custom"></select>
+            </div>
+            <div class="col-md-3">
+                <label class="filter-label">Data Início</label>
+                <input type="date" id="payload_data_inicio" class="form-control form-select-custom">
+            </div>
+            <div class="col-md-3">
+                <label class="filter-label">Data Fim</label>
+                <input type="date" id="payload_data_fim" class="form-control form-select-custom">
+            </div>
+        </div>
+    </div>
+
+    <div id="tpl_jornada">
+        <h6 class="fw-bold mb-3">Escala Mensal (Jornada)</h6>
+        <p class="small text-muted mb-4">Selecione um turno abaixo e pinte os dias desejados na planilha.</p>
+        
+        <div class="d-flex gap-3 mb-4 align-items-end flex-wrap">
+            <div>
+                <label class="filter-label">1. Escolha o Turno para Pintear</label>
+                <select id="paint_turno" class="form-select form-select-custom" style="width: 250px;"></select>
+            </div>
+            <div class="p-2 rounded border d-flex align-items-center gap-2 bg-light">
+                <div class="small fw-bold">Pincel Ativo:</div>
+                <div id="brush_info" class="badge bg-secondary">Nenhum</div>
+            </div>
+        </div>
+
+        <div class="jornada-grid-container border rounded bg-white p-3 shadow-sm">
+            <table class="table table-bordered jornada-table mb-0" id="grid_table"></table>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentStep = 1;
+    let selectedType = null;
+    let auxData = { empresas: [], departments: [], turnos: [], colaboradores: [], justificativas: [], centros_custo: [], cargos: [] };
+    let selectedPaintTurno = null;
+    let paintedDays = [];
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadAuxData();
+        
+        document.querySelectorAll('.selection-card').forEach(card => {
+            card.addEventListener('click', () => {
+                document.querySelectorAll('.selection-card').forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
+                selectedType = card.dataset.type;
+            });
+        });
+
+        document.getElementById('btnNext').addEventListener('click', nextStep);
+        document.getElementById('btnPrev').addEventListener('click', prevStep);
+        document.getElementById('btnSave').addEventListener('click', saveAssignment);
+        
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('day-cell')) {
+                const cell = e.target;
+                const date = cell.dataset.date;
+                if (!selectedPaintTurno) return alert('Selecione um turno no pincel primeiro.');
+                
+                if (cell.classList.contains('painted')) {
+                    cell.classList.remove('painted');
+                    cell.style.backgroundColor = '';
+                    paintedDays = paintedDays.filter(p => p.data !== date);
+                } else {
+                    cell.classList.add('painted');
+                    cell.style.backgroundColor = selectedPaintTurno.cor || '#2563eb';
+                    paintedDays.push({ data: date, turno_id: selectedPaintTurno.id });
+                }
+            }
+        });
+
+        document.addEventListener('change', (e) => {
+            if (e.target.id === 'paint_turno') {
+                const id = e.target.value;
+                selectedPaintTurno = auxData.turnos.find(t => t.id == id);
+                const info = document.getElementById('brush_info');
+                info.textContent = selectedPaintTurno ? selectedPaintTurno.nome : 'Nenhum';
+                if (selectedPaintTurno) info.style.backgroundColor = selectedPaintTurno.cor || '#6366f1';
+            }
+        });
+    });
+
+    async function loadAuxData() {
+        console.log("Iniciando carregamento de dados auxiliares...");
+        try {
+            const resp = await fetch('/api/rh/auxiliar-data/');
+            const data = await resp.json();
+            console.log("Dados recebidos da API:", data);
+            if (data.success) {
+                auxData = data;
+                populateStep2();
+            } else {
+                console.error("Erro na API de dados auxiliares:", data.error);
+                alert("Erro ao carregar dados para os filtros. Verifique o console.");
+            }
+        } catch(e) { 
+            console.error('Erro de conexão ao carregar dados:', e); 
+            alert("Erro de conexão ao carregar dados. Verifique sua rede.");
+        }
+    }
+
+    function populateStep2() {
+        console.log("Populando Passo 2 com auxData:", auxData);
+        // Populamos a lista de checkboxes de colaboradores
+        const colabList = document.getElementById('colab_checkbox_list');
+        if (colabList) {
+            colabList.innerHTML = (auxData.colaboradores || []).map(c => `
+                <div class="form-check">
+                    <input class="form-check-input colab-checkbox" type="checkbox" value="${c.id}" id="chk_colab_${c.id}">
+                    <label class="form-check-label small" for="chk_colab_${c.id}">
+                        ${c.nome_completo}
+                    </label>
+                </div>
+            `).join('') || '<small class="text-muted p-2">Nenhum funcionário encontrado.</small>';
+        }
+        
+        populateSelect('filter_empresa', auxData.empresas, e => `<option value="${e.id}">${e.nome}</option>`);
+        populateSelect('filter_depto', auxData.departments, d => `<option value="${d.id}">${d.name}</option>`);
+        populateSelect('filter_centro', auxData.centros_custo, c => `<option value="${c.id}">${c.nome}</option>`);
+        populateSelect('filter_cargo', auxData.cargos, c => `<option value="${c.nome}">${c.nome}</option>`);
+        
+        const horSelect = document.getElementById('filter_horarios');
+        if (horSelect) {
+            horSelect.innerHTML = (auxData.horarios || []).map(h => `<option value="${h.id}">${h.nome}</option>`).join('');
+        }
+        console.log("Passo 2 populado.");
+    }
+
+    function populateSelect(id, data, mapFn) {
+        const el = document.getElementById(id);
+        if (!el) {
+            console.warn(`Elemento ${id} não encontrado para população.`);
+            return;
+        }
+        el.innerHTML = '<option value="">Selecione</option>' + (data || []).map(mapFn).join('');
+    }
+
+    function nextStep() {
+        if (currentStep === 1 && !selectedType) return alert('Selecione um tipo de atribuição.');
+        
+        if (currentStep < 3) {
+            currentStep++;
+            updateWizardUI();
+            if (currentStep === 3) prepareStep3();
+        }
+    }
+
+    function prevStep() {
+        if (currentStep > 1) {
+            currentStep--;
+            updateWizardUI();
+        }
+    }
+
+    function updateWizardUI() {
+        document.querySelectorAll('.wizard-step').forEach(s => s.classList.remove('active'));
+        document.getElementById(`step${currentStep}`).classList.add('active');
+        
+        document.querySelectorAll('.progress-step').forEach((ps, idx) => {
+            ps.classList.remove('active', 'completed');
+            if (idx + 1 < currentStep) ps.classList.add('completed');
+            if (idx + 1 === currentStep) ps.classList.add('active');
+        });
+
+        document.getElementById('btnPrev').style.display = currentStep > 1 ? 'block' : 'none';
+        document.getElementById('btnNext').style.display = currentStep < 3 ? 'block' : 'none';
+        document.getElementById('btnSave').style.display = currentStep === 3 ? 'block' : 'none';
+    }
+
+    function prepareStep3() {
+        const container = document.getElementById('step3_content');
+        container.innerHTML = '';
+        const tplMap = { 'horario': 'tpl_horario', 'grupos_cargos': 'tpl_grupos', 'justificativa': 'tpl_justificativa', 'jornada': 'tpl_jornada' };
+        const tplId = tplMap[selectedType];
+        
+        if (tplId) {
+            container.innerHTML = document.getElementById(tplId).innerHTML;
+            if (selectedType === 'horario') populateSelect('payload_turno', auxData.turnos, t => `<option value="${t.id}">${t.nome}</option>`);
+            else if (selectedType === 'grupos_cargos') {
+                populateSelect('payload_empresa', auxData.empresas, e => `<option value="${e.id}">${e.nome}</option>`);
+                populateSelect('payload_depto', auxData.departments, d => `<option value="${d.id}">${d.name}</option>`);
+                populateSelect('payload_cargo', auxData.cargos, c => `<option value="${c.nome}">${c.nome}</option>`);
+            } else if (selectedType === 'justificativa') populateSelect('payload_justificativa', auxData.justificativas || [], j => `<option value="${j.id}">${j.nome}</option>`);
+            else if (selectedType === 'jornada') {
+                populateSelect('paint_turno', auxData.turnos, t => `<option value="${t.id}">${t.nome}</option>`);
+                renderJornadaGrid();
+            }
+        }
+    }
+
+    function renderJornadaGrid() {
+        const table = document.getElementById('grid_table');
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = now.getMonth();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+        
+        let html = `<thead><tr><th colspan="${daysInMonth + 1}" class="bg-primary text-white">${monthNames[month]} ${year}</th></tr><tr><th>Dia</th>`;
+        for (let i = 1; i <= daysInMonth; i++) html += `<th>${i}</th>`;
+        html += `</tr></thead><tbody><tr><td class="fw-bold bg-light">Ações</td>`;
+        for (let i = 1; i <= daysInMonth; i++) {
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+            html += `<td class="day-cell" data-date="${dateStr}"></td>`;
+        }
+        html += `</tr></tbody>`;
+        table.innerHTML = html;
+    }
+
+    async function saveAssignment() {
+        // Collect filtros
+        const filter_colab = Array.from(document.querySelectorAll('.colab-checkbox:checked')).map(cb => cb.value);
+        const filters = {
+            colaborador_ids: filter_colab,
+            horario_id: null, // Removido conforme solicitado
+            empresa_id: document.getElementById('filter_empresa').value,
+            department_id: document.getElementById('filter_depto').value, // Keeping existing single select for now
+            departamentos: getSelectedValues('filter_departments'),
+            horarios: getSelectedValues('filter_horarios'),
+            centros_custo_id: document.getElementById('filter_centro').value,
+            cargo: document.getElementById('filter_cargo').value, // Keeping existing single select for now
+            cargos: getSelectedValues('filter_cargos')
+        };
+
+        const payload = {};
+        if (selectedType === 'horario') payload.turno_id = document.getElementById('payload_turno').value;
+        else if (selectedType === 'grupos_cargos') {
+            payload.empresa_id = document.getElementById('payload_empresa').value;
+            payload.department_id = document.getElementById('payload_depto').value;
+            payload.cargo = document.getElementById('payload_cargo').value;
+        } else if (selectedType === 'justificativa') {
+            payload.justificativa_id = document.getElementById('payload_justificativa').value;
+            payload.data_inicio = document.getElementById('payload_data_inicio').value;
+            payload.data_fim = document.getElementById('payload_data_fim').value;
+        } else if (selectedType === 'jornada') payload.pinturas = paintedDays;
+
+        const data = { tipo_atribuicao: selectedType, filters: filters, payload: payload };
+
+        try {
+            const btn = document.getElementById('btnSave');
+            btn.disabled = true;
+            btn.innerHTML = 'Processando...';
+
+            const resp = await fetch('/api/rh/atribuicoes-massa/execute/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+                body: JSON.stringify(data)
+            });
+            const res = await resp.json();
+            if (res.success) { alert(res.message); window.location.reload(); }
+            else alert(res.error || 'Erro ao processar.');
+        } catch(e) { alert('Erro de conexão.'); } finally {
+            const btn = document.getElementById('btnSave');
+            btn.disabled = false;
+            btn.innerHTML = 'Salvar atribuição';
+        }
+    }
+</script>
+{% endblock %}

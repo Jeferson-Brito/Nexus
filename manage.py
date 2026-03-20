@@ -6,7 +6,7 @@ import sys
 
 def main():
     """Run administrative tasks."""
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'gestao_reclame_aqui.settings')
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'nexus.settings')
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:

@@ -1,5 +1,7 @@
 
-file_path = r'c:\Users\jeffe\Documents\Sites\CSHub\templates\base.html'
+import os
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+file_path = os.path.join(BASE_DIR, 'templates', 'base.html')
 
 with open(file_path, 'r', encoding='utf-8') as f:
     lines = f.readlines()

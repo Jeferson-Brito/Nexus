@@ -1,0 +1,479 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Formulário Add/Edit (Inicialmente Oculto) -->
+    <div id="feriadoFormContainer" class="mb-4" style="display: none;">
+        <div class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
+            <div class="card-header border-0 py-3 px-4"
+                style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
+                <h5 class="fw-bold mb-0 text-white" id="formTitle">Novo Feriado</h5>
+            </div>
+            <div class="card-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-5">
+                            <label class="form-label small fw-bold">Nome do Feriado *</label>
+                            <input type="text" name="name" id="feriadoName" class="form-control" required
+                                placeholder="Ex: Natal">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small fw-bold">Data *</label>
+                            <input type="date" name="date" id="feriadoDate" class="form-control" required>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="feriadoRepeats" checked>
+                                <label class="form-check-label small fw-bold" for="feriadoRepeats">
+                                    Repete todo ano
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="feriadoApplyAll" checked onchange="toggleFilters()">
+                                <label class="form-check-label small fw-bold" for="feriadoApplyAll">
+                                    Todos os funcionários
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Filtros de Aplicação (Empresas, Departamentos, Horários) -->
+                    <div id="filteringSection" class="mt-4 pt-3 border-top" style="display: none;">
+                        <div class="row g-3">
+                            <!-- Empresas -->
+                            <div class="col-md-4">
+                                <div class="filter-box p-3 bg-light rounded shadow-sm border h-100">
+                                    <h6 class="fw-bold mb-3 small d-flex align-items-center gap-2">
+                                        <i class="bi bi-building text-primary"></i> Empresas
+                                    </h6>
+                                    <div class="d-flex gap-2 mb-3">
+                                        <button type="button" class="btn btn-xs btn-outline-primary py-1 px-2 border-0 fw-bold" onclick="selectAll('target_companies')">
+                                            <i class="bi bi-check2-all"></i> Selecionar Todas
+                                        </button>
+                                        <button type="button" class="btn btn-xs btn-outline-danger py-1 px-2 border-0 fw-bold" onclick="removeAll('target_companies')">
+                                            <i class="bi bi-x-lg"></i> Remover Todas
+                                        </button>
+                                    </div>
+                                    <select id="target_companies" class="form-select form-select-sm" multiple style="height: 180px;"></select>
+                                    <div class="small text-muted mt-2">Segure Ctrl para selecionar múltiplos</div>
+                                </div>
+                            </div>
+
+                            <!-- Departamentos -->
+                            <div class="col-md-4">
+                                <div class="filter-box p-3 bg-light rounded shadow-sm border h-100">
+                                    <h6 class="fw-bold mb-3 small d-flex align-items-center gap-2">
+                                        <i class="bi bi-diagram-3 text-primary"></i> Departamentos
+                                    </h6>
+                                    <div class="d-flex gap-2 mb-3">
+                                        <button type="button" class="btn btn-xs btn-outline-primary py-1 px-2 border-0 fw-bold" onclick="selectAll('target_departments')">
+                                            <i class="bi bi-check2-all"></i> Selecionar Todos
+                                        </button>
+                                        <button type="button" class="btn btn-xs btn-outline-danger py-1 px-2 border-0 fw-bold" onclick="removeAll('target_departments')">
+                                            <i class="bi bi-x-lg"></i> Remover Todos
+                                        </button>
+                                    </div>
+                                    <select id="target_departments" class="form-select form-select-sm" multiple style="height: 180px;"></select>
+                                    <div class="small text-muted mt-2">Segure Ctrl para selecionar múltiplos</div>
+                                </div>
+                            </div>
+
+                            <!-- Horários/Turnos -->
+                            <div class="col-md-4">
+                                <div class="filter-box p-3 bg-light rounded shadow-sm border h-100">
+                                    <h6 class="fw-bold mb-3 small d-flex align-items-center gap-2">
+                                        <i class="bi bi-clock text-primary"></i> Horários
+                                    </h6>
+                                    <div class="d-flex gap-2 mb-3">
+                                        <button type="button" class="btn btn-xs btn-outline-primary py-1 px-2 border-0 fw-bold" onclick="selectAll('target_turnos')">
+                                            <i class="bi bi-check2-all"></i> Selecionar Todas
+                                        </button>
+                                        <button type="button" class="btn btn-xs btn-outline-danger py-1 px-2 border-0 fw-bold" onclick="removeAll('target_turnos')">
+                                            <i class="bi bi-x-lg"></i> Remover Todas
+                                        </button>
+                                    </div>
+                                    <select id="target_turnos" class="form-select form-select-sm" multiple style="height: 180px;"></select>
+                                    <div class="small text-muted mt-2">Segure Ctrl para selecionar múltiplos</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-top d-flex gap-2 justify-content-end">
+                        <button type="button" class="btn btn-light border px-4" onclick="hideForm()">
+                            Cancelar
+                        </button>
+                        <button type="button" class="btn btn-primary px-5 shadow-sm" id="btnSaveFeriado">
+                            <i class="bi bi-check-lg me-1"></i> Salvar Feriado
+                        </button>
+                    </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabela de Feriados -->
+    <div id="feriadoListContainer" class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
+        <!-- Header -->
+        <div class="card-header border-0 d-flex align-items-center justify-content-between py-3 px-4"
+            style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
+            <h5 class="fw-bold mb-0 text-white">Feriados</h5>
+            <button class="btn d-flex align-items-center gap-2" onclick="showForm()"
+                style="background:rgba(255,255,255,0.2); color:#fff; border:1.5px solid rgba(255,255,255,0.6); font-weight:600;">
+                <i class="bi bi-plus-lg"></i> Adicionar
+            </button>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="card-body border-bottom py-3 px-4">
+            <div class="d-flex flex-wrap align-items-center gap-3">
+                <div class="d-flex align-items-center gap-2 text-muted small">
+                    Mostrar
+                    <select id="perPageSelect" class="form-select form-select-sm" style="width: auto;">
+                        <option value="10">10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                    </select>
+                    registros
+                </div>
+
+                <div class="ms-auto d-flex align-items-center gap-2">
+                    <label class="text-muted small mb-0">Buscar:</label>
+                    <input type="text" id="searchInput" class="form-control form-control-sm"
+                        placeholder="Nome do feriado..." style="width: 220px;">
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabela -->
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" id="feriadoTable">
+                <thead class="table-light">
+                    <tr>
+                        <th class="px-4 py-3">Feriado</th>
+                        <th class="py-3">Data</th>
+                        <th class="py-3 text-center">Repete Todo Ano</th>
+                        <th class="py-3 text-end pe-4">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="feriadoTbody">
+                    <tr>
+                        <td colspan="4" class="text-center py-5 text-muted">
+                            <div class="spinner-border spinner-border-sm me-2"></div> Carregando...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Footer -->
+        <div class="card-footer bg-white border-top d-flex align-items-center justify-content-between py-3 px-4">
+            <span class="text-muted small" id="paginacaoInfo">—</span>
+            <nav>
+                <ul class="pagination pagination-sm mb-0 gap-1" id="paginacaoControles"></ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Delete -->
+<div class="modal fade" id="modalDelete" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-body text-center py-4">
+                <div class="mb-3" style="font-size:2rem; color:#ef4444;"><i class="bi bi-trash3"></i></div>
+                <h6 class="fw-bold mb-1">Excluir feriado?</h6>
+                <p class="text-muted small mb-3" id="deleteFeriadoNome">—</p>
+                <div class="d-flex gap-2 justify-content-center">
+                    <button class="btn btn-sm btn-light px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button class="btn btn-sm btn-danger px-4" id="btnConfirmDelete">Excluir</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let allFeriados = [];
+    let auxiliaryData = { empresas: [], departments: [], turnos: [] };
+    let deleteId = null;
+    let currentPage = 1;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadData();
+        loadAuxiliaryData();
+        document.getElementById('searchInput').addEventListener('input', () => { currentPage = 1; render(); });
+        document.getElementById('perPageSelect').addEventListener('change', () => { currentPage = 1; render(); });
+        document.getElementById('btnSaveFeriado').addEventListener('click', saveFeriado);
+        document.getElementById('btnConfirmDelete').addEventListener('click', confirmDelete);
+    });
+
+    async function loadData() {
+        try {
+            const response = await fetch('/api/rh/feriados/');
+            const data = await response.json();
+            if (data.success) {
+                allFeriados = data.feriados;
+                render();
+            } else {
+                showError(data.error || 'Erro ao carregar feriados.');
+            }
+        } catch (e) {
+            showError('Erro ao carregar dados.');
+        }
+    }
+
+    async function loadAuxiliaryData() {
+        try {
+            const response = await fetch('/api/rh/auxiliar-data/');
+            const data = await response.json();
+            if (data.success) {
+                auxiliaryData = data;
+                populateSelectionLists();
+            }
+        } catch (e) {
+            console.error('Erro ao carregar dados auxiliares:', e);
+        }
+    }
+
+    function populateSelectionLists() {
+        const companySelect = document.getElementById('target_companies');
+        const deptSelect = document.getElementById('target_departments');
+        const turnoSelect = document.getElementById('target_turnos');
+
+        if (companySelect) {
+            companySelect.innerHTML = auxiliaryData.empresas.map(e =>
+                `<option value="${e.id}">${e.nome_fantasia || e.nome}</option>`
+            ).join('');
+        }
+
+        if (deptSelect) {
+            deptSelect.innerHTML = auxiliaryData.departments.map(d =>
+                `<option value="${d.id}">${d.name}</option>`
+            ).join('');
+        }
+
+        if (turnoSelect) {
+            turnoSelect.innerHTML = auxiliaryData.turnos.map(t =>
+                `<option value="${t.id}">${t.nome} (${t.horario})</option>`
+            ).join('');
+        }
+    }
+
+    function toggleFilters() {
+        const applyAll = document.getElementById('feriadoApplyAll').checked;
+        const section = document.getElementById('filteringSection');
+        section.style.display = applyAll ? 'none' : 'block';
+    }
+
+    function selectAll(id) {
+        const select = document.getElementById(id);
+        Array.from(select.options).forEach(opt => opt.selected = true);
+    }
+
+    function removeAll(id) {
+        const select = document.getElementById(id);
+        Array.from(select.options).forEach(opt => opt.selected = false);
+    }
+
+    function render() {
+        const q = document.getElementById('searchInput').value.toLowerCase();
+        const filtered = allFeriados.filter(f =>
+            (f.name || '').toLowerCase().includes(q)
+        );
+
+        const pp = parseInt(document.getElementById('perPageSelect').value) || 10;
+        const total = filtered.length;
+        const totalPag = Math.max(1, Math.ceil(total / pp));
+        if (currentPage > totalPag) currentPage = totalPag;
+
+        const inicio = (currentPage - 1) * pp;
+        const pagina = filtered.slice(inicio, inicio + pp);
+
+        const info = document.getElementById('paginacaoInfo');
+        if (info) {
+            if (total === 0) info.textContent = '0 registros';
+            else info.textContent = `${inicio + 1} a ${Math.min(inicio + pp, total)} de ${total}`;
+        }
+
+        renderPaginacao(totalPag);
+
+        const tbody = document.getElementById('feriadoTbody');
+        if (pagina.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" class="text-center py-5 text-muted">Nenhum feriado encontrado.</td></tr>`;
+        } else {
+            tbody.innerHTML = pagina.map(f => `
+            <tr>
+                <td class="px-4 fw-semibold">${f.name}</td>
+                <td>${f.date_display}</td>
+                <td class="text-center">
+                    <span class="badge ${f.repeats_annually ? 'bg-success' : 'bg-secondary'}">
+                        ${f.repeats_annually ? 'Sim' : 'Não'}
+                    </span>
+                </td>
+                <td class="text-end pe-4">
+                    <button class="btn btn-sm btn-light border me-1" onclick="showForm('${f.id}')">
+                        <i class="bi bi-pencil-square text-primary"></i>
+                    </button>
+                    <button class="btn btn-sm btn-light border" onclick="openModalDelete('${f.id}', '${f.name.replace(/'/g, "\\'")}')">
+                        <i class="bi bi-trash3 text-danger"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+        }
+    }
+
+    function renderPaginacao(total) {
+        const ul = document.getElementById('paginacaoControles');
+        if (!ul) return;
+        ul.innerHTML = '';
+
+        const prev = document.createElement('li');
+        prev.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+        prev.innerHTML = `<button class="page-link" ${currentPage === 1 ? 'disabled' : ''}>‹</button>`;
+        prev.querySelector('button').onclick = () => { if (currentPage > 1) { currentPage--; render(); } };
+        ul.appendChild(prev);
+
+        for (let p = 1; p <= total; p++) {
+            const li = document.createElement('li');
+            li.className = `page-item ${p === currentPage ? 'active' : ''}`;
+            li.innerHTML = `<button class="page-link">${p}</button>`;
+            const pg = p;
+            li.querySelector('button').onclick = () => { currentPage = pg; render(); };
+            ul.appendChild(li);
+        }
+
+        const next = document.createElement('li');
+        next.className = `page-item ${currentPage === total ? 'disabled' : ''}`;
+        next.innerHTML = `<button class="page-link" ${currentPage === total ? 'disabled' : ''}>›</button>`;
+        next.querySelector('button').onclick = () => { if (currentPage < total) { currentPage++; render(); } };
+        ul.appendChild(next);
+    }
+
+    function showForm(id = null) {
+        if (id) {
+            const f = allFeriados.find(x => x.id === id);
+            if (!f) return;
+            document.getElementById('formTitle').textContent = 'Editar Feriado';
+            document.getElementById('feriadoId').value = f.id;
+            document.getElementById('feriadoName').value = f.name;
+            document.getElementById('feriadoDate').value = f.date;
+            document.getElementById('feriadoRepeats').checked = f.repeats_annually;
+            document.getElementById('feriadoApplyAll').checked = f.apply_to_all;
+
+            // ManyToMany
+            setMultiSelect('target_companies', f.target_companies);
+            setMultiSelect('target_departments', f.target_departments);
+            setMultiSelect('target_turnos', f.target_turnos);
+
+            toggleFilters();
+        } else {
+            document.getElementById('formTitle').textContent = 'Novo Feriado';
+            document.getElementById('feriadoId').value = '';
+            document.getElementById('feriadoName').value = '';
+            document.getElementById('feriadoDate').value = '';
+            document.getElementById('feriadoRepeats').checked = true;
+            document.getElementById('feriadoApplyAll').checked = true;
+
+            removeAll('target_companies');
+            removeAll('target_departments');
+            removeAll('target_turnos');
+
+            toggleFilters();
+        }
+        document.getElementById('feriadoListContainer').style.display = 'none';
+        document.getElementById('feriadoFormContainer').style.display = 'block';
+    }
+
+    function setMultiSelect(id, values) {
+        const select = document.getElementById(id);
+        if (!select || !values) return;
+        const stringValues = values.map(v => String(v));
+        Array.from(select.options).forEach(opt => {
+            opt.selected = stringValues.includes(String(opt.value));
+        });
+    }
+
+    function hideForm() {
+        document.getElementById('feriadoFormContainer').style.display = 'none';
+        document.getElementById('feriadoListContainer').style.display = 'block';
+    }
+
+    function saveFeriado() {
+        const data = {
+            id: document.getElementById('feriadoId').value || null,
+            name: document.getElementById('feriadoName').value,
+            date: document.getElementById('feriadoDate').value,
+            repeats_annually: document.getElementById('feriadoRepeats').checked,
+            apply_to_all: document.getElementById('feriadoApplyAll').checked,
+            target_companies: getSelectedValues('target_companies'),
+            target_departments: getSelectedValues('target_departments'),
+            target_turnos: getSelectedValues('target_turnos')
+        };
+
+        if (!data.name || !data.date) return alert('Preencha os campos obrigatórios.');
+
+        if (!data.apply_to_all && data.target_companies.length === 0 && data.target_departments.length === 0 && data.target_turnos.length === 0) {
+            return alert('Selecione ao menos uma empresa, departamento ou horário quando não aplicar a todos.');
+        }
+
+        fetch('/api/rh/feriados/save/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrf()
+            },
+            body: JSON.stringify(data)
+        })
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    if (window.showToast) showToast('success', res.message);
+                    else alert(res.message);
+                    hideForm();
+                    loadData();
+                } else {
+                    alert(res.error || 'Erro ao salvar.');
+                }
+            });
+    }
+
+    function getSelectedValues(id) {
+        const select = document.getElementById(id);
+        return Array.from(select.selectedOptions).map(opt => opt.value);
+    }
+
+    function openModalDelete(id, nome) {
+        deleteId = id;
+        document.getElementById('deleteFeriadoNome').textContent = nome;
+        new bootstrap.Modal(document.getElementById('modalDelete')).show();
+    }
+
+    function confirmDelete() {
+        if (!deleteId) return;
+        fetch(`/api/rh/feriados/${deleteId}/delete/`, {
+            method: 'DELETE',
+            headers: { 'X-CSRFToken': getCsrf() }
+        })
+            .then(r => r.json())
+            .then(data => {
+                bootstrap.Modal.getInstance(document.getElementById('modalDelete')).hide();
+                if (data.success) {
+                    if (window.showToast) showToast('success', 'Feriado excluído!');
+                    loadData();
+                } else {
+                    alert(data.error || 'Erro ao excluir.');
+                }
+            });
+    }
+
+    function showError(msg) {
+        const tbody = document.getElementById('feriadoTbody');
+        if (tbody) tbody.innerHTML = `<tr><td colspan="4" class="text-center py-5 text-danger">${msg}</td></tr>`;
+    }
+
+    function getCsrf() { return document.cookie.match(/csrftoken=([^;]+)/)?.[1] || ''; }
+</script>
+{% endblock %}

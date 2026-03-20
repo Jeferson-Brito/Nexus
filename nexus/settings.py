@@ -1,5 +1,5 @@
 """
-Django settings for gestao_reclame_aqui project.
+Django settings for nexus project.
 """
 
 import os
@@ -31,11 +31,11 @@ SECRET_KEY = get_env("SECRET_KEY", "django-insecure-change-me")
 
 DEBUG = get_env("DEBUG", "False").lower() == "true"
 
-ALLOWED_HOSTS = get_env("ALLOWED_HOSTS", "cshub-deploy.onrender.com,localhost,127.0.0.1,.onrender.com").split(",")
+ALLOWED_HOSTS = get_env("ALLOWED_HOSTS", "nexus-deploy.onrender.com,localhost,127.0.0.1,.onrender.com").split(",")
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://cshub-deploy.onrender.com",
-    "https://cshub-l8jg.onrender.com",
+    "https://nexus-deploy.onrender.com",
+    "https://nexus-l8jg.onrender.com",
     "https://*.onrender.com",
 ]
 
@@ -80,7 +80,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = "gestao_reclame_aqui.urls"
+ROOT_URLCONF = "nexus.urls"
 
 # ==============================
 # TEMPLATES
@@ -114,7 +114,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "gestao_reclame_aqui.wsgi.application"
+WSGI_APPLICATION = "nexus.wsgi.application"
 
 # ==============================
 # DATABASE (POSTGRESQL - Render & Supabase Config)
@@ -255,6 +255,33 @@ SESSION_SAVE_EVERY_REQUEST = False
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 # ==============================
+# CACHE (REDIS)
+# ==============================
+REDIS_URL = get_env("REDIS_URL")
+
+if REDIS_URL:
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": REDIS_URL,
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+                "IGNORE_EXCEPTIONS": True,  # Don't crash if Redis is down
+            }
+        }
+    }
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "unique-snowflake",
+        }
+    }
+
+# Default TTL: 1 hour
+CACHE_TTL = 60 * 60
+
+# ==============================
 # UPLOAD LIMITS
 # ==============================
 FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
@@ -285,7 +312,7 @@ LOGGING = {
 # ==============================
 # CHANNELS (WEBSOCKETS) - REMOVED
 # ==============================
-# ASGI_APPLICATION = "gestao_reclame_aqui.asgi.application"
+# ASGI_APPLICATION = "nexus.asgi.application"
 
 # CHANNEL_LAYERS = {
 #     "default": {

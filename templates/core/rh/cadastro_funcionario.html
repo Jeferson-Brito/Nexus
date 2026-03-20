@@ -180,10 +180,10 @@
                                 <select name="centro_custo" id="formCentroCusto" class="form-select">
                                     <option value="">Selecione</option>
                                 </select>
-                                <button type="button" class="btn btn-sm btn-primary mt-2 rounded-pill px-3"
-                                        style="font-size:.75rem;" onclick="alert('Criar centro de custo — em breve')">
+                                <a href="{% url 'rh_centros_custo' %}?add=1" class="btn btn-sm btn-primary mt-2 rounded-pill px-3"
+                                        style="font-size:.75rem;">
                                     <i class="bi bi-plus-lg me-1"></i> Criar novo centro de custo
-                                </button>
+                                </a>
                             </div>
 
                             <div class="col-md-4">
@@ -714,10 +714,23 @@ document.addEventListener('DOMContentLoaded', function () {
             const sel = document.getElementById('formEmpresa');
             const currentEmpresaId = '{{ colaborador.empresa_id|unlocalize|default:"" }}';
             (data.empresas || []).forEach(e => {
-                // skip if already rendered by Django template
                 if ([...sel.options].some(o => o.value === e.id)) return;
                 const opt = new Option(e.nome, e.id);
                 if (e.id === currentEmpresaId) opt.selected = true;
+                sel.add(opt);
+            });
+        });
+
+    // Load centros de custo para o select
+    fetch('/api/rh/centros-custo/')
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) return;
+            const sel = document.getElementById('formCentroCusto');
+            const currentCentroId = '{{ colaborador.centro_custo_id|unlocalize|default:"" }}';
+            (data.centros || []).forEach(c => {
+                const opt = new Option(c.nome, c.id);
+                if (c.id == currentCentroId) opt.selected = true;
                 sel.add(opt);
             });
         });
@@ -771,7 +784,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!cpfVal) {
             // Mudar para a aba Dados Pessoais e alertar
             document.querySelector('[data-bs-target="#tabPessoal"]')?.click();
-            Swal.fire({ icon: 'warning', title: 'CPF obrigatório', text: 'Preencha o CPF na aba Dados Pessoais antes de salvar.' });
+            return showToast('warning', 'Preencha o CPF na aba Dados Pessoais antes de salvar.');
             return;
         }
 
@@ -787,19 +800,16 @@ document.addEventListener('DOMContentLoaded', function () {
         .then(r => r.json())
         .then(data => {
             if (data.success) {
-                Swal.fire({
-                    icon: 'success', title: 'Salvo!',
-                    text: data.message || 'Funcionário cadastrado com sucesso.',
-                    timer: 2000, showConfirmButton: false
-                }).then(() => { window.location.href = '{% url "rh_colaboradores" %}'; });
+                showToast('success', data.message || 'Funcionário cadastrado com sucesso.');
+                setTimeout(() => { window.location.href = '{% url "rh_colaboradores" %}'; }, 1000);
             } else {
-                Swal.fire({ icon: 'error', title: 'Erro', text: data.error });
+                showToast('error', data.error || 'Erro ao salvar.');
                 btn.disabled = false;
                 btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Salvar';
             }
         })
         .catch(() => {
-            Swal.fire({ icon: 'error', title: 'Erro de rede', text: 'Tente novamente.' });
+            showToast('error', 'Erro de rede ou permissão. Tente novamente.');
             btn.disabled = false;
             btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Salvar';
         });

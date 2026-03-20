@@ -2,7 +2,7 @@
 import os
 import django
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'gestao_reclame_aqui.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'nexus.settings')
 django.setup()
 
 from core.models import ArtigoBaseConhecimento, Department, User

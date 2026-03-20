@@ -12,7 +12,7 @@ if project_root not in sys.path:
     sys.path.append(project_root)
 
 # Manually configure settings to bypass storages
-from gestao_reclame_aqui import settings as app_settings
+from nexus import settings as app_settings
 
 if not settings.configured:
     settings_dict = {}

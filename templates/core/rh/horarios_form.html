@@ -1,0 +1,494 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div class="d-flex align-items-center gap-3">
+            <a href="{% url 'rh_horarios' %}" class="btn btn-light btn-sm rounded-circle shadow-sm border">
+                <i class="bi bi-arrow-left"></i>
+            </a>
+            <h4 class="fw-bold mb-0">{{ page_title }}</h4>
+        </div>
+        <div>
+            <button type="button" class="btn btn-primary px-4 shadow-sm" id="btnSaveHorario">
+                <i class="bi bi-check-lg me-1"></i> Salvar Horário
+            </button>
+        </div>
+    </div>
+
+    <!-- Multi-tab Card -->
+    <div class="card border-0 shadow-sm" style="border-radius: 12px; min-height: 600px;">
+        <div class="card-header border-0 p-0" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
+            <ul class="nav nav-tabs border-0 px-4" id="horarioTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active fw-bold small text-uppercase py-3" id="principal-tab" data-bs-toggle="tab" data-bs-target="#principal" type="button" role="tab">Principal</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link fw-bold small text-uppercase py-3" id="horario-tab" data-bs-toggle="tab" data-bs-target="#horario-grid" type="button" role="tab">Horários</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link fw-bold small text-uppercase py-3" id="tolerancias-tab" data-bs-toggle="tab" data-bs-target="#tolerancias" type="button" role="tab">Tolerâncias</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link fw-bold small text-uppercase py-3" id="dsr-tab" data-bs-toggle="tab" data-bs-target="#dsr" type="button" role="tab">DSR</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link fw-bold small text-uppercase py-3" id="extras-tab" data-bs-toggle="tab" data-bs-target="#extras" type="button" role="tab">Horas Extras / Banco</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link fw-bold small text-uppercase py-3" id="noturno-tab" data-bs-toggle="tab" data-bs-target="#noturno" type="button" role="tab">Adic. Noturno</button>
+                </li>
+            </ul>
+        </div>
+
+        <div class="card-body p-4">
+            <div class="tab-content" id="horarioTabsContent">
+                
+                <!-- ABA PRINCIPAL -->
+                <div class="tab-pane fade show active" id="principal" role="tabpanel">
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">Nome do Horário *</label>
+                            <input type="text" id="hor_nome" class="form-control" placeholder="Ex: Administrativo Seg-Sex">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold small">Sigla *</label>
+                            <input type="text" id="hor_sigla" class="form-control" placeholder="Ex: ADM" maxlength="5">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold small">Cor de Exibição</label>
+                            <input type="color" id="hor_cor" class="form-control form-control-color w-100" value="#2563eb">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small">Tipo de Horário *</label>
+                            <select id="hor_tipo" class="form-select" onchange="toggleTipoFields()">
+                                <option value="semanal">Semanal</option>
+                                <option value="ciclico">Cíclico</option>
+                                <option value="jornada">Jornada (Móvel)</option>
+                            </select>
+                        </div>
+
+                        <!-- Campos extra para Cíclico -->
+                        <div class="col-md-4 tipo-field tipo-ciclico" style="display: none;">
+                            <label class="form-label fw-bold small">Data Início do Ciclo *</label>
+                            <input type="date" id="hor_data_inicio" class="form-control">
+                        </div>
+                        <div class="col-md-4 tipo-field tipo-ciclico" style="display: none;">
+                            <label class="form-label fw-bold small">Nº de Dias do Ciclo *</label>
+                            <input type="number" id="hor_dias_ciclo" class="form-control" value="2" min="2" onchange="regenerateGrid()">
+                        </div>
+
+                        <div class="col-12 border-top mt-4 pt-4">
+                            <h6 class="fw-bold text-primary mb-3">Configurações Gerais</h6>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" id="hor_folga_intervalos">
+                                        <label class="form-check-label fw-bold small" for="hor_folga_intervalos">Considerar folga nos intervalos</label>
+                                        <div class="form-text small">Indica se o colaborador está de folga durante os intervalos cadastrados.</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ABA HORÁRIOS (GRID) -->
+                <div class="tab-pane fade" id="horario-grid" role="tabpanel">
+                    <div class="table-responsive bg-light rounded shadow-sm border">
+                        <table class="table table-sm table-bordered mb-0 align-middle">
+                            <thead class="bg-white">
+                                <tr class="text-center small">
+                                    <th rowspan="2" class="py-3" style="width: 150px;">Dia / Descrição</th>
+                                    <th colspan="2" class="py-2 bg-blue-light">Período 1</th>
+                                    <th colspan="2" class="py-2 bg-green-light">Período 2</th>
+                                    <th rowspan="2" class="py-3">Carga Diária</th>
+                                    <th rowspan="2" class="py-3" style="width: 100px;">Alm. Livre</th>
+                                    <th rowspan="2" class="py-3" style="width: 100px;">Comp.</th>
+                                    <th rowspan="2" class="py-3" style="width: 100px;">Neutro</th>
+                                    <th rowspan="2" class="py-3" style="width: 120px;">Fech. Noturno</th>
+                                </tr>
+                                <tr class="text-center x-small">
+                                    <th class="py-1">Entrada</th>
+                                    <th class="py-1">Saída</th>
+                                    <th class="py-1">Entrada</th>
+                                    <th class="py-1">Saída</th>
+                                </tr>
+                            </thead>
+                            <tbody id="horarioDetailTbody">
+                                <!-- Dinamicamente preenchido -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- ABA TOLERÂNCIAS -->
+                <div class="tab-pane fade" id="tolerancias" role="tabpanel">
+                    <div class="row g-4 max-w-600">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">Tolerância Entrada (minutos)</label>
+                            <input type="number" id="hor_tol_entrada" class="form-control" value="5">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">Tolerância Saída (minutos)</label>
+                            <input type="number" id="hor_tol_saida" class="form-control" value="5">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">Tolerância Intervalo (minutos)</label>
+                            <input type="number" id="hor_tol_intervalo" class="form-control" value="5">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">Tolerância Diária Acumulada (minutos)</label>
+                            <input type="number" id="hor_tol_diaria" class="form-control" value="10">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ABA DSR -->
+                <div class="tab-pane fade" id="dsr" role="tabpanel">
+                    <div class="row g-4 max-w-600">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">Dia do DSR</label>
+                            <select id="hor_dia_dsr" class="form-select">
+                                <option value="0">Domingo</option>
+                                <option value="1">Segunda</option>
+                                <option value="2">Terça</option>
+                                <option value="3">Quarta</option>
+                                <option value="4">Quinta</option>
+                                <option value="5">Sexta</option>
+                                <option value="6" selected>Sábado</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">Mínimo de Horas para DSR</label>
+                            <input type="number" id="hor_minimo_horas_dsr" class="form-control" step="0.1" value="0">
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check form-switch mt-2">
+                                <input class="form-check-input" type="checkbox" id="hor_descontar_faltas_dsr" checked>
+                                <label class="form-check-label fw-bold small" for="hor_descontar_faltas_dsr">Descontar faltas do DSR</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ABA EXTRAS / BANCO -->
+                <div class="tab-pane fade" id="extras" role="tabpanel">
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="form-check form-switch mb-4">
+                                <input class="form-check-input" type="checkbox" id="hor_utiliza_banco_horas">
+                                <label class="form-check-label fw-bold small" for="hor_utiliza_banco_horas">Utiliza Banco de Horas</label>
+                            </div>
+                            
+                            <label class="form-label fw-bold small">Modo de Cálculo de Extras</label>
+                            <select id="hor_modo_extra" class="form-select mb-3">
+                                <option value="simples">Simples (Diário)</option>
+                                <option value="semanal">Semanal</option>
+                                <option value="mensal">Mensal</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="p-3 bg-light rounded border">
+                                <h6 class="fw-bold small mb-3">Percentuais Standard</h6>
+                                <div class="row g-3">
+                                    <div class="col-6">
+                                        <label class="form-label small">Extra Diurno (%)</label>
+                                        <input type="number" id="hor_perc_diurno" class="form-control" value="50">
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label small">Extra Noturno (%)</label>
+                                        <input type="number" id="hor_perc_noturno" class="form-control" value="50">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ABA ADICIONAL NOTURNO -->
+                <div class="tab-pane fade" id="noturno" role="tabpanel">
+                    <div class="row g-4 max-w-600">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">Início Adicional Noturno</label>
+                            <input type="time" id="hor_inicio_noturno" class="form-control" value="22:00">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">Fim Adicional Noturno</label>
+                            <input type="time" id="hor_fim_noturno" class="form-control" value="05:00">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">Fator Redução Noturna (ex: 60 ou 52.5)</label>
+                            <input type="number" id="hor_fator_noturno" class="form-control" value="60" step="0.1">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">Fechamento Noturno Padrão</label>
+                            <input type="time" id="hor_fech_global" class="form-control" value="00:00">
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .nav-tabs .nav-link {
+        border: none !important;
+        color: #ffffff !important;
+        opacity: 1 !important;
+        background: transparent !important;
+        transition: all 0.2s;
+        border-bottom: 3px solid transparent !important;
+        margin-right: 15px;
+        padding: 1.2rem 1rem !important;
+    }
+    .nav-tabs .nav-link:hover {
+        color: #fff !important;
+        background: rgba(255, 255, 255, 0.1) !important;
+    }
+    .nav-tabs .nav-link.active {
+        color: #fff !important;
+        background: rgba(255, 255, 255, 0.2) !important;
+        border-bottom: 3px solid #fff !important;
+    }
+    .bg-blue-light { background-color: rgba(37, 99, 235, 0.05); }
+    .bg-green-light { background-color: rgba(16, 185, 129, 0.05); }
+    .max-w-600 { max-width: 600px; }
+    .btn-xs { font-size: 0.75rem; padding: 0.2rem 0.4rem; }
+    .form-control-sm-grid {
+        font-size: 0.8rem;
+        padding: 0.2rem 0.4rem;
+        text-align: center;
+        width: 80px;
+        margin: 0 auto;
+    }
+</style>
+
+<script>
+    const HORARIO_ID = "{{ horario_id }}";
+    const DIAS_SEMANA = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
+    let horarioOriginalData = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        if (HORARIO_ID) {
+            loadHorarioDetail();
+        } else {
+            generateGrid();
+        }
+        
+        document.getElementById('btnSaveHorario').addEventListener('click', saveHorario);
+    });
+
+    function toggleTipoFields() {
+        const tipo = document.getElementById('hor_tipo').value;
+        document.querySelectorAll('.tipo-field').forEach(el => el.style.display = 'none');
+        if (tipo === 'ciclico') {
+            document.querySelectorAll('.tipo-ciclico').forEach(el => el.style.display = 'block');
+        }
+        generateGrid();
+    }
+
+    function generateGrid() {
+        const tipo = document.getElementById('hor_tipo').value;
+        const tbody = document.getElementById('horarioDetailTbody');
+        tbody.innerHTML = '';
+
+        let count = 7;
+        let labels = DIAS_SEMANA;
+
+        if (tipo === 'ciclico') {
+            count = parseInt(document.getElementById('hor_dias_ciclo').value) || 2;
+            labels = Array.from({length: count}, (_, i) => `Dia ${i + 1}`);
+        } else if (tipo === 'jornada') {
+            count = 1;
+            labels = ["Jornada Móvel"];
+        }
+
+        labels.forEach((label, index) => {
+            const row = createGridRow(index, label);
+            tbody.appendChild(row);
+        });
+    }
+
+    function regenerateGrid() {
+        const tipo = document.getElementById('hor_tipo').value;
+        if (tipo !== 'ciclico') return;
+        
+        // Mantém dados preenchidos se existirem, mas ajusta o tamanho
+        const tbody = document.getElementById('horarioDetailTbody');
+        const count = parseInt(document.getElementById('hor_dias_ciclo').value) || 2;
+        
+        // Simplesmente limpa e regera por enquanto (melhoria posterior: manter dados)
+        generateGrid();
+    }
+
+    function createGridRow(index, label, existing = null) {
+        const tr = document.createElement('tr');
+        tr.dataset.index = index;
+        tr.innerHTML = `
+            <td class="ps-3 fw-bold small">${label}</td>
+            <td><input type="time" class="form-control form-control-sm form-control-sm-grid input-e1" value="${existing?.entrada_1 || ''}"></td>
+            <td><input type="time" class="form-control form-control-sm form-control-sm-grid input-s1" value="${existing?.saida_1 || ''}"></td>
+            <td><input type="time" class="form-control form-control-sm form-control-sm-grid input-e2" value="${existing?.entrada_2 || ''}"></td>
+            <td><input type="time" class="form-control form-control-sm form-control-sm-grid input-s2" value="${existing?.saida_2 || ''}"></td>
+            <td><input type="text" class="form-control form-control-sm form-control-sm-grid input-total" value="${existing?.total_horas || '00:00'}" readonly></td>
+            <td class="text-center"><input type="checkbox" class="form-check-input check-almoco" ${existing?.almoco_livre ? 'checked' : ''}></td>
+            <td class="text-center"><input type="checkbox" class="form-check-input check-comp" ${existing?.compensado ? 'checked' : ''}></td>
+            <td class="text-center"><input type="checkbox" class="form-check-input check-neutro" ${existing?.neutro ? 'checked' : ''}></td>
+            <td><input type="time" class="form-control form-control-sm form-control-sm-grid input-fech" value="${existing?.fechamento_noturno || '00:00'}"></td>
+        `;
+        
+        // Add events for auto-calculate total?
+        const inputs = tr.querySelectorAll('input[type="time"]');
+        inputs.forEach(inp => inp.addEventListener('change', () => calculateRowTotal(tr)));
+        
+        return tr;
+    }
+
+    function calculateRowTotal(tr) {
+        // Implementação simples de cálculo de horas entre E/S
+        const e1 = tr.querySelector('.input-e1').value;
+        const s1 = tr.querySelector('.input-s1').value;
+        const e2 = tr.querySelector('.input-e2').value;
+        const s2 = tr.querySelector('.input-s2').value;
+        
+        if (!e1 || !s1) return;
+        
+        let totalMin = 0;
+        
+        function diff(start, end) {
+            if (!start || !end) return 0;
+            const [h1, m1] = start.split(':').map(Number);
+            const [h2, m2] = end.split(':').map(Number);
+            let m_diff = (h2 * 60 + m2) - (h1 * 60 + m1);
+            if (m_diff < 0) m_diff += 24 * 60; // Virada de dia
+            return m_diff;
+        }
+        
+        totalMin += diff(e1, s1);
+        if (e2 && s2) totalMin += diff(e2, s2);
+        
+        const rh = Math.floor(totalMin / 60);
+        const rm = totalMin % 60;
+        tr.querySelector('.input-total').value = `${String(rh).padStart(2,'0')}:${String(rm).padStart(2,'0')}`;
+    }
+
+    async function loadHorarioDetail() {
+        try {
+            const response = await fetch(`/api/rh/horarios/${HORARIO_ID}/`);
+            const data = await response.json();
+            if (data.success) {
+                const h = data.horario;
+                horarioOriginalData = h;
+                
+                // Preencher campos
+                document.getElementById('hor_nome').value = h.nome;
+                document.getElementById('hor_sigla').value = h.sigla;
+                document.getElementById('hor_cor').value = h.cor;
+                document.getElementById('hor_tipo').value = h.tipo;
+                document.getElementById('hor_data_inicio').value = h.data_inicio;
+                document.getElementById('hor_dias_ciclo').value = h.dias_ciclo;
+                document.getElementById('hor_folga_intervalos').checked = h.folga_nos_intervalos;
+                document.getElementById('hor_tol_entrada').value = h.tol_entrada;
+                document.getElementById('hor_tol_saida').value = h.tol_saida;
+                document.getElementById('hor_tol_intervalo').value = h.tol_intervalo;
+                document.getElementById('hor_tol_diaria').value = h.tol_diaria;
+                document.getElementById('hor_dia_dsr').value = h.dia_dsr;
+                document.getElementById('hor_minimo_horas_dsr').value = h.minimo_horas_dsr;
+                document.getElementById('hor_descontar_faltas_dsr').checked = h.descontar_faltas_dsr;
+                document.getElementById('hor_utiliza_banco_horas').checked = h.utiliza_banco_horas;
+                document.getElementById('hor_modo_extra').value = h.modo_extra;
+                document.getElementById('hor_perc_diurno').value = h.percentual_diurno;
+                document.getElementById('hor_perc_noturno').value = h.percentual_noturno;
+                document.getElementById('hor_inicio_noturno').value = h.inicio_noturno;
+                document.getElementById('hor_fim_noturno').value = h.fim_noturno;
+                document.getElementById('hor_fator_noturno').value = h.fator_noturno;
+                document.getElementById('hor_fech_global').value = h.fechamento_noturno_global;
+
+                toggleTipoFields();
+                
+                // Grid
+                const tbody = document.getElementById('horarioDetailTbody');
+                tbody.innerHTML = '';
+                h.detalhes.sort((a,b) => a.dia_index - b.dia_index).forEach(d => {
+                    const row = createGridRow(d.dia_index, d.nome_dia, d);
+                    tbody.appendChild(row);
+                });
+                
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    function saveHorario() {
+        const data = {
+            id: HORARIO_ID || null,
+            nome: document.getElementById('hor_nome').value,
+            sigla: document.getElementById('hor_sigla').value,
+            cor: document.getElementById('hor_cor').value,
+            tipo: document.getElementById('hor_tipo').value,
+            data_inicio: document.getElementById('hor_data_inicio').value,
+            dias_ciclo: parseInt(document.getElementById('hor_dias_ciclo').value),
+            folga_nos_intervalos: document.getElementById('hor_folga_intervalos').checked,
+            tol_entrada: parseInt(document.getElementById('hor_tol_entrada').value),
+            tol_saida: parseInt(document.getElementById('hor_tol_saida').value),
+            tol_intervalo: parseInt(document.getElementById('hor_tol_intervalo').value),
+            tol_diaria: parseInt(document.getElementById('hor_tol_diaria').value),
+            dia_dsr: parseInt(document.getElementById('hor_dia_dsr').value),
+            minimo_horas_dsr: parseFloat(document.getElementById('hor_minimo_horas_dsr').value),
+            descontar_faltas_dsr: document.getElementById('hor_descontar_faltas_dsr').checked,
+            utiliza_banco_horas: document.getElementById('hor_utiliza_banco_horas').checked,
+            modo_extra: document.getElementById('hor_modo_extra').value,
+            percentual_diurno: parseFloat(document.getElementById('hor_perc_diurno').value),
+            percentual_noturno: parseFloat(document.getElementById('hor_perc_noturno').value),
+            inicio_noturno: document.getElementById('hor_inicio_noturno').value,
+            fim_noturno: document.getElementById('hor_fim_noturno').value,
+            fator_noturno: parseFloat(document.getElementById('hor_fator_noturno').value),
+            fechamento_noturno_global: document.getElementById('hor_fech_global').value,
+            detalhes: []
+        };
+
+        if (!data.nome || !data.sigla) return alert('Preencha Nome e Sigla.');
+
+        // Coletar detalhes do Grid
+        const rows = document.querySelectorAll('#horarioDetailTbody tr');
+        rows.forEach(tr => {
+            data.detalhes.push({
+                dia_index: parseInt(tr.dataset.index),
+                nome_dia: tr.querySelector('td:first-child').textContent,
+                entrada_1: tr.querySelector('.input-e1').value,
+                saida_1: tr.querySelector('.input-s1').value,
+                entrada_2: tr.querySelector('.input-e2').value,
+                saida_2: tr.querySelector('.input-s2').value,
+                total_horas: tr.querySelector('.input-total').value,
+                almoco_livre: tr.querySelector('.check-almoco').checked,
+                compensado: tr.querySelector('.check-comp').checked,
+                neutro: tr.querySelector('.check-neutro').checked,
+                fechamento_noturno: tr.querySelector('.input-fech').value
+            });
+        });
+
+        fetch('/api/rh/horarios/save/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrf() },
+            body: JSON.stringify(data)
+        })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success) {
+                if (window.showToast) showToast('success', res.message);
+                else alert(res.message);
+                window.location.href = "{% url 'rh_horarios' %}";
+            } else {
+                alert(res.error || 'Erro ao salvar.');
+            }
+        });
+    }
+
+    function getCsrf() { return document.cookie.match(/csrftoken=([^;]+)/)?.[1] || ''; }
+</script>
+{% endblock %}
