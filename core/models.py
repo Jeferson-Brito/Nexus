@@ -2338,6 +2338,21 @@ class Horario(models.Model):
     nome = models.CharField(max_length=100)
     tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, default='semanal')
     
+    # Novos campos da aba Parâmetros Básicos
+    pre_assinalar = models.CharField(max_length=50, default='sem_marcacao', blank=True, null=True)
+    modo_compensacao = models.CharField(max_length=50, default='sem_compensacao', blank=True, null=True)
+    inicio_mes = models.IntegerField(default=1)
+    refeicao_tipo = models.CharField(max_length=50, default='s1_e2', blank=True, null=True)
+    quando_feriado = models.CharField(max_length=50, default='extra', blank=True, null=True)
+    quando_domingo = models.CharField(max_length=50, default='extra', blank=True, null=True)
+    considera_extra_antes = models.CharField(max_length=50, default='considera', blank=True, null=True)
+    considera_extra_depois = models.CharField(max_length=50, default='considera', blank=True, null=True)
+    considera_extra_intervalo = models.CharField(max_length=50, default='considera', blank=True, null=True)
+    considera_extra_intervalo_curto = models.CharField(max_length=50, default='minutos_trabalhados', blank=True, null=True)
+    considera_atraso_inicio = models.CharField(max_length=50, default='considera', blank=True, null=True)
+    considera_atraso_fim = models.CharField(max_length=50, default='considera', blank=True, null=True)
+    considera_atraso_intervalo = models.CharField(max_length=50, default='considera', blank=True, null=True)
+
     # Campos específicos para Jornada
     sigla = models.CharField(max_length=10, blank=True, null=True)
     cor = models.CharField(max_length=20, default='#2563eb')

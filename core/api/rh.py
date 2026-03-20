@@ -922,6 +922,19 @@ def api_rh_horario_detail(request, pk):
                 'fim_noturno': h.fim_noturno.strftime('%H:%M'),
                 'fator_noturno': h.fator_noturno,
                 'fechamento_noturno_global': h.fechamento_noturno_global.strftime('%H:%M'),
+                'pre_assinalar': h.pre_assinalar,
+                'modo_compensacao': h.modo_compensacao,
+                'inicio_mes': h.inicio_mes,
+                'refeicao_tipo': h.refeicao_tipo,
+                'quando_feriado': h.quando_feriado,
+                'quando_domingo': h.quando_domingo,
+                'considera_extra_antes': h.considera_extra_antes,
+                'considera_extra_depois': h.considera_extra_depois,
+                'considera_extra_intervalo': h.considera_extra_intervalo,
+                'considera_extra_intervalo_curto': h.considera_extra_intervalo_curto,
+                'considera_atraso_inicio': h.considera_atraso_inicio,
+                'considera_atraso_fim': h.considera_atraso_fim,
+                'considera_atraso_intervalo': h.considera_atraso_intervalo,
                 'detalhes': detalhes
             }
         })
@@ -971,6 +984,21 @@ def api_save_horario(request):
             h.fim_noturno = data.get('fim_noturno', '05:00')
             h.fator_noturno = data.get('fator_noturno', 60)
             h.fechamento_noturno_global = data.get('fechamento_noturno_global', '00:00')
+            
+            # Novos campos Parâmetros Básicos
+            h.pre_assinalar = data.get('pre_assinalar', 'sem_marcacao')
+            h.modo_compensacao = data.get('modo_compensacao', 'sem_compensacao')
+            h.inicio_mes = data.get('inicio_mes', 1)
+            h.refeicao_tipo = data.get('refeicao_tipo', 's1_e2')
+            h.quando_feriado = data.get('quando_feriado', 'extra')
+            h.quando_domingo = data.get('quando_domingo', 'extra')
+            h.considera_extra_antes = data.get('considera_extra_antes', 'considera')
+            h.considera_extra_depois = data.get('considera_extra_depois', 'considera')
+            h.considera_extra_intervalo = data.get('considera_extra_intervalo', 'considera')
+            h.considera_extra_intervalo_curto = data.get('considera_extra_intervalo_curto', 'minutos_trabalhados')
+            h.considera_atraso_inicio = data.get('considera_atraso_inicio', 'considera')
+            h.considera_atraso_fim = data.get('considera_atraso_fim', 'considera')
+            h.considera_atraso_intervalo = data.get('considera_atraso_intervalo', 'considera')
             
             h.save()
             
