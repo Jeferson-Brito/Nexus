@@ -295,21 +295,6 @@
                 <i class="bi bi-clock-history"></i>
                 <span class="link-text">Ponto e Frequência</span>
             </a>
-            <a href="{% url 'rh_ferias_folgas' %}"
-                class="nav-link {% if request.resolver_match.url_name == 'rh_ferias_folgas' %}active{% endif %}">
-                <i class="bi bi-calendar-check"></i>
-                <span class="link-text">Férias e Folgas</span>
-            </a>
-            <a href="{% url 'rh_absenteismo' %}"
-                class="nav-link {% if request.resolver_match.url_name == 'rh_absenteismo' %}active{% endif %}">
-                <i class="bi bi-graph-down-arrow"></i>
-                <span class="link-text">Absenteísmo</span>
-            </a>
-            <a href="{% url 'rh_onboarding' %}"
-                class="nav-link {% if request.resolver_match.url_name == 'rh_onboarding' %}active{% endif %}">
-                <i class="bi bi-person-plus"></i>
-                <span class="link-text">Onboarding</span>
-            </a>
 
             <!-- Apuração e Cálculo -->
             <a href="#apuracaoCalculoSubmenu" class="nav-link dropdown-toggle-custom" data-bs-toggle="collapse"
@@ -320,9 +305,33 @@
             </a>
             <div class="collapse nav-submenu-container" id="apuracaoCalculoSubmenu">
                 <div class="nav-submenu">
+                    <a href="#" class="nav-link sub-link disabled opacity-50" title="Em breve">
+                        <i class="bi bi-circle small"></i>
+                        <span class="link-text">Apuração de Ponto</span>
+                    </a>
+                    <a href="#" class="nav-link sub-link disabled opacity-50" title="Em breve">
+                        <i class="bi bi-circle small"></i>
+                        <span class="link-text">Ponto Diário</span>
+                    </a>
+                    <a href="#" class="nav-link sub-link disabled opacity-50" title="Em breve">
+                        <i class="bi bi-circle small"></i>
+                        <span class="link-text">Inconsistências</span>
+                    </a>
+                    <a href="#" class="nav-link sub-link disabled opacity-50" title="Em breve">
+                        <i class="bi bi-circle small"></i>
+                        <span class="link-text">Banco de Horas</span>
+                    </a>
+                    <a href="#" class="nav-link sub-link disabled opacity-50" title="Em breve">
+                        <i class="bi bi-circle small"></i>
+                        <span class="link-text">Arquivar Cálculo</span>
+                    </a>
                     <a href="{% url 'rh_atribuicoes_massa' %}" class="nav-link sub-link {% if 'rh_atribuicoes_massa' in request.resolver_match.url_name %}active{% endif %}" title="Atribuições em massa">
-                        <i class="bi bi-people-fill"></i>
-                        <span class="link-text">Atribuições em massa</span>
+                        <i class="bi bi-circle small"></i>
+                        <span class="link-text">Atribuições em Massa</span>
+                    </a>
+                    <a href="#" class="nav-link sub-link disabled opacity-50" title="Em breve">
+                        <i class="bi bi-circle small"></i>
+                        <span class="link-text">Pendências Aprovação</span>
                     </a>
                 </div>
             </div>
