@@ -124,27 +124,70 @@
                             <i class="bi bi-info-circle text-primary mt-1"></i>
                             <div class="small text-muted">
                                 <strong class="text-dark d-block mb-1">Sobre esta aba: Tolerâncias</strong>
-                                Configure o limite de minutos que o sistema deve ignorar tanto no atraso quanto na saída antecipada. 
-                                Conforme o Art. 58 da CLT, o padrão é de 5 minutos por batida, com limite de 10 minutos diários.
+                                A aba de tolerâncias permite que o operador defina os parâmetros referentes a tolerância com atrasos e horas extras. Por padrão estes parâmetros são definidos através do Art. 58 da CLT, que determina uma tolerância de 5 minutos por batida e no máximo 10 minutos por dia.
                             </div>
                         </div>
                     </div>
-                    <div class="row g-4 max-w-600">
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold small">Tolerância Entrada (minutos)</label>
-                            <input type="number" id="hor_tol_entrada" class="form-control" value="5" title="Minutos de atraso permitidos na entrada que não serão descontados">
+                    
+                    <div class="row row-cols-1 row-cols-md-3 g-4">
+                        <!-- Coluna 1 -->
+                        <div class="col">
+                            <div class="form-check mb-4">
+                                <input class="form-check-input" type="checkbox" id="hor_tol_clt" checked>
+                                <label class="form-check-label fw-bold small" for="hor_tol_clt">Tolerância CLT Art 58</label>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold small">Limite mínimo diário de horas extra</label>
+                                <input type="number" id="hor_limite_extra_diario" class="form-control" value="10">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold small">Descontar tempo de tolerância dos extras</label>
+                                <select id="hor_descontar_tol_extras" class="form-select">
+                                    <option value="nunca_desconta">Nunca desconta a tolerância</option>
+                                    <option value="desconta_sempre">Sempre desconta a tolerância</option>
+                                </select>
+                            </div>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold small">Tolerância Saída (minutos)</label>
-                            <input type="number" id="hor_tol_saida" class="form-control" value="5" title="Minutos de saída antecipada permitidos que não serão descontados">
+
+                        <!-- Coluna 2 -->
+                        <div class="col">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold small">Tolerância Extra por batida</label>
+                                <input type="number" id="hor_tol_extra_batida" class="form-control" value="5">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold small">Limite mínimo diário de faltas</label>
+                                <input type="number" id="hor_limite_falta_diario" class="form-control" value="10">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold small">Quando passar do limite diário de extras:</label>
+                                <select id="hor_quando_limite_extra" class="form-select">
+                                    <option value="considera_tudo">Considera todas as horas extra</option>
+                                    <option value="excedente">Considera apenas o que exceder a tolerância</option>
+                                </select>
+                            </div>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold small">Tolerância Intervalo (minutos)</label>
-                            <input type="number" id="hor_tol_intervalo" class="form-control" value="5" title="Tempo de tolerância para o intervalo intrajornada">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold small">Tolerância Diária Acumulada (minutos)</label>
-                            <input type="number" id="hor_tol_diaria" class="form-control" value="10" title="Limite máximo de tolerância diária acumulada (entrada + saída)">
+
+                        <!-- Coluna 3 -->
+                        <div class="col">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold small">Tolerância Falta por batida</label>
+                                <input type="number" id="hor_tol_falta_batida" class="form-control" value="5">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold small">Descontar tempo de tolerância das faltas</label>
+                                <select id="hor_descontar_tol_faltas" class="form-select">
+                                    <option value="nunca_desconta">Nunca desconta a tolerância</option>
+                                    <option value="desconta_sempre">Sempre desconta a tolerância</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold small">Quando passar do limite diário de faltas:</label>
+                                <select id="hor_quando_limite_falta" class="form-select">
+                                    <option value="considera_tudo">Considera todas as faltas</option>
+                                    <option value="excedente">Considera apenas o que exceder a tolerância</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -282,32 +325,61 @@
                         <div class="d-flex align-items-start gap-2">
                             <i class="bi bi-info-circle text-primary mt-1"></i>
                             <div class="small text-muted">
-                                <strong class="text-dark d-block mb-1">Sobre esta aba: DSR (Descanso Semanal Remunerado)</strong>
-                                Defina as regras para o cálculo do descanso semanal. O sistema utilizará estas configurações para identificar se o colaborador tem direito ao recebimento do descanso ou se deve haver desconto em caso de faltas injustificadas.
+                                <strong class="text-dark d-block mb-1">Sobre esta aba: DSR</strong>
+                                A aba DSR refere-se aos parâmetros que definem o Descanso Semanal Remunerado do funcionário, como previsto por lei. Nesta aba é possível determinar o dia da semana em que o DSR ocorrerá, o máximo de faltas (em horas) na semana que o funcionário poderá ter para ter direito ao DSR, entre outros parâmetros.
                             </div>
                         </div>
                     </div>
-                    <div class="row g-4 max-w-600">
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold small">Dia do DSR</label>
-                            <select id="hor_dia_dsr" class="form-select" title="Dia da semana em que o descanso semanal é preferencialmente concedido (geralmente Domingo)">
-                                <option value="0">Domingo</option>
-                                <option value="1">Segunda</option>
-                                <option value="2">Terça</option>
-                                <option value="3">Quarta</option>
-                                <option value="4">Quinta</option>
-                                <option value="5">Sexta</option>
-                                <option value="6" selected>Sábado</option>
-                            </select>
+                    
+                    <div class="row row-cols-1 row-cols-md-3 g-4">
+                        <!-- Coluna 1 -->
+                        <div class="col">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold small">Primeiro dia da semana</label>
+                                <select id="hor_primeiro_dia_semana" class="form-select">
+                                    <option value="0">Domingo</option>
+                                    <option value="1" selected>Segunda-feira</option>
+                                    <option value="2">Terça-feira</option>
+                                    <option value="3">Quarta-feira</option>
+                                    <option value="4">Quinta-feira</option>
+                                    <option value="5">Sexta-feira</option>
+                                    <option value="6">Sábado</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold small">Máximo de faltas para DSR</label>
+                                <input type="time" id="hor_max_faltas_dsr" class="form-control" value="02:00">
+                            </div>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold small">Valor DSR (horas)</label>
-                            <input type="number" id="hor_minimo_horas_dsr" class="form-control" value="7.33" step="0.01" title="Quantidade de horas a serem pagas como descanso (Ex: 7.33 para jornada de 44h semanais)">
+
+                        <!-- Coluna 2 -->
+                        <div class="col">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold small">Dia da semana do DSR</label>
+                                <select id="hor_dia_dsr" class="form-select">
+                                    <option value="0" selected>Domingo</option>
+                                    <option value="1">Segunda-feira</option>
+                                    <option value="2">Terça-feira</option>
+                                    <option value="3">Quarta-feira</option>
+                                    <option value="4">Quinta-feira</option>
+                                    <option value="5">Sexta-feira</option>
+                                    <option value="6">Sábado</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold small">Desconto DSR em feriados</label>
+                                <select id="hor_desconto_dsr_feriado" class="form-select">
+                                    <option value="desconta_normais">Desconta as horas normais</option>
+                                    <option value="nao_desconta">Não desconta</option>
+                                </select>
+                            </div>
                         </div>
-                        <div class="col-12">
-                            <div class="form-check form-switch mt-2">
-                                <input class="form-check-input" type="checkbox" id="hor_descontar_faltas_dsr" checked>
-                                <label class="form-check-label fw-bold small" for="hor_descontar_faltas_dsr" title="Se ativado, faltas injustificadas durante a semana resultarão no desconto do valor do DSR">Desconta DSR em caso de falta</label>
+
+                        <!-- Coluna 3 -->
+                        <div class="col">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold small">Tempo do DSR</label>
+                                <input type="time" id="hor_tempo_dsr" class="form-control" value="07:20">
                             </div>
                         </div>
                     </div>
@@ -585,13 +657,24 @@
                 document.getElementById('hor_data_inicio').value = h.data_inicio;
                 document.getElementById('hor_dias_ciclo').value = h.dias_ciclo;
                 document.getElementById('hor_folga_intervalos').checked = h.folga_nos_intervalos;
-                document.getElementById('hor_tol_entrada').value = h.tol_entrada;
-                document.getElementById('hor_tol_saida').value = h.tol_saida;
-                document.getElementById('hor_tol_intervalo').value = h.tol_intervalo;
-                document.getElementById('hor_tol_diaria').value = h.tol_diaria;
                 document.getElementById('hor_dia_dsr').value = h.dia_dsr;
-                document.getElementById('hor_minimo_horas_dsr').value = h.minimo_horas_dsr;
-                document.getElementById('hor_descontar_faltas_dsr').checked = h.descontar_faltas_dsr;
+
+                // Tolerâncias RHID
+                document.getElementById('hor_tol_clt').checked = h.tol_clt;
+                document.getElementById('hor_tol_extra_batida').value = h.tol_extra_batida;
+                document.getElementById('hor_tol_falta_batida').value = h.tol_falta_batida;
+                document.getElementById('hor_limite_extra_diario').value = h.limite_extra_diario;
+                document.getElementById('hor_limite_falta_diario').value = h.limite_falta_diario;
+                document.getElementById('hor_descontar_tol_faltas').value = h.descontar_tol_faltas;
+                document.getElementById('hor_descontar_tol_extras').value = h.descontar_tol_extras;
+                document.getElementById('hor_quando_limite_extra').value = h.quando_limite_extra;
+                document.getElementById('hor_quando_limite_falta').value = h.quando_limite_falta;
+
+                // DSR RHID
+                document.getElementById('hor_primeiro_dia_semana').value = h.primeiro_dia_semana;
+                document.getElementById('hor_tempo_dsr').value = h.tempo_dsr;
+                document.getElementById('hor_max_faltas_dsr').value = h.max_faltas_dsr;
+                document.getElementById('hor_desconto_dsr_feriado').value = h.desconto_dsr_feriado;
                 document.getElementById('hor_utiliza_banco_horas').checked = h.utiliza_banco_horas;
                 document.getElementById('hor_modo_extra').value = h.modo_extra;
                 document.getElementById('hor_perc_diurno').value = h.percentual_diurno;
@@ -647,13 +730,7 @@
             data_inicio: document.getElementById('hor_data_inicio').value,
             dias_ciclo: parseInt(document.getElementById('hor_dias_ciclo').value),
             folga_nos_intervalos: document.getElementById('hor_folga_intervalos').checked,
-            tol_entrada: parseInt(document.getElementById('hor_tol_entrada').value),
-            tol_saida: parseInt(document.getElementById('hor_tol_saida').value),
-            tol_intervalo: parseInt(document.getElementById('hor_tol_intervalo').value),
-            tol_diaria: parseInt(document.getElementById('hor_tol_diaria').value),
             dia_dsr: parseInt(document.getElementById('hor_dia_dsr').value),
-            minimo_horas_dsr: parseFloat(document.getElementById('hor_minimo_horas_dsr').value),
-            descontar_faltas_dsr: document.getElementById('hor_descontar_faltas_dsr').checked,
             utiliza_banco_horas: document.getElementById('hor_utiliza_banco_horas').checked,
             modo_extra: document.getElementById('hor_modo_extra').value,
             percentual_diurno: parseFloat(document.getElementById('hor_perc_diurno').value),
@@ -677,6 +754,23 @@
             considera_atraso_inicio: document.getElementById('hor_considera_atraso_inicio').value,
             considera_atraso_fim: document.getElementById('hor_considera_atraso_fim').value,
             considera_atraso_intervalo: document.getElementById('hor_considera_atraso_intervalo').value,
+            
+            // RHID Tolerâncias
+            tol_clt: document.getElementById('hor_tol_clt').checked,
+            tol_extra_batida: parseInt(document.getElementById('hor_tol_extra_batida').value),
+            tol_falta_batida: parseInt(document.getElementById('hor_tol_falta_batida').value),
+            limite_extra_diario: parseInt(document.getElementById('hor_limite_extra_diario').value),
+            limite_falta_diario: parseInt(document.getElementById('hor_limite_falta_diario').value),
+            descontar_tol_faltas: document.getElementById('hor_descontar_tol_faltas').value,
+            descontar_tol_extras: document.getElementById('hor_descontar_tol_extras').value,
+            quando_limite_extra: document.getElementById('hor_quando_limite_extra').value,
+            quando_limite_falta: document.getElementById('hor_quando_limite_falta').value,
+            
+            // RHID DSR
+            primeiro_dia_semana: parseInt(document.getElementById('hor_primeiro_dia_semana').value),
+            tempo_dsr: document.getElementById('hor_tempo_dsr').value,
+            max_faltas_dsr: document.getElementById('hor_max_faltas_dsr').value,
+            desconto_dsr_feriado: document.getElementById('hor_desconto_dsr_feriado').value,
             
             detalhes: []
         };

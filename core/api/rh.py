@@ -935,6 +935,24 @@ def api_rh_horario_detail(request, pk):
                 'considera_atraso_inicio': h.considera_atraso_inicio,
                 'considera_atraso_fim': h.considera_atraso_fim,
                 'considera_atraso_intervalo': h.considera_atraso_intervalo,
+                
+                # Novos campos RHID - Tolerâncias
+                'tol_clt': h.tol_clt,
+                'tol_extra_batida': h.tol_extra_batida,
+                'tol_falta_batida': h.tol_falta_batida,
+                'limite_extra_diario': h.limite_extra_diario,
+                'limite_falta_diario': h.limite_falta_diario,
+                'descontar_tol_faltas': h.descontar_tol_faltas,
+                'descontar_tol_extras': h.descontar_tol_extras,
+                'quando_limite_extra': h.quando_limite_extra,
+                'quando_limite_falta': h.quando_limite_falta,
+                
+                # Novos campos RHID - DSR
+                'primeiro_dia_semana': h.primeiro_dia_semana,
+                'tempo_dsr': h.tempo_dsr,
+                'max_faltas_dsr': h.max_faltas_dsr,
+                'desconto_dsr_feriado': h.desconto_dsr_feriado,
+                
                 'detalhes': detalhes
             }
         })
@@ -999,6 +1017,23 @@ def api_save_horario(request):
             h.considera_atraso_inicio = data.get('considera_atraso_inicio', 'considera')
             h.considera_atraso_fim = data.get('considera_atraso_fim', 'considera')
             h.considera_atraso_intervalo = data.get('considera_atraso_intervalo', 'considera')
+            
+            # Novos campos RHID - Tolerâncias
+            h.tol_clt = data.get('tol_clt', True)
+            h.tol_extra_batida = data.get('tol_extra_batida', 5)
+            h.tol_falta_batida = data.get('tol_falta_batida', 5)
+            h.limite_extra_diario = data.get('limite_extra_diario', 10)
+            h.limite_falta_diario = data.get('limite_falta_diario', 10)
+            h.descontar_tol_faltas = data.get('descontar_tol_faltas', 'nunca_desconta')
+            h.descontar_tol_extras = data.get('descontar_tol_extras', 'nunca_desconta')
+            h.quando_limite_extra = data.get('quando_limite_extra', 'considera_tudo')
+            h.quando_limite_falta = data.get('quando_limite_falta', 'considera_tudo')
+            
+            # Novos campos RHID - DSR
+            h.primeiro_dia_semana = data.get('primeiro_dia_semana', 1)
+            h.tempo_dsr = data.get('tempo_dsr', '07:20')
+            h.max_faltas_dsr = data.get('max_faltas_dsr', '02:00')
+            h.desconto_dsr_feriado = data.get('desconto_dsr_feriado', 'desconta_normais')
             
             h.save()
             
