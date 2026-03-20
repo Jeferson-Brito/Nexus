@@ -867,15 +867,39 @@ def api_execute_atribuicao_massa(request):
     """Executa a atribuição em massa baseada no tipo e nos filtros selecionados"""
     try:
         data = json.loads(request.body)
-        tipo_atribuicao = data.get('tipo_atribuicao')
-        colaborador_ids = data.get('colaborador_ids', [])
+        filters = data.get('filters', {})
         payload = data.get('payload', {})
+        tipo_atribuicao = data.get('tipo_atribuicao')
         
-        if not colaborador_ids:
-            return JsonResponse({'success': False, 'error': 'Nenhum colaborador selecionado.'}, status=400)
+        # Iniciar query base
+        colaboradores = Colaborador.objects.all()
+        
+        # Se houver IDs específicos, usar apenas eles
+        colab_ids = filters.get('colaborador_ids', [])
+        if colab_ids:
+            colaboradores = colaboradores.filter(id__in=colab_ids)
+        else:
+            # Caso contrário, aplicar filtros cumulativos
+            if filters.get('empresa_id'):
+                colaboradores = colaboradores.filter(empresa_id=filters.get('empresa_id'))
+            if filters.get('department_id'):
+                colaboradores = colaboradores.filter(department_id=filters.get('department_id'))
+            if filters.get('centro_custo_id'):
+                colaboradores = colaboradores.filter(centro_custo_id=filters.get('centro_custo_id'))
+            if filters.get('cargo'):
+                colaboradores = colaboradores.filter(cargo_atual=filters.get('cargo'))
+            if filters.get('horario_id'):
+                # Filtro por turno (baseado na string jornada_trabalho ou similar)
+                # Como os colaboradores guardam a jornada como string, tentamos um match parcial
+                turno = Turno.objects.filter(id=filters.get('horario_id')).first()
+                if turno:
+                    colaboradores = colaboradores.filter(jornada_trabalho__icontains=turno.nome)
+
+        if not colaboradores.exists():
+            return JsonResponse({'success': False, 'error': 'Nenhum colaborador encontrado com os filtros selecionados.'}, status=400)
 
         with transaction.atomic():
-            colaboradores = Colaborador.objects.filter(id__in=colaborador_ids)
+            # A partir daqui a lógica continua a mesma, mas usando o queryset 'colaboradores' filtrado
             
             if tipo_atribuicao == 'horario':
                 # Atribuição de Turno (Horário)

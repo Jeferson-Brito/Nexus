@@ -6,64 +6,72 @@
     .wizard-step { display: none; }
     .wizard-step.active { display: block; }
     
+    /* Wizard Progress - RHiD Style */
     .wizard-progress {
         display: flex;
-        justify-content: space-between;
-        position: relative;
-        margin-bottom: 2rem;
-    }
-    .wizard-progress::before {
-        content: "";
-        position: absolute;
-        top: 50%;
-        left: 0;
-        right: 0;
-        height: 2px;
-        background: #e2e8f0;
-        z-index: 1;
-        transform: translateY(-50%);
+        justify-content: space-around;
+        align-items: center;
+        margin-bottom: 3rem;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 1rem;
     }
     .progress-step {
-        width: 35px;
-        height: 35px;
-        border-radius: 50%;
-        background: #fff;
-        border: 2px solid #e2e8f0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: bold;
-        z-index: 2;
+        font-size: 0.9rem;
+        color: #999;
+        font-weight: 500;
+        position: relative;
+        padding: 0 10px;
         transition: all 0.3s ease;
-        color: #64748b;
     }
     .progress-step.active {
-        border-color: #2563eb;
-        background: #2563eb;
-        color: #fff;
+        color: #6366f1;
+        font-weight: bold;
+    }
+    .progress-step.active::after {
+        content: "";
+        position: absolute;
+        bottom: -1.1rem;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: #6366f1;
+        border-radius: 2px;
     }
     .progress-step.completed {
-        border-color: #2563eb;
-        background: #2563eb;
-        color: #fff;
+        color: #333;
     }
 
     .selection-card {
         cursor: pointer;
         transition: all 0.2s ease;
-        border: 2px solid transparent;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
     }
     .selection-card:hover {
         transform: translateY(-3px);
         box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
     }
     .selection-card.selected {
-        border-color: #2563eb;
-        background-color: #f8fafc;
+        border: 2px solid #2563eb;
+        background-color: #eff6ff;
     }
     .selection-card i {
         font-size: 2rem;
         color: #2563eb;
+    }
+
+    /* Step 2 Form Styling */
+    .filter-label {
+        font-weight: 600;
+        color: #4b5563;
+        font-size: 0.85rem;
+        margin-bottom: 0.4rem;
+    }
+    .form-select-custom {
+        border-radius: 8px;
+        border: 1px solid #d1d5db;
+        padding: 0.5rem;
+        font-size: 0.9rem;
     }
 
     /* Grid de Jornada */
@@ -83,11 +91,18 @@
         transition: background 0.1s;
     }
     .day-cell:hover {
-        background-color: #e2e8f0;
+        background-color: #f1f5f9;
     }
     .day-cell.painted {
         background-color: #2563eb;
         color: white;
+    }
+
+    /* Buttons bottom left */
+    .wizard-footer {
+        margin-top: 3rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid #f3f4f6;
     }
 </style>
 {% endblock %}
@@ -95,22 +110,22 @@
 {% block content %}
 <div class="container-fluid py-4">
     <div class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
-        <div class="card-header border-0 py-3 px-4" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
-            <h5 class="fw-bold mb-0 text-white"><i class="bi bi-magic me-2"></i>Atribuições em Massa</h5>
+        <div class="card-header bg-white border-0 pt-4 px-4">
+            <h5 class="fw-bold mb-0 text-dark">Atribuições em massa</h5>
         </div>
         
         <div class="card-body p-4">
             <!-- Wizard Progress Tracking -->
-            <div class="wizard-progress mx-auto" style="max-width: 400px;">
-                <div class="progress-step active" data-step="1">1</div>
-                <div class="progress-step" data-step="2">2</div>
-                <div class="progress-step" data-step="3">3</div>
+            <div class="wizard-progress">
+                <div class="progress-step active" data-step="1">Passo 1: Escolher atribuição</div>
+                <div class="progress-step" data-step="2">Passo 2: Filtrar</div>
+                <div class="progress-step" data-step="3">Passo 3: Fazer alteração</div>
             </div>
 
             <form id="wizardForm">
-                <!-- STEP 1: Tipo de Atribuição -->
+                <!-- STEP 1: Escolher Atribuição -->
                 <div class="wizard-step active" id="step1">
-                    <h5 class="fw-bold text-center mb-4">Selecione o tipo de atribuição</h5>
+                    <h6 class="text-muted mb-4">Selecione o tipo de alteração que deseja realizar</h6>
                     <div class="row g-4 justify-content-center">
                         <div class="col-md-4 col-lg-2">
                             <div class="card h-100 selection-card p-3 text-center" data-type="horario">
@@ -145,125 +160,142 @@
                     </div>
                 </div>
 
-                <!-- STEP 2: Filtros -->
+                <!-- STEP 2: Filtrar -->
                 <div class="wizard-step" id="step2">
-                    <h5 class="fw-bold mb-4">Filtros de Funcionários</h5>
-                    <div class="row g-3">
-                        <div class="col-md-4">
-                            <label class="form-label small fw-bold">Empresa</label>
-                            <select id="filter_empresa" class="form-select" multiple style="height: 150px;"></select>
+                    <h6 class="text-muted mb-4">Filtre os funcionários que participarão da alteração</h6>
+                    
+                    <div class="row g-4">
+                        <!-- Row 1 -->
+                        <div class="col-md-8">
+                            <label class="filter-label">Funcionários</label>
+                            <select id="filter_colab" class="form-select form-select-custom" multiple size="1"></select>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label small fw-bold">Departamento</label>
-                            <select id="filter_depto" class="form-select" multiple style="height: 150px;"></select>
+                            <label class="filter-label">Horários</label>
+                            <select id="filter_horario" class="form-select form-select-custom">
+                                <option value="">Selecione</option>
+                            </select>
+                        </div>
+
+                        <!-- Row 2 -->
+                        <div class="col-12">
+                            <label class="filter-label">Empresa</label>
+                            <select id="filter_empresa" class="form-select form-select-custom">
+                                <option value="">Selecione</option>
+                            </select>
+                        </div>
+
+                        <!-- Row 3 -->
+                        <div class="col-md-4">
+                            <label class="filter-label">Departamento</label>
+                            <select id="filter_depto" class="form-select form-select-custom">
+                                <option value="">Selecione</option>
+                            </select>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label small fw-bold">Funcionário</label>
-                            <select id="filter_colab" class="form-select" multiple style="height: 150px;"></select>
+                            <label class="filter-label">Centro de custo</label>
+                            <select id="filter_centro" class="form-select form-select-custom">
+                                <option value="">Selecione</option>
+                            </select>
                         </div>
-                    </div>
-                    <div class="mt-3 text-muted small">
-                        <i class="bi bi-info-circle me-1"></i> Segure Ctrl para selecionar múltiplos. Se não selecionar nenhum, aplicará filtros gerais.
+                        <div class="col-md-4">
+                            <label class="filter-label">Cargo</label>
+                            <select id="filter_cargo" class="form-select form-select-custom">
+                                <option value="">Selecione</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
-                <!-- STEP 3: Detalhes (Dinâmico) -->
+                <!-- STEP 3: Fazer Alteração -->
                 <div class="wizard-step" id="step3">
                     <div id="step3_content">
-                        <!-- Conteúdo carregado via JS baseado no tipo -->
+                        <!-- Conteúdo carregado via JS -->
                     </div>
                 </div>
             </form>
 
-            <!-- Navigation Buttons -->
-            <div class="mt-5 pt-4 border-top d-flex justify-content-between">
-                <button type="button" class="btn btn-light px-4 border" id="btnPrev" style="display: none;">
-                    <i class="bi bi-arrow-left me-1"></i> Anterior
+            <!-- Navigation Buttons - RHiD Style (Bottom Left) -->
+            <div class="wizard-footer d-flex gap-2">
+                <button type="button" class="btn btn-outline-secondary px-4" id="btnPrev" style="display: none;">
+                    Anterior
                 </button>
-                <div class="ms-auto">
-                    <button type="button" class="btn btn-primary px-5 shadow-sm" id="btnNext">
-                        Próximo <i class="bi bi-arrow-right ms-1"></i>
-                    </button>
-                    <button type="button" class="btn btn-success px-5 shadow-sm" id="btnSave" style="display: none;">
-                        <i class="bi bi-check-lg me-1"></i> Salvar Atribuição
-                    </button>
-                </div>
+                <button type="button" class="btn btn-primary px-4" id="btnNext" style="background-color: #6366f1; border-color: #6366f1;">
+                    Próximo
+                </button>
+                <button type="button" class="btn btn-success px-4" id="btnSave" style="display: none;">
+                    Salvar atribuição
+                </button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Template Container para detalhes do Step 3 -->
+<!-- Template Container -->
 <div id="templates" style="display: none;">
-    <!-- Template Horário -->
     <div id="tpl_horario">
-        <h5 class="fw-bold mb-4">Definição de Horário</h5>
+        <h6 class="fw-bold mb-4">Definição de Horário</h6>
         <div class="row">
             <div class="col-md-6">
-                <label class="form-label small fw-bold">Escolha o Novo Horário (Turno)</label>
-                <select id="payload_turno" class="form-select"></select>
+                <label class="filter-label">Escolha o Novo Horário (Turno)</label>
+                <select id="payload_turno" class="form-select form-select-custom"></select>
             </div>
         </div>
     </div>
 
-    <!-- Template Grupos/Cargos -->
     <div id="tpl_grupos">
-        <h5 class="fw-bold mb-4">Alteração de Grupos e Cargos</h5>
+        <h6 class="fw-bold mb-4">Alteração de Grupos e Cargos</h6>
         <div class="row g-3">
             <div class="col-md-4">
-                <label class="form-label small fw-bold">Nova Empresa</label>
-                <select id="payload_empresa" class="form-select"><option value="">Não alterar</option></select>
+                <label class="filter-label">Nova Empresa</label>
+                <select id="payload_empresa" class="form-select form-select-custom"><option value="">Não alterar</option></select>
             </div>
             <div class="col-md-4">
-                <label class="form-label small fw-bold">Novo Departamento</label>
-                <select id="payload_depto" class="form-select"><option value="">Não alterar</option></select>
+                <label class="filter-label">Novo Departamento</label>
+                <select id="payload_depto" class="form-select form-select-custom"><option value="">Não alterar</option></select>
             </div>
             <div class="col-md-4">
-                <label class="form-label small fw-bold">Novo Cargo</label>
-                <select id="payload_cargo" class="form-select"><option value="">Não alterar</option></select>
+                <label class="filter-label">Novo Cargo</label>
+                <select id="payload_cargo" class="form-select form-select-custom"><option value="">Não alterar</option></select>
             </div>
         </div>
     </div>
 
-    <!-- Template Justificativa -->
     <div id="tpl_justificativa">
-        <h5 class="fw-bold mb-4">Lançar Justificativa em Massa</h5>
+        <h6 class="fw-bold mb-4">Lançar Justificativa em Massa</h6>
         <div class="row g-3">
             <div class="col-md-4">
-                <label class="form-label small fw-bold">Tipo de Justificativa</label>
-                <select id="payload_justificativa" class="form-select"></select>
+                <label class="filter-label">Tipo de Justificativa</label>
+                <select id="payload_justificativa" class="form-select form-select-custom"></select>
             </div>
             <div class="col-md-3">
-                <label class="form-label small fw-bold">Data Início</label>
-                <input type="date" id="payload_data_inicio" class="form-control">
+                <label class="filter-label">Data Início</label>
+                <input type="date" id="payload_data_inicio" class="form-control form-select-custom">
             </div>
             <div class="col-md-3">
-                <label class="form-label small fw-bold">Data Fim</label>
-                <input type="date" id="payload_data_fim" class="form-control">
+                <label class="filter-label">Data Fim</label>
+                <input type="date" id="payload_data_fim" class="form-control form-select-custom">
             </div>
         </div>
     </div>
 
-    <!-- Template Jornada (Grid) -->
     <div id="tpl_jornada">
-        <h5 class="fw-bold mb-3">Escala Mensal (Jornada)</h5>
-        <p class="small text-muted mb-4">Selecione um turno abaixo e pinte os dias desejados na planilha para todos os funcionários filtrados.</p>
+        <h6 class="fw-bold mb-3">Escala Mensal (Jornada)</h6>
+        <p class="small text-muted mb-4">Selecione um turno abaixo e pinte os dias desejados na planilha.</p>
         
         <div class="d-flex gap-3 mb-4 align-items-end flex-wrap">
             <div>
-                <label class="form-label small fw-bold">1. Escolha o Turno para Pintear</label>
-                <select id="paint_turno" class="form-select form-select-sm" style="width: 250px;"></select>
+                <label class="filter-label">1. Escolha o Turno para Pintear</label>
+                <select id="paint_turno" class="form-select form-select-custom" style="width: 250px;"></select>
             </div>
-            <div class="bg-light p-2 rounded border border-2 border-primary d-flex align-items-center gap-2">
+            <div class="p-2 rounded border d-flex align-items-center gap-2 bg-light">
                 <div class="small fw-bold">Pincel Ativo:</div>
-                <div id="brush_info" class="badge bg-primary">Nenhum</div>
+                <div id="brush_info" class="badge bg-secondary">Nenhum</div>
             </div>
         </div>
 
         <div class="jornada-grid-container border rounded bg-white p-3 shadow-sm">
-            <table class="table table-bordered jornada-table mb-0" id="grid_table">
-                <!-- Preenchido via JS -->
-            </table>
+            <table class="table table-bordered jornada-table mb-0" id="grid_table"></table>
         </div>
     </div>
 </div>
@@ -271,14 +303,13 @@
 <script>
     let currentStep = 1;
     let selectedType = null;
-    let auxData = { empresas: [], departments: [], turnos: [], colaboradores: [], justificativas: [] };
+    let auxData = { empresas: [], departments: [], turnos: [], colaboradores: [], justificativas: [], centros_custo: [], cargos: [] };
     let selectedPaintTurno = null;
-    let paintedDays = []; // [{data, turno_id}]
+    let paintedDays = [];
 
     document.addEventListener('DOMContentLoaded', () => {
         loadAuxData();
         
-        // Step 1 selection logic
         document.querySelectorAll('.selection-card').forEach(card => {
             card.addEventListener('click', () => {
                 document.querySelectorAll('.selection-card').forEach(c => c.classList.remove('selected'));
@@ -291,7 +322,6 @@
         document.getElementById('btnPrev').addEventListener('click', prevStep);
         document.getElementById('btnSave').addEventListener('click', saveAssignment);
         
-        // Listeners para pintura do grid (delegação)
         document.addEventListener('click', (e) => {
             if (e.target.classList.contains('day-cell')) {
                 const cell = e.target;
@@ -316,7 +346,7 @@
                 selectedPaintTurno = auxData.turnos.find(t => t.id == id);
                 const info = document.getElementById('brush_info');
                 info.textContent = selectedPaintTurno ? selectedPaintTurno.nome : 'Nenhum';
-                if (selectedPaintTurno) info.style.backgroundColor = selectedPaintTurno.cor;
+                if (selectedPaintTurno) info.style.backgroundColor = selectedPaintTurno.cor || '#6366f1';
             }
         });
     });
@@ -333,21 +363,22 @@
     }
 
     function populateStep2() {
-        populateSelect('filter_empresa', auxData.empresas, e => `<option value="${e.id}">${e.nome_fantasia || e.nome}</option>`);
-        populateSelect('filter_depto', auxData.departments, d => `<option value="${d.id}">${d.name}</option>`);
         populateSelect('filter_colab', auxData.colaboradores, c => `<option value="${c.id}">${c.nome_completo}</option>`);
+        populateSelect('filter_horario', auxData.turnos, t => `<option value="${t.id}">${t.nome}</option>`);
+        populateSelect('filter_empresa', auxData.empresas, e => `<option value="${e.id}">${e.nome}</option>`);
+        populateSelect('filter_depto', auxData.departments, d => `<option value="${d.id}">${d.name}</option>`);
+        populateSelect('filter_centro', auxData.centros_custo, c => `<option value="${c.id}">${c.nome}</option>`);
+        populateSelect('filter_cargo', auxData.cargos, c => `<option value="${c.nome}">${c.nome}</option>`);
     }
 
     function populateSelect(id, data, mapFn) {
         const el = document.getElementById(id);
         if (!el) return;
-        el.innerHTML = data.map(mapFn).join('');
+        el.innerHTML = '<option value="">Selecione</option>' + (data || []).map(mapFn).join('');
     }
 
     function nextStep() {
-        if (currentStep === 1) {
-            if (!selectedType) return alert('Selecione um tipo de atribuição.');
-        }
+        if (currentStep === 1 && !selectedType) return alert('Selecione um tipo de atribuição.');
         
         if (currentStep < 3) {
             currentStep++;
@@ -381,28 +412,18 @@
     function prepareStep3() {
         const container = document.getElementById('step3_content');
         container.innerHTML = '';
-        
-        let tplId = '';
-        if (selectedType === 'horario') tplId = 'tpl_horario';
-        else if (selectedType === 'grupos_cargos') tplId = 'tpl_grupos';
-        else if (selectedType === 'justificativa') tplId = 'tpl_justificativa';
-        else if (selectedType === 'jornada') tplId = 'tpl_jornada';
+        const tplMap = { 'horario': 'tpl_horario', 'grupos_cargos': 'tpl_grupos', 'justificativa': 'tpl_justificativa', 'jornada': 'tpl_jornada' };
+        const tplId = tplMap[selectedType];
         
         if (tplId) {
             container.innerHTML = document.getElementById(tplId).innerHTML;
-            
-            // Post-load population
-            if (selectedType === 'horario') {
-                populateSelect('payload_turno', auxData.turnos, t => `<option value="${t.id}">${t.nome} (${t.horario})</option>`);
-            } else if (selectedType === 'grupos_cargos') {
-                populateSelect('payload_empresa', auxData.empresas, e => `<option value="${e.id}">${e.nome}</option>`, true);
-                populateSelect('payload_depto', auxData.departments, d => `<option value="${d.id}">${d.name}</option>`, true);
-                // Cargos could be hardcoded or from auxData if available
-                const cargoSel = document.getElementById('payload_cargo');
-                cargoSel.innerHTML = '<option value="">Não alterar</option>' + (auxData.cargos ? auxData.cargos.map(c => `<option value="${c.name}">${c.name}</option>`).join('') : '');
-            } else if (selectedType === 'justificativa') {
-                populateSelect('payload_justificativa', auxData.justificativas || [], j => `<option value="${j.id}">${j.nome}</option>`);
-            } else if (selectedType === 'jornada') {
+            if (selectedType === 'horario') populateSelect('payload_turno', auxData.turnos, t => `<option value="${t.id}">${t.nome}</option>`);
+            else if (selectedType === 'grupos_cargos') {
+                populateSelect('payload_empresa', auxData.empresas, e => `<option value="${e.id}">${e.nome}</option>`);
+                populateSelect('payload_depto', auxData.departments, d => `<option value="${d.id}">${d.name}</option>`);
+                populateSelect('payload_cargo', auxData.cargos, c => `<option value="${c.nome}">${c.nome}</option>`);
+            } else if (selectedType === 'justificativa') populateSelect('payload_justificativa', auxData.justificativas || [], j => `<option value="${j.id}">${j.nome}</option>`);
+            else if (selectedType === 'jornada') {
                 populateSelect('paint_turno', auxData.turnos, t => `<option value="${t.id}">${t.nome}</option>`);
                 renderJornadaGrid();
             }
@@ -415,13 +436,11 @@
         const year = now.getFullYear();
         const month = now.getMonth();
         const daysInMonth = new Date(year, month + 1, 0).getDate();
-        
         const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
         
-        let html = `<thead><tr><th colspan="${daysInMonth + 1}" class="bg-primary text-white">${monthNames[month]} ${year}</th></tr><tr><th>Mês</th>`;
+        let html = `<thead><tr><th colspan="${daysInMonth + 1}" class="bg-primary text-white">${monthNames[month]} ${year}</th></tr><tr><th>Dia</th>`;
         for (let i = 1; i <= daysInMonth; i++) html += `<th>${i}</th>`;
-        html += `</tr></thead><tbody><tr><td class="fw-bold bg-light">Dias</td>`;
-        
+        html += `</tr></thead><tbody><tr><td class="fw-bold bg-light">Ações</td>`;
         for (let i = 1; i <= daysInMonth; i++) {
             const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
             html += `<td class="day-cell" data-date="${dateStr}"></td>`;
@@ -431,10 +450,20 @@
     }
 
     async function saveAssignment() {
+        // Collect filtros
+        const filter_colab = Array.from(document.getElementById('filter_colab').selectedOptions).map(o => o.value).filter(v => v !== "");
+        const filters = {
+            colaborador_ids: filter_colab,
+            horario_id: document.getElementById('filter_horario').value,
+            empresa_id: document.getElementById('filter_empresa').value,
+            department_id: document.getElementById('filter_depto').value,
+            centro_custo_id: document.getElementById('filter_centro').value,
+            cargo: document.getElementById('filter_cargo').value
+        };
+
         const payload = {};
-        if (selectedType === 'horario') {
-            payload.turno_id = document.getElementById('payload_turno').value;
-        } else if (selectedType === 'grupos_cargos') {
+        if (selectedType === 'horario') payload.turno_id = document.getElementById('payload_turno').value;
+        else if (selectedType === 'grupos_cargos') {
             payload.empresa_id = document.getElementById('payload_empresa').value;
             payload.department_id = document.getElementById('payload_depto').value;
             payload.cargo = document.getElementById('payload_cargo').value;
@@ -442,29 +471,14 @@
             payload.justificativa_id = document.getElementById('payload_justificativa').value;
             payload.data_inicio = document.getElementById('payload_data_inicio').value;
             payload.data_fim = document.getElementById('payload_data_fim').value;
-        } else if (selectedType === 'jornada') {
-            payload.pinturas = paintedDays;
-        }
+        } else if (selectedType === 'jornada') payload.pinturas = paintedDays;
 
-        const data = {
-            tipo_atribuicao: selectedType,
-            colaborador_ids: getSelectedValues('filter_colab'),
-            payload: payload
-        };
-
-        if (data.colaborador_ids.length === 0) {
-            // Se nenhum colaborador selecionado explicitamente, poderíamos pegar pela empresa/depto
-            // Por enquanto, vamos exigir seleção ou fazer fallback no backend
-            // Vamos desabilitar a trava se filtros de depto/empresa estiverem marcados
-            if (getSelectedValues('filter_empresa').length === 0 && getSelectedValues('filter_depto').length === 0) {
-                 return alert('Selecione ao menos um funcionário ou aplique filtros de Empresa/Departamento.');
-            }
-        }
+        const data = { tipo_atribuicao: selectedType, filters: filters, payload: payload };
 
         try {
             const btn = document.getElementById('btnSave');
             btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Processando...';
+            btn.innerHTML = 'Processando...';
 
             const resp = await fetch('/api/rh/atribuicoes-massa/execute/', {
                 method: 'POST',
@@ -472,26 +486,13 @@
                 body: JSON.stringify(data)
             });
             const res = await resp.json();
-            
-            if (res.success) {
-                alert(res.message);
-                window.location.reload();
-            } else {
-                alert(res.error || 'Erro ao processar atribuição.');
-            }
-        } catch(e) { 
-            alert('Erro de conexão.');
-        } finally {
+            if (res.success) { alert(res.message); window.location.reload(); }
+            else alert(res.error || 'Erro ao processar.');
+        } catch(e) { alert('Erro de conexão.'); } finally {
             const btn = document.getElementById('btnSave');
             btn.disabled = false;
-            btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Salvar Atribuição';
+            btn.innerHTML = 'Salvar atribuição';
         }
-    }
-
-    function getSelectedValues(id) {
-        const sel = document.getElementById(id);
-        if (!sel) return [];
-        return Array.from(sel.selectedOptions).map(o => o.value);
     }
 </script>
 {% endblock %}
