@@ -84,6 +84,7 @@
                     <tr>
                         <th class="px-4 py-3">Nome do Cargo</th>
                         <th class="py-3">Departamento</th>
+                        <th class="py-3 text-center">Funcionários</th>
                         <th class="py-3">Descrição</th>
                         <th class="py-3 text-end pe-4">Ações</th>
                     </tr>
@@ -188,12 +189,21 @@ function render() {
 
     const tbody = document.getElementById('cargoTbody');
     if (pagina.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" class="text-center py-5 text-muted">Nenhum cargo encontrado.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center py-5 text-muted">Nenhum cargo encontrado.</td></tr>`;
     } else {
         tbody.innerHTML = pagina.map(c => `
             <tr>
-                <td class="px-4 fw-semibold" style="color:#111827;">${c.nome}</td>
+                <td class="px-4 fw-semibold">
+                    <a href="{% url 'rh_colaboradores' %}?cargo=${encodeURIComponent(c.nome)}" class="text-dark text-decoration-none hover-link">
+                        ${c.nome}
+                    </a>
+                </td>
                 <td><span class="badge bg-light text-primary border">${c.department_name}</span></td>
+                <td class="text-center">
+                    <a href="{% url 'rh_colaboradores' %}?cargo=${encodeURIComponent(c.nome)}" class="badge bg-light text-dark border text-decoration-none hover-link">
+                        ${c.count_colaboradores}
+                    </a>
+                </td>
                 <td class="text-muted small">${c.descricao || '—'}</td>
                 <td class="text-end pe-4">
                     <button class="btn btn-sm btn-light border me-1" onclick="showForm('${c.id}')">
@@ -321,4 +331,10 @@ function showError(msg) {
 
 function getCsrf() { return document.cookie.match(/csrftoken=([^;]+)/)?.[1] || ''; }
 </script>
+<style>
+    .hover-link:hover {
+        color: #2563eb !important;
+        text-decoration: underline !important;
+    }
+</style>
 {% endblock %}

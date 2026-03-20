@@ -165,8 +165,16 @@ function render() {
     } else {
         tbody.innerHTML = pagina.map(c => `
             <tr>
-                <td class="px-4 fw-semibold" style="color:#111827;">${c.nome}</td>
-                <td class="text-center"><span class="badge bg-light text-dark border">${c.num_funcionarios}</span></td>
+                <td class="px-4 fw-semibold">
+                    <a href="{% url 'rh_colaboradores' %}?centro_custo_id=${c.id}" class="text-dark text-decoration-none hover-link">
+                        ${c.nome}
+                    </a>
+                </td>
+                <td class="text-center">
+                    <a href="{% url 'rh_colaboradores' %}?centro_custo_id=${c.id}" class="badge bg-light text-dark border text-decoration-none hover-link">
+                        ${c.num_funcionarios}
+                    </a>
+                </td>
                 <td class="text-end pe-4">
                     <button class="btn btn-sm btn-light border me-1" onclick="showForm('${c.id}')">
                         <i class="bi bi-pencil-square text-primary"></i>
@@ -289,4 +297,10 @@ function showError(msg) {
 
 function getCsrf() { return document.cookie.match(/csrftoken=([^;]+)/)?.[1] || ''; }
 </script>
+<style>
+    .hover-link:hover {
+        color: #2563eb !important;
+        text-decoration: underline !important;
+    }
+</style>
 {% endblock %}

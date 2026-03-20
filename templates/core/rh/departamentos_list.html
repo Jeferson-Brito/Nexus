@@ -184,13 +184,21 @@ function render() {
     } else {
         tbody.innerHTML = pagina.map(d => `
             <tr>
-                <td class="px-4 fw-semibold" style="color:#111827;">${d.name}</td>
+                <td class="px-4 fw-semibold">
+                    <a href="{% url 'rh_colaboradores' %}?department_id=${d.id}" class="text-dark text-decoration-none hover-link">
+                        ${d.name}
+                    </a>
+                </td>
                 <td class="text-muted small">${d.description || '—'}</td>
                 <td class="text-muted">${d.fluxo_aprovacao || '—'}</td>
                 <td class="text-center">
                     ${d.show_in_nav ? '<span class="badge bg-success" style="font-size:10px;">SIM</span>' : '<span class="badge bg-light text-muted border" style="font-size:10px;">NÃO</span>'}
                 </td>
-                <td class="text-center"><span class="badge bg-light text-dark border">${d.num_funcionarios}</span></td>
+                <td class="text-center">
+                    <a href="{% url 'rh_colaboradores' %}?department_id=${d.id}" class="badge bg-light text-dark border text-decoration-none hover-link">
+                        ${d.num_funcionarios}
+                    </a>
+                </td>
                 <td class="text-end pe-4">
                     <button class="btn btn-sm btn-light border me-1" onclick="showForm('${d.id}')">
                         <i class="bi bi-pencil-square text-primary"></i>
@@ -313,9 +321,15 @@ function confirmDelete() {
 }
 
 function showError(msg) {
-    document.getElementById('deptTbody').innerHTML = `<tr><td colspan="5" class="text-center py-5 text-danger">${msg}</td></tr>`;
+    document.getElementById('deptTbody').innerHTML = `<tr><td colspan="6" class="text-center py-5 text-danger">${msg}</td></tr>`;
 }
 
 function getCsrf() { return document.cookie.match(/csrftoken=([^;]+)/)?.[1] || ''; }
 </script>
+<style>
+    .hover-link:hover {
+        color: #2563eb !important;
+        text-decoration: underline !important;
+    }
+</style>
 {% endblock %}

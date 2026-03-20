@@ -261,6 +261,8 @@ document.addEventListener('DOMContentLoaded', function () {
     let currentPage    = 1;
 
     // ─── Auxiliares (departamentos, status, tipo_contrato) ───────────────────
+    const urlParams = new URLSearchParams(window.location.search);
+    
     fetch('/api/rh/auxiliar/')
         .then(r => r.json())
         .then(data => {
@@ -271,6 +273,15 @@ document.addEventListener('DOMContentLoaded', function () {
                 const fd = document.getElementById('formDept');
                 if (fd) fd.innerHTML += opt;
             });
+            
+            // Set initial filter value from URL if present
+            if (urlParams.get('department_id')) {
+                filterDept.value = urlParams.get('department_id');
+            }
+            if (urlParams.get('status')) {
+                filterStatus.value = urlParams.get('status');
+            }
+
             Object.entries(data.status_choices || {}).forEach(([v, l]) => {
                 const s = document.getElementById('formStatus');
                 if (s) s.innerHTML += `<option value="${v}">${l}</option>`;
@@ -279,6 +290,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 const s = document.getElementById('formTipoContrato');
                 if (s) s.innerHTML += `<option value="${v}">${l}</option>`;
             });
+
+            // Initial load after auxiliary data
+            loadColaboradores();
         });
 
     // ─── Carregar colaboradores ───────────────────────────────────────────────
@@ -286,7 +300,10 @@ document.addEventListener('DOMContentLoaded', function () {
         currentPage = 1;
         const params = new URLSearchParams({
             status: filterStatus.value,
-            department: filterDept.value
+            department: filterDept.value,
+            empresa: urlParams.get('empresa_id') || '',
+            cargo: urlParams.get('cargo') || '',
+            centro_custo: urlParams.get('centro_custo_id') || ''
         });
         tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-muted">
             <div class="spinner-border spinner-border-sm me-2"></div> Carregando...</td></tr>`;

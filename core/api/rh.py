@@ -46,15 +46,24 @@ def api_colaboradores_list(request):
         
     status_filter = request.GET.get('status', 'ativo')
     dept_filter = request.GET.get('department')
+    empresa_filter = request.GET.get('empresa')
+    cargo_filter = request.GET.get('cargo')
+    centro_filter = request.GET.get('centro_custo')
 
     colaboradores = Colaborador.objects.all()
     if status_filter != 'todos':
         colaboradores = colaboradores.filter(status=status_filter)
     if dept_filter:
         colaboradores = colaboradores.filter(department_id=dept_filter)
+    if empresa_filter:
+        colaboradores = colaboradores.filter(empresa_id=empresa_filter)
+    if cargo_filter:
+        colaboradores = colaboradores.filter(cargo_atual=cargo_filter)
+    if centro_filter:
+        colaboradores = colaboradores.filter(centro_custo_id=centro_filter)
 
     data = []
-    for c in colaboradores.select_related('department'):
+    for c in colaboradores.select_related('department', 'empresa', 'centro_custo'):
         data.append({
             'tipo': 'colaborador',
             'id': str(c.id),
@@ -63,8 +72,12 @@ def api_colaboradores_list(request):
             'cargo': c.cargo_atual,
             'cargo_atual': c.cargo_atual,
             'cpf': c.cpf or '',
-            'department': c.department.name,
+            'department': c.department.name if c.department else '—',
             'department_id': c.department_id,
+            'empresa': c.empresa.nome if c.empresa else '—',
+            'empresa_id': c.empresa_id,
+            'centro_custo': c.centro_custo.nome if c.centro_custo else '—',
+            'centro_custo_id': c.centro_custo_id,
             'status': c.status,
             'status_display': c.get_status_display(),
             'data_admissao': c.data_admissao.strftime('%d/%m/%Y'),
@@ -637,18 +650,22 @@ def api_delete_departamento(request, pk):
 @login_required
 @require_http_methods(["GET"])
 def api_cargos_list(request):
-    """Lista todos os cargos"""
+    """Lista todos os cargos com contagem de funcionários"""
     try:
         cargos = Cargo.objects.all().select_related('department')
-        return JsonResponse({'success': True, 'cargos': [
-            {
+        data = []
+        for c in cargos:
+            # Contagem baseada no nome do cargo no modelo Colaborador
+            count = Colaborador.objects.filter(cargo_atual=c.nome).count()
+            data.append({
                 'id': str(c.id),
                 'nome': c.nome,
                 'department_id': str(c.department_id),
-                'department_name': c.department.name if c.department else '',
+                'department_name': c.department.name if c.department else '—',
                 'descricao': c.descricao,
-            } for c in cargos
-        ]})
+                'count_colaboradores': count
+            })
+        return JsonResponse({'success': True, 'cargos': data})
     except Exception as ex:
         return JsonResponse({'success': False, 'error': str(ex)}, status=500)
 
