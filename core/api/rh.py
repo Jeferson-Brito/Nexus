@@ -318,6 +318,10 @@ def api_rh_auxiliar_data(request):
     for c in centros:
         c['id'] = str(c['id'])
     
+    depts = list(Department.objects.all().values('id', 'name'))
+    for dept in depts:
+        dept['id'] = str(dept['id'])
+    
     return JsonResponse({
         'success': True,
         'cargos': cargos,
