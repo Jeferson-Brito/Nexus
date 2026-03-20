@@ -11,19 +11,17 @@
                 <h5 class="fw-bold mb-0 text-white" id="formTitle">Novo Feriado</h5>
             </div>
             <div class="card-body p-4">
-                <form id="feriadoForm">
-                    <input type="hidden" name="id" id="feriadoId">
                     <div class="row g-3">
-                        <div class="col-md-6">
+                        <div class="col-md-5">
                             <label class="form-label small fw-bold">Nome do Feriado *</label>
                             <input type="text" name="name" id="feriadoName" class="form-control" required
                                 placeholder="Ex: Natal">
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <label class="form-label small fw-bold">Data *</label>
                             <input type="date" name="date" id="feriadoDate" class="form-control" required>
                         </div>
-                        <div class="col-md-3 d-flex align-items-end">
+                        <div class="col-md-2 d-flex align-items-end">
                             <div class="form-check mb-2">
                                 <input class="form-check-input" type="checkbox" id="feriadoRepeats" checked>
                                 <label class="form-check-label small fw-bold" for="feriadoRepeats">
@@ -31,17 +29,86 @@
                                 </label>
                             </div>
                         </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="feriadoApplyAll" checked onchange="toggleFilters()">
+                                <label class="form-check-label small fw-bold" for="feriadoApplyAll">
+                                    Todos os funcionários
+                                </label>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="mt-4 pt-3 border-top d-flex gap-2">
-                        <button type="button" class="btn btn-primary px-4" id="btnSaveFeriado">
-                            <i class="bi bi-check-lg"></i> Salvar Feriado
-                        </button>
+                    <!-- Filtros de Aplicação (Empresas, Departamentos, Horários) -->
+                    <div id="filteringSection" class="mt-4 pt-3 border-top" style="display: none;">
+                        <div class="row g-3">
+                            <!-- Empresas -->
+                            <div class="col-md-4">
+                                <div class="filter-box p-3 bg-light rounded shadow-sm border h-100">
+                                    <h6 class="fw-bold mb-3 small d-flex align-items-center gap-2">
+                                        <i class="bi bi-building text-primary"></i> Empresas
+                                    </h6>
+                                    <div class="d-flex gap-2 mb-3">
+                                        <button type="button" class="btn btn-xs btn-outline-primary py-1 px-2 border-0 fw-bold" onclick="selectAll('target_companies')">
+                                            <i class="bi bi-check2-all"></i> Selecionar Todas
+                                        </button>
+                                        <button type="button" class="btn btn-xs btn-outline-danger py-1 px-2 border-0 fw-bold" onclick="removeAll('target_companies')">
+                                            <i class="bi bi-x-lg"></i> Remover Todas
+                                        </button>
+                                    </div>
+                                    <select id="target_companies" class="form-select form-select-sm" multiple style="height: 180px;"></select>
+                                    <div class="small text-muted mt-2">Segure Ctrl para selecionar múltiplos</div>
+                                </div>
+                            </div>
+
+                            <!-- Departamentos -->
+                            <div class="col-md-4">
+                                <div class="filter-box p-3 bg-light rounded shadow-sm border h-100">
+                                    <h6 class="fw-bold mb-3 small d-flex align-items-center gap-2">
+                                        <i class="bi bi-diagram-3 text-primary"></i> Departamentos
+                                    </h6>
+                                    <div class="d-flex gap-2 mb-3">
+                                        <button type="button" class="btn btn-xs btn-outline-primary py-1 px-2 border-0 fw-bold" onclick="selectAll('target_departments')">
+                                            <i class="bi bi-check2-all"></i> Selecionar Todos
+                                        </button>
+                                        <button type="button" class="btn btn-xs btn-outline-danger py-1 px-2 border-0 fw-bold" onclick="removeAll('target_departments')">
+                                            <i class="bi bi-x-lg"></i> Remover Todos
+                                        </button>
+                                    </div>
+                                    <select id="target_departments" class="form-select form-select-sm" multiple style="height: 180px;"></select>
+                                    <div class="small text-muted mt-2">Segure Ctrl para selecionar múltiplos</div>
+                                </div>
+                            </div>
+
+                            <!-- Horários/Turnos -->
+                            <div class="col-md-4">
+                                <div class="filter-box p-3 bg-light rounded shadow-sm border h-100">
+                                    <h6 class="fw-bold mb-3 small d-flex align-items-center gap-2">
+                                        <i class="bi bi-clock text-primary"></i> Horários
+                                    </h6>
+                                    <div class="d-flex gap-2 mb-3">
+                                        <button type="button" class="btn btn-xs btn-outline-primary py-1 px-2 border-0 fw-bold" onclick="selectAll('target_turnos')">
+                                            <i class="bi bi-check2-all"></i> Selecionar Todas
+                                        </button>
+                                        <button type="button" class="btn btn-xs btn-outline-danger py-1 px-2 border-0 fw-bold" onclick="removeAll('target_turnos')">
+                                            <i class="bi bi-x-lg"></i> Remover Todas
+                                        </button>
+                                    </div>
+                                    <select id="target_turnos" class="form-select form-select-sm" multiple style="height: 180px;"></select>
+                                    <div class="small text-muted mt-2">Segure Ctrl para selecionar múltiplos</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-top d-flex gap-2 justify-content-end">
                         <button type="button" class="btn btn-light border px-4" onclick="hideForm()">
                             Cancelar
                         </button>
+                        <button type="button" class="btn btn-primary px-5 shadow-sm" id="btnSaveFeriado">
+                            <i class="bi bi-check-lg me-1"></i> Salvar Feriado
+                        </button>
                     </div>
-                </form>
             </div>
         </div>
     </div>
@@ -129,11 +196,13 @@
 
 <script>
     let allFeriados = [];
+    let auxiliaryData = { empresas: [], departments: [], turnos: [] };
     let deleteId = null;
     let currentPage = 1;
 
     document.addEventListener('DOMContentLoaded', () => {
         loadData();
+        loadAuxiliaryData();
         document.getElementById('searchInput').addEventListener('input', () => { currentPage = 1; render(); });
         document.getElementById('perPageSelect').addEventListener('change', () => { currentPage = 1; render(); });
         document.getElementById('btnSaveFeriado').addEventListener('click', saveFeriado);
@@ -153,6 +222,59 @@
         } catch (e) {
             showError('Erro ao carregar dados.');
         }
+    }
+
+    async function loadAuxiliaryData() {
+        try {
+            const response = await fetch('/api/rh/auxiliar-data/');
+            const data = await response.json();
+            if (data.success) {
+                auxiliaryData = data;
+                populateSelectionLists();
+            }
+        } catch (e) {
+            console.error('Erro ao carregar dados auxiliares:', e);
+        }
+    }
+
+    function populateSelectionLists() {
+        const companySelect = document.getElementById('target_companies');
+        const deptSelect = document.getElementById('target_departments');
+        const turnoSelect = document.getElementById('target_turnos');
+
+        if (companySelect) {
+            companySelect.innerHTML = auxiliaryData.empresas.map(e =>
+                `<option value="${e.id}">${e.nome_fantasia || e.nome}</option>`
+            ).join('');
+        }
+
+        if (deptSelect) {
+            deptSelect.innerHTML = auxiliaryData.departments.map(d =>
+                `<option value="${d.id}">${d.name}</option>`
+            ).join('');
+        }
+
+        if (turnoSelect) {
+            turnoSelect.innerHTML = auxiliaryData.turnos.map(t =>
+                `<option value="${t.id}">${t.nome} (${t.horario})</option>`
+            ).join('');
+        }
+    }
+
+    function toggleFilters() {
+        const applyAll = document.getElementById('feriadoApplyAll').checked;
+        const section = document.getElementById('filteringSection');
+        section.style.display = applyAll ? 'none' : 'block';
+    }
+
+    function selectAll(id) {
+        const select = document.getElementById(id);
+        Array.from(select.options).forEach(opt => opt.selected = true);
+    }
+
+    function removeAll(id) {
+        const select = document.getElementById(id);
+        Array.from(select.options).forEach(opt => opt.selected = false);
     }
 
     function render() {
@@ -239,14 +361,39 @@
             document.getElementById('feriadoName').value = f.name;
             document.getElementById('feriadoDate').value = f.date;
             document.getElementById('feriadoRepeats').checked = f.repeats_annually;
+            document.getElementById('feriadoApplyAll').checked = f.apply_to_all;
+
+            // ManyToMany
+            setMultiSelect('target_companies', f.target_companies);
+            setMultiSelect('target_departments', f.target_departments);
+            setMultiSelect('target_turnos', f.target_turnos);
+
+            toggleFilters();
         } else {
             document.getElementById('formTitle').textContent = 'Novo Feriado';
             document.getElementById('feriadoId').value = '';
-            document.getElementById('feriadoForm').reset();
+            document.getElementById('feriadoName').value = '';
+            document.getElementById('feriadoDate').value = '';
             document.getElementById('feriadoRepeats').checked = true;
+            document.getElementById('feriadoApplyAll').checked = true;
+
+            removeAll('target_companies');
+            removeAll('target_departments');
+            removeAll('target_turnos');
+
+            toggleFilters();
         }
         document.getElementById('feriadoListContainer').style.display = 'none';
         document.getElementById('feriadoFormContainer').style.display = 'block';
+    }
+
+    function setMultiSelect(id, values) {
+        const select = document.getElementById(id);
+        if (!select || !values) return;
+        const stringValues = values.map(v => String(v));
+        Array.from(select.options).forEach(opt => {
+            opt.selected = stringValues.includes(String(opt.value));
+        });
     }
 
     function hideForm() {
@@ -259,10 +406,18 @@
             id: document.getElementById('feriadoId').value || null,
             name: document.getElementById('feriadoName').value,
             date: document.getElementById('feriadoDate').value,
-            repeats_annually: document.getElementById('feriadoRepeats').checked
+            repeats_annually: document.getElementById('feriadoRepeats').checked,
+            apply_to_all: document.getElementById('feriadoApplyAll').checked,
+            target_companies: getSelectedValues('target_companies'),
+            target_departments: getSelectedValues('target_departments'),
+            target_turnos: getSelectedValues('target_turnos')
         };
 
         if (!data.name || !data.date) return alert('Preencha os campos obrigatórios.');
+
+        if (!data.apply_to_all && data.target_companies.length === 0 && data.target_departments.length === 0 && data.target_turnos.length === 0) {
+            return alert('Selecione ao menos uma empresa, departamento ou horário quando não aplicar a todos.');
+        }
 
         fetch('/api/rh/feriados/save/', {
             method: 'POST',
@@ -283,6 +438,11 @@
                     alert(res.error || 'Erro ao salvar.');
                 }
             });
+    }
+
+    function getSelectedValues(id) {
+        const select = document.getElementById(id);
+        return Array.from(select.selectedOptions).map(opt => opt.value);
     }
 
     function openModalDelete(id, nome) {

@@ -10,11 +10,10 @@ from django.db import transaction
 from django.utils import timezone
 import json
 import logging
-
 from ..models import (
     Colaborador, Department, HistoricoProfissional, 
     PerformanceRH, User, DocumentoColaborador, Empresa, Cargo,
-    CentroCusto, Holiday
+    CentroCusto, Holiday, Turno
 )
 
 logger = logging.getLogger(__name__)
@@ -335,11 +334,21 @@ def api_rh_auxiliar_data(request):
     for dept in depts:
         dept['id'] = str(dept['id'])
     
+    empresas = list(Empresa.objects.all().values('id', 'nome', 'nome_fantasia'))
+    for e in empresas:
+        e['id'] = str(e['id'])
+        
+    turnos = list(Turno.objects.all().values('id', 'nome', 'horario'))
+    for t in turnos:
+        t['id'] = str(t['id'])
+
     return JsonResponse({
         'success': True,
         'cargos': cargos,
         'departments': depts,
         'centros_custo': centros,
+        'empresas': empresas,
+        'turnos': turnos,
         'status_choices': dict(Colaborador.STATUS_CHOICES),
         'tipo_contrato_choices': dict(Colaborador.TIPO_CONTRATO_CHOICES),
         'tipo_evento_choices': dict(HistoricoProfissional.TIPO_EVENTO_CHOICES),
@@ -780,6 +789,10 @@ def api_feriados_list(request):
                 'date': f.date.isoformat(),
                 'date_display': f.date.strftime('%d/%m/%Y') if not f.repeats_annually else f.date.strftime('%d/%m'),
                 'repeats_annually': f.repeats_annually,
+                'apply_to_all': f.apply_to_all,
+                'target_companies': list(f.target_companies.values_list('id', flat=True)),
+                'target_departments': list(f.target_departments.values_list('id', flat=True)),
+                'target_turnos': list(f.target_turnos.values_list('id', flat=True)),
             })
         return JsonResponse({'success': True, 'feriados': data})
     except Exception as ex:
@@ -800,10 +813,21 @@ def api_save_feriado(request):
             else:
                 feriado = Holiday()
             
-            feriado.name = data.get('name', '')
+            feriado.name = data.get('name')
             feriado.date = data.get('date')
             feriado.repeats_annually = data.get('repeats_annually', True)
+            feriado.apply_to_all = data.get('apply_to_all', True)
             feriado.save()
+            
+            # ManyToMany fields
+            if not feriado.apply_to_all:
+                feriado.target_companies.set(data.get('target_companies', []))
+                feriado.target_departments.set(data.get('target_departments', []))
+                feriado.target_turnos.set(data.get('target_turnos', []))
+            else:
+                feriado.target_companies.clear()
+                feriado.target_departments.clear()
+                feriado.target_turnos.clear()
 
         return JsonResponse({'success': True, 'message': 'Feriado salvo com sucesso.', 'id': str(feriado.id)})
     except Exception as ex:

@@ -2058,6 +2058,12 @@ class Holiday(models.Model):
     date = models.DateField(verbose_name="Data")
     repeats_annually = models.BooleanField(default=True, verbose_name="Repete todo ano")
     
+    # Filtros de aplicação
+    apply_to_all = models.BooleanField(default=True, verbose_name="Todos os Funcionários")
+    target_companies = models.ManyToManyField('Empresa', blank=True, related_name='holidays', verbose_name="Empresas")
+    target_departments = models.ManyToManyField('Department', blank=True, related_name='holidays', verbose_name="Departamentos")
+    target_turnos = models.ManyToManyField('Turno', blank=True, related_name='holidays', verbose_name="Horários")
+
     # Metadados
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
