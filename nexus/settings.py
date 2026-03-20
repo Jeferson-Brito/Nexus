@@ -255,6 +255,33 @@ SESSION_SAVE_EVERY_REQUEST = False
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 # ==============================
+# CACHE (REDIS)
+# ==============================
+REDIS_URL = get_env("REDIS_URL")
+
+if REDIS_URL:
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": REDIS_URL,
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+                "IGNORE_EXCEPTIONS": True,  # Don't crash if Redis is down
+            }
+        }
+    }
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "unique-snowflake",
+        }
+    }
+
+# Default TTL: 1 hour
+CACHE_TTL = 60 * 60
+
+# ==============================
 # UPLOAD LIMITS
 # ==============================
 FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024

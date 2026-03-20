@@ -8,6 +8,7 @@ from django.views.decorators.http import require_http_methods
 from django.shortcuts import get_object_or_404
 from django.db import transaction
 from django.utils import timezone
+from django.core.cache import cache
 import json
 import logging
 from ..models import (
@@ -320,11 +321,17 @@ def api_save_colaborador(request):
 @login_required
 @require_http_methods(["GET"])
 def api_rh_auxiliar_data(request):
-    """Dados auxiliares para formulários (Cargos, Departamentos, Opções)"""
+    """Retorna dados para combos e listas auxiliares do RH"""
+    cache_key = 'aux_data:all'
+    cached_data = cache.get(cache_key)
+    
+    if cached_data:
+        return JsonResponse(cached_data)
+
     cargos = list(Cargo.objects.all().values('id', 'nome', 'department_id'))
-    for c in cargos:
-        c['id'] = str(c['id'])
-        c['department_id'] = str(c['department_id'])
+    for cargo in cargos:
+        cargo['id'] = str(cargo['id'])
+        cargo['department_id'] = str(cargo['department_id'])
     
     centros = list(CentroCusto.objects.all().values('id', 'nome'))
     for c in centros:
@@ -342,7 +349,7 @@ def api_rh_auxiliar_data(request):
     for t in turnos:
         t['id'] = str(t['id'])
 
-    return JsonResponse({
+    response_data = {
         'success': True,
         'cargos': cargos,
         'departments': depts,
@@ -353,7 +360,12 @@ def api_rh_auxiliar_data(request):
         'tipo_contrato_choices': dict(Colaborador.TIPO_CONTRATO_CHOICES),
         'tipo_evento_choices': dict(HistoricoProfissional.TIPO_EVENTO_CHOICES),
         'tipo_performance_choices': dict(PerformanceRH.TIPO_CHOICES)
-    })
+    }
+    
+    # Cache por 2 horas
+    cache.set(cache_key, response_data, 7200)
+    
+    return JsonResponse(response_data)
 
 
 @login_required

@@ -9,6 +9,8 @@ from django.core.paginator import Paginator
 from django.db.models import Count, Avg, Q, Max
 from django.http import JsonResponse, HttpResponse
 from django.utils import timezone
+from django.core.cache import cache
+from django.conf import settings
 from django.contrib.auth.forms import UserCreationForm
 from django import forms
 from datetime import timedelta
@@ -124,104 +126,115 @@ def dashboard(request):
         return render(request, 'core/welcome.html', {'current_department': current_dept})
 
     # Se chegou aqui, é CS Clientes ou Reclame Aqui -> Mostrar Dashboard de Reclamações
-    queryset = Complaint.objects.filter(department=current_dept)
-        
-    # OTIMIZAÇÃO: Usar aggregate para buscar contadores em uma única query
-    stats = queryset.aggregate(
-        total=Count('id'),
-        pending=Count('id', filter=Q(status='pendente')),
-        em_replica=Count('id', filter=Q(status='em_replica')),
-        resolved=Count('id', filter=Q(status='resolvido')),
-        awaiting=Count('id', filter=Q(status='aguardando_avaliacao')),
-        em_andamento=Count('id', filter=Q(status='em_andamento'))
-    )
-
-    total_complaints = stats['total']
-    pending = stats['pending']
-    em_replica = stats['em_replica']
-    resolved = stats['resolved']
-    awaiting = stats['awaiting']
-    em_andamento = stats['em_andamento']
+    dept_id = current_dept.id if current_dept else 0
+    cache_key = f'dashboard:stats:dept_{dept_id}'
     
-    # Ranking de lojas com mais reclamações (top 5)
-    top_stores_ranking = queryset.values('loja_cod').annotate(
-        count=Count('id')
-    ).order_by('-count')[:5]
+    context = cache.get(cache_key)
     
-    # Gráficos
-    # Gráficos - Otimizado
-    days = 30
-    date_threshold = timezone.now().date() - timedelta(days=days)
-    
-    # Query única para agrupar por data
-    daily_counts = queryset.filter(
-        created_at__date__gte=date_threshold
-    ).values('created_at__date').annotate(count=Count('id'))
-    
-    # Transformar em dicionário para lookup rápido
-    counts_map = {item['created_at__date']: item['count'] for item in daily_counts}
-    
-    complaints_by_period = []
-    for i in range(days):
-        date = timezone.now().date() - timedelta(days=days-1-i) # Order from oldest to newest usually? Current code was 29-i (descending?)
-        # Current code: for i in range(30): date = ... - (29-i). This goes from Oldest to Newest.
-        # i=0: -29 days. i=29: -0 days.
-        count = counts_map.get(date, 0)
-        complaints_by_period.append({'day': date.isoformat(), 'count': count})
-    
-    top_stores = queryset.values('loja_cod').annotate(
-        count=Count('id')
-    ).order_by('-count')[:10]
-    
-    satisfaction_by_store = queryset.filter(
-        nota_satisfacao__isnull=False
-    ).values('loja_cod').annotate(
-        avg=Avg('nota_satisfacao')
-    )
-    
-    complaints_by_status = queryset.values('status').annotate(
-        count=Count('id')
-    )
-    
-    recent_complaints = queryset.select_related('analista').order_by('-created_at')[:10]
-    
-    # Estatísticas adicionais
-    avg_satisfaction = queryset.filter(nota_satisfacao__isnull=False).aggregate(avg=Avg('nota_satisfacao'))['avg'] or 0
-    
-    if not request.user.is_administrador():
-        total_analysts = User.objects.filter(role='analista', ativo=True, department=request.user.department).count()
-    else:
-        if selected_dept_id:
-            total_analysts = User.objects.filter(role='analista', ativo=True, department_id=selected_dept_id).count()
-        else:
-            total_analysts = User.objects.filter(role='analista', ativo=True).count()
+    if not context:
+        queryset = Complaint.objects.filter(department=current_dept)
             
-    complaints_without_analyst = queryset.filter(analista__isnull=True).count()
+        # OTIMIZAÇÃO: Usar aggregate para buscar contadores em uma única query
+        stats = queryset.aggregate(
+            total=Count('id'),
+            pending=Count('id', filter=Q(status='pendente')),
+            em_replica=Count('id', filter=Q(status='em_replica')),
+            resolved=Count('id', filter=Q(status='resolvido')),
+            awaiting=Count('id', filter=Q(status='aguardando_avaliacao')),
+            em_andamento=Count('id', filter=Q(status='em_andamento'))
+        )
+
+        total_complaints = stats['total']
+        pending = stats['pending']
+        em_replica = stats['em_replica']
+        resolved = stats['resolved']
+        awaiting = stats['awaiting']
+        em_andamento = stats['em_andamento']
+        
+        # Ranking de lojas com mais reclamações (top 5)
+        top_stores_ranking = queryset.values('loja_cod').annotate(
+            count=Count('id')
+        ).order_by('-count')[:5]
+        
+        # Gráficos
+        days = 30
+        date_threshold = timezone.now().date() - timedelta(days=days)
+        
+        # Query única para agrupar por data
+        daily_counts = queryset.filter(
+            created_at__date__gte=date_threshold
+        ).values('created_at__date').annotate(count=Count('id'))
+        
+        # Transformar em dicionário para lookup rápido
+        counts_map = {item['created_at__date']: item['count'] for item in daily_counts}
+        
+        complaints_by_period = []
+        for i in range(days):
+            date = timezone.now().date() - timedelta(days=days-1-i)
+            count = counts_map.get(date, 0)
+            complaints_by_period.append({'day': date.isoformat(), 'count': count})
+        
+        top_stores = queryset.values('loja_cod').annotate(
+            count=Count('id')
+        ).order_by('-count')[:10]
+        
+        satisfaction_by_store = queryset.filter(
+            nota_satisfacao__isnull=False
+        ).values('loja_cod').annotate(
+            avg=Avg('nota_satisfacao')
+        )
+        
+        complaints_by_status = queryset.values('status').annotate(
+            count=Count('id')
+        )
+        
+        recent_complaints = queryset.select_related('analista').order_by('-created_at')[:10]
+        
+        # Estatísticas adicionais
+        avg_satisfaction = queryset.filter(nota_satisfacao__isnull=False).aggregate(avg=Avg('nota_satisfacao'))['avg'] or 0
+        
+        if not request.user.is_administrador():
+            total_analysts = User.objects.filter(role='analista', ativo=True, department=request.user.department).count()
+        else:
+            if selected_dept_id:
+                total_analysts = User.objects.filter(role='analista', ativo=True, department_id=selected_dept_id).count()
+            else:
+                total_analysts = User.objects.filter(role='analista', ativo=True).count()
+                
+        complaints_without_analyst = queryset.filter(analista__isnull=True).count()
+        
+        # Reclamações urgentes (pendentes há mais de 3 dias)
+        urgent_date = timezone.now().date() - timedelta(days=3)
+        urgent_complaints = queryset.filter(
+            status='pendente',
+            data_reclamacao__lte=urgent_date
+        ).count()
+        
+        context = {
+            'total_complaints': total_complaints,
+            'pending': pending,
+            'em_replica': em_replica,
+            'em_andamento': em_andamento,
+            'resolved': resolved,
+            'awaiting': awaiting,
+            'recent_complaints': recent_complaints,
+            'top_stores': list(top_stores),
+            'top_stores_ranking': list(top_stores_ranking),
+            'satisfaction_by_store': list(satisfaction_by_store),
+            'complaints_by_status': list(complaints_by_status),
+            'avg_satisfaction': round(avg_satisfaction, 1),
+            'total_analysts': total_analysts,
+            'complaints_without_analyst': complaints_without_analyst,
+            'urgent_complaints': urgent_complaints,
+            'current_department': current_dept,
+        }
+        # Salva no cache por 1 hora
+        cache.set(cache_key, context, 3600)
+
+    # O current_department pode ter mudado se o cache for global, mas aqui o cache é por dept_id
+    # Garantir que o current_dept no contexto seja o correto (opcional, mas seguro)
+    context['current_department'] = current_dept
     
-    # Reclamações urgentes (pendentes há mais de 3 dias)
-    urgent_date = timezone.now().date() - timedelta(days=3)
-    urgent_complaints = queryset.filter(
-        status='pendente',
-        data_reclamacao__lte=urgent_date
-    ).count()
-    
-    context = {
-        'total_complaints': total_complaints,
-        'pending': pending,
-        'em_replica': em_replica,
-        'em_andamento': em_andamento,
-        'resolved': resolved,
-        'awaiting': awaiting,
-        'recent_complaints': recent_complaints,
-        'top_stores': list(top_stores),
-        'top_stores_ranking': list(top_stores_ranking),
-        'satisfaction_by_store': list(satisfaction_by_store),
-        'complaints_by_status': list(complaints_by_status),
-        'avg_satisfaction': round(avg_satisfaction, 1),
-        'total_analysts': total_analysts,
-        'complaints_without_analyst': complaints_without_analyst,
-        'urgent_complaints': urgent_complaints,
-    }
     return render(request, 'core/dashboard.html', context)
 
 

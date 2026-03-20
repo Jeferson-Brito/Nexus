@@ -2114,6 +2114,9 @@ class Empresa(models.Model):
         verbose_name = 'Empresa'
         verbose_name_plural = 'Empresas'
         ordering = ['nome']
+        indexes = [
+            models.Index(fields=['nome']),
+        ]
 
     def __str__(self):
         return self.nome_fantasia or self.nome
@@ -2198,6 +2201,12 @@ class Colaborador(models.Model):
         verbose_name = "Colaborador"
         verbose_name_plural = "Colaboradores"
         ordering = ['nome_completo']
+        indexes = [
+            models.Index(fields=['nome_completo']),
+            models.Index(fields=['department']),
+            models.Index(fields=['empresa']),
+            models.Index(fields=['status']),
+        ]
 
     @property
     def tempo_empresa(self):
