@@ -22,10 +22,7 @@
         <div class="card-header border-0 p-0" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
             <ul class="nav nav-tabs border-0 px-4" id="horarioTabs" role="tablist">
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link active fw-bold small text-uppercase py-3" id="principal-tab" data-bs-toggle="tab" data-bs-target="#principal" type="button" role="tab">Principal</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link fw-bold small text-uppercase py-3" id="horario-tab" data-bs-toggle="tab" data-bs-target="#horario-grid" type="button" role="tab">Horários</button>
+                    <button class="nav-link active fw-bold small text-uppercase py-3" id="horario-tab" data-bs-toggle="tab" data-bs-target="#horario-grid" type="button" role="tab">Horários</button>
                 </li>
                 <li class="nav-item" role="presentation">
                     <button class="nav-link fw-bold small text-uppercase py-3" id="tolerancias-tab" data-bs-toggle="tab" data-bs-target="#tolerancias" type="button" role="tab">Tolerâncias</button>
@@ -45,16 +42,17 @@
         <div class="card-body p-4">
             <div class="tab-content" id="horarioTabsContent">
                 
-                <!-- ABA PRINCIPAL -->
-                <div class="tab-pane fade show active" id="principal" role="tabpanel">
-                    <div class="row g-4">
+                <!-- ABA HORÁRIOS (GRID) -->
+                <div class="tab-pane fade show active" id="horario-grid" role="tabpanel">
+                    <!-- Conteúdo que era do Principal -->
+                    <div class="row g-4 mb-4 pb-4 border-bottom">
                         <div class="col-md-6">
                             <label class="form-label fw-bold small">Nome do Horário *</label>
                             <input type="text" id="hor_nome" class="form-control" placeholder="Ex: Administrativo Seg-Sex">
                         </div>
                         <div class="col-md-3">
                             <label class="form-label fw-bold small">Sigla *</label>
-                            <input type="text" id="hor_sigla" class="form-control" placeholder="Ex: ADM" maxlength="5">
+                            <input type="text" id="hor_sigla" class="form-control" placeholder="Ex: ADM" maxlength="10">
                         </div>
                         <div class="col-md-3">
                             <label class="form-label fw-bold small">Cor de Exibição</label>
@@ -80,23 +78,14 @@
                             <input type="number" id="hor_dias_ciclo" class="form-control" value="2" min="2" onchange="regenerateGrid()">
                         </div>
 
-                        <div class="col-12 border-top mt-4 pt-4">
-                            <h6 class="fw-bold text-primary mb-3">Configurações Gerais</h6>
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <div class="form-check form-switch mb-3">
-                                        <input class="form-check-input" type="checkbox" id="hor_folga_intervalos">
-                                        <label class="form-check-label fw-bold small" for="hor_folga_intervalos">Considerar folga nos intervalos</label>
-                                        <div class="form-text small">Indica se o colaborador está de folga durante os intervalos cadastrados.</div>
-                                    </div>
-                                </div>
+                        <div class="col-md-4">
+                            <div class="form-check form-switch mt-4 pt-1">
+                                <input class="form-check-input" type="checkbox" id="hor_folga_intervalos">
+                                <label class="form-check-label fw-bold small" for="hor_folga_intervalos">Considerar folga nos intervalos</label>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- ABA HORÁRIOS (GRID) -->
-                <div class="tab-pane fade" id="horario-grid" role="tabpanel">
                     <div class="table-responsive bg-light rounded shadow-sm border">
                         <table class="table table-sm table-bordered mb-0 align-middle">
                             <thead class="bg-white">
@@ -498,7 +487,7 @@
         rows.forEach(tr => {
             data.detalhes.push({
                 dia_index: parseInt(tr.dataset.index),
-                nome_dia: tr.querySelector('td:first-child').textContent,
+                nome_dia: tr.querySelector('td:first-child span').textContent.trim(),
                 entrada_1: tr.querySelector('.input-e1').value,
                 saida_1: tr.querySelector('.input-s1').value,
                 entrada_2: tr.querySelector('.input-e2').value,

@@ -2365,7 +2365,13 @@ class Horario(models.Model):
     
     # Horas Extras
     utiliza_banco_horas = models.BooleanField(default=False)
-    modo_extra = models.CharField(max_length=20, choices=[('simples', 'Simples'), ('avançado', 'Avançado')], default='simples')
+    MODO_EXTRA_CHOICES = [
+        ('simples', 'Simples (Diário)'),
+        ('semanal', 'Semanal'),
+        ('mensal', 'Mensal'),
+        ('avançado', 'Avançado'),
+    ]
+    modo_extra = models.CharField(max_length=20, choices=MODO_EXTRA_CHOICES, default='simples')
     percentual_diurno = models.DecimalField(max_digits=5, decimal_places=2, default=50)
     percentual_noturno = models.DecimalField(max_digits=5, decimal_places=2, default=50)
     
