@@ -27,7 +27,7 @@ from django.views.decorators.http import require_http_methods
 
 from ..models import (
     Colaborador, RegistroPonto, BancoHoras,
-    ConfiguracaoPonto, Department, User,
+    ConfiguracaoPonto, Department, User, Holiday
 )
 
 
@@ -89,10 +89,29 @@ def _atualizar_banco_horas(colaborador, data_ref=None):
     for r in registros:
         dias.setdefault(r.data, []).append(r)
 
-    total_trabalhado = sum(_calcular_horas_dia(v) for v in dias.values())
-    dias_uteis = len(dias)
-    esperado = carga_diaria * dias_uteis
-    saldo = total_trabalhado - esperado
+    # Buscar feriados do mês para evitar múltiplas queries se necessário
+    # Mas como _atualizar_banco_horas costuma ser para um colaborador/mês, podemos otimizar
+    feriados = Holiday.objects.filter(
+        Q(date__year=data_ref.year, date__month=data_ref.month) | 
+        Q(repeats_annually=True, date__month=data_ref.month)
+    )
+    datas_feriados = {f.date.replace(year=data_ref.year) if f.repeats_annually else f.date for f in feriados}
+
+    total_trabalhado = 0
+    total_esperado = 0
+
+    # Iterar pelos dias que tiveram registro
+    for data_dia, regs_dia in dias.items():
+        trabalhado_dia = _calcular_horas_dia(regs_dia)
+        total_trabalhado += trabalhado_dia
+        
+        # Se for feriado, carga esperada é 0 (trabalho no feriado conta como extra)
+        if data_dia in datas_feriados:
+            total_esperado += 0
+        else:
+            total_esperado += carga_diaria
+
+    saldo = total_trabalhado - total_esperado
 
     banco, _ = BancoHoras.objects.get_or_create(colaborador=colaborador)
     banco.saldo_minutos = saldo

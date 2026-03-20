@@ -14,7 +14,7 @@ import logging
 from ..models import (
     Colaborador, Department, HistoricoProfissional, 
     PerformanceRH, User, DocumentoColaborador, Empresa, Cargo,
-    CentroCusto
+    CentroCusto, Holiday
 )
 
 logger = logging.getLogger(__name__)
@@ -759,4 +759,66 @@ def api_delete_centro_custo(request, pk):
         centro.delete()
         return JsonResponse({'success': True, 'message': 'Centro de custo excluído com sucesso.'})
     except Exception as ex:
+        return JsonResponse({'success': False, 'error': str(ex)}, status=500)
+
+
+# ─────────────────────────────────────────────
+#  FERIADOS
+# ─────────────────────────────────────────────
+
+@login_required
+@require_http_methods(["GET"])
+def api_feriados_list(request):
+    """Lista todos os feriados"""
+    try:
+        feriados = Holiday.objects.all().order_by('date')
+        data = []
+        for f in feriados:
+            data.append({
+                'id': str(f.id),
+                'name': f.name,
+                'date': f.date.isoformat(),
+                'date_display': f.date.strftime('%d/%m/%Y') if not f.repeats_annually else f.date.strftime('%d/%m'),
+                'repeats_annually': f.repeats_annually,
+            })
+        return JsonResponse({'success': True, 'feriados': data})
+    except Exception as ex:
+        return JsonResponse({'success': False, 'error': str(ex)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def api_save_feriado(request):
+    """Cria ou atualiza um feriado"""
+    try:
+        data = json.loads(request.body)
+        pk = data.get('id')
+        
+        with transaction.atomic():
+            if pk:
+                feriado = get_object_or_404(Holiday, pk=pk)
+            else:
+                feriado = Holiday()
+            
+            feriado.name = data.get('name', '')
+            feriado.date = data.get('date')
+            feriado.repeats_annually = data.get('repeats_annually', True)
+            feriado.save()
+
+        return JsonResponse({'success': True, 'message': 'Feriado salvo com sucesso.', 'id': str(feriado.id)})
+    except Exception as ex:
+        logger.error(f"Erro ao salvar feriado: {ex}")
+        return JsonResponse({'success': False, 'error': str(ex)}, status=500)
+
+
+@login_required
+@require_http_methods(["DELETE"])
+def api_delete_feriado(request, pk):
+    """Exclui um feriado"""
+    try:
+        feriado = get_object_or_404(Holiday, pk=pk)
+        feriado.delete()
+        return JsonResponse({'success': True, 'message': 'Feriado excluído com sucesso.'})
+    except Exception as ex:
+        logger.error(f"Erro ao excluir feriado: {ex}")
         return JsonResponse({'success': False, 'error': str(ex)}, status=500)

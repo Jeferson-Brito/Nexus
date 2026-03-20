@@ -2052,6 +2052,28 @@ class Cargo(models.Model):
         return f"{self.nome} ({self.department.name})"
 
 
+class Holiday(models.Model):
+    """Modelo para representar feriados no sistema"""
+    name = models.CharField(max_length=100, verbose_name="Nome do Feriado")
+    date = models.DateField(verbose_name="Data")
+    repeats_annually = models.BooleanField(default=True, verbose_name="Repete todo ano")
+    
+    # Metadados
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Feriado"
+        verbose_name_plural = "Feriados"
+        ordering = ['date']
+
+    def __str__(self):
+        # Para feriado anual, mostrar apenas dia/mês
+        if self.repeats_annually:
+             return f"{self.name} ({self.date.strftime('%d/%m')})"
+        return f"{self.name} ({self.date.strftime('%d/%m/%Y')})"
+
+
 
 class Empresa(models.Model):
     """Empresa cadastrada no sistema de ponto / RH"""

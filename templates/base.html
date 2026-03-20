@@ -50,6 +50,7 @@
             pointer-events: none;
             display: block !important;
         }
+
         #toast-container .toast {
             pointer-events: auto;
             margin-bottom: 0.75rem;
@@ -188,15 +189,15 @@
             <!-- Cadastros (submenu) -->
             <div class="nav-group-title">Gestão de Pessoas</div>
             <a href="#rhCadastrosSubmenu"
-                class="nav-link dropdown-toggle-custom {% if 'rh_colaboradores' in request.resolver_match.url_name or 'rh_colaborador_perfil' in request.resolver_match.url_name or 'rh_empresas' in request.resolver_match.url_name or 'rh_departamentos' in request.resolver_match.url_name or 'rh_cargos' in request.resolver_match.url_name %}active{% endif %}"
+                class="nav-link dropdown-toggle-custom {% if 'rh_colaboradores' in request.resolver_match.url_name or 'rh_colaborador_perfil' in request.resolver_match.url_name or 'rh_empresas' in request.resolver_match.url_name or 'rh_departamentos' in request.resolver_match.url_name or 'rh_cargos' in request.resolver_match.url_name or 'rh_feriados' in request.resolver_match.url_name %}active{% endif %}"
                 data-bs-toggle="collapse"
-                aria-expanded="{% if 'rh_colaboradores' in request.resolver_match.url_name or 'rh_colaborador_perfil' in request.resolver_match.url_name or 'rh_empresas' in request.resolver_match.url_name or 'rh_departamentos' in request.resolver_match.url_name or 'rh_cargos' in request.resolver_match.url_name %}true{% else %}false{% endif %}"
+                aria-expanded="{% if 'rh_colaboradores' in request.resolver_match.url_name or 'rh_colaborador_perfil' in request.resolver_match.url_name or 'rh_empresas' in request.resolver_match.url_name or 'rh_departamentos' in request.resolver_match.url_name or 'rh_cargos' in request.resolver_match.url_name or 'rh_feriados' in request.resolver_match.url_name %}true{% else %}false{% endif %}"
                 aria-controls="rhCadastrosSubmenu">
                 <i class="bi bi-layers"></i>
                 <span class="link-text">Cadastros</span>
                 <i class="bi bi-chevron-down ms-auto arrow-icon"></i>
             </a>
-            <div class="collapse nav-submenu-container {% if 'rh_colaboradores' in request.resolver_match.url_name or 'rh_colaborador_perfil' in request.resolver_match.url_name or 'rh_empresas' in request.resolver_match.url_name or 'rh_departamentos' in request.resolver_match.url_name or 'rh_cargos' in request.resolver_match.url_name %}show{% endif %}"
+            <div class="collapse nav-submenu-container {% if 'rh_colaboradores' in request.resolver_match.url_name or 'rh_colaborador_perfil' in request.resolver_match.url_name or 'rh_empresas' in request.resolver_match.url_name or 'rh_departamentos' in request.resolver_match.url_name or 'rh_cargos' in request.resolver_match.url_name or 'rh_feriados' in request.resolver_match.url_name %}show{% endif %}"
                 id="rhCadastrosSubmenu">
                 <div class="nav-submenu">
                     <a href="{% url 'rh_colaboradores' %}"
@@ -211,25 +212,27 @@
                         <i class="bi bi-building"></i>
                         <span class="link-text">Empresas</span>
                     </a>
-                    <a href="{% url 'rh_departamentos' %}" 
-                        class="nav-link sub-link {% if 'rh_departamentos' in request.resolver_match.url_name %}active{% endif %}" 
+                    <a href="{% url 'rh_departamentos' %}"
+                        class="nav-link sub-link {% if 'rh_departamentos' in request.resolver_match.url_name %}active{% endif %}"
                         title="Departamentos">
                         <i class="bi bi-diagram-3"></i>
                         <span class="link-text">Departamentos</span>
                     </a>
-                    <a href="{% url 'rh_cargos' %}" 
-                        class="nav-link sub-link {% if 'rh_cargos' in request.resolver_match.url_name %}active{% endif %}" 
+                    <a href="{% url 'rh_cargos' %}"
+                        class="nav-link sub-link {% if 'rh_cargos' in request.resolver_match.url_name %}active{% endif %}"
                         title="Cargos">
                         <i class="bi bi-briefcase"></i>
                         <span class="link-text">Cargos</span>
                     </a>
-                    <a href="{% url 'rh_centros_custo' %}" 
-                        class="nav-link sub-link {% if 'rh_centros_custo' in request.resolver_match.url_name %}active{% endif %}" 
+                    <a href="{% url 'rh_centros_custo' %}"
+                        class="nav-link sub-link {% if 'rh_centros_custo' in request.resolver_match.url_name %}active{% endif %}"
                         title="Centros de Custo">
                         <i class="bi bi-currency-dollar"></i>
                         <span class="link-text">Centros de Custo</span>
                     </a>
-                    <a href="#" class="nav-link sub-link disabled opacity-50" title="Em breve">
+                    <a href="{% url 'rh_feriados' %}"
+                        class="nav-link sub-link {% if 'rh_feriados' in request.resolver_match.url_name %}active{% endif %}"
+                        title="Feriados">
                         <i class="bi bi-calendar-heart"></i>
                         <span class="link-text">Feriados</span>
                     </a>
@@ -319,7 +322,8 @@
                 <span class="link-text">Operadores</span>
             </a>
 
-            {% elif current_department.slug == 'nrs-suporte' or current_department.slug == 'nrp' or current_department.name == 'NRS Suporte' or current_department.name == 'NRP' %}
+            {% elif current_department.slug == 'nrs-suporte' or current_department.slug == 'nrp' or
+            current_department.name == 'NRS Suporte' or current_department.name == 'NRP' %}
             <!-- NRS Suporte / NRP -->
             <div class="nav-group-title">Operação</div>
             <a href="{% url 'escala' %}"
@@ -536,16 +540,17 @@
             <button class="btn btn-link text-secondary p-0 d-lg-none" id="mobileToggle" title="Alternar Menu">
                 <i class="bi bi-list fs-4"></i>
             </button>
-            
+
             <!-- Botão Bater Ponto Web -->
             {% if request.user.is_authenticated and request.user.colaborador_perfil %}
-                {% if request.user.colaborador_perfil.ponto_web_permitido %}
-                <a href="{% url 'ponto_kiosk' %}" class="btn btn-primary btn-sm rounded-pill fw-semibold px-3 shadow-sm d-flex align-items-center gap-1 me-1"
-                        style="font-size: 0.85rem;">
-                    <i class="bi bi-fingerprint"></i>
-                    <span class="d-none d-md-inline" style="margin-top: 1px;">Bater Ponto</span>
-                </a>
-                {% endif %}
+            {% if request.user.colaborador_perfil.ponto_web_permitido %}
+            <a href="{% url 'ponto_kiosk' %}"
+                class="btn btn-primary btn-sm rounded-pill fw-semibold px-3 shadow-sm d-flex align-items-center gap-1 me-1"
+                style="font-size: 0.85rem;">
+                <i class="bi bi-fingerprint"></i>
+                <span class="d-none d-md-inline" style="margin-top: 1px;">Bater Ponto</span>
+            </a>
+            {% endif %}
             {% endif %}
 
             <!-- Notification Dropdown -->
@@ -818,7 +823,7 @@
     <script src="{% static 'js/custom_timepicker.js' %}"></script>
     {% if user.is_authenticated %}
     <script>
-        const currentUserId = {% if user.id %}{{ user.id }}{% else %}0{% endif %};
+        const currentUserId = {% if user.id %}{ { user.id } } {% else %} 0{% endif %};
         const currentUserName = "{{ user.get_full_name|default:user.username }}";
     </script>
 
@@ -891,7 +896,7 @@
 
             container.insertAdjacentHTML('beforeend', toastHTML);
             const toastElement = document.getElementById(toastId);
-            
+
             // Garantir que o bootstrap está disponível
             if (typeof bootstrap === 'undefined') {
                 console.error('Bootstrap JS não carregado para Toasts');
@@ -1135,9 +1140,9 @@
             modal.show();
         }
     </script>
-    
 
-    
+
+
 </body>
 
 

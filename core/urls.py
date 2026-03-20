@@ -125,6 +125,8 @@ urlpatterns = [
     path('rh/centros-custo/', views.rh_centros_custo_view, name='rh_centros_custo'),
     # Cargos
     path('rh/cargos/', views.rh_cargos_view, name='rh_cargos'),
+    # Feriados
+    path('rh/feriados/', views.rh_feriados_view, name='rh_feriados'),
     # API Empresas
     path('api/rh/empresas/', api_rh.api_empresas_list, name='api_empresas_list'),
     path('api/rh/empresas/save/', api_rh.api_save_empresa, name='api_save_empresa'),
@@ -141,6 +143,10 @@ urlpatterns = [
     path('api/rh/centros-custo/', api_rh.api_centros_custo_list, name='api_centros_custo_list'),
     path('api/rh/centros-custo/save/', api_rh.api_save_centro_custo, name='api_save_centro_custo'),
     path('api/rh/centros-custo/delete/<int:pk>/', api_rh.api_delete_centro_custo, name='api_delete_centro_custo'),
+    # API Feriados
+    path('api/rh/feriados/', api_rh.api_feriados_list, name='api_feriados_list'),
+    path('api/rh/feriados/save/', api_rh.api_save_feriado, name='api_save_feriado'),
+    path('api/rh/feriados/<int:pk>/delete/', api_rh.api_delete_feriado, name='api_delete_feriado'),
     path('rh/onboarding/', views.under_development, {
         'page_name': 'Acompanhamento de Onboarding',
         'description': 'Checklist interativo para garantir que todos os novos colaboradores recebam equipamentos, acessos e treinamentos necessários.'
