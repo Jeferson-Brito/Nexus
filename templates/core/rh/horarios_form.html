@@ -330,8 +330,17 @@
     function createGridRow(index, label, existing = null) {
         const tr = document.createElement('tr');
         tr.dataset.index = index;
+        const isFirst = index === 0;
         tr.innerHTML = `
-            <td class="ps-3 fw-bold small">${label}</td>
+            <td class="ps-3 fw-bold small">
+                <div class="d-flex align-items-center justify-content-between">
+                    <span>${label}</span>
+                    <button type="button" class="btn btn-link btn-sm p-0 text-primary btn-replicate" 
+                            title="Replicar para todos os dias" onclick="replicateRow(${index})">
+                        <i class="bi bi-copy"></i>
+                    </button>
+                </div>
+            </td>
             <td><input type="time" class="form-control form-control-sm form-control-sm-grid input-e1" value="${existing?.entrada_1 || ''}"></td>
             <td><input type="time" class="form-control form-control-sm form-control-sm-grid input-s1" value="${existing?.saida_1 || ''}"></td>
             <td><input type="time" class="form-control form-control-sm form-control-sm-grid input-e2" value="${existing?.entrada_2 || ''}"></td>
@@ -357,8 +366,6 @@
         const e2 = tr.querySelector('.input-e2').value;
         const s2 = tr.querySelector('.input-s2').value;
         
-        if (!e1 || !s1) return;
-        
         let totalMin = 0;
         
         function diff(start, end) {
@@ -370,12 +377,44 @@
             return m_diff;
         }
         
-        totalMin += diff(e1, s1);
+        if (e1 && s1) totalMin += diff(e1, s1);
         if (e2 && s2) totalMin += diff(e2, s2);
         
         const rh = Math.floor(totalMin / 60);
         const rm = totalMin % 60;
         tr.querySelector('.input-total').value = `${String(rh).padStart(2,'0')}:${String(rm).padStart(2,'0')}`;
+    }
+
+    function replicateRow(sourceIndex) {
+        const sourceRow = document.querySelector(`#horarioDetailTbody tr[data-index="${sourceIndex}"]`);
+        if (!sourceRow) return;
+
+        const e1 = sourceRow.querySelector('.input-e1').value;
+        const s1 = sourceRow.querySelector('.input-s1').value;
+        const e2 = sourceRow.querySelector('.input-e2').value;
+        const s2 = sourceRow.querySelector('.input-s2').value;
+        const almoco = sourceRow.querySelector('.check-almoco').checked;
+        const comp = sourceRow.querySelector('.check-comp').checked;
+        const neutro = sourceRow.querySelector('.check-neutro').checked;
+        const fech = sourceRow.querySelector('.input-fech').value;
+
+        const rows = document.querySelectorAll('#horarioDetailTbody tr');
+        rows.forEach(tr => {
+            if (parseInt(tr.dataset.index) !== sourceIndex) {
+                tr.querySelector('.input-e1').value = e1;
+                tr.querySelector('.input-s1').value = s1;
+                tr.querySelector('.input-e2').value = e2;
+                tr.querySelector('.input-s2').value = s2;
+                tr.querySelector('.check-almoco').checked = almoco;
+                tr.querySelector('.check-comp').checked = comp;
+                tr.querySelector('.check-neutro').checked = neutro;
+                tr.querySelector('.input-fech').value = fech;
+                
+                calculateRowTotal(tr);
+            }
+        });
+        
+        if (window.showToast) showToast('success', 'Horário replicado para todos os dias.');
     }
 
     async function loadHorarioDetail() {

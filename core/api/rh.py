@@ -818,7 +818,46 @@ def api_rh_horarios_list(request):
             resumo = ""
             if h.tipo == 'semanal':
                 # Ex: Seg Ter Qua Qui Sex: 08:00-12:00 13:00-17:00
-                ... # Lógica de resumo será refinada no frontend ou aqui
+                days_short = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"]
+                schedule_groups = {} # schedule_str -> list of day_indices
+                
+                detalhes = h.detalhes.all().order_by('dia_index')
+                for d in detalhes:
+                    if d.neutro:
+                        s_str = "Folga"
+                    elif d.compensado:
+                        s_str = "Comp."
+                    else:
+                        parts = []
+                        if d.entrada_1 and d.saida_1:
+                            parts.append(f"{d.entrada_1.strftime('%H:%M')}-{d.saida_1.strftime('%H:%M')}")
+                        if d.entrada_2 and d.saida_2:
+                            parts.append(f"{d.entrada_2.strftime('%H:%M')}-{d.saida_2.strftime('%H:%M')}")
+                        s_str = " ".join(parts) if parts else "---"
+                    
+                    if s_str not in schedule_groups:
+                        schedule_groups[s_str] = []
+                    schedule_groups[s_str].append(d.dia_index)
+                
+                summary_parts = []
+                # Para manter a ordem dos dias, ordenamos os grupos pelo menor índice de dia
+                sorted_groups = sorted(schedule_groups.items(), key=lambda x: min(x[1]))
+                
+                for s_str, indices in sorted_groups:
+                    if s_str in ["---", "Folga"] and len(sorted_groups) > 1:
+                        continue # Pula folgas se houver horários úteis (para encurtar)
+                    
+                    indices.sort()
+                    days_str = ", ".join([days_short[i] for i in indices])
+                    summary_parts.append(f"{days_str}: {s_str}")
+                
+                resumo = " | ".join(summary_parts)
+                if not resumo: # Caso só tenha folga
+                    resumo = "Folga"
+            elif h.tipo == 'ciclico':
+                resumo = f"Ciclo de {h.dias_ciclo} dias"
+            else:
+                resumo = "Jornada Móvel"
             
             data.append({
                 'id': str(h.id),
