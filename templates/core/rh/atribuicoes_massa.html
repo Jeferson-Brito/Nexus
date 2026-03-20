@@ -166,20 +166,18 @@
                     
                     <div class="row g-4">
                         <!-- Row 1 -->
-                        <div class="col-md-8">
-                            <label class="filter-label">Funcionários</label>
-                            <select id="filter_colab" class="form-select form-select-custom" multiple>
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="filter-label">Horários</label>
-                            <select id="filter_horario" class="form-select form-select-custom">
-                                <option value="">Selecione</option>
-                            </select>
+                        <div class="col-md-12">
+                            <label class="filter-label">Funcionários (Selecione um ou mais)</label>
+                            <div class="border rounded p-2 bg-light" style="max-height: 150px; overflow-y: auto; border-radius: 8px !important;">
+                                <div id="colab_checkbox_list" class="d-flex flex-column gap-1">
+                                    <!-- Preenchido via JS -->
+                                    <small class="text-muted p-2">Carregando funcionários...</small>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Row 2 -->
-                        <div class="col-12">
+                        <div class="col-md-12">
                             <label class="filter-label">Empresa</label>
                             <select id="filter_empresa" class="form-select form-select-custom">
                                 <option value="">Selecione</option>
@@ -373,13 +371,19 @@
 
     function populateStep2() {
         console.log("Populando Passo 2 com auxData:", auxData);
-        // Populamos o select de colaboradores (múltiplo)
-        const colabSelect = document.getElementById('filter_colab');
-        if (colabSelect) {
-            colabSelect.innerHTML = (auxData.colaboradores || []).map(c => `<option value="${c.id}">${c.nome_completo}</option>`).join('');
+        // Populamos a lista de checkboxes de colaboradores
+        const colabList = document.getElementById('colab_checkbox_list');
+        if (colabList) {
+            colabList.innerHTML = (auxData.colaboradores || []).map(c => `
+                <div class="form-check">
+                    <input class="form-check-input colab-checkbox" type="checkbox" value="${c.id}" id="chk_colab_${c.id}">
+                    <label class="form-check-label small" for="chk_colab_${c.id}">
+                        ${c.nome_completo}
+                    </label>
+                </div>
+            `).join('') || '<small class="text-muted p-2">Nenhum funcionário encontrado.</small>';
         }
         
-        populateSelect('filter_horario', auxData.turnos, t => `<option value="${t.id}">${t.nome}</option>`);
         populateSelect('filter_empresa', auxData.empresas, e => `<option value="${e.id}">${e.nome}</option>`);
         populateSelect('filter_depto', auxData.departments, d => `<option value="${d.id}">${d.name}</option>`);
         populateSelect('filter_centro', auxData.centros_custo, c => `<option value="${c.id}">${c.nome}</option>`);
@@ -470,10 +474,10 @@
 
     async function saveAssignment() {
         // Collect filtros
-        const filter_colab = Array.from(document.getElementById('filter_colab').selectedOptions).map(o => o.value).filter(v => v !== "");
+        const filter_colab = Array.from(document.querySelectorAll('.colab-checkbox:checked')).map(cb => cb.value);
         const filters = {
             colaborador_ids: filter_colab,
-            horario_id: document.getElementById('filter_horario').value,
+            horario_id: null, // Removido conforme solicitado
             empresa_id: document.getElementById('filter_empresa').value,
             department_id: document.getElementById('filter_depto').value,
             centro_custo_id: document.getElementById('filter_centro').value,
