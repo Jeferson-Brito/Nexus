@@ -818,7 +818,46 @@ def api_rh_horarios_list(request):
             resumo = ""
             if h.tipo == 'semanal':
                 # Ex: Seg Ter Qua Qui Sex: 08:00-12:00 13:00-17:00
-                ... # Lógica de resumo será refinada no frontend ou aqui
+                days_short = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"]
+                schedule_groups = {} # schedule_str -> list of day_indices
+                
+                detalhes = h.detalhes.all().order_by('dia_index')
+                for d in detalhes:
+                    if d.neutro:
+                        s_str = "Folga"
+                    elif d.compensado:
+                        s_str = "Comp."
+                    else:
+                        parts = []
+                        if d.entrada_1 and d.saida_1:
+                            parts.append(f"{d.entrada_1.strftime('%H:%M')}-{d.saida_1.strftime('%H:%M')}")
+                        if d.entrada_2 and d.saida_2:
+                            parts.append(f"{d.entrada_2.strftime('%H:%M')}-{d.saida_2.strftime('%H:%M')}")
+                        s_str = " ".join(parts) if parts else "---"
+                    
+                    if s_str not in schedule_groups:
+                        schedule_groups[s_str] = []
+                    schedule_groups[s_str].append(d.dia_index)
+                
+                summary_parts = []
+                # Para manter a ordem dos dias, ordenamos os grupos pelo menor índice de dia
+                sorted_groups = sorted(schedule_groups.items(), key=lambda x: min(x[1]))
+                
+                for s_str, indices in sorted_groups:
+                    if s_str in ["---", "Folga"] and len(sorted_groups) > 1:
+                        continue # Pula folgas se houver horários úteis (para encurtar)
+                    
+                    indices.sort()
+                    days_str = ", ".join([days_short[i] for i in indices])
+                    summary_parts.append(f"{days_str}: {s_str}")
+                
+                resumo = " | ".join(summary_parts)
+                if not resumo: # Caso só tenha folga
+                    resumo = "Folga"
+            elif h.tipo == 'ciclico':
+                resumo = f"Ciclo de {h.dias_ciclo} dias"
+            else:
+                resumo = "Jornada Móvel"
             
             data.append({
                 'id': str(h.id),
@@ -883,6 +922,37 @@ def api_rh_horario_detail(request, pk):
                 'fim_noturno': h.fim_noturno.strftime('%H:%M'),
                 'fator_noturno': h.fator_noturno,
                 'fechamento_noturno_global': h.fechamento_noturno_global.strftime('%H:%M'),
+                'pre_assinalar': h.pre_assinalar,
+                'modo_compensacao': h.modo_compensacao,
+                'inicio_mes': h.inicio_mes,
+                'refeicao_tipo': h.refeicao_tipo,
+                'quando_feriado': h.quando_feriado,
+                'quando_domingo': h.quando_domingo,
+                'considera_extra_antes': h.considera_extra_antes,
+                'considera_extra_depois': h.considera_extra_depois,
+                'considera_extra_intervalo': h.considera_extra_intervalo,
+                'considera_extra_intervalo_curto': h.considera_extra_intervalo_curto,
+                'considera_atraso_inicio': h.considera_atraso_inicio,
+                'considera_atraso_fim': h.considera_atraso_fim,
+                'considera_atraso_intervalo': h.considera_atraso_intervalo,
+                
+                # Novos campos RHID - Tolerâncias
+                'tol_clt': h.tol_clt,
+                'tol_extra_batida': h.tol_extra_batida,
+                'tol_falta_batida': h.tol_falta_batida,
+                'limite_extra_diario': h.limite_extra_diario,
+                'limite_falta_diario': h.limite_falta_diario,
+                'descontar_tol_faltas': h.descontar_tol_faltas,
+                'descontar_tol_extras': h.descontar_tol_extras,
+                'quando_limite_extra': h.quando_limite_extra,
+                'quando_limite_falta': h.quando_limite_falta,
+                
+                # Novos campos RHID - DSR
+                'primeiro_dia_semana': h.primeiro_dia_semana,
+                'tempo_dsr': h.tempo_dsr,
+                'max_faltas_dsr': h.max_faltas_dsr,
+                'desconto_dsr_feriado': h.desconto_dsr_feriado,
+                
                 'detalhes': detalhes
             }
         })
@@ -932,6 +1002,38 @@ def api_save_horario(request):
             h.fim_noturno = data.get('fim_noturno', '05:00')
             h.fator_noturno = data.get('fator_noturno', 60)
             h.fechamento_noturno_global = data.get('fechamento_noturno_global', '00:00')
+            
+            # Novos campos Parâmetros Básicos
+            h.pre_assinalar = data.get('pre_assinalar', 'sem_marcacao')
+            h.modo_compensacao = data.get('modo_compensacao', 'sem_compensacao')
+            h.inicio_mes = data.get('inicio_mes', 1)
+            h.refeicao_tipo = data.get('refeicao_tipo', 's1_e2')
+            h.quando_feriado = data.get('quando_feriado', 'extra')
+            h.quando_domingo = data.get('quando_domingo', 'extra')
+            h.considera_extra_antes = data.get('considera_extra_antes', 'considera')
+            h.considera_extra_depois = data.get('considera_extra_depois', 'considera')
+            h.considera_extra_intervalo = data.get('considera_extra_intervalo', 'considera')
+            h.considera_extra_intervalo_curto = data.get('considera_extra_intervalo_curto', 'minutos_trabalhados')
+            h.considera_atraso_inicio = data.get('considera_atraso_inicio', 'considera')
+            h.considera_atraso_fim = data.get('considera_atraso_fim', 'considera')
+            h.considera_atraso_intervalo = data.get('considera_atraso_intervalo', 'considera')
+            
+            # Novos campos RHID - Tolerâncias
+            h.tol_clt = data.get('tol_clt', True)
+            h.tol_extra_batida = data.get('tol_extra_batida', 5)
+            h.tol_falta_batida = data.get('tol_falta_batida', 5)
+            h.limite_extra_diario = data.get('limite_extra_diario', 10)
+            h.limite_falta_diario = data.get('limite_falta_diario', 10)
+            h.descontar_tol_faltas = data.get('descontar_tol_faltas', 'nunca_desconta')
+            h.descontar_tol_extras = data.get('descontar_tol_extras', 'nunca_desconta')
+            h.quando_limite_extra = data.get('quando_limite_extra', 'considera_tudo')
+            h.quando_limite_falta = data.get('quando_limite_falta', 'considera_tudo')
+            
+            # Novos campos RHID - DSR
+            h.primeiro_dia_semana = data.get('primeiro_dia_semana', 1)
+            h.tempo_dsr = data.get('tempo_dsr', '07:20')
+            h.max_faltas_dsr = data.get('max_faltas_dsr', '02:00')
+            h.desconto_dsr_feriado = data.get('desconto_dsr_feriado', 'desconta_normais')
             
             h.save()
             

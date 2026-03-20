@@ -10,8 +10,17 @@ function showToast(message, type = 'info') {
             toast: true,
             position: 'bottom-end',
             showConfirmButton: false,
-            timer: 3000,
+            timer: 4000,
             timerProgressBar: true,
+            showClass: {
+                popup: 'animate__animated animate__fadeInRight animate__faster'
+            },
+            hideClass: {
+                popup: 'animate__animated animate__fadeOutRight animate__faster'
+            },
+            customClass: {
+                popup: 'swal2-toast-premium'
+            },
             didOpen: (toast) => {
                 toast.addEventListener('mouseenter', Swal.stopTimer)
                 toast.addEventListener('mouseleave', Swal.resumeTimer)
@@ -27,10 +36,19 @@ function showToast(message, type = 'info') {
             'debug': 'info'
         };
 
+        const iconMap = {
+            'success': 'success',
+            'error': 'error',
+            'danger': 'error',
+            'warning': 'warning',
+            'info': 'info'
+        };
+
         Toast.fire({
-            icon: typeMap[type] || 'info',
+            icon: iconMap[type] || 'info',
             title: message
         });
+
     } else {
         console.warn('SweetAlert2 não carregado. Toast:', message);
         // Fallback simples se necessário

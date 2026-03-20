@@ -456,7 +456,7 @@
                                         {% endfor %}
                                     </td>
                                     <td>
-                                        {% with first_item=issue.items.first %}
+                                        {% with first_item=issue.items.all.0 %}
                                         {% if first_item.audit.analyst.get_full_name %}
                                         {{ first_item.audit.analyst.get_full_name }}
                                         {% else %}
@@ -2848,53 +2848,7 @@
     }
 
     // Show toast notification
-    function showToast(type, message, duration = 4000) {
-        const container = document.getElementById('toastContainer');
-        if (!container) return;
-
-        // Icon and color maps
-        const iconMap = {
-            'success': 'bi-check-circle-fill text-success',
-            'error': 'bi-x-circle-fill text-danger',
-            'warning': 'bi-exclamation-triangle-fill text-warning',
-            'info': 'bi-info-circle-fill text-info'
-        };
-
-        const borderMap = {
-            'success': '#198754',
-            'error': '#dc3545',
-            'warning': '#ffc107',
-            'info': '#0dcaf0'
-        };
-
-        const icon = iconMap[type] || iconMap['info'];
-        const borderColor = borderMap[type] || borderMap['info'];
-        const toastId = 'toast-' + Date.now();
-
-        const toastHTML = `
-            <div id="${toastId}" class="toast align-items-center border-0 mb-2 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true">
-                <div class="d-flex">
-                    <div class="toast-body d-flex align-items-center bg-white" style="border-left: 4px solid ${borderColor};">
-                        <i class="bi ${icon} me-2" style="font-size: 1.25rem;"></i>
-                        <span>${message}</span>
-                    </div>
-                    <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-                </div>
-            </div>
-        `;
-
-        container.insertAdjacentHTML('beforeend', toastHTML);
-
-        // Initialize and show toast
-        const toastElement = document.getElementById(toastId);
-        const toast = new bootstrap.Toast(toastElement, { delay: duration });
-        toast.show();
-
-        // Remove from DOM after hiding
-        toastElement.addEventListener('hidden.bs.toast', () => {
-            toastElement.remove();
-        });
-    }
+    // Local showToast removed in favor of global showToast in base.html
 
     function getCookie(name) {
         let cookieValue = null;

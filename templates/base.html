@@ -24,6 +24,9 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
 
+    <!-- Animate.css for Toasts -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+
     {% block extra_css %}{% endblock %}
 
 
@@ -40,8 +43,39 @@
             min-height: 150px !important;
         }
 
+        /* Premium Toast Styling (Glassmorphism) */
+        .swal2-toast-premium {
+            backdrop-filter: blur(12px) saturate(180%) !important;
+            -webkit-backdrop-filter: blur(12px) saturate(180%) !important;
+            background-color: rgba(255, 255, 255, 0.75) !important;
+            border: 1px solid rgba(255, 255, 255, 0.3) !important;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15) !important;
+            border-radius: 16px !important;
+            padding: 1rem !important;
+            font-family: 'Inter', sans-serif !important;
+        }
+
+        .swal2-toast-premium .swal2-title {
+            color: #1f2937 !important;
+            font-weight: 600 !important;
+            font-size: 0.95rem !important;
+        }
+
+        /* Custom Progress Bars */
+        .swal2-toast-premium.swal2-icon-success .swal2-timer-progress-bar { background: #10b981 !important; }
+        .swal2-toast-premium.swal2-icon-error .swal2-timer-progress-bar { background: #ef4444 !important; }
+        .swal2-toast-premium.swal2-icon-warning .swal2-timer-progress-bar { background: #f59e0b !important; }
+        .swal2-toast-premium.swal2-icon-info .swal2-timer-progress-bar { background: #3b82f6 !important; }
+
+        /* Left-side accent borders */
+        .swal2-toast-premium.swal2-icon-success { border-left: 5px solid #10b981 !important; }
+        .swal2-toast-premium.swal2-icon-error { border-left: 5px solid #ef4444 !important; }
+        .swal2-toast-premium.swal2-icon-warning { border-left: 5px solid #f59e0b !important; }
+        .swal2-toast-premium.swal2-icon-info { border-left: 5px solid #3b82f6 !important; }
+
         /* Toast Position and Visibility */
-        #toast-container {
+
+        #toastContainer {
             position: fixed;
             bottom: 24px;
             right: 24px;
@@ -51,7 +85,7 @@
             display: block !important;
         }
 
-        #toast-container .toast {
+        #toastContainer .toast {
             pointer-events: auto;
             margin-bottom: 0.75rem;
         }
@@ -662,8 +696,7 @@
     </div>
 
     <!-- Toast Container -->
-    <!-- Toast Container (Bottom Right via style.css) -->
-    <div id="toast-container" class="toast-container"></div>
+    <div id="toastContainer" class="toast-container"></div>
 
     <!-- Processar mensagens do Django e mostrar como toast -->
     {% if messages %}
@@ -854,7 +887,7 @@
     <script src="{% static 'js/custom_timepicker.js' %}"></script>
     {% if user.is_authenticated %}
     <script>
-        const currentUserId = {% if user.id %}{{ user.id }}{% else %}0{% endif %};
+        const currentUserId = Number("{{ user.id|default:0 }}");
         const currentUserName = "{{ user.get_full_name|default:user.username }}";
     </script>
 
@@ -887,7 +920,7 @@
                 type = tmp;
             }
 
-            const container = document.getElementById('toast-container');
+            const container = document.getElementById('toastContainer');
             if (!container) {
                 console.warn('Toast container não encontrado');
                 return;
@@ -914,11 +947,11 @@
             const toastId = 'toast-' + Date.now();
 
             const toastHTML = `
-                <div id="${toastId}" class="toast align-items-center border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true" style="display: none; opacity: 0; transition: opacity 0.3s ease;">
+                <div id="${toastId}" class="toast align-items-center border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true">
                     <div class="d-flex">
-                        <div class="toast-body d-flex align-items-center bg-white" style="border-left: 5px solid ${borderColor}; border-radius: 6px; padding: 14px 18px; width: 100%;">
-                            <i class="bi ${icon} me-3" style="font-size: 1.4rem;"></i>
-                            <div class="text-dark fw-bold" style="font-size: 0.95rem;">${message}</div>
+                        <div class="toast-body d-flex align-items-center bg-white" style="border-left: 5px solid ${borderColor}; border-radius: 4px; padding: 12px 16px; width: 100%;">
+                            <i class="bi ${icon} me-3" style="font-size: 1.3rem;"></i>
+                            <div class="text-dark fw-semibold" style="font-size: 0.95rem;">${message}</div>
                         </div>
                         <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
                     </div>
@@ -928,17 +961,14 @@
             container.insertAdjacentHTML('beforeend', toastHTML);
             const toastElement = document.getElementById(toastId);
 
-            // Garantir que o bootstrap está disponível
             if (typeof bootstrap === 'undefined') {
-                console.error('Bootstrap JS não carregado para Toasts');
+                console.warn('Bootstrap JS não carregado para Toasts');
                 toastElement.style.display = 'block';
-                toastElement.style.opacity = '1';
                 setTimeout(() => toastElement.remove(), duration);
                 return;
             }
 
             const toast = new bootstrap.Toast(toastElement, { delay: duration, autohide: true });
-            toastElement.style.display = 'block'; // Necessário para animação do bootstrap
             toast.show();
 
             toastElement.addEventListener('hidden.bs.toast', () => {

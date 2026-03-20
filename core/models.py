@@ -2338,6 +2338,38 @@ class Horario(models.Model):
     nome = models.CharField(max_length=100)
     tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, default='semanal')
     
+    # Novos campos da aba Parâmetros Básicos
+    pre_assinalar = models.CharField(max_length=50, default='sem_marcacao', blank=True, null=True)
+    modo_compensacao = models.CharField(max_length=50, default='sem_compensacao', blank=True, null=True)
+    inicio_mes = models.IntegerField(default=1)
+    refeicao_tipo = models.CharField(max_length=50, default='s1_e2', blank=True, null=True)
+    quando_feriado = models.CharField(max_length=50, default='extra', blank=True, null=True)
+    quando_domingo = models.CharField(max_length=50, default='extra', blank=True, null=True)
+    considera_extra_antes = models.CharField(max_length=50, default='considera', blank=True, null=True)
+    considera_extra_depois = models.CharField(max_length=50, default='considera', blank=True, null=True)
+    considera_extra_intervalo = models.CharField(max_length=50, default='considera', blank=True, null=True)
+    considera_extra_intervalo_curto = models.CharField(max_length=50, default='minutos_trabalhados', blank=True, null=True)
+    considera_atraso_inicio = models.CharField(max_length=50, default='considera', blank=True, null=True)
+    considera_atraso_fim = models.CharField(max_length=50, default='considera', blank=True, null=True)
+    considera_atraso_intervalo = models.CharField(max_length=50, default='considera', blank=True, null=True)
+
+    # Novos campos RHID - Tolerâncias
+    tol_clt = models.BooleanField(default=True)
+    tol_extra_batida = models.IntegerField(default=5)
+    tol_falta_batida = models.IntegerField(default=5)
+    limite_extra_diario = models.IntegerField(default=10)
+    limite_falta_diario = models.IntegerField(default=10)
+    descontar_tol_faltas = models.CharField(max_length=50, default='nunca_desconta', blank=True, null=True)
+    descontar_tol_extras = models.CharField(max_length=50, default='nunca_desconta', blank=True, null=True)
+    quando_limite_extra = models.CharField(max_length=50, default='considera_tudo', blank=True, null=True)
+    quando_limite_falta = models.CharField(max_length=50, default='considera_tudo', blank=True, null=True)
+
+    # Novos campos RHID - DSR
+    primeiro_dia_semana = models.IntegerField(default=1) # 0=Dom, 1=Seg...
+    tempo_dsr = models.CharField(max_length=10, default='07:20')
+    max_faltas_dsr = models.CharField(max_length=10, default='02:00')
+    desconto_dsr_feriado = models.CharField(max_length=50, default='desconta_normais', blank=True, null=True)
+
     # Campos específicos para Jornada
     sigla = models.CharField(max_length=10, blank=True, null=True)
     cor = models.CharField(max_length=20, default='#2563eb')
@@ -2365,7 +2397,13 @@ class Horario(models.Model):
     
     # Horas Extras
     utiliza_banco_horas = models.BooleanField(default=False)
-    modo_extra = models.CharField(max_length=20, choices=[('simples', 'Simples'), ('avançado', 'Avançado')], default='simples')
+    MODO_EXTRA_CHOICES = [
+        ('simples', 'Simples (Diário)'),
+        ('semanal', 'Semanal'),
+        ('mensal', 'Mensal'),
+        ('avançado', 'Avançado'),
+    ]
+    modo_extra = models.CharField(max_length=20, choices=MODO_EXTRA_CHOICES, default='simples')
     percentual_diurno = models.DecimalField(max_digits=5, decimal_places=2, default=50)
     percentual_noturno = models.DecimalField(max_digits=5, decimal_places=2, default=50)
     
