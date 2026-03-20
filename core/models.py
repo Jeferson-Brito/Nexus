@@ -2310,6 +2310,57 @@ class DocumentoColaborador(models.Model):
 # SISTEMA DE CONTROLE DE PONTO
 # ==================================================
 
+class JustificativaPonto(models.Model):
+    """Tipos de justificativa para ocorrências no ponto (faltas, atrasos, etc)"""
+    nome = models.CharField(max_length=100, verbose_name="Nome da Justificativa")
+    codigo = models.CharField(max_length=20, blank=True, verbose_name="Código")
+    abonar = models.BooleanField(default=True, verbose_name="Abona Horas?")
+    descricao = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Tipo de Justificativa"
+        verbose_name_plural = "Tipos de Justificativa"
+        ordering = ['nome']
+
+    def __str__(self):
+        return self.nome
+
+
+class EscalaMensal(models.Model):
+    """Armazena a escala/jornada diária pintada para o colaborador"""
+    TIPO_CHOICES = [
+        ('trabalho', 'Trabalho (Regular)'),
+        ('folga', 'Folga'),
+        ('neutro', 'Dia Neutro'),
+        ('compensado', 'Compensado'),
+        ('almoço_livre', 'Almoço Livre'),
+        ('afastamento', 'Afastamento/Atestado'),
+    ]
+
+    colaborador = models.ForeignKey(Colaborador, on_delete=models.CASCADE, related_name='escalas_mensais')
+    data = models.DateField()
+    turno = models.ForeignKey(Turno, on_delete=models.SET_NULL, null=True, blank=True, related_name='escalas_mensais')
+    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, default='trabalho')
+    justificativa = models.ForeignKey(JustificativaPonto, on_delete=models.SET_NULL, null=True, blank=True)
+    observacao = models.TextField(blank=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Escala Mensal"
+        verbose_name_plural = "Escalas Mensais"
+        unique_together = ['colaborador', 'data']
+        ordering = ['data']
+        indexes = [
+            models.Index(fields=['colaborador', 'data']),
+        ]
+
+    def __str__(self):
+        return f"{self.colaborador.nome_completo} - {self.data} ({self.get_tipo_display()})"
+
+
 class ConfiguracaoPonto(models.Model):
     """Configuração de jornada e tolerâncias por departamento"""
     department = models.OneToOneField(

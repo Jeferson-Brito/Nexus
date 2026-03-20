@@ -11,10 +11,11 @@ from django.utils import timezone
 from django.core.cache import cache
 import json
 import logging
+from datetime import datetime, timedelta
 from ..models import (
     Colaborador, Department, HistoricoProfissional, 
     PerformanceRH, User, DocumentoColaborador, Empresa, Cargo,
-    CentroCusto, Holiday, Turno
+    CentroCusto, Holiday, Turno, JustificativaPonto, EscalaMensal
 )
 
 logger = logging.getLogger(__name__)
@@ -857,4 +858,90 @@ def api_delete_feriado(request, pk):
         return JsonResponse({'success': True, 'message': 'Feriado excluído com sucesso.'})
     except Exception as ex:
         logger.error(f"Erro ao excluir feriado: {ex}")
+        return JsonResponse({'success': False, 'error': str(ex)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def api_execute_atribuicao_massa(request):
+    """Executa a atribuição em massa baseada no tipo e nos filtros selecionados"""
+    try:
+        data = json.loads(request.body)
+        tipo_atribuicao = data.get('tipo_atribuicao')
+        colaborador_ids = data.get('colaborador_ids', [])
+        payload = data.get('payload', {})
+        
+        if not colaborador_ids:
+            return JsonResponse({'success': False, 'error': 'Nenhum colaborador selecionado.'}, status=400)
+
+        with transaction.atomic():
+            colaboradores = Colaborador.objects.filter(id__in=colaborador_ids)
+            
+            if tipo_atribuicao == 'horario':
+                # Atribuição de Turno (Horário)
+                turno_id = payload.get('turno_id')
+                if not turno_id:
+                    return JsonResponse({'success': False, 'error': 'Turno não selecionado.'}, status=400)
+                
+                turno = Turno.objects.filter(id=turno_id).first()
+                if turno:
+                    colaboradores.update(jornada_trabalho=f"{turno.nome} ({turno.horario})")
+            
+            elif tipo_atribuicao == 'jornada':
+                # Atribuição de Jornada (Painting Grid)
+                pinturas = payload.get('pinturas', [])
+                for colab in colaboradores:
+                    for pintura in pinturas:
+                        EscalaMensal.objects.update_or_create(
+                            colaborador=colab,
+                            data=pintura.get('data'),
+                            defaults={
+                                'turno_id': pintura.get('turno_id'),
+                                'tipo': pintura.get('tipo', 'trabalho'),
+                                'justificativa_id': pintura.get('justificativa_id')
+                            }
+                        )
+            
+            elif tipo_atribuicao == 'grupos_cargos':
+                # Atualização de Empresa, Depto, Cargo, etc.
+                updates = {}
+                if payload.get('empresa_id'): updates['empresa_id'] = payload.get('empresa_id')
+                if payload.get('department_id'): updates['department_id'] = payload.get('department_id')
+                if payload.get('cargo'): updates['cargo_atual'] = payload.get('cargo')
+                if payload.get('centro_custo_id'): updates['centro_custo_id'] = payload.get('centro_custo_id')
+                if payload.get('status'): updates['status'] = payload.get('status')
+                
+                if updates:
+                    colaboradores.update(**updates)
+            
+            elif tipo_atribuicao == 'justificativa':
+                # Aplicação de Justificativa em massa para um período
+                justificativa_id = payload.get('justificativa_id')
+                data_inicio = payload.get('data_inicio')
+                data_fim = payload.get('data_fim')
+                
+                if not all([justificativa_id, data_inicio, data_fim]):
+                    return JsonResponse({'success': False, 'error': 'Dados incompletos para justificativa.'}, status=400)
+                
+                # Converter datas
+                d_inicio = datetime.strptime(data_inicio, '%Y-%m-%d').date()
+                d_fim = datetime.strptime(data_fim, '%Y-%m-%d').date()
+                curr_date = d_inicio
+                
+                while curr_date <= d_fim:
+                    for colab in colaboradores:
+                        EscalaMensal.objects.update_or_create(
+                            colaborador=colab,
+                            data=curr_date,
+                            defaults={
+                                'justificativa_id': justificativa_id,
+                                'tipo': 'afastamento'
+                            }
+                        )
+                    curr_date += timedelta(days=1)
+
+        return JsonResponse({'success': True, 'message': f'Atribuição de "{tipo_atribuicao}" executada com sucesso para {colaboradores.count()} colaboradores.'})
+    
+    except Exception as ex:
+        logger.error(f"Erro na atribuição em massa: {ex}")
         return JsonResponse({'success': False, 'error': str(ex)}, status=500)

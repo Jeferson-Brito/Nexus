@@ -19,7 +19,7 @@ import re
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment
 from datetime import datetime
-from .models import Complaint, Store, User, Department, Escala, IndicadorDesempenho, ObservacaoDesempenho, Lista, Activity, AuditLog, StoreAudit, StoreAuditItem, StoreAuditIssue, MetaMensalGlobal, SystemNotification, Cargo, Colaborador, HistoricoProfissional, PerformanceRH, Empresa
+from .models import Complaint, Store, User, Department, Escala, IndicadorDesempenho, ObservacaoDesempenho, Lista, Activity, AuditLog, StoreAudit, StoreAuditItem, StoreAuditIssue, MetaMensalGlobal, SystemNotification, Cargo, Colaborador, HistoricoProfissional, PerformanceRH, Empresa, Turno, JustificativaPonto, EscalaMensal
 from .forms import ComplaintForm, StoreForm
 
 
@@ -3218,3 +3218,18 @@ def rh_feriados_view(request):
         messages.error(request, 'Acesso restrito para Gestores ou Departamento de RH.')
         return redirect('dashboard')
     return render(request, 'core/rh/feriados_list.html')
+@login_required
+def rh_atribuicoes_massa_view(request):
+    """View para o wizard de atribuições em massa do RH"""
+    # Restrição de acesso (Apenas RH ou Admin)
+    user = request.user
+    if not user.is_administrador():
+        if not user.department or user.department.name != 'RH':
+            messages.error(request, 'Acesso negado. Apenas o departamento de RH pode acessar esta funcionalidade.')
+            return redirect('dashboard')
+
+    context = {
+        'title': 'Atribuições em Massa',
+        'active_menu': 'rh_atribuicoes'
+    }
+    return render(request, 'core/rh/atribuicoes_massa.html', context)

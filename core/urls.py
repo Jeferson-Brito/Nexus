@@ -125,8 +125,9 @@ urlpatterns = [
     path('rh/centros-custo/', views.rh_centros_custo_view, name='rh_centros_custo'),
     # Cargos
     path('rh/cargos/', views.rh_cargos_view, name='rh_cargos'),
-    # Feriados
+    # Feriados e Atribuições
     path('rh/feriados/', views.rh_feriados_view, name='rh_feriados'),
+    path('rh/atribuicoes-massa/', views.rh_atribuicoes_massa_view, name='rh_atribuicoes_massa'),
     # API Empresas
     path('api/rh/empresas/', api_rh.api_empresas_list, name='api_empresas_list'),
     path('api/rh/empresas/save/', api_rh.api_save_empresa, name='api_save_empresa'),
@@ -318,6 +319,7 @@ urlpatterns = [
     path('rh/ponto/relatorios/', views_ponto.ponto_relatorios, name='ponto_relatorios'),
 
     # Ponto Eletrônico - API
+    path('api/rh/atribuicoes-massa/execute/', api_rh.api_execute_atribuicao_massa, name='api_rh_execute_atribuicao_massa'),
     path('api/ponto/buscar-colaborador/', api_ponto.buscar_colaborador, name='api_ponto_buscar_colaborador'),
     path('api/ponto/registrar/', api_ponto.registrar_ponto, name='api_ponto_registrar_ponto'),
     path('api/ponto/registros/', api_ponto.listar_registros, name='api_ponto_listar_registros'),

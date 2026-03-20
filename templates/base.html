@@ -248,7 +248,7 @@
                         <i class="bi bi-journal-check"></i>
                         <span class="link-text">Tipos de Justificativa</span>
                     </a>
-                    <a href="#" class="nav-link sub-link disabled opacity-50" title="Em breve">
+                    <a href="{% url 'rh_atribuicoes_massa' %}" class="nav-link sub-link {% if 'rh_atribuicoes_massa' in request.resolver_match.url_name %}active{% endif %}" title="Atribuições em Massa">
                         <i class="bi bi-people-fill"></i>
                         <span class="link-text">Atribuições em Massa</span>
                     </a>
@@ -282,7 +282,7 @@
                         <i class="bi bi-clock"></i>
                         <span class="link-text">Horários</span>
                     </a>
-                    <a href="#" class="nav-link sub-link disabled opacity-50" title="Em breve">
+                    <a href="{% url 'rh_atribuicoes_massa' %}" class="nav-link sub-link {% if 'rh_atribuicoes_massa' in request.resolver_match.url_name %}active{% endif %}" title="Atribuições em massa">
                         <i class="bi bi-people-fill"></i>
                         <span class="link-text">Atribuições em massa</span>
                     </a>
