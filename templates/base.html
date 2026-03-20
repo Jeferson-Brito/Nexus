@@ -322,8 +322,7 @@
                 <span class="link-text">Operadores</span>
             </a>
 
-            {% elif current_department.slug == 'nrs-suporte' or current_department.slug == 'nrp' or
-            current_department.name == 'NRS Suporte' or current_department.name == 'NRP' %}
+            {% elif current_department.slug == 'nrs-suporte' or current_department.slug == 'nrp' or current_department.name == 'NRS Suporte' or current_department.name == 'NRP' %}
             <!-- NRS Suporte / NRP -->
             <div class="nav-group-title">Operação</div>
             <a href="{% url 'escala' %}"
@@ -823,7 +822,7 @@
     <script src="{% static 'js/custom_timepicker.js' %}"></script>
     {% if user.is_authenticated %}
     <script>
-        const currentUserId = {% if user.id %}{ { user.id } } {% else %} 0{% endif %};
+        const currentUserId = {% if user.id %}{{ user.id }}{% else %}0{% endif %};
         const currentUserName = "{{ user.get_full_name|default:user.username }}";
     </script>
 
