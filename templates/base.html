@@ -270,10 +270,24 @@
             </a>
 
             <!-- Config Horário -->
-            <a href="#" class="nav-link disabled opacity-50" title="Em breve">
+            <a href="#configHorarioSubmenu" class="nav-link dropdown-toggle-custom" data-bs-toggle="collapse"
+                aria-expanded="false" aria-controls="configHorarioSubmenu">
                 <i class="bi bi-clock-fill"></i>
                 <span class="link-text">Config Horário</span>
+                <i class="bi bi-chevron-down ms-auto arrow-icon"></i>
             </a>
+            <div class="collapse nav-submenu-container" id="configHorarioSubmenu">
+                <div class="nav-submenu">
+                    <a href="#" class="nav-link sub-link disabled opacity-50" title="Em breve">
+                        <i class="bi bi-clock"></i>
+                        <span class="link-text">Horários</span>
+                    </a>
+                    <a href="#" class="nav-link sub-link disabled opacity-50" title="Em breve">
+                        <i class="bi bi-people-fill"></i>
+                        <span class="link-text">Atribuições em massa</span>
+                    </a>
+                </div>
+            </div>
 
             <div class="nav-group-title">Operacional RH</div>
             <a href="{% url 'ponto_admin' %}"
@@ -298,10 +312,20 @@
             </a>
 
             <!-- Apuração e Cálculo -->
-            <a href="#" class="nav-link disabled opacity-50" title="Em breve">
+            <a href="#apuracaoCalculoSubmenu" class="nav-link dropdown-toggle-custom" data-bs-toggle="collapse"
+                aria-expanded="false" aria-controls="apuracaoCalculoSubmenu">
                 <i class="bi bi-calculator"></i>
                 <span class="link-text">Apuração e Cálculo</span>
+                <i class="bi bi-chevron-down ms-auto arrow-icon"></i>
             </a>
+            <div class="collapse nav-submenu-container" id="apuracaoCalculoSubmenu">
+                <div class="nav-submenu">
+                    <a href="#" class="nav-link sub-link disabled opacity-50" title="Em breve">
+                        <i class="bi bi-people-fill"></i>
+                        <span class="link-text">Atribuições em massa</span>
+                    </a>
+                </div>
+            </div>
 
             <div class="nav-group-title">Análise</div>
             <!-- Relatórios -->
