@@ -133,10 +133,14 @@ function loadCentros() {
     fetch('/api/rh/centros-custo/')
         .then(r => r.json())
         .then(data => {
-            if (data.success) { allCentros = data.centros; render(); }
-            else showError('Erro ao carregar centros de custo.');
+            if (data.success) { 
+                allCentros = data.centros; 
+                render(); 
+            } else {
+                showToast('error', 'Erro ao carregar centros de custo.');
+            }
         })
-        .catch(() => showError('Erro ao carregar centros de custo.'));
+        .catch(() => showToast('error', 'Erro de conexão ao carregar centros de custo.'));
 }
 
 function render() {
@@ -247,7 +251,7 @@ function saveCostCenter() {
         nome: document.getElementById('costCenterName').value
     };
 
-    if (!data.nome) return alert('Nome é obrigatório.');
+    if (!data.nome) return showToast('error', 'Nome é obrigatório.');
 
     fetch('/api/rh/centros-custo/save/', {
         method: 'POST',
@@ -260,10 +264,11 @@ function saveCostCenter() {
     .then(r => r.json())
     .then(res => {
         if (res.success) {
+            showToast('success', res.message || 'Centro de custo salvo!');
             hideForm();
             loadCentros();
         } else {
-            alert(res.error || 'Erro ao salvar.');
+            showToast('error', res.error || 'Erro ao salvar.');
         }
     });
 }
@@ -284,9 +289,10 @@ function confirmDelete() {
     .then(data => {
         bootstrap.Modal.getInstance(document.getElementById('modalDelete')).hide();
         if (data.success) {
+            showToast('success', 'Centro de custo excluído!');
             loadCentros();
         } else {
-            alert(data.error || 'Erro ao excluir.');
+            showToast('error', data.error || 'Erro ao excluir.');
         }
     });
 }

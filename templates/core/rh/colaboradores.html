@@ -527,10 +527,13 @@ window.deleteColaborador = function (id, nome) {
                 method: 'POST',
                 headers: { 'X-CSRFToken': '{{ csrf_token }}' }
             })
-            .then(r => r.json())
             .then(data => {
-                if (data.success) { Swal.fire('Excluído!', data.message, 'success'); location.reload(); }
-                else              { Swal.fire('Erro!', data.error, 'error'); }
+                if (data.success) { 
+                    showToast('success', data.message || 'Excluído com sucesso!'); 
+                    loadColaboradores(); // Recarrega a lista sem dar reload total na página se possível
+                } else { 
+                    showToast('error', data.error || 'Erro ao excluir.'); 
+                }
             });
         }
     });

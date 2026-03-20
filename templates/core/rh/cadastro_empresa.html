@@ -331,19 +331,16 @@ document.getElementById('formEmpresa').addEventListener('submit', function(e) {
     .then(r => r.json())
     .then(data => {
         if (data.success) {
-            Swal.fire({
-                icon: 'success', title: 'Salvo!',
-                text: data.message || 'Empresa salva com sucesso.',
-                timer: 2000, showConfirmButton: false
-            }).then(() => { window.location.href = '{% url "rh_empresas" %}'; });
+            showToast('success', data.message || 'Empresa salva com sucesso.');
+            setTimeout(() => { window.location.href = '{% url "rh_empresas" %}'; }, 1000);
         } else {
-            Swal.fire({ icon: 'error', title: 'Erro', text: data.error });
+            showToast('error', data.error || 'Erro ao salvar.');
             btn.disabled = false;
             btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Salvar';
         }
     })
     .catch(() => {
-        Swal.fire({ icon: 'error', title: 'Erro de rede', text: 'Tente novamente.' });
+        showToast('error', 'Erro de rede ou permissão. Tente novamente.');
         btn.disabled = false;
         btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Salvar';
     });

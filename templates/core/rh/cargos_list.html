@@ -293,10 +293,11 @@ function saveCargo() {
     .then(r => r.json())
     .then(res => {
         if (res.success) {
+            showToast('success', res.message || 'Cargo salvo!');
             hideForm();
             loadData();
         } else {
-            alert(res.error || 'Erro ao salvar.');
+            showToast('error', res.error || 'Erro ao salvar.');
         }
     });
 }
@@ -317,9 +318,10 @@ function confirmDelete() {
     .then(data => {
         bootstrap.Modal.getInstance(document.getElementById('modalDelete')).hide();
         if (data.success) {
+            showToast('success', 'Cargo excluído!');
             loadData();
         } else {
-            alert(data.error || 'Erro ao excluir.');
+            showToast('error', data.error || 'Erro ao excluir.');
         }
     });
 }

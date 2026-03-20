@@ -238,11 +238,12 @@ function confirmDelete() {
     .then(data => {
         bootstrap.Modal.getInstance(document.getElementById('modalDelete')).hide();
         if (data.success) {
+            showToast('success', 'Empresa excluída com sucesso!');
             allEmpresas = allEmpresas.filter(e => e.id !== deleteId);
             deleteId = null;
             render();
         } else {
-            alert(data.error || 'Erro ao excluir.');
+            showToast('error', data.error || 'Erro ao excluir.');
         }
     });
 }
