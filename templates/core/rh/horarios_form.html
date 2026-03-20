@@ -19,8 +19,8 @@
 
     <!-- Multi-tab Card -->
     <div class="card border-0 shadow-sm" style="border-radius: 12px; min-height: 600px;">
-        <div class="card-header bg-white border-bottom p-0">
-            <ul class="nav nav-tabs border-0 px-4 pt-3" id="horarioTabs" role="tablist">
+        <div class="card-header border-0 p-0" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
+            <ul class="nav nav-tabs border-0 px-4" id="horarioTabs" role="tablist">
                 <li class="nav-item" role="presentation">
                     <button class="nav-link active fw-bold small text-uppercase py-3" id="principal-tab" data-bs-toggle="tab" data-bs-target="#principal" type="button" role="tab">Principal</button>
                 </li>
@@ -239,15 +239,21 @@
 <style>
     .nav-tabs .nav-link {
         border: none;
-        color: #64748b;
+        color: rgba(255, 255, 255, 0.7);
         background: transparent;
         transition: all 0.2s;
-        border-bottom: 2px solid transparent;
-        margin-right: 20px;
+        border-bottom: 3px solid transparent;
+        margin-right: 15px;
+        padding: 1.2rem 1rem !important;
+    }
+    .nav-tabs .nav-link:hover {
+        color: #fff;
+        background: rgba(255, 255, 255, 0.05);
     }
     .nav-tabs .nav-link.active {
-        color: #2563eb;
-        border-bottom: 2px solid #2563eb;
+        color: #fff !important;
+        background: rgba(255, 255, 255, 0.15) !important;
+        border-bottom: 3px solid #fff !important;
     }
     .bg-blue-light { background-color: rgba(37, 99, 235, 0.05); }
     .bg-green-light { background-color: rgba(16, 185, 129, 0.05); }
