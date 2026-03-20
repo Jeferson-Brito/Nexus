@@ -3187,3 +3187,12 @@ def rh_cargos_view(request):
         messages.error(request, 'Acesso restrito para Gestores ou Departamento de RH.')
         return redirect('dashboard')
     return render(request, 'core/rh/cargos_list.html')
+
+
+@login_required
+def rh_centros_custo_view(request):
+    """Tela de gestão de centros de custo"""
+    if not (request.user.is_gestor() or request.user.is_administrador() or getattr(request.user.department, 'name', '') == 'RH'):
+        messages.error(request, 'Acesso restrito para Gestores ou Departamento de RH.')
+        return redirect('dashboard')
+    return render(request, 'core/rh/centros_custo_list.html')

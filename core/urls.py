@@ -121,6 +121,8 @@ urlpatterns = [
     path('rh/empresas/<int:pk>/editar/', views.rh_cadastro_empresa_view, name='rh_editar_empresa'),
     # Departamentos
     path('rh/departamentos/', views.rh_departamentos_view, name='rh_departamentos'),
+    # Centros de Custo
+    path('rh/centros-custo/', views.rh_centros_custo_view, name='rh_centros_custo'),
     # Cargos
     path('rh/cargos/', views.rh_cargos_view, name='rh_cargos'),
     # API Empresas
@@ -135,6 +137,10 @@ urlpatterns = [
     path('api/rh/cargos/', api_rh.api_cargos_list, name='api_cargos_list'),
     path('api/rh/cargos/save/', api_rh.api_save_cargo, name='api_save_cargo'),
     path('api/rh/cargos/<int:pk>/delete/', api_rh.api_delete_cargo, name='api_delete_cargo'),
+    # API Centros de Custo
+    path('api/rh/centros-custo/', api_rh.api_centros_custo_list, name='api_centros_custo_list'),
+    path('api/rh/centros-custo/save/', api_rh.api_save_centro_custo, name='api_save_centro_custo'),
+    path('api/rh/centros-custo/delete/<int:pk>/', api_rh.api_delete_centro_custo, name='api_delete_centro_custo'),
     path('rh/onboarding/', views.under_development, {
         'page_name': 'Acompanhamento de Onboarding',
         'description': 'Checklist interativo para garantir que todos os novos colaboradores recebam equipamentos, acessos e treinamentos necessários.'

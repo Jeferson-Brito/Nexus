@@ -208,13 +208,11 @@
                         <i class="bi bi-briefcase"></i>
                         <span class="link-text">Cargos</span>
                     </a>
-                    <a href="#" class="nav-link sub-link disabled opacity-50" title="Em breve">
+                    <a href="{% url 'rh_centros_custo' %}" 
+                        class="nav-link sub-link {% if 'rh_centros_custo' in request.resolver_match.url_name %}active{% endif %}" 
+                        title="Centros de Custo">
                         <i class="bi bi-currency-dollar"></i>
                         <span class="link-text">Centros de Custo</span>
-                    </a>
-                    <a href="#" class="nav-link sub-link disabled opacity-50" title="Em breve">
-                        <i class="bi bi-door-open"></i>
-                        <span class="link-text">Motivos de Demissão</span>
                     </a>
                     <a href="#" class="nav-link sub-link disabled opacity-50" title="Em breve">
                         <i class="bi bi-calendar-heart"></i>

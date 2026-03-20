@@ -2021,6 +2021,20 @@ class AuditoriaAtendimento(models.Model):
 # Modelos para Gestão de RH e Colaboradores
 # ==================================================
 
+class CentroCusto(models.Model):
+    """Modelo para representar centros de custo"""
+    nome = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Centro de Custo"
+        verbose_name_plural = "Centros de Custo"
+        ordering = ['nome']
+
+    def __str__(self):
+        return self.nome
+
+
 class Cargo(models.Model):
     """Modelo para representar cargos na empresa"""
     nome = models.CharField(max_length=100)
@@ -2128,6 +2142,7 @@ class Colaborador(models.Model):
     data_desligamento = models.DateField(null=True, blank=True)
     cargo_atual = models.CharField(max_length=100)
     department = models.ForeignKey(Department, on_delete=models.PROTECT, related_name='colaboradores_rh')
+    centro_custo = models.ForeignKey('CentroCusto', on_delete=models.SET_NULL, null=True, blank=True, related_name='colaboradores', verbose_name='Centro de Custo')
     empresa = models.ForeignKey('Empresa', on_delete=models.SET_NULL, null=True, blank=True, related_name='colaboradores_empresa', verbose_name='Empresa')
     salario_atual = models.DecimalField(max_digits=10, decimal_places=2)
     tipo_contrato = models.CharField(max_length=20, choices=TIPO_CONTRATO_CHOICES, default='clt')

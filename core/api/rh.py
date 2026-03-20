@@ -13,7 +13,8 @@ import logging
 
 from ..models import (
     Colaborador, Department, HistoricoProfissional, 
-    PerformanceRH, User, DocumentoColaborador, Empresa, Cargo
+    PerformanceRH, User, DocumentoColaborador, Empresa, Cargo,
+    CentroCusto
 )
 
 logger = logging.getLogger(__name__)
@@ -218,6 +219,8 @@ def api_save_colaborador(request):
             colaborador.cargo_atual = data.get('cargo')
             colaborador.cargo_inicial = data.get('cargo_inicial', '')
             colaborador.department_id = data.get('department_id')
+            centro_custo_id = data.get('centro_custo') or None
+            colaborador.centro_custo_id = centro_custo_id if centro_custo_id else None
             empresa_id = data.get('empresa_id') or None
             colaborador.empresa_id = empresa_id if empresa_id else None
             colaborador.salario_atual = parse_decimal(data.get('salario_atual'))
@@ -311,14 +314,15 @@ def api_rh_auxiliar_data(request):
         c['id'] = str(c['id'])
         c['department_id'] = str(c['department_id'])
     
-    depts = list(Department.objects.all().values('id', 'name'))
-    for dept in depts:
-        dept['id'] = str(dept['id'])
+    centros = list(CentroCusto.objects.all().values('id', 'nome'))
+    for c in centros:
+        c['id'] = str(c['id'])
     
     return JsonResponse({
         'success': True,
         'cargos': cargos,
         'departments': depts,
+        'centros_custo': centros,
         'status_choices': dict(Colaborador.STATUS_CHOICES),
         'tipo_contrato_choices': dict(Colaborador.TIPO_CONTRATO_CHOICES),
         'tipo_evento_choices': dict(HistoricoProfissional.TIPO_EVENTO_CHOICES),
@@ -680,4 +684,58 @@ def api_delete_cargo(request, pk):
         return JsonResponse({'success': True, 'message': 'Cargo excluído com sucesso.'})
     except Exception as ex:
         logger.error(f"Erro ao excluir cargo: {ex}")
+        return JsonResponse({'success': False, 'error': str(ex)}, status=500)
+
+# ─────────────────────────────────────────────
+#  CENTROS DE CUSTO
+# ─────────────────────────────────────────────
+
+@login_required
+@require_http_methods(["GET"])
+def api_centros_custo_list(request):
+    """Lista todos os centros de custo com contagem de funcionários"""
+    try:
+        from django.db.models import Count
+        centros = CentroCusto.objects.annotate(num_funcionarios=Count('colaboradores'))
+        return JsonResponse({'success': True, 'centros': [
+            {
+                'id': str(c.id),
+                'nome': c.nome,
+                'num_funcionarios': c.num_funcionarios,
+            } for c in centros
+        ]})
+    except Exception as ex:
+        return JsonResponse({'success': False, 'error': str(ex)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def api_save_centro_custo(request):
+    """Cria ou atualiza um centro de custo"""
+    try:
+        data = json.loads(request.body)
+        pk = data.get('id')
+        
+        if pk:
+            centro = get_object_or_404(CentroCusto, pk=pk)
+        else:
+            centro = CentroCusto()
+        
+        centro.nome = data.get('nome', '')
+        centro.save()
+        
+        return JsonResponse({'success': True, 'message': 'Centro de custo salvo com sucesso.', 'id': str(centro.id)})
+    except Exception as ex:
+        return JsonResponse({'success': False, 'error': str(ex)}, status=500)
+
+
+@login_required
+@require_http_methods(["DELETE"])
+def api_delete_centro_custo(request, pk):
+    """Exclui um centro de custo"""
+    try:
+        centro = get_object_or_404(CentroCusto, pk=pk)
+        centro.delete()
+        return JsonResponse({'success': True, 'message': 'Centro de custo excluído com sucesso.'})
+    except Exception as ex:
         return JsonResponse({'success': False, 'error': str(ex)}, status=500)
