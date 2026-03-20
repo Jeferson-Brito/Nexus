@@ -350,6 +350,14 @@ def api_rh_auxiliar_data(request):
     for t in turnos:
         t['id'] = str(t['id'])
 
+    justificativas = list(JustificativaPonto.objects.all().values('id', 'nome'))
+    for j in justificativas:
+        j['id'] = str(j['id'])
+
+    colabs = list(Colaborador.objects.filter(status='ativo').values('id', 'nome_completo'))
+    for c in colabs:
+        c['id'] = str(c['id'])
+
     response_data = {
         'success': True,
         'cargos': cargos,
@@ -357,13 +365,16 @@ def api_rh_auxiliar_data(request):
         'centros_custo': centros,
         'empresas': empresas,
         'turnos': turnos,
+        'justificativas': justificativas,
+        'colaboradores': colabs,
         'status_choices': dict(Colaborador.STATUS_CHOICES),
         'tipo_contrato_choices': dict(Colaborador.TIPO_CONTRATO_CHOICES),
         'tipo_evento_choices': dict(HistoricoProfissional.TIPO_EVENTO_CHOICES),
         'tipo_performance_choices': dict(PerformanceRH.TIPO_CHOICES)
     }
     
-    # Cache por 2 horas
+    # Cache por 2 horas - Invalida cache anterior pra garantir que venha os novos campos
+    cache.delete(cache_key)
     cache.set(cache_key, response_data, 7200)
     
     return JsonResponse(response_data)

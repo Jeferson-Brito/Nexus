@@ -110,8 +110,8 @@
 {% block content %}
 <div class="container-fluid py-4">
     <div class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
-        <div class="card-header bg-white border-0 pt-4 px-4">
-            <h5 class="fw-bold mb-0 text-dark">Atribuições em massa</h5>
+        <div class="card-header border-0 py-3 px-4" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
+            <h5 class="fw-bold mb-0 text-white">Atribuições em massa</h5>
         </div>
         
         <div class="card-body p-4">
@@ -168,7 +168,8 @@
                         <!-- Row 1 -->
                         <div class="col-md-8">
                             <label class="filter-label">Funcionários</label>
-                            <select id="filter_colab" class="form-select form-select-custom" multiple size="1"></select>
+                            <select id="filter_colab" class="form-select form-select-custom" multiple>
+                            </select>
                         </div>
                         <div class="col-md-4">
                             <label class="filter-label">Horários</label>
@@ -352,28 +353,46 @@
     });
 
     async function loadAuxData() {
+        console.log("Iniciando carregamento de dados auxiliares...");
         try {
             const resp = await fetch('/api/rh/auxiliar-data/');
             const data = await resp.json();
+            console.log("Dados recebidos da API:", data);
             if (data.success) {
                 auxData = data;
                 populateStep2();
+            } else {
+                console.error("Erro na API de dados auxiliares:", data.error);
+                alert("Erro ao carregar dados para os filtros. Verifique o console.");
             }
-        } catch(e) { console.error('Error loading data', e); }
+        } catch(e) { 
+            console.error('Erro de conexão ao carregar dados:', e); 
+            alert("Erro de conexão ao carregar dados. Verifique sua rede.");
+        }
     }
 
     function populateStep2() {
-        populateSelect('filter_colab', auxData.colaboradores, c => `<option value="${c.id}">${c.nome_completo}</option>`);
+        console.log("Populando Passo 2 com auxData:", auxData);
+        // Populamos o select de colaboradores (múltiplo)
+        const colabSelect = document.getElementById('filter_colab');
+        if (colabSelect) {
+            colabSelect.innerHTML = (auxData.colaboradores || []).map(c => `<option value="${c.id}">${c.nome_completo}</option>`).join('');
+        }
+        
         populateSelect('filter_horario', auxData.turnos, t => `<option value="${t.id}">${t.nome}</option>`);
         populateSelect('filter_empresa', auxData.empresas, e => `<option value="${e.id}">${e.nome}</option>`);
         populateSelect('filter_depto', auxData.departments, d => `<option value="${d.id}">${d.name}</option>`);
         populateSelect('filter_centro', auxData.centros_custo, c => `<option value="${c.id}">${c.nome}</option>`);
         populateSelect('filter_cargo', auxData.cargos, c => `<option value="${c.nome}">${c.nome}</option>`);
+        console.log("Passo 2 populado.");
     }
 
     function populateSelect(id, data, mapFn) {
         const el = document.getElementById(id);
-        if (!el) return;
+        if (!el) {
+            console.warn(`Elemento ${id} não encontrado para população.`);
+            return;
+        }
         el.innerHTML = '<option value="">Selecione</option>' + (data || []).map(mapFn).join('');
     }
 
