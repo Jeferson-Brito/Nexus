@@ -1,0 +1,376 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-4" style="background-color: #f8f9fa; min-height: 100vh;">
+    <!-- Cabeçalho -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <h4 class="fw-bold mb-0 text-dark">{{ page_title }}</h4>
+    </div>
+
+    <!-- Tela de Filtros (Card) -->
+    <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
+        <div class="card-body p-4">
+            <form id="formFiltroApuracao">
+                <div class="row g-4">
+                    <!-- Linha 1 -->
+                    <div class="col-md-6">
+                        <label class="form-label small text-muted">Empresa</label>
+                        <select class="form-select text-secondary" id="filtro_empresa"><option>Selecione</option></select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small text-muted">Departamento</label>
+                        <select class="form-select text-secondary" id="filtro_departamento"><option>Selecione</option></select>
+                    </div>
+                    
+                    <!-- Linha 2 -->
+                    <div class="col-md-6 border-top pt-3">
+                        <label class="form-label small text-muted">Centro de custo</label>
+                        <select class="form-select text-secondary" id="filtro_centro_custo"><option>Selecione</option></select>
+                    </div>
+                    <div class="col-md-6 border-top pt-3">
+                        <label class="form-label small text-muted">Cargo</label>
+                        <select class="form-select text-secondary" id="filtro_cargo"><option>Selecione</option></select>
+                    </div>
+
+                    <!-- Linha 3 -->
+                    <div class="col-md-6 border-top pt-3">
+                        <label class="form-label small text-muted">Horário</label>
+                        <select class="form-select text-secondary" id="filtro_horario"><option>Selecione</option></select>
+                    </div>
+                    <div class="col-md-6 border-top pt-3">
+                        <label class="form-label small text-muted">Pessoas</label>
+                        <select class="form-select text-secondary" id="filtro_pessoas"><option>Selecione</option></select>
+                    </div>
+
+                    <!-- Linha 4 -->
+                    <div class="col-md-3 border-top pt-3">
+                        <label class="form-label small text-muted">Início</label>
+                        <input type="date" class="form-control text-secondary" id="filtro_inicio">
+                    </div>
+                    <div class="col-md-3 border-top pt-3">
+                        <label class="form-label small text-muted">Fim</label>
+                        <input type="date" class="form-control text-secondary" id="filtro_fim">
+                    </div>
+                    <div class="col-md-6 border-top pt-3 d-flex align-items-end">
+                        <button type="button" class="btn btn-primary px-5" id="btnBuscarApuracao">Buscar</button>
+                    </div>
+                    
+                    <div class="col-12 mt-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="filtro_inconsistencias">
+                            <label class="form-check-label text-muted small" for="filtro_inconsistencias">
+                                Mostrar apenas inconsistências
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- Tabela de Apuração e Toolbar -->
+    <div class="card border-0 shadow-sm" style="border-radius: 12px; display: none;" id="cardApuracao">
+        
+        <!-- Toolbar (Header da Tabela) -->
+        <div class="card-header bg-white border-bottom p-3 d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <h6 class="mb-0 fw-bold px-3 py-2 bg-light rounded text-dark" id="lblEmpregadoAtual">Selecione um funcionário</h6>
+                
+                <!-- Paginação Inline -->
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-secondary"><i class="bi bi-chevron-left"></i></button>
+                    <span class="btn btn-outline-secondary disabled text-dark" id="lblPaginacao">1 de 1</span>
+                    <button class="btn btn-outline-secondary"><i class="bi bi-chevron-right"></i></button>
+                </div>
+            </div>
+            
+            <div class="d-flex align-items-center gap-2">
+                <!-- Dropdown de Visuais de Colunas -->
+                <div class="dropdown">
+                    <button class="btn btn-outline-secondary btn-sm dropdown-toggle d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                        <i class="bi bi-gear"></i> Colunas
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end p-0 shadow" style="width: 320px;">
+                        <div class="p-3 border-bottom d-flex gap-2 text-center">
+                            <button class="btn btn-light border flex-fill pt-3 pb-2 text-primary text-decoration-none" data-bs-toggle="modal" data-bs-target="#modalCriarVisual">
+                                <i class="bi bi-rocket-takeoff d-block fs-4 mb-1"></i>
+                                <small>Criar visual</small>
+                            </button>
+                            <button class="btn btn-light border flex-fill pt-3 pb-2 text-primary text-decoration-none">
+                                <i class="bi bi-pencil-square d-block fs-4 mb-1"></i>
+                                <small>Editar visuais</small>
+                            </button>
+                        </div>
+                        <div class="p-2" id="dropdownApuracaoColunas">
+                            <h6 class="dropdown-header text-uppercase fw-bold text-primary small">Escolha de Colunas</h6>
+                            <!-- Accordion dinâmico via JS -->
+                            <div class="accordion accordion-flush" id="accordionColunas">
+                                <!-- Gerado via JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="btn btn-outline-secondary btn-sm" title="Imprimir"><i class="bi bi-printer"></i></button>
+                <button class="btn btn-outline-secondary btn-sm" title="Recarregar"><i class="bi bi-arrow-repeat"></i></button>
+                
+                <div class="d-flex align-items-center gap-3 ms-3 border-start ps-3">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="toggleColunasApuracao" checked>
+                        <label class="form-check-label small text-muted">Colunas apuração</label>
+                    </div>
+                    <div class="form-check form-switch border-start ps-4">
+                        <input class="form-check-input" type="checkbox" id="toggleColunasCalculo">
+                        <label class="form-check-label small text-muted">Colunas cálculo</label>
+                    </div>
+                    <div class="form-check form-switch border-start ps-4">
+                        <input class="form-check-input" type="checkbox" id="toggleColunasAjuste">
+                        <label class="form-check-label small text-muted">Colunas ajuste</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Grade da Tabela -->
+        <div class="table-responsive">
+            <table class="table table-hover table-sm mb-0 align-middle text-center text-nowrap" id="tabelaApuracao">
+                <thead class="bg-light text-muted small">
+                    <tr id="tabelaApuracaoThead">
+                        <!-- Gerado dinamicamente -->
+                    </tr>
+                </thead>
+                <tbody id="tabelaApuracaoTbody">
+                    <!-- Gerado dinamicamente -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<!-- Modal: Criar Visual de Colunas -->
+<div class="modal fade" id="modalCriarVisual" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title fw-bold">Criar layout de colunas</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-4">
+                    <!-- Nome e Ícone -->
+                    <div class="col-md-5 border-end">
+                        <div class="mb-4">
+                            <label class="form-label small text-muted">Nome</label>
+                            <input type="text" class="form-control" id="visual_nome" placeholder="Nome do padrão">
+                        </div>
+                        <div>
+                            <label class="form-label small text-muted">Ícone</label>
+                            <div class="d-flex flex-wrap gap-2" id="gridIconesVisual">
+                                <!-- Opções geradas por JS -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Escolha das Colunas -->
+                    <div class="col-md-7">
+                        <label class="form-label small text-muted">Colunas</label>
+                        <div class="border rounded p-2 overflow-auto" style="height: 350px;">
+                            <div class="accordion accordion-flush" id="accordionModalColunas">
+                                <!-- Gerado dinamicamente copiando lógica do dropdown -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-top-0 pt-0 justify-content-start">
+                <button type="button" class="btn btn-primary px-4" id="btnSalvarVisual">Salvar</button>
+                <button type="button" class="btn btn-light px-4 border" data-bs-dismiss="modal">Cancelar</button>
+            </div>
+        </div>
+    </div>
+<!-- Modal: Incluir Marcação -->
+<div class="modal fade" id="modalIncluirMarcacao" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title fw-bold">Incluir marcação</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formIncluirMarcacao">
+                    <div class="mb-3">
+                        <label class="form-label small text-muted">Empregado</label>
+                        <input type="text" class="form-control bg-light" id="marc_empregado" readonly>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label small text-muted">PIS</label>
+                        <input type="text" class="form-control bg-light" id="marc_pis" readonly>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-6">
+                            <label class="form-label small text-muted">Data</label>
+                            <input type="text" class="form-control fw-bold" id="marc_data" readonly style="border: none; background: transparent; padding-left: 0; font-size: 1.1rem;">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small text-muted">Novo horário</label>
+                            <div class="input-group">
+                                <input type="time" class="form-control" id="marc_hora">
+                                <button class="btn btn-danger" type="button" onclick="document.getElementById('marc_hora').value=''" title="Limpar"><i class="bi bi-x"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label small text-muted">Motivo</label>
+                        <textarea class="form-control" id="marc_motivo" rows="3" placeholder="Insira o motivo da marcação manual..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-top-0 pt-0 justify-content-end">
+                <button type="button" class="btn btn-light border px-4" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary px-4" id="btnSalvarMarcacao">Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Lógica Frontend da Apuração de Ponto
+    const colunasDisponiveis = [
+        { categoria: 'Geral', id: 'cat_geral', colunas: [
+            { id: 'col_comp', nome: 'Compensação diária' },
+            { id: 'col_almoco', nome: 'Almoço livre' },
+            { id: 'col_folga', nome: 'Folga' },
+            { id: 'col_neutro', nome: 'Neutro' },
+            { id: 'col_excluidas', nome: 'Marcações excluídas' }
+        ]},
+        { categoria: 'Horas Normais', id: 'cat_normais', colunas: [
+            { id: 'col_total_normais', nome: 'Total Normais', padrao: true },
+            { id: 'col_total_noturno', nome: 'Total Noturno', padrao: true }
+        ]},
+        { categoria: 'Faltas e Atrasos', id: 'cat_faltas', colunas: [
+            { id: 'col_dia_falta', nome: 'Dia Falta', padrao: true },
+            { id: 'col_falta_atraso', nome: 'Falta e atraso', padrao: true },
+            { id: 'col_abono', nome: 'Abono' }
+        ]},
+        { categoria: 'Horas Extras', id: 'cat_ext', colunas: [
+            { id: 'col_ext_diurna', nome: 'Extra Diurna', padrao: true },
+            { id: 'col_ext_noturna', nome: 'Extra Noturna', padrao: true },
+            { id: 'col_ext_50', nome: 'Extra 50,0%' },
+            { id: 'col_ext_100', nome: 'Extra 100,0%' }
+        ]}
+    ];
+
+    document.addEventListener('DOMContentLoaded', () => {
+        renderListaColunas();
+        
+        document.getElementById('btnBuscarApuracao').addEventListener('click', () => {
+            // Mostrar skeleton e buscar dadso
+            document.getElementById('cardApuracao').style.display = 'block';
+            document.getElementById('lblEmpregadoAtual').innerText = 'Carregando funcionário...';
+            
+            // TODO: Integrar com API real, mock initial
+            setTimeout(() => {
+                document.getElementById('lblEmpregadoAtual').innerText = 'Primeiro Funcionário';
+                renderEmptyTabela(); // Desenha a tabela básica mockup
+            }, 800);
+        });
+    });
+
+    function renderListaColunas() {
+        let htmlDropdown = '';
+        let htmlModal = '';
+        
+        colunasDisponiveis.forEach((cat, index) => {
+            let colHtml = cat.colunas.map(c => `
+                <div class="form-check text-start mb-2 ms-2">
+                    <input class="form-check-input check-coluna" type="checkbox" value="${c.id}" id="chk_${cat.id}_${c.id}" ${c.padrao ? 'checked' : ''}>
+                    <label class="form-check-label small" for="chk_${cat.id}_${c.id}">${c.nome}</label>
+                </div>
+            `).join('');
+
+            let accordionItem = `
+                <div class="accordion-item border-0 border-bottom">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button ${index > 0 ? 'collapsed' : ''} bg-white shadow-none py-2 px-1 text-muted small" type="button" data-bs-toggle="collapse" data-bs-target="#${cat.id}">
+                            ${cat.categoria}
+                        </button>
+                    </h2>
+                    <div id="${cat.id}" class="accordion-collapse collapse ${index === 0 ? 'show' : ''}">
+                        <div class="accordion-body p-2 pt-0 pb-3">
+                            ${colHtml}
+                        </div>
+                    </div>
+                </div>
+            `;
+            htmlDropdown += accordionItem;
+            htmlModal += accordionItem.replace(/chk_/g, 'modal_chk_');
+        });
+
+        document.getElementById('accordionColunas').innerHTML = htmlDropdown;
+        document.getElementById('accordionModalColunas').innerHTML = htmlModal;
+    }
+
+    function renderEmptyTabela() {
+        // Gera um cabeçalho fixo simulando a imagem 2
+        let thead = `
+            <th class="py-3 text-start">Dia</th>
+            <th class="py-3 text-center">Status</th>
+            <th class="py-3 text-center">Previsto</th>
+            <th class="py-3 bg-blue-light">Ent 1</th>
+            <th class="py-3 bg-blue-light">Sai 1</th>
+            <th class="py-3 bg-green-light">Ent 2</th>
+            <th class="py-3 bg-green-light">Sai 2</th>
+            <th class="py-3">Total Normais</th>
+            <th class="py-3">Falta / Atraso</th>
+            <th class="py-3">Extras</th>
+        `;
+        document.getElementById('tabelaApuracaoThead').innerHTML = thead;
+
+        // Linhas Mock
+        let trHtml = `
+            <tr>
+                <td class="text-start">07/05 <span class="text-muted ms-1">Qui</span></td>
+                <td><i class="bi bi-check-circle text-success" title="OK"></i></td>
+                <td class="small text-muted">08:00-12:00<br>13:00-17:00</td>
+                <td class="text-primary fw-bold" style="cursor: pointer" onclick="abrirInclusaoPonto('07/05/2020', 'Ent 1')">08:00</td>
+                <td class="text-primary fw-bold" style="cursor: pointer" onclick="abrirInclusaoPonto('07/05/2020', 'Sai 1')">12:00</td>
+                <td class="text-primary fw-bold" style="cursor: pointer" onclick="abrirInclusaoPonto('07/05/2020', 'Ent 2')">13:00</td>
+                <td class="text-primary fw-bold" style="cursor: pointer" onclick="abrirInclusaoPonto('07/05/2020', 'Sai 2')">17:00</td>
+                <td>08:00</td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td class="text-start">08/05 <span class="text-muted ms-1">Sex</span></td>
+                <td><i class="bi bi-exclamation-circle text-danger" title="Inconsistência"></i></td>
+                <td class="small text-muted">08:00-12:00<br>13:00-17:00</td>
+                <td class="text-danger fw-bold" style="cursor: pointer" onclick="abrirInclusaoPonto('08/05/2020', 'Ent 1')">08:50</td>
+                <td class="text-primary fw-bold" style="cursor: pointer" onclick="abrirInclusaoPonto('08/05/2020', 'Sai 1')">12:00</td>
+                <td class="text-primary fw-bold" style="cursor: pointer" onclick="abrirInclusaoPonto('08/05/2020', 'Ent 2')">13:00</td>
+                <td class="text-primary fw-bold" style="cursor: pointer" onclick="abrirInclusaoPonto('08/05/2020', 'Sai 2')">17:00</td>
+                <td>07:10</td>
+                <td class="text-danger fw-bold">00:50</td>
+                <td></td>
+            </tr>
+        `;
+        document.getElementById('tabelaApuracaoTbody').innerHTML = trHtml;
+    }
+
+    function abrirInclusaoPonto(dataObj, horarioFaltante) {
+        document.getElementById('marc_empregado').value = document.getElementById('lblEmpregadoAtual').innerText;
+        document.getElementById('marc_pis').value = '11111111';
+        document.getElementById('marc_data').value = dataObj;
+        document.getElementById('marc_hora').value = '';
+        document.getElementById('marc_motivo').value = 'Inserção de ponto';
+        
+        let modal = new bootstrap.Modal(document.getElementById('modalIncluirMarcacao'));
+        modal.show();
+    }
+</script>
+{% endblock %}

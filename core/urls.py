@@ -131,6 +131,8 @@ urlpatterns = [
     path('rh/horarios/', views.rh_horarios_view, name='rh_horarios'),
     path('rh/horarios/add/', views.rh_cadastro_horario_view, name='rh_cadastro_horario_add'),
     path('rh/horarios/<int:pk>/', views.rh_cadastro_horario_view, name='rh_cadastro_horario'),
+    # Apuração de Ponto
+    path('rh/apuracao/', views.rh_apuracao_view, name='rh_apuracao'),
     # API Empresas
     path('api/rh/empresas/', api_rh.api_empresas_list, name='api_empresas_list'),
     path('api/rh/empresas/save/', api_rh.api_save_empresa, name='api_save_empresa'),

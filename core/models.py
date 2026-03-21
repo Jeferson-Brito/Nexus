@@ -2662,3 +2662,18 @@ class BancoHoras(models.Model):
 
     def __str__(self):
         return f'Banco Horas — {self.colaborador.nome_completo} ({self.saldo_formatado})'
+
+class VisualColunaApuracao(models.Model):
+    """Layouts personalizados de colunas para a tela de Apuração de Ponto"""
+    usuario = models.ForeignKey('User', on_delete=models.CASCADE, related_name='visuais_apuracao')
+    nome = models.CharField(max_length=100)
+    icone = models.CharField(max_length=50, default='bi-layout-text-window')
+    colunas = models.JSONField(default=list)
+    padrao = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-padrao', 'nome']
+
+    def __str__(self):
+        return f'{self.nome} ({self.usuario.username})'

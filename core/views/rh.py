@@ -150,3 +150,7 @@ def rh_cadastro_horario_view(request, pk=None):
         'horario_id': horario_id,
         'page_title': page_title,
     })
+
+@login_required
+def rh_apuracao_view(request):
+    return render(request, 'core/rh/apuracao_ponto.html', {'page_title': 'Apuração de Ponto'})
