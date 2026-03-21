@@ -325,6 +325,11 @@ urlpatterns = [
     path('api/rh/colaboradores/documentos/upload/', api_rh.api_upload_documento, name='api_rh_upload_documento'),
     path('api/rh/colaboradores/documentos/<int:pk>/delete/', api_rh.api_delete_documento, name='api_rh_delete_documento'),
 
+    # API RH - Apuração Visuais
+    path('api/rh/apuracao/layout/listar/', api_rh.api_listar_visuais_apuracao, name='api_listar_visuais_apuracao'),
+    path('api/rh/apuracao/layout/salvar/', api_rh.api_salvar_visual_apuracao, name='api_salvar_visual_apuracao'),
+    path('api/rh/apuracao/layout/excluir/<int:pk>/', api_rh.api_excluir_visual_apuracao, name='api_excluir_visual_apuracao'),
+
     # Ponto Eletrônico - Views
     path('ponto/tablet/', views_ponto.ponto_kiosk, name='ponto_kiosk'),
     path('rh/ponto/', views_ponto.ponto_admin, name='ponto_admin'),

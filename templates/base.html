@@ -329,16 +329,15 @@
                 <span class="link-text">Ponto e Frequência</span>
             </a>
 
-            <!-- Apuração e Cálculo -->
-            <a href="#apuracaoCalculoSubmenu" class="nav-link dropdown-toggle-custom" data-bs-toggle="collapse"
-                aria-expanded="false" aria-controls="apuracaoCalculoSubmenu">
+            <a href="#apuracaoCalculoSubmenu" class="nav-link dropdown-toggle-custom {% if 'rh_apuracao' in request.resolver_match.url_name %}active{% endif %}" data-bs-toggle="collapse"
+                aria-expanded="{% if 'rh_apuracao' in request.resolver_match.url_name %}true{% else %}false{% endif %}" aria-controls="apuracaoCalculoSubmenu">
                 <i class="bi bi-calculator"></i>
                 <span class="link-text">Apuração e Cálculo</span>
                 <i class="bi bi-chevron-down ms-auto arrow-icon"></i>
             </a>
-            <div class="collapse nav-submenu-container" id="apuracaoCalculoSubmenu">
+            <div class="collapse nav-submenu-container {% if 'rh_apuracao' in request.resolver_match.url_name %}show{% endif %}" id="apuracaoCalculoSubmenu">
                 <div class="nav-submenu">
-                    <a href="#" class="nav-link sub-link disabled opacity-50" title="Em breve">
+                    <a href="{% url 'rh_apuracao' %}" class="nav-link sub-link {% if request.resolver_match.url_name == 'rh_apuracao' %}active{% endif %}">
                         <i class="bi bi-clipboard-data"></i>
                         <span class="link-text">Apuração de Ponto</span>
                     </a>

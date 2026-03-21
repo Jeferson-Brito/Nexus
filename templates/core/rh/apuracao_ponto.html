@@ -111,7 +111,7 @@
                     </div>
                 </div>
                 
-                <button class="btn btn-outline-secondary btn-sm" title="Imprimir"><i class="bi bi-printer"></i></button>
+                <button class="btn btn-outline-secondary btn-sm" title="Imprimir" data-bs-toggle="modal" data-bs-target="#modalImprimirRelatorio"><i class="bi bi-printer"></i></button>
                 <button class="btn btn-outline-secondary btn-sm" title="Recarregar"><i class="bi bi-arrow-repeat"></i></button>
                 
                 <div class="d-flex align-items-center gap-3 ms-3 border-start ps-3">
@@ -236,6 +236,68 @@
     </div>
 </div>
 
+<!-- Modal: Imprimir Relatório -->
+<div class="modal fade" id="modalImprimirRelatorio" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title fw-bold">Imprimir Relatório</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body pb-0">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label small text-muted">Funcionário(s):</label>
+                        <select class="form-select text-secondary"><option>Apenas funcionário selecio</option></select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small text-muted">Relatório:</label>
+                        <select class="form-select text-secondary">
+                            <option>Cartão de Ponto</option>
+                            <option>Extrato de Ponto</option>
+                            <option>Extrato por período</option>
+                            <option>Folha</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small text-muted">Formato:</label>
+                        <select class="form-select text-secondary">
+                            <option>HTML</option>
+                            <option>PDF</option>
+                            <option>CSV</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="mt-4 border p-3 bg-light rounded" style="min-height: 250px;">
+                    <ul class="nav nav-tabs border-bottom-0 mb-3" role="tablist">
+                        <li class="nav-item border-bottom pb-1 border-primary border-2 w-50" role="presentation">
+                            <button class="nav-link border-0 text-primary fw-bold text-uppercase small w-100 text-start bg-transparent py-0 active" data-bs-toggle="tab" data-bs-target="#tabEscolhaColunas" type="button" role="tab" aria-selected="true">Escolha de Colunas</button>
+                        </li>
+                        <li class="nav-item border-bottom pb-1 w-50" role="presentation">
+                            <button class="nav-link border-0 text-muted fw-bold text-uppercase small w-100 text-start bg-transparent py-0" data-bs-toggle="tab" data-bs-target="#tabVisuaisSalvos" type="button" role="tab" aria-selected="false">Visuais Salvos</button>
+                        </li>
+                    </ul>
+                    <div class="tab-content">
+                        <div class="tab-pane fade show active" id="tabEscolhaColunas" role="tabpanel">
+                            <div class="accordion accordion-flush" id="accordionModalImprimir">
+                                <!-- Gerado via JS baseando-se nas colunas disponíveis -->
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="tabVisuaisSalvos" role="tabpanel">
+                            <div class="text-center py-4 text-muted small"><i class="bi bi-exclamation-circle me-1"></i> Nenhum visual salvo ainda.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-top-0 pt-3 justify-content-start">
+                <button type="button" class="btn btn-primary px-4 bg-primary bg-opacity-75 border-0">Gerar Relatório</button>
+                <button type="button" class="btn btn-light px-4 border" data-bs-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}
@@ -266,21 +328,207 @@
         ]}
     ];
 
+    let visuaisSalvos = [];
+    let layoutAtual = []; // Array de IDs de colunas visíveis
+
     document.addEventListener('DOMContentLoaded', () => {
+        // Define o layout padrao inicial baseado no JS array
+        colunasDisponiveis.forEach(cat => {
+            cat.colunas.forEach(c => {
+                if(c.padrao) layoutAtual.push(c.id);
+            });
+        });
+
         renderListaColunas();
+        carregarVisuais();
         
         document.getElementById('btnBuscarApuracao').addEventListener('click', () => {
-            // Mostrar skeleton e buscar dadso
             document.getElementById('cardApuracao').style.display = 'block';
             document.getElementById('lblEmpregadoAtual').innerText = 'Carregando funcionário...';
-            
-            // TODO: Integrar com API real, mock initial
             setTimeout(() => {
                 document.getElementById('lblEmpregadoAtual').innerText = 'Primeiro Funcionário';
-                renderEmptyTabela(); // Desenha a tabela básica mockup
+                renderEmptyTabela(); 
+                aplicarLayoutNaTabela();
             }, 800);
         });
+
+        document.getElementById('btnSalvarVisual').addEventListener('click', salvarVisual);
+        
+        // Populate modal selection when click in 'Criar visual'
+        const modalCriarVisual = document.getElementById('modalCriarVisual');
+        if(modalCriarVisual) {
+            modalCriarVisual.addEventListener('show.bs.modal', function (event) {
+                // Ao abrir, limpa
+                document.getElementById('visual_nome').value = '';
+                atualizarCheckboxes(layoutAtual, 'modal_chk_');
+            });
+        }
     });
+
+    function atualizarCheckboxes(ativos, prefix) {
+        document.querySelectorAll(`input[id^='${prefix}']`).forEach(chk => {
+            chk.checked = ativos.includes(chk.value);
+        });
+    }
+
+    function getSelectedCheckboxes(prefix) {
+        const checkboxes = document.querySelectorAll(`input[id^='${prefix}']`);
+        let selecionadas = [];
+        checkboxes.forEach(chk => {
+            if(chk.checked) selecionadas.push(chk.value);
+        });
+        return selecionadas;
+    }
+
+    function salvarVisual() {
+        const nome = document.getElementById('visual_nome').value;
+        const colunas = getSelectedCheckboxes('modal_chk_');
+        
+        if (!nome) {
+            Swal.fire({icon: 'error', title: 'Atenção', text: 'Informe um nome para o visual!'});
+            return;
+        }
+
+        const data = {
+            nome: nome,
+            icone: 'bi-layout-text-window',
+            colunas: colunas,
+            padrao: false
+        };
+
+        const btn = document.getElementById('btnSalvarVisual');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Salvando...';
+
+        fetch('/api/rh/apuracao/layout/salvar/', {
+            method: 'POST',
+            body: JSON.stringify(data),
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(r => r.json())
+        .then(res => {
+            btn.disabled = false;
+            btn.innerHTML = 'Salvar';
+            if (res.success) {
+                Swal.fire({icon: 'success', title: 'Sucesso', text: 'Visual salvo!', timer: 2000, showConfirmButton: false});
+                
+                // Fecha o modal e recarrega
+                const modalEl = document.getElementById('modalCriarVisual');
+                const modal = bootstrap.Modal.getInstance(modalEl);
+                if(modal) modal.hide();
+                
+                carregarVisuais();
+                
+                // Opicional: já aplica o layout
+                layoutAtual = colunas;
+                aplicarLayoutNaTabela();
+                atualizarCheckboxes(layoutAtual, 'chk_'); // Atualiza dropdown toolbar
+            } else {
+                Swal.fire({icon: 'error', title: 'Erro', text: res.error});
+            }
+        }).catch(err => {
+            btn.disabled = false;
+            btn.innerHTML = 'Salvar';
+            console.error(err);
+        });
+    }
+
+    function carregarVisuais() {
+        fetch('/api/rh/apuracao/layout/listar/')
+        .then(r => r.json())
+        .then(res => {
+            if(res.success) {
+                visuaisSalvos = res.visuais;
+                renderVisuaisList();
+            }
+        });
+    }
+
+    function excluirVisual(id, event) {
+        if(event) event.stopPropagation();
+        
+        Swal.fire({
+            title: 'Excluir visual?',
+            text: "Deseja realmente remover este layout?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sim, excluir'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/api/rh/apuracao/layout/excluir/${id}/`, {
+                    method: 'DELETE',
+                    headers: { 'X-CSRFToken': getCookie('csrftoken') }
+                })
+                .then(r => r.json())
+                .then(res => {
+                    if (res.success) {
+                        carregarVisuais();
+                    } else {
+                        Swal.fire('Erro', res.error, 'error');
+                    }
+                });
+            }
+        });
+    }
+
+    function renderVisuaisList() {
+        let relatorioList = document.getElementById('tabVisuaisSalvos');
+        let dropdownList = document.getElementById('dropdownApuracaoColunas');
+        
+        if (visuaisSalvos.length === 0) {
+            relatorioList.innerHTML = '<div class="text-center py-4 text-muted small"><i class="bi bi-exclamation-circle me-1"></i> Nenhum visual salvo ainda.</div>';
+            // Para dropdown mantem o acordeon
+        } else {
+            let html = '<div class="d-flex flex-column gap-2 p-2">';
+            let dropdownSalvosHtml = '<h6 class="dropdown-header text-uppercase fw-bold text-primary small mt-3">Meus Visuais</h6><div class="d-flex flex-column gap-2 p-2 border-bottom">';
+            visuaisSalvos.forEach(v => {
+                let btnHtml = `
+                <div class="d-flex w-100 gap-1 mb-1">
+                    <button class="btn btn-light text-start border rounded flex-fill" onclick="selecionarVisual('${v.id}')">
+                        <i class="bi bi-layout-text-window me-2 text-primary"></i> ${v.nome}
+                    </button>
+                    <button class="btn btn-light text-danger border rounded px-2" onclick="excluirVisual('${v.id}', event)" title="Excluir"><i class="bi bi-trash"></i></button>
+                </div>`;
+                html += btnHtml;
+                dropdownSalvosHtml += btnHtml;
+            });
+            html += '</div>';
+            dropdownSalvosHtml += '</div>';
+            
+            relatorioList.innerHTML = html;
+            
+            // Injeta os visuais salvos ANTES do accordion de colunas normais no Dropdown de colunas
+            let baseAccordion = document.getElementById('accordionColunas').outerHTML;
+            dropdownList.innerHTML = dropdownSalvosHtml + '<h6 class="dropdown-header text-uppercase fw-bold text-primary small mt-3">Escolha de Colunas</h6>' + baseAccordion;
+        }
+    }
+
+    function selecionarVisual(id) {
+        const visual = visuaisSalvos.find(v => v.id == id);
+        if (visual) {
+            layoutAtual = visual.colunas;
+            aplicarLayoutNaTabela();
+            // sync chks
+            atualizarCheckboxes(layoutAtual, 'chk_');
+        }
+    }
+
+    function aplicarLayoutNaTabela() {
+        const dynCols = document.querySelectorAll('.col-dyna');
+        dynCols.forEach(el => {
+            const colId = el.getAttribute('data-col-id');
+            if (layoutAtual.includes(colId)) {
+                el.classList.remove('d-none');
+            } else {
+                el.classList.add('d-none');
+            }
+        });
+    }
 
     function renderListaColunas() {
         let htmlDropdown = '';
@@ -289,7 +537,7 @@
         colunasDisponiveis.forEach((cat, index) => {
             let colHtml = cat.colunas.map(c => `
                 <div class="form-check text-start mb-2 ms-2">
-                    <input class="form-check-input check-coluna" type="checkbox" value="${c.id}" id="chk_${cat.id}_${c.id}" ${c.padrao ? 'checked' : ''}>
+                    <input class="form-check-input check-coluna" type="checkbox" value="${c.id}" id="chk_${cat.id}_${c.id}" ${layoutAtual.includes(c.id) ? 'checked' : ''} onchange="toggleColunaDinamica('${c.id}', this.checked)">
                     <label class="form-check-label small" for="chk_${cat.id}_${c.id}">${c.nome}</label>
                 </div>
             `).join('');
@@ -309,57 +557,129 @@
                 </div>
             `;
             htmlDropdown += accordionItem;
-            htmlModal += accordionItem.replace(/chk_/g, 'modal_chk_');
+            // No modal as checks não aplicam live, só salvam pro layout
+            let colHtmlModal = cat.colunas.map(c => `
+                <div class="form-check text-start mb-2 ms-2">
+                    <input class="form-check-input check-coluna" type="checkbox" value="${c.id}" id="modal_chk_${cat.id}_${c.id}" ${layoutAtual.includes(c.id) ? 'checked' : ''}>
+                    <label class="form-check-label small" for="modal_chk_${cat.id}_${c.id}">${c.nome}</label>
+                </div>
+            `).join('');
+
+            let accordionItemModal = `
+                <div class="accordion-item border-0 border-bottom">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button ${index > 0 ? 'collapsed' : ''} bg-white shadow-none py-2 px-1 text-muted small" type="button" data-bs-toggle="collapse" data-bs-target="#modal_${cat.id}">
+                            ${cat.categoria}
+                        </button>
+                    </h2>
+                    <div id="modal_${cat.id}" class="accordion-collapse collapse ${index === 0 ? 'show' : ''}">
+                        <div class="accordion-body p-2 pt-0 pb-3">
+                            ${colHtmlModal}
+                        </div>
+                    </div>
+                </div>
+            `;
+            htmlModal += accordionItemModal;
         });
 
         document.getElementById('accordionColunas').innerHTML = htmlDropdown;
         document.getElementById('accordionModalColunas').innerHTML = htmlModal;
+        document.getElementById('accordionModalImprimir').innerHTML = htmlModal.replace(/modal_chk_/g, 'imprimir_chk_').replace(/modal_/g, 'imprimir_');
+    }
+
+    function toggleColunaDinamica(colId, checked) {
+        if (checked && !layoutAtual.includes(colId)) {
+            layoutAtual.push(colId);
+        } else if (!checked && layoutAtual.includes(colId)) {
+            layoutAtual = layoutAtual.filter(id => id !== colId);
+        }
+        aplicarLayoutNaTabela();
     }
 
     function renderEmptyTabela() {
-        // Gera um cabeçalho fixo simulando a imagem 2
         let thead = `
             <th class="py-3 text-start">Dia</th>
             <th class="py-3 text-center">Status</th>
             <th class="py-3 text-center">Previsto</th>
-            <th class="py-3 bg-blue-light">Ent 1</th>
-            <th class="py-3 bg-blue-light">Sai 1</th>
-            <th class="py-3 bg-green-light">Ent 2</th>
-            <th class="py-3 bg-green-light">Sai 2</th>
-            <th class="py-3">Total Normais</th>
-            <th class="py-3">Falta / Atraso</th>
-            <th class="py-3">Extras</th>
+            <th class="py-3 bg-blue-light">Ent. 1</th>
+            <th class="py-3 bg-blue-light">Saí. 1</th>
+            <th class="py-3 bg-green-light">Ent. 2</th>
+            <th class="py-3 bg-green-light">Saí. 2</th>
+            
+            <th class="py-3 text-center col-dyna" data-col-id="col_comp">Comp. Diária</th>
+            <th class="py-3 text-center col-dyna" data-col-id="col_almoco">Almoço Livre</th>
+            <th class="py-3 text-center col-dyna" data-col-id="col_folga">Folga</th>
+            <th class="py-3 text-center col-dyna" data-col-id="col_neutro">Neutro</th>
+            <th class="py-3 text-center col-dyna" data-col-id="col_excluidas">Exclusões</th>
+            
+            <th class="py-3 col-dyna" data-col-id="col_total_normais">Total Normais</th>
+            <th class="py-3 col-dyna" data-col-id="col_total_noturno">Total Noturno</th>
+            <th class="py-3 col-dyna" data-col-id="col_dia_falta">Dia Falta</th>
+            <th class="py-3 col-dyna" data-col-id="col_falta_atraso">Falta / Atraso</th>
+            <th class="py-3 col-dyna" data-col-id="col_abono">Abono</th>
+            <th class="py-3 col-dyna" data-col-id="col_ext_diurna">Extra Diurna</th>
+            <th class="py-3 col-dyna" data-col-id="col_ext_noturna">Extra Noturna</th>
+            <th class="py-3 col-dyna" data-col-id="col_ext_50">Extra 50%</th>
+            <th class="py-3 col-dyna" data-col-id="col_ext_100">Extra 100%</th>
         `;
         document.getElementById('tabelaApuracaoThead').innerHTML = thead;
 
-        // Linhas Mock
         let trHtml = `
             <tr>
-                <td class="text-start">07/05 <span class="text-muted ms-1">Qui</span></td>
-                <td><i class="bi bi-check-circle text-success" title="OK"></i></td>
-                <td class="small text-muted">08:00-12:00<br>13:00-17:00</td>
-                <td class="text-primary fw-bold" style="cursor: pointer" onclick="abrirInclusaoPonto('07/05/2020', 'Ent 1')">08:00</td>
-                <td class="text-primary fw-bold" style="cursor: pointer" onclick="abrirInclusaoPonto('07/05/2020', 'Sai 1')">12:00</td>
-                <td class="text-primary fw-bold" style="cursor: pointer" onclick="abrirInclusaoPonto('07/05/2020', 'Ent 2')">13:00</td>
-                <td class="text-primary fw-bold" style="cursor: pointer" onclick="abrirInclusaoPonto('07/05/2020', 'Sai 2')">17:00</td>
-                <td>08:00</td>
-                <td></td>
-                <td></td>
+                <td class="text-start">01/08 <span class="text-muted ms-1">Seg</span></td>
+                <td><i class="bi bi-check fs-5 text-success fw-bold" title="OK"></i> <i class="bi bi-chevron-down text-muted small ms-1" style="cursor: pointer;"></i></td>
+                <td class="small text-muted py-2" style="line-height: 1.2;">06:00-10:00<br>10:30-12:00</td>
+                <td class="text-danger fw-bold" style="cursor: pointer" onclick="abrirInclusaoPonto('01/08/2020', 'Ent 1')">06:00</td>
+                <td class="text-danger fw-bold" style="cursor: pointer" onclick="abrirInclusaoPonto('01/08/2020', 'Sai 1')">10:00</td>
+                <td class="text-danger fw-bold" style="cursor: pointer" onclick="abrirInclusaoPonto('01/08/2020', 'Ent 2')">10:30</td>
+                <td class="text-danger fw-bold" style="cursor: pointer" onclick="abrirInclusaoPonto('01/08/2020', 'Sai 2')">12:00</td>
+                
+                <td class="text-center align-middle col-dyna" data-col-id="col_comp"><input class="form-check-input border-primary" type="checkbox" checked></td>
+                <td class="text-center align-middle col-dyna" data-col-id="col_almoco"><input class="form-check-input border-primary" type="checkbox"></td>
+                <td class="text-center align-middle col-dyna" data-col-id="col_folga"><input class="form-check-input border-primary" type="checkbox"></td>
+                <td class="text-center align-middle col-dyna" data-col-id="col_neutro"><input class="form-check-input border-primary" type="checkbox"></td>
+                <td class="bg-light align-middle text-center col-dyna" data-col-id="col_excluidas"></td>
+                
+                <td class="text-center col-dyna" data-col-id="col_total_normais">05:30</td>
+                <td class="text-center col-dyna" data-col-id="col_total_noturno">00:00</td>
+                <td class="col-dyna" data-col-id="col_dia_falta"></td>
+                <td class="col-dyna" data-col-id="col_falta_atraso"></td>
+                <td class="col-dyna" data-col-id="col_abono"></td>
+                <td class="col-dyna" data-col-id="col_ext_diurna"></td>
+                <td class="col-dyna" data-col-id="col_ext_noturna"></td>
+                <td class="col-dyna" data-col-id="col_ext_50"></td>
+                <td class="col-dyna" data-col-id="col_ext_100"></td>
             </tr>
             <tr>
-                <td class="text-start">08/05 <span class="text-muted ms-1">Sex</span></td>
-                <td><i class="bi bi-exclamation-circle text-danger" title="Inconsistência"></i></td>
-                <td class="small text-muted">08:00-12:00<br>13:00-17:00</td>
-                <td class="text-danger fw-bold" style="cursor: pointer" onclick="abrirInclusaoPonto('08/05/2020', 'Ent 1')">08:50</td>
-                <td class="text-primary fw-bold" style="cursor: pointer" onclick="abrirInclusaoPonto('08/05/2020', 'Sai 1')">12:00</td>
-                <td class="text-primary fw-bold" style="cursor: pointer" onclick="abrirInclusaoPonto('08/05/2020', 'Ent 2')">13:00</td>
-                <td class="text-primary fw-bold" style="cursor: pointer" onclick="abrirInclusaoPonto('08/05/2020', 'Sai 2')">17:00</td>
-                <td>07:10</td>
-                <td class="text-danger fw-bold">00:50</td>
-                <td></td>
+                <td class="text-start">02/08 <span class="text-muted ms-1">Ter</span></td>
+                <td><i class="bi bi-x fs-5 text-danger fw-bold" title="Falta"></i> <i class="bi bi-chevron-down text-muted small ms-1" style="cursor: pointer;"></i></td>
+                <td class="small text-muted py-2" style="line-height: 1.2;">08:00-12:00<br>13:00-17:00</td>
+                <td class="bg-warning bg-opacity-50 text-dark fw-bold" style="cursor: pointer" onclick="abrirInclusaoPonto('02/08/2020', 'Ent 1')">11:39</td>
+                <td class="border border-primary text-danger" style="cursor: pointer" onclick="abrirInclusaoPonto('02/08/2020', 'Sai 1')">Falta</td>
+                <td class="bg-light text-danger" style="cursor: pointer" onclick="abrirInclusaoPonto('02/08/2020', 'Ent 2')">Falta</td>
+                <td class="bg-light text-danger" style="cursor: pointer" onclick="abrirInclusaoPonto('02/08/2020', 'Sai 2')">Falta</td>
+                
+                <td class="text-center align-middle col-dyna" data-col-id="col_comp"><input class="form-check-input border-primary" type="checkbox"></td>
+                <td class="text-center align-middle col-dyna" data-col-id="col_almoco"><input class="form-check-input border-primary" type="checkbox"></td>
+                <td class="text-center align-middle col-dyna" data-col-id="col_folga"><input class="form-check-input border-primary" type="checkbox"></td>
+                <td class="text-center align-middle col-dyna" data-col-id="col_neutro"><input class="form-check-input border-primary" type="checkbox"></td>
+                <td class="bg-light align-middle text-center col-dyna" data-col-id="col_excluidas"></td>
+                
+                <td class="text-center col-dyna" data-col-id="col_total_normais">00:00</td>
+                <td class="text-center col-dyna" data-col-id="col_total_noturno">00:00</td>
+                <td class="col-dyna" data-col-id="col_dia_falta">Integral</td>
+                <td class="text-danger text-center fw-bold col-dyna" data-col-id="col_falta_atraso">08:00</td>
+                <td class="col-dyna" data-col-id="col_abono"></td>
+                <td class="col-dyna" data-col-id="col_ext_diurna"></td>
+                <td class="col-dyna" data-col-id="col_ext_noturna"></td>
+                <td class="col-dyna" data-col-id="col_ext_50"></td>
+                <td class="col-dyna" data-col-id="col_ext_100"></td>
             </tr>
         `;
         document.getElementById('tabelaApuracaoTbody').innerHTML = trHtml;
+        
+        const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+        const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
     }
 
     function abrirInclusaoPonto(dataObj, horarioFaltante) {
@@ -371,6 +691,21 @@
         
         let modal = new bootstrap.Modal(document.getElementById('modalIncluirMarcacao'));
         modal.show();
+    }
+    
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
     }
 </script>
 {% endblock %}

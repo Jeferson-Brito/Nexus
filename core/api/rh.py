@@ -1356,3 +1356,69 @@ def api_execute_atribuicao_massa(request):
     except Exception as ex:
         logger.error(f"Erro na atribuição em massa: {ex}")
         return JsonResponse({'success': False, 'error': str(ex)}, status=500)
+
+
+# ─────────────────────────────────────────────
+#  APURAÇÃO DE PONTO - VISUAIS
+# ─────────────────────────────────────────────
+
+from ..models import VisualColunaApuracao
+
+@login_required
+@require_http_methods(["GET"])
+def api_listar_visuais_apuracao(request):
+    try:
+        visuais = VisualColunaApuracao.objects.filter(usuario=request.user)
+        return JsonResponse({'success': True, 'visuais': [
+            {
+                'id': str(v.id),
+                'nome': v.nome,
+                'icone': v.icone,
+                'colunas': v.colunas,
+                'padrao': v.padrao
+            } for v in visuais
+        ]})
+    except Exception as ex:
+        return JsonResponse({'success': False, 'error': str(ex)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def api_salvar_visual_apuracao(request):
+    try:
+        data = json.loads(request.body)
+        pk = data.get('id')
+        nome = data.get('nome')
+        icone = data.get('icone', 'bi-layout-text-window')
+        colunas = data.get('colunas', [])
+        padrao = data.get('padrao', False)
+
+        with transaction.atomic():
+            if padrao:
+                # Se esse vai ser o padrão, desmarca os outros
+                VisualColunaApuracao.objects.filter(usuario=request.user, padrao=True).update(padrao=False)
+
+            if pk:
+                visual = get_object_or_404(VisualColunaApuracao, pk=pk, usuario=request.user)
+            else:
+                visual = VisualColunaApuracao(usuario=request.user)
+
+            visual.nome = nome
+            visual.icone = icone
+            visual.colunas = colunas
+            visual.padrao = padrao
+            visual.save()
+            
+        return JsonResponse({'success': True, 'id': str(visual.id), 'message': 'Visual salvo com sucesso', 'colunas': visual.colunas})
+    except Exception as ex:
+        return JsonResponse({'success': False, 'error': str(ex)}, status=500)
+        
+@login_required
+@require_http_methods(["DELETE"])
+def api_excluir_visual_apuracao(request, pk):
+    try:
+        visual = get_object_or_404(VisualColunaApuracao, pk=pk, usuario=request.user)
+        visual.delete()
+        return JsonResponse({'success': True, 'message': 'Visual excluído com sucesso'})
+    except Exception as ex:
+        return JsonResponse({'success': False, 'error': str(ex)}, status=500)
