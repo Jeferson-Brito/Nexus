@@ -910,70 +910,55 @@
 
         // --------------------------------------------------
         // Sistema de Toast Notifications (Premium Global)
-        // Design inspirado no NRS Suporte
+        // Design inspirado no NRS Suporte - Powered by SweetAlert2
         // --------------------------------------------------
+        const GlobalToast = typeof Swal !== 'undefined' ? Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 4000,
+            timerProgressBar: true,
+            showClass: {
+                popup: 'animate__animated animate__fadeInRight animate__faster'
+            },
+            hideClass: {
+                popup: 'animate__animated animate__fadeOutRight animate__faster'
+            },
+            customClass: {
+                popup: 'swal2-toast-premium'
+            },
+            didOpen: (toast) => {
+                toast.addEventListener('mouseenter', Swal.stopTimer)
+                toast.addEventListener('mouseleave', Swal.resumeTimer)
+            }
+        }) : null;
+
         function showGlobalToast(message, type = 'info', duration = 4000) {
-            // Suporte para assinaturas invertidas (type, message) comum em alguns módulos
+            // Suporte para assinaturas invertidas (type, message)
             if (['success', 'error', 'warning', 'info', 'danger'].includes(message) && typeof type === 'string') {
                 const tmp = message;
                 message = type;
                 type = tmp;
             }
 
-            const container = document.getElementById('toastContainer');
-            if (!container) {
-                console.warn('Toast container não encontrado');
-                return;
-            }
-
             const iconMap = {
-                'success': 'bi-check-circle-fill text-success',
-                'error': 'bi-x-circle-fill text-danger',
-                'danger': 'bi-x-circle-fill text-danger',
-                'warning': 'bi-exclamation-triangle-fill text-warning',
-                'info': 'bi-info-circle-fill text-info'
+                'success': 'success',
+                'error': 'error',
+                'danger': 'error',
+                'warning': 'warning',
+                'info': 'info'
             };
 
-            const borderMap = {
-                'success': '#198754',
-                'error': '#dc3545',
-                'danger': '#dc3545',
-                'warning': '#ffc107',
-                'info': '#0dcaf0'
-            };
-
-            const icon = iconMap[type] || iconMap['info'];
-            const borderColor = borderMap[type] || borderMap['info'];
-            const toastId = 'toast-' + Date.now();
-
-            const toastHTML = `
-                <div id="${toastId}" class="toast align-items-center border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true">
-                    <div class="d-flex">
-                        <div class="toast-body d-flex align-items-center bg-white" style="border-left: 5px solid ${borderColor}; border-radius: 4px; padding: 12px 16px; width: 100%;">
-                            <i class="bi ${icon} me-3" style="font-size: 1.3rem;"></i>
-                            <div class="text-dark fw-semibold" style="font-size: 0.95rem;">${message}</div>
-                        </div>
-                        <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-                    </div>
-                </div>
-            `;
-
-            container.insertAdjacentHTML('beforeend', toastHTML);
-            const toastElement = document.getElementById(toastId);
-
-            if (typeof bootstrap === 'undefined') {
-                console.warn('Bootstrap JS não carregado para Toasts');
-                toastElement.style.display = 'block';
-                setTimeout(() => toastElement.remove(), duration);
-                return;
+            if (GlobalToast) {
+                GlobalToast.fire({
+                    icon: iconMap[type] || 'info',
+                    title: message,
+                    timer: duration
+                });
+            } else {
+                console.warn('SweetAlert2 não carregado. Fallback para alert.');
+                alert(message);
             }
-
-            const toast = new bootstrap.Toast(toastElement, { delay: duration, autohide: true });
-            toast.show();
-
-            toastElement.addEventListener('hidden.bs.toast', () => {
-                toastElement.remove();
-            });
         }
 
         // Alias para compatibilidade global
