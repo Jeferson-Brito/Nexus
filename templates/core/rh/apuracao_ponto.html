@@ -9,50 +9,53 @@
     </div>
 
     <!-- Tela de Filtros (Card) -->
-    <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
+    <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px; overflow: hidden;">
+        <div class="card-header border-0 py-3 px-4" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
+            <h5 class="fw-bold mb-0 text-white"><i class="bi bi-funnel"></i> Filtros de Busca</h5>
+        </div>
         <div class="card-body p-4">
             <form id="formFiltroApuracao">
                 <div class="row g-4">
                     <!-- Linha 1 -->
                     <div class="col-md-6">
-                        <label class="form-label small text-muted">Empresa</label>
-                        <select class="form-select text-secondary" id="filtro_empresa"><option>Selecione</option></select>
+                        <label class="form-label small fw-bold">Empresa</label>
+                        <select class="form-select " id="filtro_empresa"><option>Selecione</option></select>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label small text-muted">Departamento</label>
-                        <select class="form-select text-secondary" id="filtro_departamento"><option>Selecione</option></select>
+                        <label class="form-label small fw-bold">Departamento</label>
+                        <select class="form-select " id="filtro_departamento"><option>Selecione</option></select>
                     </div>
                     
                     <!-- Linha 2 -->
-                    <div class="col-md-6 border-top pt-3">
-                        <label class="form-label small text-muted">Centro de custo</label>
-                        <select class="form-select text-secondary" id="filtro_centro_custo"><option>Selecione</option></select>
+                    <div class="col-md-6 ">
+                        <label class="form-label small fw-bold">Centro de custo</label>
+                        <select class="form-select " id="filtro_centro_custo"><option>Selecione</option></select>
                     </div>
-                    <div class="col-md-6 border-top pt-3">
-                        <label class="form-label small text-muted">Cargo</label>
-                        <select class="form-select text-secondary" id="filtro_cargo"><option>Selecione</option></select>
+                    <div class="col-md-6 ">
+                        <label class="form-label small fw-bold">Cargo</label>
+                        <select class="form-select " id="filtro_cargo"><option>Selecione</option></select>
                     </div>
 
                     <!-- Linha 3 -->
-                    <div class="col-md-6 border-top pt-3">
-                        <label class="form-label small text-muted">Horário</label>
-                        <select class="form-select text-secondary" id="filtro_horario"><option>Selecione</option></select>
+                    <div class="col-md-6 ">
+                        <label class="form-label small fw-bold">Horário</label>
+                        <select class="form-select " id="filtro_horario"><option>Selecione</option></select>
                     </div>
-                    <div class="col-md-6 border-top pt-3">
-                        <label class="form-label small text-muted">Pessoas</label>
-                        <select class="form-select text-secondary" id="filtro_pessoas"><option>Selecione</option></select>
+                    <div class="col-md-6 ">
+                        <label class="form-label small fw-bold">Pessoas</label>
+                        <select class="form-select " id="filtro_pessoas"><option>Selecione</option></select>
                     </div>
 
                     <!-- Linha 4 -->
-                    <div class="col-md-3 border-top pt-3">
-                        <label class="form-label small text-muted">Início</label>
-                        <input type="date" class="form-control text-secondary" id="filtro_inicio">
+                    <div class="col-md-3 ">
+                        <label class="form-label small fw-bold">Início</label>
+                        <input type="date" class="form-control " id="filtro_inicio">
                     </div>
-                    <div class="col-md-3 border-top pt-3">
-                        <label class="form-label small text-muted">Fim</label>
-                        <input type="date" class="form-control text-secondary" id="filtro_fim">
+                    <div class="col-md-3 ">
+                        <label class="form-label small fw-bold">Fim</label>
+                        <input type="date" class="form-control " id="filtro_fim">
                     </div>
-                    <div class="col-md-6 border-top pt-3 d-flex align-items-end">
+                    <div class="col-md-6  d-flex align-items-end">
                         <button type="button" class="btn btn-primary px-5" id="btnBuscarApuracao">Buscar</button>
                     </div>
                     
@@ -69,10 +72,13 @@
         </div>
     </div>
     <!-- Tabela de Apuração e Toolbar -->
-    <div class="card border-0 shadow-sm" style="border-radius: 12px; display: none;" id="cardApuracao">
+    <div class="card border-0 shadow-sm" style="border-radius: 12px; display: none; overflow: hidden;" id="cardApuracao">
+        <div class="card-header border-0 py-3 px-4" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
+            <h5 class="fw-bold mb-0 text-white"><i class="bi bi-calendar3"></i> Cartão de Ponto</h5>
+        </div>
         
-        <!-- Toolbar (Header da Tabela) -->
-        <div class="card-header bg-white border-bottom p-3 d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <!-- Toolbar -->
+        <div class="bg-white border-bottom p-3 d-flex justify-content-between align-items-center flex-wrap gap-3">
             <div class="d-flex align-items-center gap-3">
                 <h6 class="mb-0 fw-bold px-3 py-2 bg-light rounded text-dark" id="lblEmpregadoAtual">Selecione um funcionário</h6>
                 
@@ -117,15 +123,15 @@
                 <div class="d-flex align-items-center gap-3 ms-3 border-start ps-3">
                     <div class="form-check form-switch">
                         <input class="form-check-input" type="checkbox" id="toggleColunasApuracao" checked>
-                        <label class="form-check-label small text-muted">Colunas apuração</label>
+                        <label class="form-check-label small fw-bold">Colunas apuração</label>
                     </div>
                     <div class="form-check form-switch border-start ps-4">
                         <input class="form-check-input" type="checkbox" id="toggleColunasCalculo">
-                        <label class="form-check-label small text-muted">Colunas cálculo</label>
+                        <label class="form-check-label small fw-bold">Colunas cálculo</label>
                     </div>
                     <div class="form-check form-switch border-start ps-4">
                         <input class="form-check-input" type="checkbox" id="toggleColunasAjuste">
-                        <label class="form-check-label small text-muted">Colunas ajuste</label>
+                        <label class="form-check-label small fw-bold">Colunas ajuste</label>
                     </div>
                 </div>
             </div>
@@ -161,11 +167,11 @@
                     <!-- Nome e Ícone -->
                     <div class="col-md-5 border-end">
                         <div class="mb-4">
-                            <label class="form-label small text-muted">Nome</label>
+                            <label class="form-label small fw-bold">Nome</label>
                             <input type="text" class="form-control" id="visual_nome" placeholder="Nome do padrão">
                         </div>
                         <div>
-                            <label class="form-label small text-muted">Ícone</label>
+                            <label class="form-label small fw-bold">Ícone</label>
                             <div class="d-flex flex-wrap gap-2" id="gridIconesVisual">
                                 <!-- Opções geradas por JS -->
                             </div>
@@ -174,7 +180,7 @@
                     
                     <!-- Escolha das Colunas -->
                     <div class="col-md-7">
-                        <label class="form-label small text-muted">Colunas</label>
+                        <label class="form-label small fw-bold">Colunas</label>
                         <div class="border rounded p-2 overflow-auto" style="height: 350px;">
                             <div class="accordion accordion-flush" id="accordionModalColunas">
                                 <!-- Gerado dinamicamente copiando lógica do dropdown -->
@@ -200,21 +206,21 @@
             <div class="modal-body">
                 <form id="formIncluirMarcacao">
                     <div class="mb-3">
-                        <label class="form-label small text-muted">Empregado</label>
+                        <label class="form-label small fw-bold">Empregado</label>
                         <input type="text" class="form-control bg-light" id="marc_empregado" readonly>
                     </div>
                     <div class="mb-4">
-                        <label class="form-label small text-muted">PIS</label>
+                        <label class="form-label small fw-bold">PIS</label>
                         <input type="text" class="form-control bg-light" id="marc_pis" readonly>
                     </div>
                     
                     <div class="row mb-4">
                         <div class="col-6">
-                            <label class="form-label small text-muted">Data</label>
+                            <label class="form-label small fw-bold">Data</label>
                             <input type="text" class="form-control fw-bold" id="marc_data" readonly style="border: none; background: transparent; padding-left: 0; font-size: 1.1rem;">
                         </div>
                         <div class="col-6">
-                            <label class="form-label small text-muted">Novo horário</label>
+                            <label class="form-label small fw-bold">Novo horário</label>
                             <div class="input-group">
                                 <input type="time" class="form-control" id="marc_hora">
                                 <button class="btn btn-danger" type="button" onclick="document.getElementById('marc_hora').value=''" title="Limpar"><i class="bi bi-x"></i></button>
@@ -223,7 +229,7 @@
                     </div>
                     
                     <div class="mb-3">
-                        <label class="form-label small text-muted">Motivo</label>
+                        <label class="form-label small fw-bold">Motivo</label>
                         <textarea class="form-control" id="marc_motivo" rows="3" placeholder="Insira o motivo da marcação manual..."></textarea>
                     </div>
                 </form>
@@ -247,12 +253,12 @@
             <div class="modal-body pb-0">
                 <div class="row g-3">
                     <div class="col-md-4">
-                        <label class="form-label small text-muted">Funcionário(s):</label>
-                        <select class="form-select text-secondary"><option>Apenas funcionário selecio</option></select>
+                        <label class="form-label small fw-bold">Funcionário(s):</label>
+                        <select class="form-select "><option>Apenas funcionário selecio</option></select>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label small text-muted">Relatório:</label>
-                        <select class="form-select text-secondary">
+                        <label class="form-label small fw-bold">Relatório:</label>
+                        <select class="form-select ">
                             <option>Cartão de Ponto</option>
                             <option>Extrato de Ponto</option>
                             <option>Extrato por período</option>
@@ -260,8 +266,8 @@
                         </select>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label small text-muted">Formato:</label>
-                        <select class="form-select text-secondary">
+                        <label class="form-label small fw-bold">Formato:</label>
+                        <select class="form-select ">
                             <option>HTML</option>
                             <option>PDF</option>
                             <option>CSV</option>
@@ -332,6 +338,48 @@
     let layoutAtual = []; // Array de IDs de colunas visíveis
 
     document.addEventListener('DOMContentLoaded', () => {
+
+    // Carregar filtros auxiliares
+    fetch('/api/rh/auxiliar-data/')
+    .then(r => r.json())
+    .then(data => {
+        if(data.success) {
+            populateSelect('filtro_empresa', data.empresas, 'id', 'nome');
+            populateSelect('filtro_departamento', data.departments, 'id', 'name');
+            populateSelect('filtro_centro_custo', data.centros_custo, 'id', 'nome');
+            populateSelect('filtro_cargo', data.cargos, 'id', 'nome');
+            populateSelect('filtro_horario', data.turnos, 'id', 'nome');
+            
+            // Colaboradores vêm na api_rh_auxiliar_data
+            if (data.colaboradores) {
+                populateSelect('filtro_pessoas', data.colaboradores, 'id', 'nome_completo');
+            } else if (data.funcionarios) {
+                populateSelect('filtro_pessoas', data.funcionarios, 'id', 'nome_completo');
+            }
+        }
+    });
+
+    function populateSelect(id, items, value_key='id', text_key='name') {
+        const sel = document.getElementById(id);
+        if(!sel) return;
+        let htmlOption = '<option value="">Selecione</option>';
+        if(items && Array.isArray(items)) {
+            items.forEach(item => {
+                htmlOption += `<option value="${item[value_key]}">${item[text_key]}</option>`;
+            });
+        }
+        sel.innerHTML = htmlOption;
+
+        // Populate also the Relatorio select if needed
+        if (id === 'filtro_pessoas') {
+            const relatorioEmpregados = document.getElementById('relatorio_funcionarios');
+            if (relatorioEmpregados) {
+                relatorioEmpregados.innerHTML = '<option value="">Todos da Apuração atual</option>' + 
+                    items.map(item => `<option value="${item[value_key]}">${item[text_key]}</option>`).join('');
+            }
+        }
+    }
+
         // Define o layout padrao inicial baseado no JS array
         colunasDisponiveis.forEach(cat => {
             cat.colunas.forEach(c => {
@@ -628,7 +676,7 @@
             <tr>
                 <td class="text-start">01/08 <span class="text-muted ms-1">Seg</span></td>
                 <td><i class="bi bi-check fs-5 text-success fw-bold" title="OK"></i> <i class="bi bi-chevron-down text-muted small ms-1" style="cursor: pointer;"></i></td>
-                <td class="small text-muted py-2" style="line-height: 1.2;">06:00-10:00<br>10:30-12:00</td>
+                <td class="small fw-bold py-2" style="line-height: 1.2;">06:00-10:00<br>10:30-12:00</td>
                 <td class="text-danger fw-bold" style="cursor: pointer" onclick="abrirInclusaoPonto('01/08/2020', 'Ent 1')">06:00</td>
                 <td class="text-danger fw-bold" style="cursor: pointer" onclick="abrirInclusaoPonto('01/08/2020', 'Sai 1')">10:00</td>
                 <td class="text-danger fw-bold" style="cursor: pointer" onclick="abrirInclusaoPonto('01/08/2020', 'Ent 2')">10:30</td>
@@ -653,7 +701,7 @@
             <tr>
                 <td class="text-start">02/08 <span class="text-muted ms-1">Ter</span></td>
                 <td><i class="bi bi-x fs-5 text-danger fw-bold" title="Falta"></i> <i class="bi bi-chevron-down text-muted small ms-1" style="cursor: pointer;"></i></td>
-                <td class="small text-muted py-2" style="line-height: 1.2;">08:00-12:00<br>13:00-17:00</td>
+                <td class="small fw-bold py-2" style="line-height: 1.2;">08:00-12:00<br>13:00-17:00</td>
                 <td class="bg-warning bg-opacity-50 text-dark fw-bold" style="cursor: pointer" onclick="abrirInclusaoPonto('02/08/2020', 'Ent 1')">11:39</td>
                 <td class="border border-primary text-danger" style="cursor: pointer" onclick="abrirInclusaoPonto('02/08/2020', 'Sai 1')">Falta</td>
                 <td class="bg-light text-danger" style="cursor: pointer" onclick="abrirInclusaoPonto('02/08/2020', 'Ent 2')">Falta</td>
