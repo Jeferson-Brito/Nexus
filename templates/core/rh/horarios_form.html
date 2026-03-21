@@ -983,7 +983,15 @@
         politicasAvancadas[pIndex][field] = value;
     }
 
-    function updateFaixaField(pIndex, fIndex, field, value) {    function renderPoliticasAvancadas() {
+    function updateFaixaField(pIndex, fIndex, field, value) {
+        if (field === 'banco_horas') {
+            politicasAvancadas[pIndex].faixas[fIndex][field] = value;
+        } else {
+            politicasAvancadas[pIndex].faixas[fIndex][field] = parseFloat(value) || 0;
+        }
+    }
+
+    function renderPoliticasAvancadas() {
         const container = document.getElementById('lista_politicas_avancadas');
         
         // Header
