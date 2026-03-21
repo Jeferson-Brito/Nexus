@@ -22,7 +22,7 @@
 
     <!-- SweetAlert2 -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <!-- Animate.css for Toasts -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
@@ -912,27 +912,6 @@
         // Sistema de Toast Notifications (Premium Global)
         // Design inspirado no NRS Suporte - Powered by SweetAlert2
         // --------------------------------------------------
-        const GlobalToast = typeof Swal !== 'undefined' ? Swal.mixin({
-            toast: true,
-            position: 'top-end',
-            showConfirmButton: false,
-            timer: 4000,
-            timerProgressBar: true,
-            showClass: {
-                popup: 'animate__animated animate__fadeInRight animate__faster'
-            },
-            hideClass: {
-                popup: 'animate__animated animate__fadeOutRight animate__faster'
-            },
-            customClass: {
-                popup: 'swal2-toast-premium'
-            },
-            didOpen: (toast) => {
-                toast.addEventListener('mouseenter', Swal.stopTimer)
-                toast.addEventListener('mouseleave', Swal.resumeTimer)
-            }
-        }) : null;
-
         function showGlobalToast(message, type = 'info', duration = 4000) {
             // Suporte para assinaturas invertidas (type, message)
             if (['success', 'error', 'warning', 'info', 'danger'].includes(message) && typeof type === 'string') {
@@ -940,6 +919,33 @@
                 message = type;
                 type = tmp;
             }
+
+            if (typeof Swal === 'undefined') {
+                console.warn('SweetAlert2 não carregado. Fallback para alert.');
+                alert(message);
+                return;
+            }
+
+            const GlobalToast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: duration,
+                timerProgressBar: true,
+                showClass: {
+                    popup: 'animate__animated animate__fadeInRight animate__faster'
+                },
+                hideClass: {
+                    popup: 'animate__animated animate__fadeOutRight animate__faster'
+                },
+                customClass: {
+                    popup: 'swal2-toast-premium'
+                },
+                didOpen: (toast) => {
+                    toast.addEventListener('mouseenter', Swal.stopTimer)
+                    toast.addEventListener('mouseleave', Swal.resumeTimer)
+                }
+            });
 
             const iconMap = {
                 'success': 'success',
@@ -949,16 +955,10 @@
                 'info': 'info'
             };
 
-            if (GlobalToast) {
-                GlobalToast.fire({
-                    icon: iconMap[type] || 'info',
-                    title: message,
-                    timer: duration
-                });
-            } else {
-                console.warn('SweetAlert2 não carregado. Fallback para alert.');
-                alert(message);
-            }
+            GlobalToast.fire({
+                icon: iconMap[type] || 'info',
+                title: message
+            });
         }
 
         // Alias para compatibilidade global
