@@ -918,6 +918,41 @@ def api_rh_horario_detail(request, pk):
                 'modo_extra': h.modo_extra,
                 'percentual_diurno': float(h.percentual_diurno),
                 'percentual_noturno': float(h.percentual_noturno),
+                
+                # Modo Simples Detalhado
+                'perc_extra_dia_diurno': float(h.perc_extra_dia_diurno),
+                'perc_extra_dia_noturno': float(h.perc_extra_dia_noturno),
+                'perc_extra_sab_diurno': float(h.perc_extra_sab_diurno),
+                'perc_extra_sab_noturno': float(h.perc_extra_sab_noturno),
+                'perc_extra_dom_diurno': float(h.perc_extra_dom_diurno),
+                'perc_extra_dom_noturno': float(h.perc_extra_dom_noturno),
+                'perc_extra_feriado_diurno': float(h.perc_extra_feriado_diurno),
+                'perc_extra_feriado_noturno': float(h.perc_extra_feriado_noturno),
+                
+                # Modo Avançado
+                'politicas_avancadas': [
+                    {
+                        'id': p.id,
+                        'seq': p.seq,
+                        'dias': p.dias,
+                        'feriado': p.feriado,
+                        'noturno': p.noturno,
+                        'intervalo': p.intervalo,
+                        'dia_especifico': p.dia_especifico,
+                        'acumulo': p.acumulo,
+                        'eventos': p.eventos,
+                        'faixas': [
+                            {
+                                'de_horas': float(f.de_horas),
+                                'ate_horas': float(f.ate_horas),
+                                'acrescimo_percentual': float(f.acrescimo_percentual),
+                                'banco_horas': f.banco_horas,
+                                'codigo_evento': f.codigo_evento,
+                                'codigo_evento_acrescimo': f.codigo_evento_acrescimo
+                            } for f in p.faixas.all()
+                        ]
+                    } for p in h.politicas_hora_extra.all()
+                ],
                 'inicio_noturno': h.inicio_noturno.strftime('%H:%M'),
                 'fim_noturno': h.fim_noturno.strftime('%H:%M'),
                 'fator_noturno': h.fator_noturno,
@@ -998,6 +1033,16 @@ def api_save_horario(request):
             h.percentual_diurno = data.get('percentual_diurno', 50)
             h.percentual_noturno = data.get('percentual_noturno', 50)
             
+            # Modo Simples Detalhado
+            h.perc_extra_dia_diurno = data.get('perc_extra_dia_diurno', 50)
+            h.perc_extra_dia_noturno = data.get('perc_extra_dia_noturno', 50)
+            h.perc_extra_sab_diurno = data.get('perc_extra_sab_diurno', 100)
+            h.perc_extra_sab_noturno = data.get('perc_extra_sab_noturno', 100)
+            h.perc_extra_dom_diurno = data.get('perc_extra_dom_diurno', 100)
+            h.perc_extra_dom_noturno = data.get('perc_extra_dom_noturno', 100)
+            h.perc_extra_feriado_diurno = data.get('perc_extra_feriado_diurno', 100)
+            h.perc_extra_feriado_noturno = data.get('perc_extra_feriado_noturno', 100)
+            
             h.inicio_noturno = data.get('inicio_noturno', '22:00')
             h.fim_noturno = data.get('fim_noturno', '05:00')
             h.fator_noturno = data.get('fator_noturno', 60)
@@ -1063,6 +1108,37 @@ def api_save_horario(request):
                     detalhe.neutro = d_data.get('neutro', False)
                     detalhe.fechamento_noturno = d_data.get('fechamento_noturno', '00:00')
                     detalhe.save()
+
+            # Modo Avançado - Políticas e Faixas de Extras
+            if 'politicas_avancadas' in data:
+                from core.models import PoliticaHoraExtra, FaixaHoraExtra
+                # Limpar antigas e recriar
+                h.politicas_hora_extra.all().delete()
+                
+                for p_idx, p_data in enumerate(data['politicas_avancadas']):
+                    politica = PoliticaHoraExtra.objects.create(
+                        horario=h,
+                        seq=p_idx + 1,
+                        dias=p_data.get('dias', 'qualquer_dia'),
+                        feriado=p_data.get('feriado', 'qualquer'),
+                        noturno=p_data.get('noturno', 'ambos'),
+                        intervalo=p_data.get('intervalo', 'tudo'),
+                        dia_especifico=p_data.get('dia_especifico', 'qualquer'),
+                        acumulo=p_data.get('acumulo', 'diario'),
+                        eventos=p_data.get('eventos', '')
+                    )
+                    
+                    faixas = p_data.get('faixas', [])
+                    for f_data in faixas:
+                        FaixaHoraExtra.objects.create(
+                            politica=politica,
+                            de_horas=f_data.get('de_horas', 0),
+                            ate_horas=f_data.get('ate_horas', 24),
+                            acrescimo_percentual=f_data.get('acrescimo_percentual', 50),
+                            banco_horas=f_data.get('banco_horas', True),
+                            codigo_evento=f_data.get('codigo_evento', ''),
+                            codigo_evento_acrescimo=f_data.get('codigo_evento_acrescimo', '')
+                        )
 
         # Invalidar cache de dados auxiliares
         cache.delete('aux_data:all')

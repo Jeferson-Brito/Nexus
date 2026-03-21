@@ -393,34 +393,74 @@
                             <i class="bi bi-info-circle text-primary mt-1"></i>
                             <div class="small text-muted">
                                 <strong class="text-dark d-block mb-1">Sobre esta aba: Horas Extras e Banco</strong>
-                                Configure como o sistema deve tratar o tempo trabalhado além da jornada. 
-                                No <strong>Banco de Horas</strong>, as horas são acumuladas para compensação futura. 
-                                Se desativado, as horas serão calculadas como <strong>Extras</strong> com os percentuais definidos (ex: 50% ou 100%).
+                                Configure como o sistema deve tratar o tempo trabalhado além da jornada no <strong class="text-dark">Modo Simples</strong>, ou crie políticas detalhadas de prioridade no <strong class="text-dark">Modo Avançado</strong>.
                             </div>
                         </div>
                     </div>
-                    <div class="row g-4">
-                        <div class="col-md-6">
+
+                    <input type="hidden" id="hor_modo_extra" value="simples">
+
+                    <!-- CABEÇALHO/TOGGLE MODO -->
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h6 class="mb-0 fw-bold" id="titulo_modo_extra">Percentuais de Hora Extra</h6>
+                        <button type="button" class="btn btn-outline-primary btn-sm" id="btn_toggle_modo_extra" onclick="toggleModoExtra()">
+                            Alterar para modo avançado (inclui faixas de extra)
+                        </button>
+                    </div>
+
+                    <!-- MODO SIMPLES -->
+                    <div id="container_modo_simples">
+                        <div class="table-responsive mb-4">
+                            <table class="table table-bordered table-sm align-middle" style="max-width: 600px;">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Dia</th>
+                                        <th style="width: 150px" class="text-center">Hora-extra Diurna (%)</th>
+                                        <th style="width: 150px" class="text-center">Hora-extra Noturna (%)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="fw-medium">Dia de Trabalho</td>
+                                        <td><input type="number" id="hor_perc_extra_dia_diurno" class="form-control form-control-sm text-end" value="50"></td>
+                                        <td><input type="number" id="hor_perc_extra_dia_noturno" class="form-control form-control-sm text-end" value="50"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-medium">Sábado</td>
+                                        <td><input type="number" id="hor_perc_extra_sab_diurno" class="form-control form-control-sm text-end" value="100"></td>
+                                        <td><input type="number" id="hor_perc_extra_sab_noturno" class="form-control form-control-sm text-end" value="100"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-medium">Domingo</td>
+                                        <td><input type="number" id="hor_perc_extra_dom_diurno" class="form-control form-control-sm text-end" value="100"></td>
+                                        <td><input type="number" id="hor_perc_extra_dom_noturno" class="form-control form-control-sm text-end" value="100"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-medium">Feriado</td>
+                                        <td><input type="number" id="hor_perc_extra_feriado_diurno" class="form-control form-control-sm text-end" value="100"></td>
+                                        <td><input type="number" id="hor_perc_extra_feriado_noturno" class="form-control form-control-sm text-end" value="100"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- MODO AVANÇADO -->
+                    <div id="container_modo_avancado" style="display: none;">
+                        <div id="lista_politicas_avancadas" class="mb-3">
+                            <!-- Políticas serão geradas via JS -->
+                        </div>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="addPoliticaAvancada()">
+                            <i class="bi bi-plus"></i> Adicionar política
+                        </button>
+                    </div>
+
+                    <div class="row mt-4 pt-3 border-top">
+                        <div class="col-12">
                             <div class="form-check form-switch mb-4">
                                 <input class="form-check-input" type="checkbox" id="hor_utiliza_banco_horas">
                                 <label class="form-check-label fw-bold small" for="hor_utiliza_banco_horas" title="Se ativado, as horas excedentes serão acumuladas em banco para compensação em vez de serem pagas como extras">Utiliza Banco de Horas</label>
                             </div>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold small">Extra Diurno (%)</label>
-                            <input type="number" id="hor_perc_diurno" class="form-control" value="50" title="Percentual de adicional para horas extras diurnas (Padrão 50%)">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold small">Extra Noturno (%)</label>
-                            <input type="number" id="hor_perc_noturno" class="form-control" value="50" title="Percentual de adicional para horas extras noturnas (Padrão 50%)">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold small">Modo de Cálculo de Extras</label>
-                            <select id="hor_modo_extra" class="form-select mb-3" title="Define como as horas extras são calculadas: diariamente, semanalmente ou mensalmente">
-                                <option value="simples">Simples (Diário)</option>
-                                <option value="semanal">Semanal</option>
-                                <option value="mensal">Mensal</option>
-                            </select>
                         </div>
                     </div>
                 </div>
@@ -697,8 +737,28 @@
                 document.getElementById('hor_desconto_dsr_feriado').value = h.desconto_dsr_feriado;
                 document.getElementById('hor_utiliza_banco_horas').checked = h.utiliza_banco_horas;
                 document.getElementById('hor_modo_extra').value = h.modo_extra;
-                document.getElementById('hor_perc_diurno').value = h.percentual_diurno;
-                document.getElementById('hor_perc_noturno').value = h.percentual_noturno;
+                
+                // Preencher modo simples detalhado
+                document.getElementById('hor_perc_extra_dia_diurno').value = h.perc_extra_dia_diurno ?? 50;
+                document.getElementById('hor_perc_extra_dia_noturno').value = h.perc_extra_dia_noturno ?? 50;
+                document.getElementById('hor_perc_extra_sab_diurno').value = h.perc_extra_sab_diurno ?? 100;
+                document.getElementById('hor_perc_extra_sab_noturno').value = h.perc_extra_sab_noturno ?? 100;
+                document.getElementById('hor_perc_extra_dom_diurno').value = h.perc_extra_dom_diurno ?? 100;
+                document.getElementById('hor_perc_extra_dom_noturno').value = h.perc_extra_dom_noturno ?? 100;
+                document.getElementById('hor_perc_extra_feriado_diurno').value = h.perc_extra_feriado_diurno ?? 100;
+                document.getElementById('hor_perc_extra_feriado_noturno').value = h.perc_extra_feriado_noturno ?? 100;
+                
+                if (h.politicas_avancadas) {
+                    politicasAvancadas = h.politicas_avancadas;
+                }
+                
+                if (h.modo_extra === 'avançado') {
+                    document.getElementById('container_modo_simples').style.display = 'none';
+                    document.getElementById('container_modo_avancado').style.display = 'block';
+                    document.getElementById('titulo_modo_extra').innerText = 'Faixas de hora-extra (por ordem de prioridade):';
+                    document.getElementById('btn_toggle_modo_extra').innerText = 'Alterar para modo simples';
+                    renderPoliticasAvancadas();
+                }
                 document.getElementById('hor_inicio_noturno').value = h.inicio_noturno;
                 document.getElementById('hor_fim_noturno').value = h.fim_noturno;
                 document.getElementById('hor_fator_noturno').value = h.fator_noturno;
@@ -753,8 +813,15 @@
             dia_dsr: parseInt(document.getElementById('hor_dia_dsr').value),
             utiliza_banco_horas: document.getElementById('hor_utiliza_banco_horas').checked,
             modo_extra: document.getElementById('hor_modo_extra').value,
-            percentual_diurno: parseFloat(document.getElementById('hor_perc_diurno').value),
-            percentual_noturno: parseFloat(document.getElementById('hor_perc_noturno').value),
+            perc_extra_dia_diurno: parseFloat(document.getElementById('hor_perc_extra_dia_diurno').value),
+            perc_extra_dia_noturno: parseFloat(document.getElementById('hor_perc_extra_dia_noturno').value),
+            perc_extra_sab_diurno: parseFloat(document.getElementById('hor_perc_extra_sab_diurno').value),
+            perc_extra_sab_noturno: parseFloat(document.getElementById('hor_perc_extra_sab_noturno').value),
+            perc_extra_dom_diurno: parseFloat(document.getElementById('hor_perc_extra_dom_diurno').value),
+            perc_extra_dom_noturno: parseFloat(document.getElementById('hor_perc_extra_dom_noturno').value),
+            perc_extra_feriado_diurno: parseFloat(document.getElementById('hor_perc_extra_feriado_diurno').value),
+            perc_extra_feriado_noturno: parseFloat(document.getElementById('hor_perc_extra_feriado_noturno').value),
+            politicas_avancadas: politicasAvancadas,
             inicio_noturno: document.getElementById('hor_inicio_noturno').value,
             fim_noturno: document.getElementById('hor_fim_noturno').value,
             fator_noturno: parseFloat(document.getElementById('hor_fator_noturno').value),
@@ -845,5 +912,174 @@
     }
 
     function getCsrf() { return document.cookie.match(/csrftoken=([^;]+)/)?.[1] || ''; }
+
+    // === LÓGICA MODO EXTRA (SIMPLES / AVANÇADO) ===
+    let politicasAvancadas = [];
+
+    function toggleModoExtra() {
+        const inputModo = document.getElementById('hor_modo_extra');
+        const isSimples = inputModo.value === 'simples';
+        
+        if (isSimples) {
+            inputModo.value = 'avançado';
+            document.getElementById('container_modo_simples').style.display = 'none';
+            document.getElementById('container_modo_avancado').style.display = 'block';
+            document.getElementById('titulo_modo_extra').innerText = 'Faixas de hora-extra (por ordem de prioridade):';
+            document.getElementById('btn_toggle_modo_extra').innerText = 'Alterar para modo simples';
+            if(politicasAvancadas.length === 0) addPoliticaAvancada();
+            renderPoliticasAvancadas();
+        } else {
+            inputModo.value = 'simples';
+            document.getElementById('container_modo_simples').style.display = 'block';
+            document.getElementById('container_modo_avancado').style.display = 'none';
+            document.getElementById('titulo_modo_extra').innerText = 'Percentuais de Hora Extra';
+            document.getElementById('btn_toggle_modo_extra').innerText = 'Alterar para modo avançado (inclui faixas de extra)';
+        }
+    }
+
+    function addPoliticaAvancada() {
+        politicasAvancadas.push({
+            id: 'temp_' + Date.now() + Math.random(),
+            dias: 'qualquer_dia',
+            feriado: 'qualquer',
+            noturno: 'ambos',
+            intervalo: 'tudo',
+            dia_especifico: 'qualquer',
+            acumulo: 'diario',
+            faixas: [{ de_horas: 0, ate_horas: 24, acrescimo_percentual: 50, banco_horas: true }]
+        });
+        renderPoliticasAvancadas();
+    }
+
+    function removePoliticaAvancada(index) {
+        politicasAvancadas.splice(index, 1);
+        renderPoliticasAvancadas();
+    }
+    
+    function movePoliticaAvancada(index, direcao) {
+        if (direcao === -1 && index > 0) {
+            const temp = politicasAvancadas[index - 1];
+            politicasAvancadas[index - 1] = politicasAvancadas[index];
+            politicasAvancadas[index] = temp;
+        } else if (direcao === 1 && index < politicasAvancadas.length - 1) {
+            const temp = politicasAvancadas[index + 1];
+            politicasAvancadas[index + 1] = politicasAvancadas[index];
+            politicasAvancadas[index] = temp;
+        }
+        renderPoliticasAvancadas();
+    }
+
+    function addFaixa(pIndex) {
+        politicasAvancadas[pIndex].faixas.push({ de_horas: 0, ate_horas: 24, acrescimo_percentual: 50, banco_horas: true });
+        renderPoliticasAvancadas();
+    }
+
+    function removeFaixa(pIndex, fIndex) {
+        politicasAvancadas[pIndex].faixas.splice(fIndex, 1);
+        renderPoliticasAvancadas();
+    }
+
+    function updatePoliticaField(pIndex, field, value) {
+        politicasAvancadas[pIndex][field] = value;
+    }
+
+    function updateFaixaField(pIndex, fIndex, field, value) {
+        if (field === 'banco_horas') {
+            politicasAvancadas[pIndex].faixas[fIndex][field] = value;
+        } else {
+            politicasAvancadas[pIndex].faixas[fIndex][field] = parseFloat(value) || 0;
+        }
+    }
+
+    function renderPoliticasAvancadas() {
+        const container = document.getElementById('lista_politicas_avancadas');
+        container.innerHTML = '';
+        
+        politicasAvancadas.forEach((p, pIndex) => {
+            const isFirst = pIndex === 0;
+            const isLast = pIndex === politicasAvancadas.length - 1;
+            
+            let faixasHtml = '';
+            p.faixas.forEach((f, fIndex) => {
+                faixasHtml += `
+                    <div class="row gx-2 align-items-center mb-2">
+                        <div class="col-auto"><label class="small text-muted mb-0">De</label></div>
+                        <div class="col-auto"><input type="number" class="form-control form-control-sm text-center" style="width: 70px" value="${f.de_horas}" onchange="updateFaixaField(${pIndex}, ${fIndex}, 'de_horas', this.value)"></div>
+                        <div class="col-auto"><label class="small text-muted mb-0">horas</label></div>
+                        <div class="col-auto ms-2"><label class="small text-muted mb-0">Até</label></div>
+                        <div class="col-auto"><input type="number" class="form-control form-control-sm text-center" style="width: 70px" value="${f.ate_horas}" onchange="updateFaixaField(${pIndex}, ${fIndex}, 'ate_horas', this.value)"></div>
+                        <div class="col-auto"><label class="small text-muted mb-0">horas</label></div>
+                        <div class="col-auto ms-3"><input type="number" class="form-control form-control-sm text-center" style="width: 70px" value="${f.acrescimo_percentual}" onchange="updateFaixaField(${pIndex}, ${fIndex}, 'acrescimo_percentual', this.value)"></div>
+                        <div class="col-auto"><label class="small text-muted mb-0">% Acréscimo</label></div>
+                        <div class="col-auto ms-3">
+                            <div class="form-check form-switch mb-0">
+                                <input class="form-check-input" type="checkbox" ${f.banco_horas ? 'checked' : ''} onchange="updateFaixaField(${pIndex}, ${fIndex}, 'banco_horas', this.checked)">
+                                <label class="form-check-label small">Banco de horas</label>
+                            </div>
+                        </div>
+                        <div class="col-auto ms-auto">
+                            <button type="button" class="btn btn-link text-danger p-0 border-0 bg-transparent" onclick="removeFaixa(${pIndex}, ${fIndex})" title="Remover faixa"><i class="bi bi-trash"></i></button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            const cardHtml = `
+                <div class="card mb-3 policy-card border shadow-sm">
+                    <div class="card-header bg-light py-2 d-flex align-items-center gap-2">
+                        <div class="d-flex flex-column gap-1 me-2">
+                            <button type="button" class="btn btn-sm p-0 text-muted lh-1 border-0 bg-transparent" onclick="movePoliticaAvancada(${pIndex}, -1)" ${isFirst ? 'disabled' : ''}><i class="bi bi-caret-up-fill"></i></button>
+                            <button type="button" class="btn btn-sm p-0 text-muted lh-1 border-0 bg-transparent" onclick="movePoliticaAvancada(${pIndex}, 1)" ${isLast ? 'disabled' : ''}><i class="bi bi-caret-down-fill"></i></button>
+                        </div>
+                        <div class="fw-bold flex-grow-1" style="min-width: 60px;">SEQ. ${pIndex + 1}</div>
+                        <div class="d-flex gap-2 flex-wrap flex-grow-1">
+                            <select class="form-select form-select-sm" style="max-width: 140px; display:inline-block;" onchange="updatePoliticaField(${pIndex}, 'dias', this.value)">
+                                <option value="qualquer_dia" ${p.dias === 'qualquer_dia' ? 'selected' : ''}>Qualquer dia</option>
+                                <option value="somente_com_horario" ${p.dias === 'somente_com_horario' ? 'selected' : ''}>Somente com hor.</option>
+                                <option value="somente_sem_horario" ${p.dias === 'somente_sem_horario' ? 'selected' : ''}>Somente sem hor.</option>
+                            </select>
+                            <select class="form-select form-select-sm" style="max-width: 140px; display:inline-block;" onchange="updatePoliticaField(${pIndex}, 'feriado', this.value)">
+                                <option value="qualquer" ${p.feriado === 'qualquer' ? 'selected' : ''}>Qualquer (Feriado)</option>
+                                <option value="nao_feriado" ${p.feriado === 'nao_feriado' ? 'selected' : ''}>Não é feriado</option>
+                                <option value="somente_feriado" ${p.feriado === 'somente_feriado' ? 'selected' : ''}>Somente feriado</option>
+                            </select>
+                            <select class="form-select form-select-sm" style="max-width: 130px; display:inline-block;" onchange="updatePoliticaField(${pIndex}, 'noturno', this.value)">
+                                <option value="ambos" ${p.noturno === 'ambos' ? 'selected' : ''}>Diurno/Noturno</option>
+                                <option value="diurno" ${p.noturno === 'diurno' ? 'selected' : ''}>Somente diurno</option>
+                                <option value="noturno" ${p.noturno === 'noturno' ? 'selected' : ''}>Somente noturno</option>
+                            </select>
+                            <select class="form-select form-select-sm" style="max-width: 130px; display:inline-block;" onchange="updatePoliticaField(${pIndex}, 'intervalo', this.value)">
+                                <option value="tudo" ${p.intervalo === 'tudo' ? 'selected' : ''}>Tudo</option>
+                                <option value="intervalo" ${p.intervalo === 'intervalo' ? 'selected' : ''}>No intervalo</option>
+                            </select>
+                            <select class="form-select form-select-sm" style="max-width: 130px; display:inline-block;" onchange="updatePoliticaField(${pIndex}, 'dia_especifico', this.value)">
+                                <option value="qualquer" ${p.dia_especifico === 'qualquer' ? 'selected' : ''}>Qualquer dia</option>
+                                <option value="domingo" ${p.dia_especifico === 'domingo' ? 'selected' : ''}>Domingo</option>
+                                <option value="sabado" ${p.dia_especifico === 'sabado' ? 'selected' : ''}>Sábado</option>
+                            </select>
+                        </div>
+                        <button type="button" class="btn btn-outline-danger btn-sm border-0" onclick="removePoliticaAvancada(${pIndex})" title="Remover Política">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm border-0" data-bs-toggle="collapse" data-bs-target="#collapsePolicy${pIndex}">
+                            <i class="bi bi-chevron-down"></i>
+                        </button>
+                    </div>
+                    <div id="collapsePolicy${pIndex}" class="collapse show">
+                        <div class="card-body bg-white pt-2 pb-3">
+                            <div class="fw-bold small text-muted mb-2">Faixas de extra:</div>
+                            ${faixasHtml}
+                            <div class="mt-2">
+                                <button type="button" class="btn btn-link btn-sm text-decoration-none p-0" onclick="addFaixa(${pIndex})">
+                                    <i class="bi bi-plus-circle"></i> Incluir mais uma faixa de extra
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', cardHtml);
+        });
+    }
 </script>
 {% endblock %}

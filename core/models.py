@@ -2407,6 +2407,16 @@ class Horario(models.Model):
     percentual_diurno = models.DecimalField(max_digits=5, decimal_places=2, default=50)
     percentual_noturno = models.DecimalField(max_digits=5, decimal_places=2, default=50)
     
+    # Modo Simples - Percentuais Detalhados
+    perc_extra_dia_diurno = models.DecimalField(max_digits=5, decimal_places=2, default=50)
+    perc_extra_dia_noturno = models.DecimalField(max_digits=5, decimal_places=2, default=50)
+    perc_extra_sab_diurno = models.DecimalField(max_digits=5, decimal_places=2, default=100)
+    perc_extra_sab_noturno = models.DecimalField(max_digits=5, decimal_places=2, default=100)
+    perc_extra_dom_diurno = models.DecimalField(max_digits=5, decimal_places=2, default=100)
+    perc_extra_dom_noturno = models.DecimalField(max_digits=5, decimal_places=2, default=100)
+    perc_extra_feriado_diurno = models.DecimalField(max_digits=5, decimal_places=2, default=100)
+    perc_extra_feriado_noturno = models.DecimalField(max_digits=5, decimal_places=2, default=100)
+    
     # Noturno
     inicio_noturno = models.TimeField(default='22:00')
     fim_noturno = models.TimeField(default='05:00')
@@ -2449,6 +2459,47 @@ class HorarioDetalhe(models.Model):
 
     def __str__(self):
         return f"{self.horario.nome} - Dia {self.dia_index}"
+
+
+class PoliticaHoraExtra(models.Model):
+    """Políticas do Modo Avançado de Horas Extras"""
+    horario = models.ForeignKey(Horario, on_delete=models.CASCADE, related_name='politicas_hora_extra')
+    seq = models.IntegerField(default=1) # Ordem de prioridade
+    
+    dias = models.CharField(max_length=100, default='qualquer_dia')
+    feriado = models.CharField(max_length=100, default='qualquer')
+    noturno = models.CharField(max_length=100, default='ambos')
+    intervalo = models.CharField(max_length=100, default='tudo')
+    dia_especifico = models.CharField(max_length=100, default='qualquer')
+    acumulo = models.CharField(max_length=100, default='diario')
+    eventos = models.CharField(max_length=100, blank=True)
+
+    class Meta:
+        ordering = ['seq']
+        verbose_name = "Política de Hora Extra"
+        verbose_name_plural = "Políticas de Hora Extra"
+
+    def __str__(self):
+        return f"Política #{self.seq} - {self.horario.nome}"
+
+
+class FaixaHoraExtra(models.Model):
+    """Faixas percentuais dentro de uma Política do Modo Avançado"""
+    politica = models.ForeignKey(PoliticaHoraExtra, on_delete=models.CASCADE, related_name='faixas')
+    de_horas = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    ate_horas = models.DecimalField(max_digits=5, decimal_places=2, default=24)
+    acrescimo_percentual = models.DecimalField(max_digits=5, decimal_places=2, default=50)
+    banco_horas = models.BooleanField(default=True)
+    codigo_evento = models.CharField(max_length=50, blank=True)
+    codigo_evento_acrescimo = models.CharField(max_length=50, blank=True)
+    
+    class Meta:
+        ordering = ['de_horas']
+        verbose_name = "Faixa de Hora Extra"
+        verbose_name_plural = "Faixas de Hora Extra"
+        
+    def __str__(self):
+        return f"{self.de_horas}h às {self.ate_horas}h ({self.acrescimo_percentual}%)"
 
 
 class EscalaMensal(models.Model):
