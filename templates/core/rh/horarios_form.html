@@ -983,18 +983,30 @@
         politicasAvancadas[pIndex][field] = value;
     }
 
-    function updateFaixaField(pIndex, fIndex, field, value) {
-        if (field === 'banco_horas') {
-            politicasAvancadas[pIndex].faixas[fIndex][field] = value;
-        } else {
-            politicasAvancadas[pIndex].faixas[fIndex][field] = parseFloat(value) || 0;
-        }
-    }
-
-    function renderPoliticasAvancadas() {
+    function updateFaixaField(pIndex, fIndex, field, value) {    function renderPoliticasAvancadas() {
         const container = document.getElementById('lista_politicas_avancadas');
-        container.innerHTML = '';
         
+        // Header
+        let html = `
+            <div class="advanced-policies-wrapper border rounded mb-3 bg-white shadow-sm overflow-hidden">
+                <div class="row g-0 align-items-center bg-light border-bottom py-2 fw-bold text-center small text-muted">
+                    <div class="col" style="max-width: 40px;"></div>
+                    <div class="col" style="max-width: 50px;">Seq</div>
+                    <div class="col">Dias</div>
+                    <div class="col">Feriado</div>
+                    <div class="col">Noturno</div>
+                    <div class="col">Intervalo</div>
+                    <div class="col">Dia específico</div>
+                    <div class="col">Acumulo</div>
+                    <div class="col" style="max-width: 100px;">Eventos</div>
+                    <div class="col" style="max-width: 40px;"></div>
+                </div>
+        `;
+        
+        if (politicasAvancadas.length === 0) {
+             html += `<div class="p-3 text-center text-muted small">Nenhuma política configurada.</div>`;
+        }
+
         politicasAvancadas.forEach((p, pIndex) => {
             const isFirst = pIndex === 0;
             const isLast = pIndex === politicasAvancadas.length - 1;
@@ -1024,53 +1036,80 @@
                 `;
             });
 
-            const cardHtml = `
-                <div class="card mb-3 policy-card border shadow-sm">
-                    <div class="card-header bg-light py-2 d-flex align-items-center gap-2">
-                        <div class="d-flex flex-column gap-1 me-2">
-                            <button type="button" class="btn btn-sm p-0 text-muted lh-1 border-0 bg-transparent" onclick="movePoliticaAvancada(${pIndex}, -1)" ${isFirst ? 'disabled' : ''}><i class="bi bi-caret-up-fill"></i></button>
-                            <button type="button" class="btn btn-sm p-0 text-muted lh-1 border-0 bg-transparent" onclick="movePoliticaAvancada(${pIndex}, 1)" ${isLast ? 'disabled' : ''}><i class="bi bi-caret-down-fill"></i></button>
+            html += `
+                <div class="policy-row-container ${pIndex < politicasAvancadas.length - 1 ? 'border-bottom' : ''}">
+                    <!-- Row Principal -->
+                    <div class="row g-0 align-items-center py-2 px-1 text-center">
+                        <div class="col d-flex flex-column align-items-center gap-1" style="max-width: 40px;">
+                            <button type="button" class="btn btn-sm p-0 text-primary lh-1 border-0 bg-transparent" data-bs-toggle="collapse" data-bs-target="#collapsePolicy${pIndex}" title="Expandir faixas">
+                                <i class="bi bi-caret-down-fill pt-1 d-block text-center" style="font-size: 1.2rem;"></i>
+                            </button>
                         </div>
-                        <div class="fw-bold flex-grow-1" style="min-width: 60px;">SEQ. ${pIndex + 1}</div>
-                        <div class="d-flex gap-2 flex-wrap flex-grow-1">
-                            <select class="form-select form-select-sm" style="max-width: 140px; display:inline-block;" onchange="updatePoliticaField(${pIndex}, 'dias', this.value)">
+                        <div class="col fw-bold text-muted" style="max-width: 50px;">${pIndex + 1}</div>
+                        <div class="col px-1">
+                            <select class="form-select form-select-sm" onchange="updatePoliticaField(${pIndex}, 'dias', this.value)">
                                 <option value="qualquer_dia" ${p.dias === 'qualquer_dia' ? 'selected' : ''}>Qualquer dia</option>
                                 <option value="somente_com_horario" ${p.dias === 'somente_com_horario' ? 'selected' : ''}>Somente com hor.</option>
                                 <option value="somente_sem_horario" ${p.dias === 'somente_sem_horario' ? 'selected' : ''}>Somente sem hor.</option>
                             </select>
-                            <select class="form-select form-select-sm" style="max-width: 140px; display:inline-block;" onchange="updatePoliticaField(${pIndex}, 'feriado', this.value)">
+                        </div>
+                        <div class="col px-1">
+                            <select class="form-select form-select-sm" onchange="updatePoliticaField(${pIndex}, 'feriado', this.value)">
                                 <option value="qualquer" ${p.feriado === 'qualquer' ? 'selected' : ''}>Qualquer (Feriado)</option>
                                 <option value="nao_feriado" ${p.feriado === 'nao_feriado' ? 'selected' : ''}>Não é feriado</option>
                                 <option value="somente_feriado" ${p.feriado === 'somente_feriado' ? 'selected' : ''}>Somente feriado</option>
                             </select>
-                            <select class="form-select form-select-sm" style="max-width: 130px; display:inline-block;" onchange="updatePoliticaField(${pIndex}, 'noturno', this.value)">
+                        </div>
+                        <div class="col px-1">
+                            <select class="form-select form-select-sm" onchange="updatePoliticaField(${pIndex}, 'noturno', this.value)">
                                 <option value="ambos" ${p.noturno === 'ambos' ? 'selected' : ''}>Diurno/Noturno</option>
                                 <option value="diurno" ${p.noturno === 'diurno' ? 'selected' : ''}>Somente diurno</option>
                                 <option value="noturno" ${p.noturno === 'noturno' ? 'selected' : ''}>Somente noturno</option>
                             </select>
-                            <select class="form-select form-select-sm" style="max-width: 130px; display:inline-block;" onchange="updatePoliticaField(${pIndex}, 'intervalo', this.value)">
+                        </div>
+                        <div class="col px-1">
+                            <select class="form-select form-select-sm" onchange="updatePoliticaField(${pIndex}, 'intervalo', this.value)">
                                 <option value="tudo" ${p.intervalo === 'tudo' ? 'selected' : ''}>Tudo</option>
                                 <option value="intervalo" ${p.intervalo === 'intervalo' ? 'selected' : ''}>No intervalo</option>
                             </select>
-                            <select class="form-select form-select-sm" style="max-width: 130px; display:inline-block;" onchange="updatePoliticaField(${pIndex}, 'dia_especifico', this.value)">
+                        </div>
+                        <div class="col px-1">
+                            <select class="form-select form-select-sm" onchange="updatePoliticaField(${pIndex}, 'dia_especifico', this.value)">
                                 <option value="qualquer" ${p.dia_especifico === 'qualquer' ? 'selected' : ''}>Qualquer dia</option>
                                 <option value="domingo" ${p.dia_especifico === 'domingo' ? 'selected' : ''}>Domingo</option>
                                 <option value="sabado" ${p.dia_especifico === 'sabado' ? 'selected' : ''}>Sábado</option>
                             </select>
                         </div>
-                        <button type="button" class="btn btn-outline-danger btn-sm border-0" onclick="removePoliticaAvancada(${pIndex})" title="Remover Política">
-                            <i class="bi bi-x-lg"></i>
-                        </button>
-                        <button type="button" class="btn btn-outline-secondary btn-sm border-0" data-bs-toggle="collapse" data-bs-target="#collapsePolicy${pIndex}">
-                            <i class="bi bi-chevron-down"></i>
-                        </button>
+                        <div class="col px-1">
+                            <select class="form-select form-select-sm" onchange="updatePoliticaField(${pIndex}, 'acumulo', this.value)">
+                                <option value="diario" ${p.acumulo === 'diario' ? 'selected' : ''}>Diário</option>
+                                <option value="semanal" ${p.acumulo === 'semanal' ? 'selected' : ''}>Semanal</option>
+                                <option value="mensal" ${p.acumulo === 'mensal' ? 'selected' : ''}>Mensal</option>
+                            </select>
+                        </div>
+                        <div class="col px-1" style="max-width: 100px;">
+                            <input type="text" class="form-control form-control-sm" value="${p.eventos || ''}" onchange="updatePoliticaField(${pIndex}, 'eventos', this.value)" placeholder="">
+                        </div>
+                        <div class="col text-center" style="max-width: 40px;">
+                            <button type="button" class="btn btn-outline-secondary btn-sm border-0 p-1 text-muted" onclick="removePoliticaAvancada(${pIndex})" title="Remover Política">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
                     </div>
-                    <div id="collapsePolicy${pIndex}" class="collapse show">
-                        <div class="card-body bg-white pt-2 pb-3">
-                            <div class="fw-bold small text-muted mb-2">Faixas de extra:</div>
+                    
+                    <!-- Faixas de Extra (Collapsible) -->
+                    <div id="collapsePolicy${pIndex}" class="collapse">
+                        <div class="bg-light p-3 border-top inner-shadow-sm">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div class="fw-bold small text-muted"><i class="bi bi-diagram-2 me-1"></i> Faixas de extra da Seq. ${pIndex + 1}:</div>
+                                <div class="d-flex gap-1">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary py-0" onclick="movePoliticaAvancada(${pIndex}, -1)" ${isFirst ? 'disabled' : ''} title="Subir Prioridade"><i class="bi bi-arrow-up"></i></button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary py-0" onclick="movePoliticaAvancada(${pIndex}, 1)" ${isLast ? 'disabled' : ''} title="Descer Prioridade"><i class="bi bi-arrow-down"></i></button>
+                                </div>
+                            </div>
                             ${faixasHtml}
-                            <div class="mt-2">
-                                <button type="button" class="btn btn-link btn-sm text-decoration-none p-0" onclick="addFaixa(${pIndex})">
+                            <div class="mt-2 text-start">
+                                <button type="button" class="btn btn-sm btn-primary py-1 px-3 mt-1" onclick="addFaixa(${pIndex})">
                                     <i class="bi bi-plus-circle"></i> Incluir mais uma faixa de extra
                                 </button>
                             </div>
@@ -1078,8 +1117,10 @@
                     </div>
                 </div>
             `;
-            container.insertAdjacentHTML('beforeend', cardHtml);
         });
+        
+        html += `</div>`;
+        container.innerHTML = html;
     }
 </script>
 {% endblock %}
