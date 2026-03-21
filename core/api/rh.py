@@ -323,7 +323,7 @@ def api_save_colaborador(request):
 @require_http_methods(["GET"])
 def api_rh_auxiliar_data(request):
     """Retorna dados para combos e listas auxiliares do RH"""
-    cache_key = 'aux_data:all'
+    cache_key = 'aux_data:v2'
     cached_data = cache.get(cache_key)
     
     if cached_data:
