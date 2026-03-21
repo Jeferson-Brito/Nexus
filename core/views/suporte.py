@@ -438,7 +438,7 @@ def verificacao_lojas(request):
         'suspended_count': suspended_count, 'pending_issues': pending_issues, 'pending_issues_page': pending_issues_page,
         'irregular_store_ids': irregular_store_ids, 'play_sound': request.session.pop('play_irregularity_sound', False),
         'search_query': search_query, 'pending_issues_count': pending_issues_count,
-        'weekly_audits_count': weekly_audits_count, 'weekly_irregularities_count': weekly_irregular.count(),
+        'weekly_audits_count': weekly_audits_count, 'weekly_irregularities_count': weekly_irregularities_count,
         'compliance_rate': round(compliance_rate, 1),
     })
 
