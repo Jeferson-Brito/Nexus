@@ -306,6 +306,7 @@ urlpatterns = [
 
     # API RH - Colaboradores
     path('api/rh/auxiliar-data/', api_rh.api_rh_auxiliar_data, name='api_rh_auxiliar_data'),
+    path('api/rh/auxiliar/', api_rh.api_rh_auxiliar_data, name='api_rh_auxiliar'),
     path('api/rh/colaboradores/', api_rh.api_colaboradores_list, name='api_rh_colaboradores_list'),
     path('api/rh/colaboradores/save/', api_rh.api_save_colaborador, name='api_rh_save_colaborador'),
     path('api/rh/colaboradores/<int:pk>/', api_rh.api_colaborador_detail, name='api_rh_colaborador_detail'),
