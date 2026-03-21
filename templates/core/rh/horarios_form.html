@@ -241,14 +241,7 @@
 
                         <!-- Coluna 2 -->
                         <div class="col">
-                            <div class="mb-3">
-                                <label class="form-label fw-bold small">Modo compensação</label>
-                                <select id="hor_modo_compensacao" class="form-select" title="Define como as horas excedentes ou faltantes serão tratadas no banco de horas.">
-                                    <option value="sem_compensacao">Sem compensação</option>
-                                    <option value="compensacao_simples">Compensação simples (Diária)</option>
-                                    <option value="pelo_banco">Lançar no Banco de Horas</option>
-                                </select>
-                            </div>
+                            <!-- modo compensacao movido para aba avançado -->
                             <div class="mb-3">
                                 <label class="form-label fw-bold small">Quando cai num feriado</label>
                                 <select id="hor_quando_feriado" class="form-select" title="Regra de cálculo para quando o funcionário trabalha em dia de feriado cadastrado.">
@@ -498,19 +491,50 @@
 
                 <!-- ABA AVANÇADO -->
                 <div class="tab-pane fade" id="avancado" role="tabpanel">
-                    <div class="alert alert-light border shadow-sm mb-4">
-                        <div class="d-flex align-items-start gap-2">
-                            <i class="bi bi-info-circle text-primary mt-1"></i>
-                            <div class="small text-muted">
-                                <strong class="text-dark d-block mb-1">Sobre esta aba: Avançado</strong>
-                                A aba de configurações avançadas permite definir comportamentos específicos para casos excepcionais ou regras de integração. Atualmente em desenvolvimento para novas funcionalidades do sistema.
+                    <div class="row g-4 mt-2">
+                        <!-- Linha 1 -->
+                        <div class="col-md-4">
+                            <label class="form-label text-muted small mb-1">Modo Compensação (faltas x extra)</label>
+                            <select id="hor_modo_compensacao" class="form-select form-select-sm text-secondary">
+                                <option value="sem_compensacao">Sem compensação</option>
+                                <option value="compensacao_simples">Compensação simples (Diária)</option>
+                                <option value="pelo_banco">Lançar no Banco de Horas</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-muted small mb-1">Maneira de descontar as faltas das horas extras</label>
+                            <select id="hor_desconto_faltas_extras" class="form-select form-select-sm text-secondary">
+                                <option value="desconta_maior">Desconta primeiro horas extra de maior percentual</option>
+                                <option value="desconta_menor">Desconta primeiro horas extra de menor percentual</option>
+                                <option value="ordem_cronologica">Desconta em ordem cronológica</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-muted small mb-1">Modo de operação da opção Neutro com marcações no dia</label>
+                            <select id="hor_modo_neutro" class="form-select form-select-sm text-secondary">
+                                <option value="desconsidera_faltas">Desconsidera faltas, considera apenas extra</option>
+                                <option value="considera_tudo">Considera faltas e extras normalmente</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Linha 2 -->
+                        <div class="col-md-4">
+                            <label class="form-label text-muted small mb-1">Cálculo de horas extra interjornada</label>
+                            <select id="hor_calculo_extra_interjornada" class="form-select form-select-sm text-secondary">
+                                <option value="nao_calcula">Não calcula extra interjornada</option>
+                                <option value="calcula">Calcula extra interjornada</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-muted small mb-1">Percentual a ser aplicado nas extra interjornada</label>
+                            <div class="input-group input-group-sm">
+                                <input type="number" id="hor_perc_extra_interjornada" class="form-control text-secondary" value="50">
+                                <span class="input-group-text bg-white text-secondary border-start-0">%</span>
                             </div>
                         </div>
-                    </div>
-                    <div class="row g-4">
-                        <div class="col-12 text-center py-5">
-                            <i class="bi bi-gear text-muted mb-3" style="font-size: 3rem;"></i>
-                            <p class="text-muted">Novas configurações avançadas serão adicionadas aqui em breve.</p>
+                        <div class="col-md-4">
+                            <label class="form-label text-muted small mb-1">Folgas na semana</label>
+                            <input type="number" id="hor_folgas_semana" class="form-control form-control-sm text-secondary" value="0">
                         </div>
                     </div>
                 </div>
@@ -767,6 +791,13 @@
                 // Parâmetros Básicos
                 document.getElementById('hor_pre_assinalar').value = h.pre_assinalar;
                 document.getElementById('hor_modo_compensacao').value = h.modo_compensacao;
+                
+                // Avançado
+                document.getElementById('hor_desconto_faltas_extras').value = h.desconto_faltas_extras || 'desconta_maior';
+                document.getElementById('hor_modo_neutro').value = h.modo_neutro || 'desconsidera_faltas';
+                document.getElementById('hor_calculo_extra_interjornada').value = h.calculo_extra_interjornada || 'nao_calcula';
+                document.getElementById('hor_perc_extra_interjornada').value = h.perc_extra_interjornada ?? 50;
+                document.getElementById('hor_folgas_semana').value = h.folgas_semana ?? 0;
                 document.getElementById('hor_inicio_mes').value = h.inicio_mes;
                 document.getElementById('hor_refeicao_tipo').value = h.refeicao_tipo;
                 document.getElementById('hor_quando_feriado').value = h.quando_feriado;
@@ -830,6 +861,13 @@
             // Novos Campos
             pre_assinalar: document.getElementById('hor_pre_assinalar').value,
             modo_compensacao: document.getElementById('hor_modo_compensacao').value,
+            
+            // Avançado
+            desconto_faltas_extras: document.getElementById('hor_desconto_faltas_extras').value,
+            modo_neutro: document.getElementById('hor_modo_neutro').value,
+            calculo_extra_interjornada: document.getElementById('hor_calculo_extra_interjornada').value,
+            perc_extra_interjornada: parseFloat(document.getElementById('hor_perc_extra_interjornada').value),
+            folgas_semana: parseInt(document.getElementById('hor_folgas_semana').value),
             inicio_mes: parseInt(document.getElementById('hor_inicio_mes').value),
             refeicao_tipo: document.getElementById('hor_refeicao_tipo').value,
             quando_feriado: document.getElementById('hor_quando_feriado').value,

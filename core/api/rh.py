@@ -988,6 +988,13 @@ def api_rh_horario_detail(request, pk):
                 'max_faltas_dsr': h.max_faltas_dsr,
                 'desconto_dsr_feriado': h.desconto_dsr_feriado,
                 
+                # Aba Avançada
+                'desconto_faltas_extras': h.desconto_faltas_extras,
+                'modo_neutro': h.modo_neutro,
+                'calculo_extra_interjornada': h.calculo_extra_interjornada,
+                'perc_extra_interjornada': float(h.perc_extra_interjornada) if h.perc_extra_interjornada is not None else 50.0,
+                'folgas_semana': h.folgas_semana,
+                
                 'detalhes': detalhes
             }
         })
@@ -1079,6 +1086,13 @@ def api_save_horario(request):
             h.tempo_dsr = data.get('tempo_dsr', '07:20')
             h.max_faltas_dsr = data.get('max_faltas_dsr', '02:00')
             h.desconto_dsr_feriado = data.get('desconto_dsr_feriado', 'desconta_normais')
+            
+            # Aba Avançada
+            h.desconto_faltas_extras = data.get('desconto_faltas_extras', 'desconta_maior')
+            h.modo_neutro = data.get('modo_neutro', 'desconsidera_faltas')
+            h.calculo_extra_interjornada = data.get('calculo_extra_interjornada', 'nao_calcula')
+            h.perc_extra_interjornada = data.get('perc_extra_interjornada', 50.0)
+            h.folgas_semana = data.get('folgas_semana', 0)
             
             h.save()
             

@@ -2423,6 +2423,13 @@ class Horario(models.Model):
     fator_noturno = models.IntegerField(default=60) # em minutos
     fechamento_noturno_global = models.TimeField(default='00:00')
     
+    # Avançado
+    desconto_faltas_extras = models.CharField(max_length=50, default='desconta_maior', blank=True, null=True)
+    modo_neutro = models.CharField(max_length=50, default='desconsidera_faltas', blank=True, null=True)
+    calculo_extra_interjornada = models.CharField(max_length=50, default='nao_calcula', blank=True, null=True)
+    perc_extra_interjornada = models.DecimalField(max_digits=5, decimal_places=2, default=50, blank=True, null=True)
+    folgas_semana = models.IntegerField(default=0, blank=True, null=True)
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
