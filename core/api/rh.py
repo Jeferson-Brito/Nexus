@@ -188,6 +188,8 @@ def api_colaborador_detail(request, pk):
             'salario_atual': float(colaborador.salario_atual),
             'tipo_contrato': colaborador.tipo_contrato,
             'jornada': colaborador.jornada_trabalho,
+            'horario_padrao_id': str(colaborador.horario_padrao_id) if colaborador.horario_padrao_id else '',
+            'horario_padrao_nome': colaborador.horario_padrao.nome if colaborador.horario_padrao else '',
             'status': colaborador.status,
             'tempo_empresa': colaborador.tempo_empresa,
             'foto_url': colaborador.foto.url if colaborador.foto else None,
@@ -253,6 +255,7 @@ def api_save_colaborador(request):
             colaborador.nome_mae = data.get('nome_mae', '')
             colaborador.genero = data.get('genero', '')
             colaborador.jornada_trabalho = data.get('jornada_trabalho', '')
+            colaborador.horario_padrao_id = data.get('horario_padrao_id') or None
             colaborador.pis = data.get('pis', '')
             colaborador.matricula = data.get('matricula', '')
             colaborador.numero_folha = data.get('numero_folha', '')
@@ -1525,7 +1528,7 @@ def api_rh_apuracao_dados(request):
                 horario_id = str(escala.horario_previsto.id)
                 # Buscar detalhes do horário para o dia da semana (0-6)
                 # Nota: current_date.weekday() já retorna 0-6 (Seg-Dom)
-                detalhe = HorarioDetalhe.objects.filter(horario=escala.horario_previsto, dia_semana=current_date.weekday()).first()
+                detalhe = HorarioDetalhe.objects.filter(horario=escala.horario_previsto, dia_index=current_date.weekday()).first()
                 if detalhe:
                     partes = []
                     if detalhe.entrada_1 and detalhe.saida_1:
@@ -1536,13 +1539,26 @@ def api_rh_apuracao_dados(request):
                 else:
                     previsto = "Folga" if escala.tipo == 'folga' else "S/ Horário"
             else:
-                # Fallback ou folga automática se for fim de semana e não houver escala pintura
-                is_weekend = current_date.weekday() >= 5
-                if is_weekend:
-                    previsto = "Folga"
+                # Fallback: Usar horário padrão do colaborador se não houver escala pintada
+                if colaborador.horario_padrao:
+                    horario_id = str(colaborador.horario_padrao.id)
+                    detalhe = HorarioDetalhe.objects.filter(horario=colaborador.horario_padrao, dia_index=current_date.weekday()).first()
+                    if detalhe:
+                        partes = []
+                        if detalhe.entrada_1 and detalhe.saida_1:
+                            partes.append(f"{detalhe.entrada_1.strftime('%H:%M')}-{detalhe.saida_1.strftime('%H:%M')}")
+                        if detalhe.entrada_2 and detalhe.saida_2:
+                            partes.append(f"{detalhe.entrada_2.strftime('%H:%M')}-{detalhe.saida_2.strftime('%H:%M')}")
+                        previsto = "<br>".join(partes)
+                    else:
+                        previsto = "Folga"
                 else:
-                    # Tenta pegar da jornada_trabalho (string) ou mantém vazio
-                    previsto = "08:00-12:00<br>13:00-17:00" # Mantemos o padrão anterior como fallback se não houver escala
+                    # Fallback final se nem o colaborador tiver horário vinculado
+                    is_weekend = current_date.weekday() >= 5
+                    if is_weekend:
+                        previsto = "Folga"
+                    else:
+                        previsto = "08:00-12:00<br>13:00-17:00"
 
             dados_apuracao.append({
                 'data': current_date.strftime('%d/%m'),

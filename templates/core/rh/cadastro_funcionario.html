@@ -260,15 +260,10 @@
 
                             <div class="col-md-4">
                                 <label class="form-label small fw-semibold text-muted text-uppercase" style="font-size:0.72rem; letter-spacing:.05em;">Horário / Jornada</label>
-                                <select name="jornada_trabalho" id="formJornada" class="form-select">
-                                    <option value="">Selecione</option>
-                                    <option value="44h - Seg a Sex 09h-18h" {% if colaborador.jornada_trabalho == '44h - Seg a Sex 09h-18h' %}selected{% endif %}>44h — Seg a Sex 09h–18h</option>
-                                    <option value="44h - Seg a Sab 09h-15h" {% if colaborador.jornada_trabalho == '44h - Seg a Sab 09h-15h' %}selected{% endif %}>44h — Seg a Sáb 09h–15h</option>
-                                    <option value="40h - Seg a Sex 08h-17h" {% if colaborador.jornada_trabalho == '40h - Seg a Sex 08h-17h' %}selected{% endif %}>40h — Seg a Sex 08h–17h</option>
-                                    <option value="12x36 - Diurno"          {% if colaborador.jornada_trabalho == '12x36 - Diurno' %}selected{% endif %}>12×36 — Diurno</option>
-                                    <option value="12x36 - Noturno"         {% if colaborador.jornada_trabalho == '12x36 - Noturno' %}selected{% endif %}>12×36 — Noturno</option>
-                                    <option value="outro"                   {% if colaborador.jornada_trabalho == 'outro' %}selected{% endif %}>Outro</option>
+                                <select name="horario_padrao_id" id="formHorario" class="form-select">
+                                    <option value="">Selecione um horário</option>
                                 </select>
+                                <input type="hidden" name="jornada_trabalho" id="formJornadaText">
                             </div>
 
                             <div class="col-md-4">
@@ -675,6 +670,25 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (v === '{{ colaborador.tipo_contrato|default:"clt" }}') opt.selected = true;
                 tcSel.add(opt);
             });
+
+            // Popula Horário Padrão
+            const horSel = document.getElementById('formHorario');
+            const currentHorarioId = '{{ colaborador.horario_padrao_id|unlocalize|default:"" }}';
+            (data.horarios || []).forEach(h => {
+                const opt = new Option(h.nome, h.id);
+                if (h.id == currentHorarioId) opt.selected = true;
+                horSel.add(opt);
+            });
+
+            // Sincroniza o texto da jornada com o nome do horário selecionado (para manter compatibilidade)
+            horSel.addEventListener('change', function() {
+                const selectedText = this.options[this.selectedIndex].text;
+                document.getElementById('formJornadaText').value = selectedText !== 'Selecione um horário' ? selectedText : '';
+            });
+            // Inicializa o texto se já houver selecionado
+            if (horSel.selectedIndex > 0) {
+                document.getElementById('formJornadaText').value = horSel.options[horSel.selectedIndex].text;
+            }
         });
 
     function updateCargosSelects() {

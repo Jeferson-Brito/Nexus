@@ -2178,6 +2178,7 @@ class Colaborador(models.Model):
     salario_atual = models.DecimalField(max_digits=10, decimal_places=2)
     tipo_contrato = models.CharField(max_length=20, choices=TIPO_CONTRATO_CHOICES, default='clt')
     jornada_trabalho = models.CharField(max_length=100, blank=True, help_text="Ex: 44h semanais, 10h às 19h")
+    horario_padrao = models.ForeignKey('Horario', on_delete=models.SET_NULL, null=True, blank=True, related_name='colaboradores_vinculados')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='ativo')
     pis = models.CharField(max_length=14, blank=True, verbose_name='PIS/NIS')
     matricula = models.CharField(max_length=30, blank=True, verbose_name='Matrícula')
