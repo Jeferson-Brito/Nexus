@@ -1417,8 +1417,6 @@ def api_excluir_visual_apuracao(request, pk):
     except Exception as ex:
         return JsonResponse({'success': False, 'error': str(ex)}, status=500)
 
-@login_required
-@require_http_methods(["GET"])
 def get_dia_index_para_horario(horario, current_date):
     """
     Calcula o índice do dia (dia_index) para um determinado horário e data.
