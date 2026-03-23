@@ -394,24 +394,45 @@
 
         renderListaColunas();
         carregarVisuais();
-        
+
         document.getElementById('btnBuscarApuracao').addEventListener('click', () => {
+            const colabId = document.getElementById('filtro_pessoas').value;
+            const mes = document.getElementById('filtro_mes').value;
+            const ano = document.getElementById('filtro_ano').value;
+
+            if (!colabId) {
+                Swal.fire({icon: 'warning', title: 'Atenção', text: 'Selecione um colaborador para realizar a apuração.'});
+                return;
+            }
+
             document.getElementById('cardApuracao').style.display = 'block';
-            document.getElementById('lblEmpregadoAtual').innerText = 'Carregando funcionário...';
-            setTimeout(() => {
-                document.getElementById('lblEmpregadoAtual').innerText = 'Primeiro Funcionário';
-                renderEmptyTabela(); 
-                aplicarLayoutNaTabela();
-            }, 800);
+            document.getElementById('lblEmpregadoAtual').innerText = 'Carregando dados...';
+            document.getElementById('tabelaApuracaoTbody').innerHTML = '<tr><td colspan="20" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
+            
+            fetch(`/api/rh/apuracao-dados/?colaborador_id=${colabId}&mes=${mes}&ano=${ano}`)
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    document.getElementById('lblEmpregadoAtual').innerText = res.colaborador_nome;
+                    renderTabelaApuracao(res.dias);
+                    aplicarLayoutNaTabela();
+                } else {
+                    document.getElementById('lblEmpregadoAtual').innerText = 'Erro ao carregar';
+                    Swal.fire({icon: 'error', title: 'Erro', text: res.error || 'Falha ao buscar dados.'});
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                document.getElementById('lblEmpregadoAtual').innerText = 'Erro de conexão';
+                Swal.fire({icon: 'error', title: 'Erro', text: 'Não foi possível conectar à API de apuração.'});
+            });
         });
 
         document.getElementById('btnSalvarVisual').addEventListener('click', salvarVisual);
         
-        // Populate modal selection when click in 'Criar visual'
         const modalCriarVisual = document.getElementById('modalCriarVisual');
         if(modalCriarVisual) {
             modalCriarVisual.addEventListener('show.bs.modal', function (event) {
-                // Ao abrir, limpa
                 document.getElementById('visual_nome').value = '';
                 atualizarCheckboxes(layoutAtual, 'modal_chk_');
             });
@@ -467,18 +488,13 @@
             btn.innerHTML = 'Salvar';
             if (res.success) {
                 Swal.fire({icon: 'success', title: 'Sucesso', text: 'Visual salvo!', timer: 2000, showConfirmButton: false});
-                
-                // Fecha o modal e recarrega
                 const modalEl = document.getElementById('modalCriarVisual');
                 const modal = bootstrap.Modal.getInstance(modalEl);
                 if(modal) modal.hide();
-                
                 carregarVisuais();
-                
-                // Opicional: já aplica o layout
                 layoutAtual = colunas;
                 aplicarLayoutNaTabela();
-                atualizarCheckboxes(layoutAtual, 'chk_'); // Atualiza dropdown toolbar
+                atualizarCheckboxes(layoutAtual, 'chk_');
             } else {
                 Swal.fire({icon: 'error', title: 'Erro', text: res.error});
             }
@@ -502,7 +518,6 @@
 
     function excluirVisual(id, event) {
         if(event) event.stopPropagation();
-        
         Swal.fire({
             title: 'Excluir visual?',
             text: "Deseja realmente remover este layout?",
@@ -535,7 +550,6 @@
         
         if (visuaisSalvos.length === 0) {
             relatorioList.innerHTML = '<div class="text-center py-4 text-muted small"><i class="bi bi-exclamation-circle me-1"></i> Nenhum visual salvo ainda.</div>';
-            // Para dropdown mantem o acordeon
         } else {
             let html = '<div class="d-flex flex-column gap-2 p-2">';
             let dropdownSalvosHtml = '<h6 class="dropdown-header text-uppercase fw-bold text-primary small mt-3">Meus Visuais</h6><div class="d-flex flex-column gap-2 p-2 border-bottom">';
@@ -552,10 +566,7 @@
             });
             html += '</div>';
             dropdownSalvosHtml += '</div>';
-            
             relatorioList.innerHTML = html;
-            
-            // Injeta os visuais salvos ANTES do accordion de colunas normais no Dropdown de colunas
             let baseAccordion = document.getElementById('accordionColunas').outerHTML;
             dropdownList.innerHTML = dropdownSalvosHtml + '<h6 class="dropdown-header text-uppercase fw-bold text-primary small mt-3">Escolha de Colunas</h6>' + baseAccordion;
         }
@@ -566,7 +577,6 @@
         if (visual) {
             layoutAtual = visual.colunas;
             aplicarLayoutNaTabela();
-            // sync chks
             atualizarCheckboxes(layoutAtual, 'chk_');
         }
     }
@@ -586,7 +596,6 @@
     function renderListaColunas() {
         let htmlDropdown = '';
         let htmlModal = '';
-        
         colunasDisponiveis.forEach((cat, index) => {
             let colHtml = cat.colunas.map(c => `
                 <div class="form-check text-start mb-2 ms-2">
@@ -610,7 +619,6 @@
                 </div>
             `;
             htmlDropdown += accordionItem;
-            // No modal as checks não aplicam live, só salvam pro layout
             let colHtmlModal = cat.colunas.map(c => `
                 <div class="form-check text-start mb-2 ms-2">
                     <input class="form-check-input check-coluna" type="checkbox" value="${c.id}" id="modal_chk_${cat.id}_${c.id}" ${layoutAtual.includes(c.id) ? 'checked' : ''}>
@@ -634,7 +642,6 @@
             `;
             htmlModal += accordionItemModal;
         });
-
         document.getElementById('accordionColunas').innerHTML = htmlDropdown;
         document.getElementById('accordionModalColunas').innerHTML = htmlModal;
         document.getElementById('accordionModalImprimir').innerHTML = htmlModal.replace(/modal_chk_/g, 'imprimir_chk_').replace(/modal_/g, 'imprimir_');
@@ -649,7 +656,7 @@
         aplicarLayoutNaTabela();
     }
 
-    function renderEmptyTabela() {
+    function renderTabelaApuracao(dias) {
         let thead = `
             <th class="py-3 text-start fw-semibold border-bottom-0" style="color: #6c757d;">Dia</th>
             <th class="py-3 text-center fw-semibold border-bottom-0"></th>
@@ -668,164 +675,50 @@
             <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_total_normais" style="color: #6c757d;">Total<br>Normais</th>
             <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_total_noturno" style="color: #6c757d;">Total<br>Noturno</th>
             <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_dia_falta" style="color: #6c757d;">Dia Falta</th>
-            <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_falta_atraso" style="color: #6c757d;">Falta o<br>atraso</th>
+            <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_falta_atraso" style="color: #6c757d;">Falta ou<br>atraso</th>
             <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_abono" style="color: #6c757d;">Abono</th>
             <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_ext_diurna" style="color: #6c757d;">Extra<br>Diurna</th>
-            <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_ext_noturna" style="color: #6c757d;">Extra<br>50,0%N</th>
-            <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_ext_50" style="color: #6c757d;">Extra<br>100,0%D</th>
-            <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_ext_100" style="color: #6c757d;">Extra<br>Diurna</th>
+            <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_ext_noturna" style="color: #6c757d;">Extra<br>Noturna</th>
+            <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_ext_50" style="color: #6c757d;">Extra<br>50,0%</th>
+            <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_ext_100" style="color: #6c757d;">Extra<br>100,0%</th>
         `;
         document.getElementById('tabelaApuracaoThead').innerHTML = thead;
 
-        let trHtml = `
-            <tr>
-                <td class="text-start text-dark py-3 border-light">07/05 <span class="text-muted ms-1 small">Qui</span></td>
-                <td class="border-light"><i class="bi bi-check-lg fs-5 text-success" title="OK"></i> <i class="bi bi-chevron-down text-muted small ms-1" style="cursor: pointer;"></i></td>
-                <td class="text-muted py-2 small border-light" style="font-size: 0.75rem;">08:00-12:00<br>13:00-17:00</td>
-                <td class="py-3 border-light" style="cursor: pointer; color: #5b62d8;" onclick="abrirInclusaoPonto('07/05/2026', 'Ent 1')">08:00</td>
-                <td class="py-3 border-light" style="cursor: pointer; color: #5b62d8;" onclick="abrirInclusaoPonto('07/05/2026', 'Sai 1')">12:00</td>
-                <td class="py-3 border-light" style="cursor: pointer; color: #5b62d8;" onclick="abrirInclusaoPonto('07/05/2026', 'Ent 2')">13:00</td>
-                <td class="py-3 border-light" style="cursor: pointer; color: #5b62d8;" onclick="abrirInclusaoPonto('07/05/2026', 'Sai 2')">17:00</td>
-                
-                <td class="text-center align-middle border-light col-dyna" data-col-id="col_comp"><input class="form-check-input border-secondary" type="checkbox"></td>
-                <td class="text-center align-middle border-light col-dyna" data-col-id="col_almoco"><input class="form-check-input border-secondary" type="checkbox"></td>
-                <td class="text-center align-middle border-light col-dyna" data-col-id="col_folga"><input class="form-check-input border-secondary" type="checkbox"></td>
-                <td class="text-center align-middle border-light col-dyna" data-col-id="col_neutro"><input class="form-check-input border-secondary" type="checkbox"></td>
-                <td class="align-middle border-light text-center col-dyna" data-col-id="col_excluidas"></td>
-                
-                <td class="text-center py-3 border-light text-muted col-dyna" data-col-id="col_total_normais">08:00</td>
-                <td class="text-center py-3 border-light text-muted col-dyna" data-col-id="col_total_noturno"></td>
-                <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_dia_falta"></td>
-                <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_falta_atraso"></td>
-                <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_abono"></td>
-                <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_ext_diurna"></td>
-                <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_ext_noturna"></td>
-                <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_ext_50"></td>
-                <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_ext_100"></td>
-            </tr>
-            <tr>
-                <td class="text-start text-dark py-3 border-light">08/05 <span class="text-muted ms-1 small">Sex</span></td>
-                <td class="border-light"><i class="bi bi-exclamation-lg fs-5 text-danger fw-bold" title="Inconsistencia"></i> <i class="bi bi-chevron-down text-muted small ms-1" style="cursor: pointer;"></i></td>
-                <td class="text-muted py-2 small border-light" style="font-size: 0.75rem;">08:00-12:00<br>13:00-17:00</td>
-                <td class="py-3 border-light" style="cursor: pointer; color: #5b62d8;" onclick="abrirInclusaoPonto('08/05/2026', 'Ent 1')">08:50</td>
-                <td class="py-3 border-light" style="cursor: pointer; color: #5b62d8;" onclick="abrirInclusaoPonto('08/05/2026', 'Sai 1')">12:00</td>
-                <td class="py-3 border-light" style="cursor: pointer; color: #5b62d8;" onclick="abrirInclusaoPonto('08/05/2026', 'Ent 2')">13:00</td>
-                <td class="py-3 border-light" style="cursor: pointer; color: #5b62d8;" onclick="abrirInclusaoPonto('08/05/2026', 'Sai 2')">17:00</td>
-                
-                <td class="text-center align-middle border-light col-dyna" data-col-id="col_comp"><input class="form-check-input border-secondary" type="checkbox"></td>
-                <td class="text-center align-middle border-light col-dyna" data-col-id="col_almoco"><input class="form-check-input border-secondary" type="checkbox"></td>
-                <td class="text-center align-middle border-light col-dyna" data-col-id="col_folga"><input class="form-check-input border-secondary" type="checkbox"></td>
-                <td class="text-center align-middle border-light col-dyna" data-col-id="col_neutro"><input class="form-check-input border-secondary" type="checkbox"></td>
-                <td class="align-middle border-light text-center col-dyna" data-col-id="col_excluidas"></td>
-                
-                <td class="text-center py-3 border-light text-muted col-dyna" data-col-id="col_total_normais">07:10</td>
-                <td class="text-center py-3 border-light text-muted col-dyna" data-col-id="col_total_noturno"></td>
-                <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_dia_falta"></td>
-                <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_falta_atraso">00:50</td>
-                <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_abono"></td>
-                <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_ext_diurna"></td>
-                <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_ext_noturna"></td>
-                <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_ext_50"></td>
-                <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_ext_100"></td>
-            </tr>
-            <tr>
-                <td class="text-start text-dark py-3 border-light">09/05 <span class="text-muted ms-1 small">Sáb</span></td>
-                <td class="border-light"><i class="bi bi-check-lg fs-5 text-success" title="OK"></i> <i class="bi bi-chevron-down text-muted small ms-1" style="cursor: pointer;"></i></td>
-                <td class="text-muted py-2 small border-light" style="font-size: 0.75rem;">08:00-12:00</td>
-                <td class="py-3 border-light" style="cursor: pointer; color: #5b62d8;" onclick="abrirInclusaoPonto('09/05/2026', 'Ent 1')">08:00</td>
-                <td class="py-3 border-light" style="cursor: pointer; color: #5b62d8;" onclick="abrirInclusaoPonto('09/05/2026', 'Sai 1')">12:00</td>
-                <td class="py-3 border-light" style="cursor: pointer; color: #5b62d8;"></td>
-                <td class="py-3 border-light" style="cursor: pointer; color: #5b62d8;"></td>
-                
-                <td class="text-center align-middle border-light col-dyna" data-col-id="col_comp"><input class="form-check-input border-secondary" type="checkbox"></td>
-                <td class="text-center align-middle border-light col-dyna" data-col-id="col_almoco"><input class="form-check-input border-secondary" type="checkbox"></td>
-                <td class="text-center align-middle border-light col-dyna" data-col-id="col_folga"><input class="form-check-input border-secondary" type="checkbox"></td>
-                <td class="text-center align-middle border-light col-dyna" data-col-id="col_neutro"><input class="form-check-input border-secondary" type="checkbox"></td>
-                <td class="align-middle border-light text-center col-dyna" data-col-id="col_excluidas"></td>
-                
-                <td class="text-center py-3 border-light text-muted col-dyna" data-col-id="col_total_normais">04:00</td>
-                <td class="text-center py-3 border-light text-muted col-dyna" data-col-id="col_total_noturno"></td>
-                <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_dia_falta"></td>
-                <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_falta_atraso"></td>
-                <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_abono"></td>
-                <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_ext_diurna"></td>
-                <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_ext_noturna"></td>
-                <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_ext_50"></td>
-                <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_ext_100"></td>
-            </tr>
-            <tr style="background-color: #f7f8f9;">
-                <td class="text-start text-dark py-3 border-light">10/05 <span class="text-muted ms-1 small">Dom</span></td>
-                <td class="border-light"><i class="bi bi-pencil-square fs-5 text-secondary" title="Editado"></i> <i class="bi bi-chevron-down text-muted small ms-1" style="cursor: pointer;"></i></td>
-                <td class="text-muted py-2 small border-light" style="font-size: 0.75rem;"></td>
-                <td class="text-muted py-3 border-light fw-medium text-center" colspan="4">Folga &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Folga &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Folga &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Folga</td>
-                
-                <td class="text-center align-middle border-light col-dyna" data-col-id="col_comp"><input class="form-check-input border-secondary" type="checkbox"></td>
-                <td class="text-center align-middle border-light col-dyna" data-col-id="col_almoco"><input class="form-check-input border-secondary" type="checkbox"></td>
-                <td class="text-center align-middle border-light col-dyna" data-col-id="col_folga"><input class="form-check-input border-secondary" type="checkbox" checked></td>
-                <td class="text-center align-middle border-light col-dyna" data-col-id="col_neutro"><input class="form-check-input border-secondary" type="checkbox"></td>
-                <td class="align-middle border-light text-center col-dyna" data-col-id="col_excluidas"></td>
-                
-                <td class="text-center py-3 border-light text-muted col-dyna" data-col-id="col_total_normais"></td>
-                <td class="text-center py-3 border-light text-muted col-dyna" data-col-id="col_total_noturno"></td>
-                <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_dia_falta"></td>
-                <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_falta_atraso"></td>
-                <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_abono"></td>
-                <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_ext_diurna"></td>
-                <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_ext_noturna"></td>
-                <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_ext_50"></td>
-                <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_ext_100"></td>
-            </tr>
-            <tr>
-                <td class="text-start text-dark py-3 border-light">11/05 <span class="text-muted ms-1 small">Seg</span></td>
-                <td class="border-light"><i class="bi bi-asterisk fs-5 text-warning" title="Novo"></i> <i class="bi bi-chevron-down text-muted small ms-1" style="cursor: pointer;"></i></td>
-                <td class="text-muted py-2 small border-light" style="font-size: 0.75rem;">08:00-12:00<br>13:00-17:00</td>
-                <td class="py-3 border-light" style="cursor: pointer; color: #5b62d8;" onclick="abrirInclusaoPonto('11/05/2026', 'Ent 1')">01:00</td>
-                <td class="py-3 border-light" style="cursor: pointer; color: #5b62d8;" onclick="abrirInclusaoPonto('11/05/2026', 'Sai 1')">12:00</td>
-                <td class="py-3 border-light" style="cursor: pointer; color: #5b62d8;" onclick="abrirInclusaoPonto('11/05/2026', 'Ent 2')">13:00</td>
-                <td class="py-3 border-light" style="cursor: pointer; color: #5b62d8;" onclick="abrirInclusaoPonto('11/05/2026', 'Sai 2')">17:00</td>
-                
-                <td class="text-center align-middle border-light col-dyna" data-col-id="col_comp"><input class="form-check-input border-secondary" type="checkbox"></td>
-                <td class="text-center align-middle border-light col-dyna" data-col-id="col_almoco"><input class="form-check-input border-secondary" type="checkbox"></td>
-                <td class="text-center align-middle border-light col-dyna" data-col-id="col_folga"><input class="form-check-input border-secondary" type="checkbox"></td>
-                <td class="text-center align-middle border-light col-dyna" data-col-id="col_neutro"><input class="form-check-input border-secondary" type="checkbox"></td>
-                <td class="align-middle border-light text-center col-dyna" data-col-id="col_excluidas"></td>
-                
-                <td class="text-center py-3 border-light text-muted col-dyna" data-col-id="col_total_normais">08:00</td>
-                <td class="text-center py-3 border-light text-muted col-dyna" data-col-id="col_total_noturno">04:00</td>
-                <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_dia_falta"></td>
-                <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_falta_atraso"></td>
-                <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_abono"></td>
-                <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_ext_diurna"></td>
-                <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_ext_noturna">03:00</td>
-                <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_ext_50">04:00</td>
-                <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_ext_100">03:00</td>
-            </tr>
-            <tr>
-                <td class="text-start text-dark py-3 border-light">12/05 <span class="text-muted ms-1 small">Ter</span></td>
-                <td class="border-light"><i class="bi bi-asterisk fs-5 text-warning" title="Novo"></i> <i class="bi bi-chevron-down text-muted small ms-1" style="cursor: pointer;"></i></td>
-                <td class="text-muted py-2 small border-light" style="font-size: 0.75rem;">08:00-12:00<br>13:00-17:00</td>
-                <td class="py-3 border-light" style="cursor: pointer; color: #5b62d8;" onclick="abrirInclusaoPonto('12/05/2026', 'Ent 1')">05:00</td>
-                <td class="py-3 border-light" style="cursor: pointer; color: #5b62d8;" onclick="abrirInclusaoPonto('12/05/2026', 'Sai 1')">12:00</td>
-                <td class="py-3 border-light" style="cursor: pointer; color: #5b62d8;" onclick="abrirInclusaoPonto('12/05/2026', 'Ent 2')">13:00</td>
-                <td class="py-3 border-light" style="cursor: pointer; color: #5b62d8;" onclick="abrirInclusaoPonto('12/05/2026', 'Sai 2')">18:00</td>
-                
-                <td class="text-center align-middle border-light col-dyna" data-col-id="col_comp"><input class="form-check-input border-secondary" type="checkbox"></td>
-                <td class="text-center align-middle border-light col-dyna" data-col-id="col_almoco"><input class="form-check-input border-secondary" type="checkbox"></td>
-                <td class="text-center align-middle border-light col-dyna" data-col-id="col_folga"><input class="form-check-input border-secondary" type="checkbox"></td>
-                <td class="text-center align-middle border-light col-dyna" data-col-id="col_neutro"><input class="form-check-input border-secondary" type="checkbox"></td>
-                <td class="align-middle border-light text-center col-dyna" data-col-id="col_excluidas"></td>
-                
-                <td class="text-center py-3 border-light text-muted col-dyna" data-col-id="col_total_normais">08:00</td>
-                <td class="text-center py-3 border-light text-muted col-dyna" data-col-id="col_total_noturno"></td>
-                <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_dia_falta"></td>
-                <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_falta_atraso"></td>
-                <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_abono"></td>
-                <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_ext_diurna"></td>
-                <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_ext_noturna">04:00</td>
-                <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_ext_50"></td>
-                <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_ext_100">04:00</td>
-            </tr>
-        `;
+        let trHtml = '';
+        dias.forEach(dia => {
+            const rowClass = dia.is_weekend ? 'style="background-color: #f7f8f9;"' : '';
+            const statusIcon = dia.status === 'OK' ? 
+                '<i class="bi bi-check-lg fs-5 text-success" title="OK"></i>' : 
+                '<i class="bi bi-exclamation-lg fs-5 text-danger fw-bold" title="Inconsistencia"></i>';
+            
+            trHtml += `
+                <tr ${rowClass}>
+                    <td class="text-start text-dark py-3 border-light">${dia.data} <span class="text-muted ms-1 small">${dia.dia_semana}</span></td>
+                    <td class="border-light">${statusIcon} <i class="bi bi-chevron-down text-muted small ms-1" style="cursor: pointer;"></i></td>
+                    <td class="text-muted py-2 small border-light" style="font-size: 0.75rem;">${dia.previsto}</td>
+                    <td class="py-3 border-light" style="cursor: pointer; color: #5b62d8;" onclick="abrirInclusaoPonto('${dia.data_full}', 'Ent 1')">${dia.ent1}</td>
+                    <td class="py-3 border-light" style="cursor: pointer; color: #5b62d8;" onclick="abrirInclusaoPonto('${dia.data_full}', 'Sai 1')">${dia.sai1}</td>
+                    <td class="py-3 border-light" style="cursor: pointer; color: #5b62d8;" onclick="abrirInclusaoPonto('${dia.data_full}', 'Ent 2')">${dia.ent2}</td>
+                    <td class="py-3 border-light" style="cursor: pointer; color: #5b62d8;" onclick="abrirInclusaoPonto('${dia.data_full}', 'Sai 2')">${dia.sai2}</td>
+                    
+                    <td class="text-center align-middle border-light col-dyna" data-col-id="col_comp"><input class="form-check-input border-secondary" type="checkbox"></td>
+                    <td class="text-center align-middle border-light col-dyna" data-col-id="col_almoco"><input class="form-check-input border-secondary" type="checkbox"></td>
+                    <td class="text-center align-middle border-light col-dyna" data-col-id="col_folga"><input class="form-check-input border-secondary" type="checkbox" ${dia.is_weekend ? 'checked' : ''}></td>
+                    <td class="text-center align-middle border-light col-dyna" data-col-id="col_neutro"><input class="form-check-input border-secondary" type="checkbox"></td>
+                    <td class="align-middle border-light text-center col-dyna" data-col-id="col_excluidas"></td>
+                    
+                    <td class="text-center py-3 border-light text-muted col-dyna" data-col-id="col_total_normais">${dia.total_normais}</td>
+                    <td class="text-center py-3 border-light text-muted col-dyna" data-col-id="col_total_noturno"></td>
+                    <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_dia_falta"></td>
+                    <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_falta_atraso"></td>
+                    <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_abono"></td>
+                    <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_ext_diurna"></td>
+                    <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_ext_noturna"></td>
+                    <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_ext_50"></td>
+                    <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_ext_100"></td>
+                </tr>
+            `;
+        });
         document.getElementById('tabelaApuracaoTbody').innerHTML = trHtml;
         
         const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');

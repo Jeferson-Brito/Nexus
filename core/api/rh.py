@@ -11,7 +11,8 @@ from django.utils import timezone
 from django.core.cache import cache
 import json
 import logging
-from datetime import datetime, timedelta
+import calendar
+from datetime import datetime, timedelta, date
 from ..models import (
     Colaborador, Department, HistoricoProfissional, 
     PerformanceRH, User, DocumentoColaborador,    Empresa, Cargo, CentroCusto, Holiday, Turno, 
@@ -1411,4 +1412,109 @@ def api_excluir_visual_apuracao(request, pk):
         visual.delete()
         return JsonResponse({'success': True, 'message': 'Visual excluído com sucesso'})
     except Exception as ex:
+        return JsonResponse({'success': False, 'error': str(ex)}, status=500)
+
+@login_required
+@require_http_methods(["GET"])
+def api_rh_apuracao_dados(request):
+    """
+    Retorna os dados reais de apuração (batidas diárias) para um colaborador.
+    Params: colaborador_id, mes, ano
+    """
+    try:
+        colaborador_id = request.GET.get('colaborador_id')
+        mes = int(request.GET.get('mes', timezone.now().month))
+        ano = int(request.GET.get('ano', timezone.now().year))
+
+        if not colaborador_id:
+            return JsonResponse({'success': False, 'error': 'Colaborador não informado'}, status=400)
+
+        colaborador = get_object_or_404(Colaborador, pk=colaborador_id)
+        
+        # Determinar os dias do mês
+        last_day = calendar.monthrange(ano, mes)[1]
+        start_date = date(ano, mes, 1)
+        end_date = date(ano, mes, last_day)
+
+        # Buscar registros de ponto
+        registros = RegistroPonto.objects.filter(
+            colaborador=colaborador,
+            data__range=[start_date, end_date]
+        ).order_by('data', 'hora')
+
+        # Organizar registros por dia
+        registros_por_dia = {}
+        for r in registros:
+            if r.data not in registros_por_dia:
+                registros_por_dia[r.data] = []
+            registros_por_dia[r.data].append(r)
+
+        dias_semana_nome = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
+
+        dados_apuracao = []
+        for d in range(1, last_day + 1):
+            current_date = date(ano, mes, d)
+            dia_semana = dias_semana_nome[current_date.weekday()]
+            
+            regs = registros_por_dia.get(current_date, [])
+            
+            # Mapear batidas (assumindo ordem cronológica para simplificar)
+            # Buscando tipos específicos se disponíveis
+            ent1 = next((r.hora.strftime('%H:%M') for r in regs if r.tipo == 'entrada'), "")
+            sai1 = next((r.hora.strftime('%H:%M') for r in regs if r.tipo == 'saida_almoco'), "")
+            ent2 = next((r.hora.strftime('%H:%M') for r in regs if r.tipo == 'retorno_almoco'), "")
+            sai2 = next((r.hora.strftime('%H:%M') for r in regs if r.tipo == 'saida'), "")
+
+            # Se as batidas não estiverem tipadas corretamente (ex: manual sem tipo certo), pega as 4 primeiras
+            if not any([ent1, sai1, ent2, sai2]) and len(regs) > 0:
+                times = sorted([r.hora.strftime('%H:%M') for r in regs])
+                if len(times) >= 1: ent1 = times[0]
+                if len(times) >= 2: sai1 = times[1]
+                if len(times) >= 3: ent2 = times[2]
+                if len(times) >= 4: sai2 = times[3]
+
+            # Cálculo básico de horas trabalhadas (minutos)
+            total_minutos = 0
+            try:
+                if ent1 and sai1:
+                    t1 = datetime.strptime(sai1, '%H:%M') - datetime.strptime(ent1, '%H:%M')
+                    total_minutos += max(0, t1.total_seconds() / 60)
+                if ent2 and sai2:
+                    t2 = datetime.strptime(sai2, '%H:%M') - datetime.strptime(ent2, '%H:%M')
+                    total_minutos += max(0, t2.total_seconds() / 60)
+            except Exception:
+                pass
+            
+            def fmt_min(m):
+                if m <= 0: return ""
+                h = int(m // 60)
+                mi = int(m % 60)
+                return f"{h:02d}:{mi:02d}"
+
+            # Previsto 08:00-12:00 13:00-17:00 para preencher a coluna "Previsto"
+            # Em uma implementação futura, isso deve vir do HorarioDetalhe
+            is_weekend = current_date.weekday() >= 5
+            previsto = "08:00-12:00<br>13:00-17:00" if not is_weekend else ""
+
+            dados_apuracao.append({
+                'data': current_date.strftime('%d/%m'),
+                'data_full': current_date.strftime('%d/%m/%Y'),
+                'dia_semana': dia_semana,
+                'is_weekend': is_weekend,
+                'previsto': previsto,
+                'ent1': ent1,
+                'sai1': sai1,
+                'ent2': ent2,
+                'sai2': sai2,
+                'total_normais': fmt_min(total_minutos),
+                'status': 'OK' if (len(regs) % 2 == 0 and len(regs) > 0) or len(regs) == 0 else 'Inconsistência'
+            })
+
+        return JsonResponse({
+            'success': True,
+            'colaborador_nome': colaborador.nome_completo,
+            'dias': dados_apuracao
+        })
+    except Exception as ex:
+        logger.error(f"Erro na api_rh_apuracao_dados: {str(ex)}")
         return JsonResponse({'success': False, 'error': str(ex)}, status=500)
