@@ -812,7 +812,7 @@
     }
     function abrirInclusaoPonto(dataObj, horarioFaltante) {
         // Obter ID do colaborador selecionado no filtro
-        const colId = document.getElementById('filtroColaborador').value;
+        const colId = document.getElementById('filtro_pessoas').value;
         if (!colId) {
             if (window.showToast) showToast('warning', 'Selecione um funcionário antes.');
             return;
