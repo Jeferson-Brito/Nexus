@@ -1465,38 +1465,27 @@ def api_rh_apuracao_dados(request):
             except ValueError:
                 # Tenta formato brasileiro se vier do frontend assim (mas input type=date geralmente manda ISO)
                 try:
-                    start_date = datetime.strptime(data_inicio_str, '%d/%m/%Y').date()
-                    end_date = datetime.strptime(data_fim_str, '%d/%m/%Y').date()
-                except ValueError:
-                    return JsonResponse({'success': False, 'error': 'Formato de data inválido'}, status=400)
-        elif mes and ano:
-            last_day = calendar.monthrange(ano, mes)[1]
-            start_date = date(ano, mes, 1)
-            end_date = date(ano, mes, last_day)
-        else:
-            # Default para o mês atual
-            now = timezone.now()
-            mes = now.month
-            ano = now.year
-            last_day = calendar.monthrange(ano, mes)[1]
-            start_date = date(ano, mes, 1)
-            end_date = date(ano, mes, last_day)
-
-        # Buscar registros de ponto
-        registros = RegistroPonto.objects.filter(
-            colaborador=colaborador,
+                    start_date = datetime.st        # Buscar escalas do mês
+        escalas = EscalaMensal.objects.filter(
+            colaborador=colaborador, 
             data__range=[start_date, end_date]
-        ).order_by('data', 'hora')
+        ).select_related('horario_previsto')
+        escalas_por_data = {e.data: e for e in escalas}
 
-        # Organizar registros por dia
-        registros_por_dia = {}
-        for r in registros:
-            if r.data not in registros_por_dia:
-                registros_por_dia[r.data] = []
-            registros_por_dia[r.data].append(r)
+        # Coletar horários envolvidos (pintados + padrão) para buscar detalhes em lote
+        horarios_ids = set()
+        for e in escalas:
+            if e.horario_previsto_id:
+                horarios_ids.add(e.horario_previsto_id)
+        if colaborador.horario_padrao_id:
+            horarios_ids.add(colaborador.horario_padrao_id)
+        
+        detalhes_qs = HorarioDetalhe.objects.filter(horario_id__in=horarios_ids)
+        detalhes_map = {} # (horario_id, dia_index) -> detalhe
+        for d in detalhes_qs:
+            detalhes_map[(d.horario_id, d.dia_index)] = d
 
         dias_semana_nome = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
-
         dados_apuracao = []
         delta = end_date - start_date
         for i in range(delta.days + 1):
@@ -1506,13 +1495,12 @@ def api_rh_apuracao_dados(request):
             regs = registros_por_dia.get(current_date, [])
             
             # Mapear batidas (assumindo ordem cronológica para simplificar)
-            # Buscando tipos específicos se disponíveis
             ent1 = next((r.hora.strftime('%H:%M') for r in regs if r.tipo == 'entrada'), "")
             sai1 = next((r.hora.strftime('%H:%M') for r in regs if r.tipo == 'saida_almoco'), "")
             ent2 = next((r.hora.strftime('%H:%M') for r in regs if r.tipo == 'retorno_almoco'), "")
             sai2 = next((r.hora.strftime('%H:%M') for r in regs if r.tipo == 'saida'), "")
 
-            # Se as batidas não estiverem tipadas corretamente (ex: manual sem tipo certo), pega as 4 primeiras
+            # Se as batidas não estiverem tipadas corretamente, pega as 4 primeiras
             if not any([ent1, sai1, ent2, sai2]) and len(regs) > 0:
                 times = sorted([r.hora.strftime('%H:%M') for r in regs])
                 if len(times) >= 1: ent1 = times[0]
@@ -1538,18 +1526,16 @@ def api_rh_apuracao_dados(request):
                 mi = int(m % 60)
                 return f"{h:02d}:{mi:02d}"
 
-            # Buscar horário previsto na EscalaMensal
-            escala = EscalaMensal.objects.filter(colaborador=colaborador, data=current_date).select_related('horario_previsto').first()
+            # Buscar horário previsto
+            escala = escalas_por_data.get(current_date)
             
             previsto = ""
             horario_id = None
             
             if escala and escala.horario_previsto:
                 horario_id = str(escala.horario_previsto.id)
-                # Buscar detalhes do horário para o dia da semana (0-6)
-                # Usar lógica de índice (semanal ou cíclico)
                 di = get_dia_index_para_horario(escala.horario_previsto, current_date)
-                detalhe = HorarioDetalhe.objects.filter(horario=escala.horario_previsto, dia_index=di).first()
+                detalhe = detalhes_map.get((escala.horario_previsto.id, di))
                 if detalhe:
                     partes = []
                     if detalhe.entrada_1 and detalhe.saida_1:
@@ -1560,11 +1546,11 @@ def api_rh_apuracao_dados(request):
                 else:
                     previsto = "Folga" if escala.tipo == 'folga' else "S/ Horário"
             else:
-                # Fallback: Usar horário padrão do colaborador se não houver escala pintada
+                # Fallback: Usar horário padrão do colaborador
                 if colaborador.horario_padrao:
                     horario_id = str(colaborador.horario_padrao.id)
                     di = get_dia_index_para_horario(colaborador.horario_padrao, current_date)
-                    detalhe = HorarioDetalhe.objects.filter(horario=colaborador.horario_padrao, dia_index=di).first()
+                    detalhe = detalhes_map.get((colaborador.horario_padrao.id, di))
                     if detalhe:
                         partes = []
                         if detalhe.entrada_1 and detalhe.saida_1:
@@ -1575,7 +1561,6 @@ def api_rh_apuracao_dados(request):
                     else:
                         previsto = "Folga"
                 else:
-                    # Fallback final se nem o colaborador tiver horário vinculado
                     is_weekend = current_date.weekday() >= 5
                     if is_weekend:
                         previsto = "Folga"
