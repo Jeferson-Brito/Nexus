@@ -202,6 +202,7 @@ urlpatterns = [
     path('api/tasks/<int:pk>/delete/', api_tasks.api_task_delete, name='api_task_delete'),
     path('api/notifications/check/', api_tasks.api_notifications_check, name='api_notifications_check'),
     path('api/system/notifications/', views.api_get_system_notifications, name='api_get_system_notifications'),
+    path('api/system/ping/', views.api_ping, name='api_ping'),
 
     
     path('api/routines/daily/', api_tasks.api_routines_daily, name='api_routines_daily'),
