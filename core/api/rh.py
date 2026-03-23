@@ -16,7 +16,7 @@ from datetime import datetime, timedelta, date
 from ..models import (
     Colaborador, Department, HistoricoProfissional, 
     PerformanceRH, User, DocumentoColaborador,    Empresa, Cargo, CentroCusto, Holiday, Turno, 
-    JustificativaPonto, EscalaMensal, Horario, HorarioDetalhe
+    JustificativaPonto, EscalaMensal, Horario, HorarioDetalhe, RegistroPonto, VisualColunaApuracao
 )
 
 logger = logging.getLogger(__name__)
