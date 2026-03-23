@@ -290,6 +290,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 const s = document.getElementById('formTipoContrato');
                 if (s) s.innerHTML += `<option value="${v}">${l}</option>`;
             });
+            (data.horarios || []).forEach(h => {
+                const s = document.getElementById('formHorario');
+                if (s) s.innerHTML += `<option value="${h.id}">${h.nome}</option>`;
+            });
 
             // Initial load after auxiliary data
             loadColaboradores();

@@ -408,6 +408,10 @@
                     if (selectTipo) {
                         selectTipo.innerHTML = Object.entries(data.tipo_contrato_choices).map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
                     }
+                    const selectHorario = document.getElementById('formHorario');
+                    if (selectHorario) {
+                        selectHorario.innerHTML = '<option value="">Selecione um horário</option>' + (data.horarios || []).map(h => `<option value="${h.id}">${h.nome}</option>`).join('');
+                    }
                 }
             });
 
@@ -489,6 +493,7 @@
                     if (form.querySelector('[name="tipo_contrato"]')) form.querySelector('[name="tipo_contrato"]').value = c.tipo_contrato;
                     form.querySelector('[name="telefone"]').value = c.telefone;
                     form.querySelector('[name="email_pessoal"]').value = c.email_pessoal;
+                    if (form.querySelector('[name="horario_padrao_id"]')) form.querySelector('[name="horario_padrao_id"]').value = c.horario_padrao_id || "";
                     form.querySelector('[name="endereco"]').value = c.endereco;
 
                     document.getElementById('previewFoto').src = c.foto_url || "{% static 'img/avatar_placeholder.png' %}";

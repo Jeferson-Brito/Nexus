@@ -1419,6 +1419,28 @@ def api_excluir_visual_apuracao(request, pk):
 
 @login_required
 @require_http_methods(["GET"])
+def get_dia_index_para_horario(horario, current_date):
+    """
+    Calcula o índice do dia (dia_index) para um determinado horário e data.
+    Para horários semanais, retorna current_date.weekday() (0-6).
+    Para horários cíclicos, calcula a posição no ciclo com base na data_inicio_ciclo.
+    """
+    if horario.tipo == 'ciclico' and horario.data_inicio_ciclo:
+        delta = (current_date - horario.data_inicio_ciclo).days
+        if delta < 0:
+            return current_date.weekday()
+        
+        # Busca o total de dias do ciclo (maior dia_index + 1)
+        from django.db.models import Max
+        max_dia = HorarioDetalhe.objects.filter(horario=horario).aggregate(Max('dia_index'))['dia_index__max']
+        if max_dia is not None:
+            ciclo_total = max_dia + 1
+            return delta % ciclo_total
+            
+    return current_date.weekday()
+
+@login_required
+@require_http_methods(["GET"])
 def api_rh_apuracao_dados(request):
     """
     Retorna os dados reais de apuração (batidas diárias) para um colaborador.
@@ -1527,8 +1549,9 @@ def api_rh_apuracao_dados(request):
             if escala and escala.horario_previsto:
                 horario_id = str(escala.horario_previsto.id)
                 # Buscar detalhes do horário para o dia da semana (0-6)
-                # Nota: current_date.weekday() já retorna 0-6 (Seg-Dom)
-                detalhe = HorarioDetalhe.objects.filter(horario=escala.horario_previsto, dia_index=current_date.weekday()).first()
+                # Usar lógica de índice (semanal ou cíclico)
+                di = get_dia_index_para_horario(escala.horario_previsto, current_date)
+                detalhe = HorarioDetalhe.objects.filter(horario=escala.horario_previsto, dia_index=di).first()
                 if detalhe:
                     partes = []
                     if detalhe.entrada_1 and detalhe.saida_1:
@@ -1542,7 +1565,8 @@ def api_rh_apuracao_dados(request):
                 # Fallback: Usar horário padrão do colaborador se não houver escala pintada
                 if colaborador.horario_padrao:
                     horario_id = str(colaborador.horario_padrao.id)
-                    detalhe = HorarioDetalhe.objects.filter(horario=colaborador.horario_padrao, dia_index=current_date.weekday()).first()
+                    di = get_dia_index_para_horario(colaborador.horario_padrao, current_date)
+                    detalhe = HorarioDetalhe.objects.filter(horario=colaborador.horario_padrao, dia_index=di).first()
                     if detalhe:
                         partes = []
                         if detalhe.entrada_1 and detalhe.saida_1:
