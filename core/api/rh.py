@@ -1458,14 +1458,46 @@ def api_rh_apuracao_dados(request):
         colaborador = get_object_or_404(Colaborador, pk=colaborador_id)
         
         # Determinar o intervalo de datas
+        start_date = None
+        end_date = None
+
         if data_inicio_str and data_fim_str:
             try:
                 start_date = datetime.strptime(data_inicio_str, '%Y-%m-%d').date()
                 end_date = datetime.strptime(data_fim_str, '%Y-%m-%d').date()
             except ValueError:
-                # Tenta formato brasileiro se vier do frontend assim (mas input type=date geralmente manda ISO)
                 try:
-                    start_date = datetime.st        # Buscar escalas do mês
+                    start_date = datetime.strptime(data_inicio_str, '%d/%m/%Y').date()
+                    end_date = datetime.strptime(data_fim_str, '%d/%m/%Y').date()
+                except ValueError:
+                    return JsonResponse({'success': False, 'error': 'Formato de data inválido'}, status=400)
+        
+        if not start_date or not end_date:
+            if mes and ano:
+                last_day = calendar.monthrange(ano, mes)[1]
+                start_date = date(ano, mes, 1)
+                end_date = date(ano, mes, last_day)
+            else:
+                now = timezone.now()
+                m = mes or now.month
+                a = ano or now.year
+                last_day = calendar.monthrange(a, m)[1]
+                start_date = date(a, m, 1)
+                end_date = date(a, m, last_day)
+
+        # Buscar registros de ponto por período para organizar em memória
+        registros = RegistroPonto.objects.filter(
+            colaborador=colaborador,
+            data__range=[start_date, end_date]
+        ).order_by('data', 'hora')
+
+        registros_por_dia = {}
+        for r in registros:
+            if r.data not in registros_por_dia:
+                registros_por_dia[r.data] = []
+            registros_por_dia[r.data].append(r)
+
+        # Buscar escalas do mês
         escalas = EscalaMensal.objects.filter(
             colaborador=colaborador, 
             data__range=[start_date, end_date]
