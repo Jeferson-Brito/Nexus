@@ -1425,8 +1425,8 @@ def get_dia_index_para_horario(horario, current_date):
     Para horários semanais, retorna current_date.weekday() (0-6).
     Para horários cíclicos, calcula a posição no ciclo com base na data_inicio_ciclo.
     """
-    if horario.tipo == 'ciclico' and horario.data_inicio_ciclo:
-        delta = (current_date - horario.data_inicio_ciclo).days
+    if horario.tipo == 'ciclico' and horario.data_inicio:
+        delta = (current_date - horario.data_inicio).days
         if delta < 0:
             return current_date.weekday()
         
