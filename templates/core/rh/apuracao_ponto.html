@@ -397,8 +397,8 @@
 
         document.getElementById('btnBuscarApuracao').addEventListener('click', () => {
             const colabId = document.getElementById('filtro_pessoas').value;
-            const mes = document.getElementById('filtro_mes').value;
-            const ano = document.getElementById('filtro_ano').value;
+            const dataInicio = document.getElementById('filtro_inicio').value;
+            const dataFim = document.getElementById('filtro_fim').value;
 
             if (!colabId) {
                 Swal.fire({icon: 'warning', title: 'Atenção', text: 'Selecione um colaborador para realizar a apuração.'});
@@ -409,7 +409,7 @@
             document.getElementById('lblEmpregadoAtual').innerText = 'Carregando dados...';
             document.getElementById('tabelaApuracaoTbody').innerHTML = '<tr><td colspan="20" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
             
-            fetch(`/api/rh/apuracao-dados/?colaborador_id=${colabId}&mes=${mes}&ano=${ano}`)
+            fetch(`/api/rh/apuracao-dados/?colaborador_id=${colabId}&data_inicio=${dataInicio}&data_fim=${dataFim}`)
             .then(r => r.json())
             .then(res => {
                 if (res.success) {

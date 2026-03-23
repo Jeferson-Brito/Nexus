@@ -1423,18 +1423,41 @@ def api_rh_apuracao_dados(request):
     """
     try:
         colaborador_id = request.GET.get('colaborador_id')
-        mes = int(request.GET.get('mes', timezone.now().month))
-        ano = int(request.GET.get('ano', timezone.now().year))
+        data_inicio_str = request.GET.get('data_inicio')
+        data_fim_str = request.GET.get('data_fim')
+        
+        mes = int(request.GET.get('mes', 0))
+        ano = int(request.GET.get('ano', 0))
 
         if not colaborador_id:
             return JsonResponse({'success': False, 'error': 'Colaborador não informado'}, status=400)
 
         colaborador = get_object_or_404(Colaborador, pk=colaborador_id)
         
-        # Determinar os dias do mês
-        last_day = calendar.monthrange(ano, mes)[1]
-        start_date = date(ano, mes, 1)
-        end_date = date(ano, mes, last_day)
+        # Determinar o intervalo de datas
+        if data_inicio_str and data_fim_str:
+            try:
+                start_date = datetime.strptime(data_inicio_str, '%Y-%m-%d').date()
+                end_date = datetime.strptime(data_fim_str, '%Y-%m-%d').date()
+            except ValueError:
+                # Tenta formato brasileiro se vier do frontend assim (mas input type=date geralmente manda ISO)
+                try:
+                    start_date = datetime.strptime(data_inicio_str, '%d/%m/%Y').date()
+                    end_date = datetime.strptime(data_fim_str, '%d/%m/%Y').date()
+                except ValueError:
+                    return JsonResponse({'success': False, 'error': 'Formato de data inválido'}, status=400)
+        elif mes and ano:
+            last_day = calendar.monthrange(ano, mes)[1]
+            start_date = date(ano, mes, 1)
+            end_date = date(ano, mes, last_day)
+        else:
+            # Default para o mês atual
+            now = timezone.now()
+            mes = now.month
+            ano = now.year
+            last_day = calendar.monthrange(ano, mes)[1]
+            start_date = date(ano, mes, 1)
+            end_date = date(ano, mes, last_day)
 
         # Buscar registros de ponto
         registros = RegistroPonto.objects.filter(
@@ -1452,8 +1475,9 @@ def api_rh_apuracao_dados(request):
         dias_semana_nome = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
 
         dados_apuracao = []
-        for d in range(1, last_day + 1):
-            current_date = date(ano, mes, d)
+        delta = end_date - start_date
+        for i in range(delta.days + 1):
+            current_date = start_date + timedelta(days=i)
             dia_semana = dias_semana_nome[current_date.weekday()]
             
             regs = registros_por_dia.get(current_date, [])
