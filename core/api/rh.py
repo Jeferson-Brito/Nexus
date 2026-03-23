@@ -1298,7 +1298,7 @@ def api_execute_atribuicao_massa(request):
                             colaborador=colab,
                             data=pintura.get('data'),
                             defaults={
-                                'turno_id': pintura.get('turno_id'),
+                                'horario_previsto_id': pintura.get('turno_id'),
                                 'tipo': pintura.get('tipo', 'trabalho'),
                                 'justificativa_id': pintura.get('justificativa_id')
                             }
@@ -1515,17 +1515,42 @@ def api_rh_apuracao_dados(request):
                 mi = int(m % 60)
                 return f"{h:02d}:{mi:02d}"
 
-            # Previsto 08:00-12:00 13:00-17:00 para preencher a coluna "Previsto"
-            # Em uma implementação futura, isso deve vir do HorarioDetalhe
-            is_weekend = current_date.weekday() >= 5
-            previsto = "08:00-12:00<br>13:00-17:00" if not is_weekend else ""
+            # Buscar horário previsto na EscalaMensal
+            escala = EscalaMensal.objects.filter(colaborador=colaborador, data=current_date).select_related('horario_previsto').first()
+            
+            previsto = ""
+            horario_id = None
+            
+            if escala and escala.horario_previsto:
+                horario_id = str(escala.horario_previsto.id)
+                # Buscar detalhes do horário para o dia da semana (0-6)
+                # Nota: current_date.weekday() já retorna 0-6 (Seg-Dom)
+                detalhe = HorarioDetalhe.objects.filter(horario=escala.horario_previsto, dia_semana=current_date.weekday()).first()
+                if detalhe:
+                    partes = []
+                    if detalhe.entrada_1 and detalhe.saida_1:
+                        partes.append(f"{detalhe.entrada_1.strftime('%H:%M')}-{detalhe.saida_1.strftime('%H:%M')}")
+                    if detalhe.entrada_2 and detalhe.saida_2:
+                        partes.append(f"{detalhe.entrada_2.strftime('%H:%M')}-{detalhe.saida_2.strftime('%H:%M')}")
+                    previsto = "<br>".join(partes)
+                else:
+                    previsto = "Folga" if escala.tipo == 'folga' else "S/ Horário"
+            else:
+                # Fallback ou folga automática se for fim de semana e não houver escala pintura
+                is_weekend = current_date.weekday() >= 5
+                if is_weekend:
+                    previsto = "Folga"
+                else:
+                    # Tenta pegar da jornada_trabalho (string) ou mantém vazio
+                    previsto = "08:00-12:00<br>13:00-17:00" # Mantemos o padrão anterior como fallback se não houver escala
 
             dados_apuracao.append({
                 'data': current_date.strftime('%d/%m'),
                 'data_full': current_date.strftime('%d/%m/%Y'),
                 'dia_semana': dia_semana,
-                'is_weekend': is_weekend,
+                'is_weekend': current_date.weekday() >= 5,
                 'previsto': previsto,
+                'horario_id': horario_id,
                 'ent1': ent1,
                 'sai1': sai1,
                 'ent2': ent2,
