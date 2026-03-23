@@ -323,12 +323,6 @@ def api_save_colaborador(request):
 @require_http_methods(["GET"])
 def api_rh_auxiliar_data(request):
     """Retorna dados para combos e listas auxiliares do RH"""
-    cache_key = 'aux_data:v2'
-    cached_data = cache.get(cache_key)
-    
-    if cached_data:
-        return JsonResponse(cached_data)
-
     cargos = list(Cargo.objects.all().values('id', 'nome', 'department_id'))
     for cargo in cargos:
         cargo['id'] = str(cargo['id'])
@@ -378,11 +372,7 @@ def api_rh_auxiliar_data(request):
         'tipo_performance_choices': dict(PerformanceRH.TIPO_CHOICES),
         'tipo_horario_choices': dict(Horario.TIPO_CHOICES)
     }
-    
-    # Cache por 2 horas - Invalida cache anterior pra garantir que venha os novos campos
-    cache.delete(cache_key)
-    cache.set(cache_key, response_data, 7200)
-    
+        
     return JsonResponse(response_data)
 
 
