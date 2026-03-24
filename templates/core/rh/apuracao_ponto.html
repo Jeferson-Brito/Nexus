@@ -274,7 +274,7 @@
 
 <!-- Modal: Incluir Marcação -->
 <div class="modal fade" id="modalIncluirMarcacao" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content border-0 shadow">
             <div class="modal-header border-bottom-0 pb-0">
                 <h5 class="modal-title fw-bold">Incluir marcação</h5>
@@ -293,11 +293,18 @@
                     </div>
                     
                     <div class="row mb-4">
-                        <div class="col-6">
+                        <div class="col-md-4">
                             <label class="form-label small fw-bold">Data</label>
-                            <input type="text" class="form-control fw-bold" id="marc_data" readonly style="border: none; background: transparent; padding-left: 0; font-size: 1.1rem;">
+                            <input type="text" class="form-control fw-bold fs-5" id="marc_data" readonly style="border: none; background: transparent; padding-left: 0;">
                         </div>
-                        <div class="col-6">
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Novo horário</label>
+                            <div class="input-group">
+                                <input type="time" class="form-control" id="marc_hora">
+                                <button class="btn btn-danger" type="button" onclick="document.getElementById('marc_hora').value=''" title="Limpar"><i class="bi bi-x"></i></button>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
                             <label class="form-label small fw-bold">Tipo</label>
                             <select class="form-select" id="marc_tipo">
                                 <option value="entrada">Entrada</option>
@@ -305,14 +312,6 @@
                                 <option value="retorno_almoco">Retorno Intervalo</option>
                                 <option value="saida">Saída Final</option>
                             </select>
-                        </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold">Novo horário</label>
-                        <div class="input-group">
-                            <input type="time" class="form-control" id="marc_hora">
-                            <button class="btn btn-danger" type="button" onclick="document.getElementById('marc_hora').value=''" title="Limpar"><i class="bi bi-x"></i></button>
                         </div>
                     </div>
                     
