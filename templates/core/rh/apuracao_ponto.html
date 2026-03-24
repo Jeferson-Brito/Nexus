@@ -75,6 +75,11 @@
     #tabelaApuracao tbody td:last-child {
         border-right: none !important;
     }
+    .hover-elevate:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important; }
+    .icon-option:hover { border-color: #3b82f6 !important; background: #eff6ff !important; }
+    .extra-small { font-size: 0.65rem; }
+    .transition-all { transition: all 0.2s ease-in-out; }
+    .cursor-pointer { cursor: pointer; }
 </style>
 
 <div class="container-fluid py-4" style="background-color: #f8f9fa; min-height: 100vh;">
@@ -171,22 +176,31 @@
                     <button class="btn btn-outline-secondary btn-sm dropdown-toggle d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
                         <i class="bi bi-gear"></i> Colunas
                     </button>
-                    <div class="dropdown-menu dropdown-menu-end p-0 shadow" style="width: 320px;">
-                        <div class="p-3 border-bottom d-flex gap-2 text-center">
-                            <button class="btn btn-light border flex-fill pt-3 pb-2 text-primary text-decoration-none" data-bs-toggle="modal" data-bs-target="#modalCriarVisual">
-                                <i class="bi bi-rocket-takeoff d-block fs-4 mb-1"></i>
-                                <small>Criar visual</small>
-                            </button>
-                            <button class="btn btn-light border flex-fill pt-3 pb-2 text-primary text-decoration-none">
-                                <i class="bi bi-pencil-square d-block fs-4 mb-1"></i>
-                                <small>Editar visuais</small>
-                            </button>
-                        </div>
-                        <div class="p-2" id="dropdownApuracaoColunas">
-                            <h6 class="dropdown-header text-uppercase fw-bold text-primary small">Escolha de Colunas</h6>
-                            <!-- Accordion dinâmico via JS -->
-                            <div class="accordion accordion-flush" id="accordionColunas">
-                                <!-- Gerado via JS -->
+                    <div class="dropdown-menu dropdown-menu-end p-0 shadow border-0" style="width: 700px; border-radius: 12px; overflow: hidden;">
+                        <div class="row g-0">
+                            <!-- Coluna Esquerda: Categorias -->
+                            <div class="col-md-6 border-end p-4" style="max-height: 550px; overflow-y: auto; background: #fff;">
+                                <h6 class="text-uppercase fw-bold text-primary mb-3" style="font-size: 0.75rem; letter-spacing: 0.05rem;">Escolha de Colunas</h6>
+                                <div class="accordion accordion-flush" id="accordionColunas">
+                                    <!-- Renderizado via JS -->
+                                </div>
+                            </div>
+                            <!-- Coluna Direita: Gestão e Visuais -->
+                            <div class="col-md-6 p-4" style="background: #f8fafc;">
+                                <div class="d-flex gap-2 mb-4">
+                                    <button class="btn btn-white border border-dashed flex-fill p-3 text-center shadow-sm hover-elevate transition-all" data-bs-toggle="modal" data-bs-target="#modalCriarVisual" style="border-style: dashed !important; border-width: 2px !important; border-color: #cbd5e1 !important; border-radius: 12px;">
+                                        <i class="bi bi-rocket-takeoff d-block fs-3 mb-1 text-primary"></i>
+                                        <div class="small fw-bold text-dark">Criar visual</div>
+                                    </button>
+                                    <button class="btn btn-white border border-dashed flex-fill p-3 text-center shadow-sm hover-elevate transition-all" style="border-style: dashed !important; border-width: 2px !important; border-color: #cbd5e1 !important; border-radius: 12px;">
+                                        <i class="bi bi-pencil-square d-block fs-3 mb-1 text-primary"></i>
+                                        <div class="small fw-bold text-dark">Editar visuais</div>
+                                    </button>
+                                </div>
+                                <h6 class="text-uppercase fw-bold text-primary mb-3" style="font-size: 0.75rem; letter-spacing: 0.05rem;">Meus Visuais</h6>
+                                <div id="dropdownApuracaoColunas" class="d-flex flex-column gap-2">
+                                    <!-- Renderizado via JS -->
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -237,28 +251,31 @@
                 <h5 class="modal-title fw-bold">Criar layout de colunas</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body p-4">
                 <div class="row g-4">
                     <!-- Nome e Ícone -->
-                    <div class="col-md-5 border-end">
+                    <div class="col-md-5 border-end pe-4">
                         <div class="mb-4">
-                            <label class="form-label small fw-bold">Nome</label>
-                            <input type="text" class="form-control" id="visual_nome" placeholder="Nome do padrão">
+                            <label class="form-label small fw-bold text-muted text-uppercase mb-2" style="font-size: 0.7rem;">Nome do Padrão</label>
+                            <input type="text" class="form-control form-control-lg border-0 bg-light shadow-none" id="visual_nome" placeholder="Ex: Financeiro" style="font-size: 0.95rem;">
                         </div>
                         <div>
-                            <label class="form-label small fw-bold">Ícone</label>
-                            <div class="d-flex flex-wrap gap-2" id="gridIconesVisual">
-                                <!-- Opções geradas por JS -->
+                            <label class="form-label small fw-bold text-muted text-uppercase mb-2" style="font-size: 0.7rem;">Escolha um Ícone</label>
+                            <div class="border border-dashed rounded p-3 bg-light bg-opacity-25" style="border-style: dashed !important; border-width: 2px !important; border-color: #e2e8f0 !important;">
+                                <div class="d-flex flex-wrap gap-2 justify-content-center" id="gridIconesVisual">
+                                    <!-- Opções geradas por JS: layout, clock, graph, list, people, etc -->
+                                </div>
                             </div>
+                            <input type="hidden" id="visual_icone" value="bi-layout-text-window">
                         </div>
                     </div>
                     
                     <!-- Escolha das Colunas -->
-                    <div class="col-md-7">
-                        <label class="form-label small fw-bold">Colunas</label>
-                        <div class="border rounded p-2 overflow-auto" style="height: 350px;">
+                    <div class="col-md-7 ps-4">
+                        <label class="form-label small fw-bold text-muted text-uppercase mb-2" style="font-size: 0.7rem;">Colunas Selecionadas</label>
+                        <div class="border rounded p-0 overflow-auto bg-white shadow-sm" style="height: 380px;">
                             <div class="accordion accordion-flush" id="accordionModalColunas">
-                                <!-- Gerado dinamicamente copiando lógica do dropdown -->
+                                <!-- Gerado dinamicamente via JS -->
                             </div>
                         </div>
                     </div>
@@ -418,6 +435,15 @@
             { id: 'col_ext_noturna', nome: 'Extra Noturna', padrao: true },
             { id: 'col_ext_50', nome: 'Extra 50,0%' },
             { id: 'col_ext_100', nome: 'Extra 100,0%' }
+        ]},
+        { categoria: 'DSR', id: 'cat_dsr', colunas: [
+            { id: 'col_dsr_prop', nome: 'DSR Proporcional' },
+            { id: 'col_dsr_integral', nome: 'DSR Integral' }
+        ]},
+        { categoria: 'Banco de Horas', id: 'cat_bh', colunas: [
+            { id: 'col_bh_cred', nome: 'Crédito BH' },
+            { id: 'col_bh_deb', nome: 'Débito BH' },
+            { id: 'col_bh_saldo', nome: 'Saldo BH' }
         ]}
     ];
 
@@ -479,6 +505,7 @@
 
         renderListaColunas();
         carregarVisuais();
+        renderGridIcones();
 
         document.getElementById('btnBuscarApuracao').addEventListener('click', carregarApuracao);
 
@@ -554,18 +581,17 @@
 
     function salvarVisual() {
         const nome = document.getElementById('visual_nome').value;
-        const colunas = getSelectedCheckboxes('modal_chk_');
+        const icone = document.getElementById('visual_icone').value || 'bi-layout-text-window';
         
         if (!nome) {
             Swal.fire({icon: 'error', title: 'Atenção', text: 'Informe um nome para o visual!'});
             return;
         }
 
-        const data = {
+        const payload = {
             nome: nome,
-            icone: 'bi-layout-text-window',
-            colunas: colunas,
-            padrao: false
+            icone: icone,
+            colunas: getSelectedCheckboxes('modal_chk_')
         };
 
         const btn = document.getElementById('btnSalvarVisual');
@@ -574,7 +600,7 @@
 
         fetch('/api/rh/apuracao/layout/salvar/', {
             method: 'POST',
-            body: JSON.stringify(data),
+            body: JSON.stringify(payload),
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRFToken': getCookie('csrftoken')
@@ -590,7 +616,7 @@
                 const modal = bootstrap.Modal.getInstance(modalEl);
                 if(modal) modal.hide();
                 carregarVisuais();
-                layoutAtual = colunas;
+                layoutAtual = payload.colunas;
                 aplicarLayoutNaTabela();
                 atualizarCheckboxes(layoutAtual, 'chk_');
             } else {
@@ -648,14 +674,17 @@
         
         if (visuaisSalvos.length === 0) {
             relatorioList.innerHTML = '<div class="text-center py-4 text-muted small"><i class="bi bi-exclamation-circle me-1"></i> Nenhum visual salvo ainda.</div>';
+            dropdownList.innerHTML = '<div class="text-center py-5 text-muted small"><i class="bi bi-layout-sidebar mb-2 fs-3 d-block"></i> Nenhum visual salvo.</div>';
         } else {
             let html = '<div class="d-flex flex-column gap-2 p-2">';
-            let dropdownSalvosHtml = '<h6 class="dropdown-header text-uppercase fw-bold text-primary small mt-3">Meus Visuais</h6><div class="d-flex flex-column gap-2 p-2 border-bottom">';
+            let dropdownSalvosHtml = '';
             visuaisSalvos.forEach(v => {
+                let iconClass = v.icone || 'bi-layout-text-window';
                 let btnHtml = `
                 <div class="d-flex w-100 gap-1 mb-1">
-                    <button class="btn btn-light text-start border rounded flex-fill" onclick="selecionarVisual('${v.id}')">
-                        <i class="bi bi-layout-text-window me-2 text-primary"></i> ${v.nome}
+                    <button class="btn btn-white text-start border rounded flex-fill shadow-sm d-flex align-items-center gap-2 py-2" onclick="selecionarVisual('${v.id}')">
+                        <i class="bi ${iconClass} text-primary"></i> 
+                        <span class="small fw-semibold text-dark">${v.nome}</span>
                     </button>
                     <button class="btn btn-light text-danger border rounded px-2" onclick="excluirVisual('${v.id}', event)" title="Excluir"><i class="bi bi-trash"></i></button>
                 </div>`;
@@ -663,11 +692,40 @@
                 dropdownSalvosHtml += btnHtml;
             });
             html += '</div>';
-            dropdownSalvosHtml += '</div>';
             relatorioList.innerHTML = html;
-            let baseAccordion = document.getElementById('accordionColunas').outerHTML;
-            dropdownList.innerHTML = dropdownSalvosHtml + '<h6 class="dropdown-header text-uppercase fw-bold text-primary small mt-3">Escolha de Colunas</h6>' + baseAccordion;
+            dropdownList.innerHTML = dropdownSalvosHtml;
         }
+    }
+
+    const iconesDisponiveis = [
+        'bi-layout-text-window', 'bi-clock-history', 'bi-graph-up', 'bi-list-check', 
+        'bi-people', 'bi-calendar-event', 'bi-briefcase', 'bi-clipboard-data'
+    ];
+
+    function renderGridIcones() {
+        const grid = document.getElementById('gridIconesVisual');
+        const hiddenInput = document.getElementById('visual_icone');
+        if(!grid) return;
+        
+        grid.innerHTML = iconesDisponiveis.map(icon => `
+            <div class="icon-option p-2 border rounded bg-white shadow-sm cursor-pointer transition-all ${hiddenInput.value === icon ? 'border-primary border-2 bg-primary bg-opacity-10' : ''}" 
+                 onclick="selecionarIconeVisual('${icon}', this)" 
+                 style="cursor: pointer; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center;">
+                <i class="bi ${icon} fs-5 ${hiddenInput.value === icon ? 'text-primary' : 'text-muted'}"></i>
+            </div>
+        `).join('');
+    }
+
+    window.selecionarIconeVisual = function(icon, el) {
+        document.getElementById('visual_icone').value = icon;
+        document.querySelectorAll('.icon-option').forEach(opt => {
+            opt.classList.remove('border-primary', 'border-2', 'bg-primary', 'bg-opacity-10');
+            opt.querySelector('i').classList.remove('text-primary');
+            opt.querySelector('i').classList.add('text-muted');
+        });
+        el.classList.add('border-primary', 'border-2', 'bg-primary', 'bg-opacity-10');
+        el.querySelector('i').classList.remove('text-muted');
+        el.querySelector('i').classList.add('text-primary');
     }
 
     function selecionarVisual(id) {
@@ -779,6 +837,12 @@
             <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_ext_noturna" style="color: #6c757d;">Extra<br>Noturna</th>
             <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_ext_50" style="color: #6c757d;">Extra<br>50,0%</th>
             <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_ext_100" style="color: #6c757d;">Extra<br>100,0%</th>
+
+            <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_dsr_prop" style="color: #6c757d;">DSR<br>Prop.</th>
+            <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_dsr_integral" style="color: #6c757d;">DSR<br>Integal</th>
+            <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_bh_cred" style="color: #6c757d;">BH<br>Crédito</th>
+            <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_bh_deb" style="color: #6c757d;">BH<br>Débito</th>
+            <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_bh_saldo" style="color: #6c757d;">BH<br>Saldo</th>
         `;
         document.getElementById('tabelaApuracaoThead').innerHTML = thead;
 
@@ -814,6 +878,11 @@
                     <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_ext_noturna"></td>
                     <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_ext_50"></td>
                     <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_ext_100"></td>
+                    <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_dsr_prop"></td>
+                    <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_dsr_integral"></td>
+                    <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_bh_cred"></td>
+                    <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_bh_deb"></td>
+                    <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_bh_saldo"></td>
                 </tr>
             `;
         });
