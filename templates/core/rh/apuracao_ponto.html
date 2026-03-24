@@ -481,38 +481,45 @@
         renderListaColunas();
         carregarVisuais();
 
-        document.getElementById('btnBuscarApuracao').addEventListener('click', () => {
-            const colabId = document.getElementById('filtro_pessoas').value;
-            const dataInicio = document.getElementById('filtro_inicio').value;
-            const dataFim = document.getElementById('filtro_fim').value;
+        document.getElementById('btnBuscarApuracao').addEventListener('click', carregarApuracao);
+    });
 
-            if (!colabId) {
-                Swal.fire({icon: 'warning', title: 'Atenção', text: 'Selecione um colaborador para realizar a apuração.'});
-                return;
+    function carregarApuracao() {
+        const colabId = document.getElementById('filtro_pessoas').value;
+        const dataInicio = document.getElementById('filtro_inicio').value;
+        const dataFim = document.getElementById('filtro_fim').value;
+
+        if (!colabId) {
+            Swal.fire({icon: 'warning', title: 'Atenção', text: 'Selecione um colaborador para realizar a apuração.'});
+            return;
+        }
+
+        document.getElementById('cardApuracao').style.display = 'block';
+        document.getElementById('lblEmpregadoAtual').innerText = 'Carregando dados...';
+        document.getElementById('tabelaApuracaoTbody').innerHTML = '<tr><td colspan="20" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
+        
+        fetch(`/api/rh/apuracao-dados/?colaborador_id=${colabId}&data_inicio=${dataInicio}&data_fim=${dataFim}`)
+        .then(r => r.json())
+        .then(res => {
+            if (res.success) {
+                document.getElementById('lblEmpregadoAtual').innerText = res.colaborador_nome;
+                renderTabelaApuracao(res.dias);
+                aplicarLayoutNaTabela();
+            } else {
+                document.getElementById('lblEmpregadoAtual').innerText = 'Erro ao carregar';
+                Swal.fire({icon: 'error', title: 'Erro', text: res.error || 'Falha ao buscar dados.'});
             }
-
-            document.getElementById('cardApuracao').style.display = 'block';
-            document.getElementById('lblEmpregadoAtual').innerText = 'Carregando dados...';
-            document.getElementById('tabelaApuracaoTbody').innerHTML = '<tr><td colspan="20" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
-            
-            fetch(`/api/rh/apuracao-dados/?colaborador_id=${colabId}&data_inicio=${dataInicio}&data_fim=${dataFim}`)
-            .then(r => r.json())
-            .then(res => {
-                if (res.success) {
-                    document.getElementById('lblEmpregadoAtual').innerText = res.colaborador_nome;
-                    renderTabelaApuracao(res.dias);
-                    aplicarLayoutNaTabela();
-                } else {
-                    document.getElementById('lblEmpregadoAtual').innerText = 'Erro ao carregar';
-                    Swal.fire({icon: 'error', title: 'Erro', text: res.error || 'Falha ao buscar dados.'});
-                }
-            })
-            .catch(err => {
-                console.error(err);
-                document.getElementById('lblEmpregadoAtual').innerText = 'Erro de conexão';
-                Swal.fire({icon: 'error', title: 'Erro', text: 'Não foi possível conectar à API de apuração.'});
-            });
+        })
+        .catch(err => {
+            console.error(err);
+            document.getElementById('lblEmpregadoAtual').innerText = 'Erro de conexão';
+            Swal.fire({icon: 'error', title: 'Erro', text: 'Não foi possível conectar à API de apuração.'});
         });
+    }
+
+    window.carregarApuracao = carregarApuracao;
+
+    function selecionarVisual(id) {
 
         document.getElementById('btnSalvarVisual').addEventListener('click', salvarVisual);
         
@@ -834,9 +841,11 @@
         };
         document.getElementById('marc_tipo').value = mapa[horarioFaltante] || 'entrada';
         
-        let modal = new bootstrap.Modal(document.getElementById('modalIncluirMarcacao'));
+        const modalEl = document.getElementById('modalIncluirMarcacao');
+        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
         modal.show();
     }
+    window.abrirInclusaoPonto = abrirInclusaoPonto;
 
     // Logic for saving the manual mark
     document.getElementById('btnSalvarMarcacao')?.addEventListener('click', function() {
