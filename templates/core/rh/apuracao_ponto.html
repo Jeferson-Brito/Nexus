@@ -482,6 +482,16 @@
         carregarVisuais();
 
         document.getElementById('btnBuscarApuracao').addEventListener('click', carregarApuracao);
+
+        document.getElementById('btnSalvarVisual').addEventListener('click', salvarVisual);
+        
+        const modalCriarVisual = document.getElementById('modalCriarVisual');
+        if(modalCriarVisual) {
+            modalCriarVisual.addEventListener('show.bs.modal', function (event) {
+                document.getElementById('visual_nome').value = '';
+                atualizarCheckboxes(layoutAtual, 'modal_chk_');
+            });
+        }
     });
 
     function carregarApuracao() {
@@ -520,17 +530,13 @@
     window.carregarApuracao = carregarApuracao;
 
     function selecionarVisual(id) {
-
-        document.getElementById('btnSalvarVisual').addEventListener('click', salvarVisual);
-        
-        const modalCriarVisual = document.getElementById('modalCriarVisual');
-        if(modalCriarVisual) {
-            modalCriarVisual.addEventListener('show.bs.modal', function (event) {
-                document.getElementById('visual_nome').value = '';
-                atualizarCheckboxes(layoutAtual, 'modal_chk_');
-            });
+        const visual = visuaisSalvos.find(v => v.id == id);
+        if (visual) {
+            layoutAtual = visual.colunas;
+            aplicarLayoutNaTabela();
+            atualizarCheckboxes(layoutAtual, 'chk_');
         }
-    });
+    }
 
     function atualizarCheckboxes(ativos, prefix) {
         document.querySelectorAll(`input[id^='${prefix}']`).forEach(chk => {
