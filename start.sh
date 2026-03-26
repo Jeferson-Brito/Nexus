@@ -5,19 +5,19 @@ set -e
 
 echo "==> Iniciando inicialização do sistema..."
 
-# Coletar arquivos estáticos
+# 1. Executar migrações (Primeiro passo crítico)
+python manage.py migrate --noinput
+
+# 2. Coletar arquivos estáticos
 python manage.py collectstatic --noinput --no-post-process
 
-# Corrigir permissões e IDs duplicados
-python manage.py fix_permissions
-
-# Executar migrações
-python manage.py migrate --noinput --fake-initial
-
-# Auto-healing do esquema do banco
+# 3. Auto-healing do esquema do banco (Corrigir colunas de migrações anteriores)
 python manage.py ensure_schema
 
-# Inicializar dados de produção (admin, departamentos funcionais)
+# 4. Corrigir permissões e IDs duplicados + Seeding de Departamentos
+python manage.py fix_permissions
+
+# 5. Inicializar dados de produção (admin)
 python manage.py init_production
 
 echo "==> Sistema inicializado. Iniciando Gunicorn..."

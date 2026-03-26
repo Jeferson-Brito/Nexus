@@ -34,13 +34,18 @@ class Command(BaseCommand):
             # =============================================
             self.stdout.write("==> [fix_permissions] Verificando permissões duplicadas...")
 
-            cursor.execute("""
-                SELECT content_type_id, codename, COUNT(*)
-                FROM auth_permission
-                GROUP BY content_type_id, codename
-                HAVING COUNT(*) > 1
-            """)
-            duplicates = cursor.fetchall()
+            # Verifica se a tabela auth_permission existe antes de prosseguir
+            cursor.execute("SELECT to_regclass('public.auth_permission')")
+            if not cursor.fetchone()[0]:
+                self.stdout.write(self.style.WARNING("  ! Tabela auth_permission ainda não existe. Pulando limpeza de permissões."))
+            else:
+                cursor.execute("""
+                    SELECT content_type_id, codename, COUNT(*)
+                    FROM auth_permission
+                    GROUP BY content_type_id, codename
+                    HAVING COUNT(*) > 1
+                """)
+                duplicates = cursor.fetchall()
 
             if not duplicates:
                 self.stdout.write(self.style.SUCCESS("  ✓ Nenhuma permissão duplicada encontrada."))
