@@ -12,6 +12,7 @@ def create_admin_user(apps, schema_editor):
         )
         return
 
+    from django.contrib.auth.hashers import make_password
     user = User(
         username='admin',
         email='admin@nexus.com',
@@ -22,8 +23,8 @@ def create_admin_user(apps, schema_editor):
         is_staff=True,
         is_active=True,
         ativo=True,
+        password=make_password('Admin123')
     )
-    user.set_password('Admin123')
     user.save()
 
 
