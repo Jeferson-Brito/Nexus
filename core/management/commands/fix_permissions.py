@@ -67,8 +67,27 @@ class Command(BaseCommand):
         self.stdout.write("==> [fix_permissions] Ativando departamentos no menu...")
         try:
             Department = apps.get_model('core', 'Department')
-            functional_slugs = ['nrs-suporte', 'cs-clientes', 'rh', 'nrp', 'onboarding', 'logistica']
-            updated = Department.objects.filter(slug__in=functional_slugs).update(show_in_nav=True)
-            self.stdout.write(self.style.SUCCESS(f"  ✓ {updated} departamento(s) ativados no menu."))
+
+            # Departamentos funcionais que devem existir e aparecer no menu
+            functional_departments = [
+                {'slug': 'nrs-suporte', 'name': 'NRS Suporte', 'description': 'Suporte NRS'},
+                {'slug': 'cs-clientes', 'name': 'CS Clientes', 'description': 'Customer Success'},
+                {'slug': 'rh',          'name': 'RH',          'description': 'Recursos Humanos'},
+                {'slug': 'nrp',         'name': 'NRP',         'description': 'NRP'},
+                {'slug': 'onboarding',  'name': 'Onboarding',  'description': 'Onboarding'},
+                {'slug': 'logistica',   'name': 'Logística',   'description': 'Logística'},
+            ]
+
+            for dept in functional_departments:
+                obj, created = Department.objects.get_or_create(
+                    slug=dept['slug'],
+                    defaults={'name': dept['name'], 'description': dept['description'], 'show_in_nav': True}
+                )
+                if not obj.show_in_nav:
+                    obj.show_in_nav = True
+                    obj.save(update_fields=['show_in_nav'])
+                status = "criado" if created else "atualizado"
+                self.stdout.write(self.style.SUCCESS(f"  ✓ {obj.name} ({status})"))
+
         except Exception as e:
             self.stdout.write(self.style.ERROR(f"  ✗ Erro ao ativar departamentos: {e}"))
