@@ -23,7 +23,14 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS('✓ Migrações executadas com sucesso!'))
         except Exception as e:
             self.stdout.write(self.style.ERROR(f'✗ Erro ao executar migrações: {e}'))
-            return
+            # Não retornar aqui, tentar seguir para garantir o esquema manualmente
+            
+        # Garantir esquema manual (Self-healing)
+        self.stdout.write(self.style.WARNING('Verificando integridade do esquema...'))
+        try:
+            call_command('ensure_schema')
+        except Exception as e:
+            self.stdout.write(self.style.ERROR(f'✗ Erro ao garantir esquema: {e}'))
         
         # Criar usuário admin
         self.stdout.write(self.style.WARNING('Criando usuário administrador...'))
