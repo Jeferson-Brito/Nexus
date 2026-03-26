@@ -2,26 +2,40 @@ from django.core.management.base import BaseCommand
 from django.db import connection
 
 class Command(BaseCommand):
-    help = 'Remove conflitos conhecidos do banco de dados antes das migrações'
+    help = 'Resolve conflitos de migração de forma inteligente (idempotente)'
 
     def handle(self, *args, **options):
-        self.stdout.write(self.style.SUCCESS('--- INICIANDO LIMPEZA DE CONFLITOS ---'))
+        self.stdout.write(self.style.SUCCESS('--- INICIANDO SINCRONIZAÇÃO INTELIGENTE ---'))
         
         with connection.cursor() as cursor:
-            # 1. Dropar o índice problemático da storeauditissue
-            # Se ele já existe e a migração tenta criar, o Django falha.
-            # Ao dropar aqui, a migração poderá criá-lo do jeito certo.
-            self.stdout.write('Dropando índices de core_storeauditissue...')
+            # Função auxiliar para checar coluna
+            def column_exists(table, column):
+                cursor.execute("""
+                    SELECT 1 FROM information_schema.columns 
+                    WHERE table_name=%s AND column_name=%s
+                """, [table, column])
+                return cursor.fetchone() is not None
+
+            # Função auxiliar para fakar migração
+            def fake_migration(app, name):
+                cursor.execute("SELECT 1 FROM django_migrations WHERE app=%s AND name=%s", [app, name])
+                if not cursor.fetchone():
+                    self.stdout.write(f'Fakando migração: {name}')
+                    cursor.execute("INSERT INTO django_migrations (app, name, applied) VALUES (%s, %s, now())", [app, name])
+
+            # 1. Resolver conflito da 0072 (fluxo_aprovacao)
+            if column_exists('core_department', 'fluxo_aprovacao'):
+                self.stdout.write('Coluna fluxo_aprovacao já existe em core_department.')
+                fake_migration('core', '0072_department_fluxo_aprovacao')
+
+            # 2. Resolver conflito da 0073 (show_in_nav)
+            if column_exists('core_department', 'show_in_nav'):
+                self.stdout.write('Coluna show_in_nav já existe em core_department.')
+                fake_migration('core', '0073_department_show_in_nav')
+
+            # 3. Limpeza de índices (caso ainda existam)
+            self.stdout.write('Limpando índices residuais...')
             cursor.execute("DROP INDEX IF EXISTS core_storeauditissue_status_f5972555 CASCADE;")
             cursor.execute("DROP INDEX IF EXISTS core_storeauditissue_status_f5972555_like CASCADE;")
-            
-            # 2. Outros possíveis conflitos da migração 0065
-            self.stdout.write('Dropando outros índices da 0065 (por segurança)...')
-            cursor.execute("DROP INDEX IF EXISTS core_storeaudit_created_at_4d77e40e CASCADE;")
-            cursor.execute("DROP INDEX IF EXISTS core_storeaudit_created_at_4d77e40e_like CASCADE;")
-            cursor.execute("DROP INDEX IF EXISTS core_storeauditissue_created_at_32f9a3e8 CASCADE;")
-            cursor.execute("DROP INDEX IF EXISTS core_storeauditissue_created_at_32f9a3e8_like CASCADE;")
-            cursor.execute("DROP INDEX IF EXISTS core_analystassignment_active_7f972555 CASCADE;")
-            cursor.execute("DROP INDEX IF EXISTS core_analystassignment_active_7f972555_like CASCADE;")
 
-        self.stdout.write(self.style.SUCCESS('--- CONFLITOS REMOVIDOS ---'))
+        self.stdout.write(self.style.SUCCESS('--- SINCRONIZAÇÃO CONCLUÍDA ---'))
