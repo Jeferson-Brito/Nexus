@@ -119,20 +119,35 @@ WSGI_APPLICATION = "nexus.wsgi.application"
 # ==============================
 # DATABASE (POSTGRESQL - Render & Supabase Config)
 # ==============================
-DATABASES = {
-    "default": {
-        "ENGINE": "django_cockroachdb",
-        "NAME": get_env("DB_NAME", "defaultdb"),
-        "USER": get_env("DB_USER", "jeferson"),
-        "PASSWORD": get_env("DB_PASSWORD", ""),
-        "HOST": get_env("DB_HOST", "ageing-phantom-12866.jxf.gcp-southamerica-east1.cockroachlabs.cloud"),
-        "PORT": get_env("DB_PORT", "26257"),
-        "CONN_MAX_AGE": 300,  # 5 minutos — reduz overhead de conexão com CockroachDB
-        "OPTIONS": {
-            "sslmode": "require",
-        },
+# Prioritizar DATABASE_URL ou SOURCE_DATABASE_URL (usado pelo usuário no Render)
+_db_url = get_env("DATABASE_URL") or get_env("SOURCE_DATABASE_URL")
+
+if _db_url:
+    DATABASES = {
+        "default": dj_database_url.config(
+            default=_db_url,
+            conn_max_age=300,
+            ssl_require=True,
+        )
     }
-}
+    # Forçar engine do cockroach se for uma URL do cockroach, mas dj_database_url costuma lidar bem
+    if "cockroach" in _db_url:
+        DATABASES["default"]["ENGINE"] = "django_cockroachdb"
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django_cockroachdb",
+            "NAME": get_env("DB_NAME", "defaultdb"),
+            "USER": get_env("DB_USER", "jeferson"),
+            "PASSWORD": get_env("DB_PASSWORD", ""),
+            "HOST": get_env("DB_HOST", "ageing-phantom-12866.jxf.gcp-southamerica-east1.cockroachlabs.cloud"),
+            "PORT": get_env("DB_PORT", "26257"),
+            "CONN_MAX_AGE": 300,  # 5 minutos — reduz overhead de conexão com CockroachDB
+            "OPTIONS": {
+                "sslmode": "require",
+            },
+        }
+    }
 
 
 print("✓ Banco PostgreSQL configurado", file=sys.stderr)

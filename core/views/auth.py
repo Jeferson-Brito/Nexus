@@ -52,8 +52,24 @@ def login_view_custom(request):
                 else:
                     messages.error(request, 'E-mail ou senha incorretos. Tente novamente.')
             except Exception as e:
-                print(f"Unexpected error in login_view_custom: {e}")
-                messages.error(request, 'Erro inesperado na autenticação. Tente novamente.')
+                import traceback
+                from django.db import connections
+                from django.db.utils import OperationalError
+                
+                db_conn = connections['default']
+                db_info = f"{db_conn.settings_dict.get('HOST')}:{db_conn.settings_dict.get('PORT')}"
+                
+                print(f"!!! Error in login_view_custom !!!")
+                print(f"Database: {db_info}")
+                print(f"Exception: {str(e)}")
+                traceback.print_exc()
+                
+                if isinstance(e, OperationalError):
+                    error_msg = 'Erro de conexão com o banco de dados. Verifique as configurações no Render.'
+                else:
+                    error_msg = 'Erro inesperado na autenticação. Tente novamente.'
+                    
+                messages.error(request, error_msg)
         else:
             messages.error(request, 'Por favor, preencha todos os campos.')
     

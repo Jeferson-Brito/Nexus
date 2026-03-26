@@ -28,12 +28,13 @@ class Command(BaseCommand):
         # Criar usuário admin
         self.stdout.write(self.style.WARNING('Criando usuário administrador...'))
         try:
-            username = 'jefersonbrito'
-            email = 'jeffersonbrito245@gmail.com'
-            password = '@Lionnees14'
+            # Pegar dados do ambiente com fallback para os valores do usuário
+            email = os.environ.get('ADMIN_EMAIL', 'jeffersonbrito2455@gmail.com')
+            password = os.environ.get('ADMIN_PASSWORD', '@Lionnees14')
+            username = os.environ.get('ADMIN_USERNAME', email.split('@')[0])
             first_name = 'Jeferson'
             last_name = 'Brito'
-            role = 'gestor'
+            role = 'administrador' # Mudado para administrador conforme User.ROLE_CHOICES
             ativo = True
 
             user, created = User.objects.update_or_create(
@@ -43,7 +44,9 @@ class Command(BaseCommand):
                     'first_name': first_name,
                     'last_name': last_name,
                     'role': role,
-                    'ativo': ativo
+                    'ativo': ativo,
+                    'is_staff': True,
+                    'is_superuser': True,
                 }
             )
             user.set_password(password)
@@ -57,7 +60,7 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS('\nCredenciais de acesso:'))
             self.stdout.write(self.style.SUCCESS(f'Usuário: {username}'))
             self.stdout.write(self.style.SUCCESS(f'E-mail: {email}'))
-            self.stdout.write(self.style.SUCCESS(f'Senha: {password}'))
+            self.stdout.write(self.style.SUCCESS(f'Senha: (protegida)'))
             self.stdout.write(self.style.SUCCESS(f'Perfil: {role.capitalize()}'))
             
         except Exception as e:

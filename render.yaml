@@ -3,7 +3,7 @@ services:
     name: nexus
     runtime: python
     buildCommand: "python -m pip install -r requirements.txt && python manage.py collectstatic --noinput --no-post-process"
-    startCommand: "python manage.py fix_permissions; python manage.py migrate --noinput --fake-initial; gunicorn nexus.wsgi:application --workers 3 --threads 4 --worker-class gthread --worker-tmp-dir /dev/shm --timeout 120 --graceful-timeout 30 --max-requests 1000 --max-requests-jitter 100"
+    startCommand: "python manage.py fix_permissions; python manage.py init_production; gunicorn nexus.wsgi:application --workers 2 --threads 2 --worker-class gthread --worker-tmp-dir /dev/shm --timeout 120 --graceful-timeout 30 --max-requests 1000 --max-requests-jitter 100"
     envVars:
       - key: PYTHON_VERSION
         value: "3.11.6"
