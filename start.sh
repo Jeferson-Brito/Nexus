@@ -1,0 +1,35 @@
+#!/bin/bash
+
+# Sair se houver erro
+set -e
+
+echo "==> Iniciando inicialização do sistema..."
+
+# Coletar arquivos estáticos
+python manage.py collectstatic --noinput --no-post-process
+
+# Corrigir permissões e IDs duplicados
+python manage.py fix_permissions
+
+# Executar migrações
+python manage.py migrate --noinput --fake-initial
+
+# Auto-healing do esquema do banco
+python manage.py ensure_schema
+
+# Inicializar dados de produção (admin, departamentos funcionais)
+python manage.py init_production
+
+echo "==> Sistema inicializado. Iniciando Gunicorn..."
+
+# Iniciar o servidor de aplicação
+exec gunicorn nexus.wsgi:application \
+    --bind 0.0.0.0:8000 \
+    --workers 2 \
+    --threads 2 \
+    --worker-class gthread \
+    --worker-tmp-dir /dev/shm \
+    --timeout 120 \
+    --graceful-timeout 30 \
+    --max-requests 1000 \
+    --max-requests-jitter 100
