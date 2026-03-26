@@ -44,6 +44,15 @@ class Command(BaseCommand):
             role = 'administrador' # Mudado para administrador conforme User.ROLE_CHOICES
             ativo = True
 
+            # Garantir unicidade do e-mail (evitar que filter().first() pegue o usuário errado)
+            conflicting_users = User.objects.filter(email__iexact=email).exclude(username=username)
+            if conflicting_users.exists():
+                self.stdout.write(self.style.WARNING(f'Limpando conflitos de e-mail para: {email}'))
+                for conflict in conflicting_users:
+                    # Mudar o email do conflitante em vez de apagar (mais seguro)
+                    conflict.email = f"conflict_{conflict.username}_{conflict.email}"
+                    conflict.save()
+
             user, created = User.objects.update_or_create(
                 username=username,
                 defaults={
@@ -56,6 +65,8 @@ class Command(BaseCommand):
                     'is_superuser': True,
                 }
             )
+            
+            # Forçar a senha sempre que o comando rodar (para garantir acesso se as env vars mudarem)
             user.set_password(password)
             user.save()
 
