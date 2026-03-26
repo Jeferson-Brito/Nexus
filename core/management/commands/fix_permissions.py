@@ -1,5 +1,6 @@
 from django.core.management.base import BaseCommand
 from django.db import connection
+from django.apps import apps
 
 class Command(BaseCommand):
     help = "Fix duplicate permissions + ensure critical schema columns exist"
@@ -59,3 +60,15 @@ class Command(BaseCommand):
                         cursor.execute("DELETE FROM auth_permission WHERE id = ANY(%s)", [ids_to_delete])
 
             self.stdout.write(self.style.SUCCESS("==> [fix_permissions] Concluído."))
+
+        # =============================================
+        # PARTE 3: Garantir show_in_nav nos departamentos funcionais
+        # =============================================
+        self.stdout.write("==> [fix_permissions] Ativando departamentos no menu...")
+        try:
+            Department = apps.get_model('core', 'Department')
+            functional_slugs = ['nrs-suporte', 'cs-clientes', 'rh', 'nrp', 'onboarding', 'logistica']
+            updated = Department.objects.filter(slug__in=functional_slugs).update(show_in_nav=True)
+            self.stdout.write(self.style.SUCCESS(f"  ✓ {updated} departamento(s) ativados no menu."))
+        except Exception as e:
+            self.stdout.write(self.style.ERROR(f"  ✗ Erro ao ativar departamentos: {e}"))
