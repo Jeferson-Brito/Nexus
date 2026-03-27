@@ -1773,11 +1773,35 @@ def api_rh_apuracao_dados(request):
                 _, n = split_night_shift(ws, we)
                 total_noturno_min += n
 
-            # Dia Útil (1 se tem horário)
-            dia_util = 1 if p_intervals else ""
-
             # Horas previstas do dia
             minutos_previstos = sum(e - s for s, e in p_intervals)
+
+            # ─────────────────────────────────────────────────────────────
+            #  FASE 3: ABSENTEÍSMO E ATRASOS
+            # ─────────────────────────────────────────────────────────────
+            
+            # Dia Falta: 1 se tem jornada prevista mas < 2 marcações
+            dia_falta = 1 if minutos_previstos > 0 and len(regs) < 2 else ""
+            
+            # Dias Trabalhados: 1 se tem >= 2 marcações
+            dias_trabalhados = 1 if len(regs) >= 2 else ""
+            
+            # Atraso Entrada: 1ª Real - 1ª Prevista
+            atraso_entrada_min = 0
+            if detalhe and detalhe.entrada_1 and regs:
+                atraso_entrada_min = max(0, time_to_min(regs[0].hora) - time_to_min(detalhe.entrada_1))
+            
+            # Saída Antecipada: Última Prevista - Última Real
+            saida_antecipada_min = 0
+            if detalhe and regs:
+                ultima_prevista = time_to_min(detalhe.saida_2) if detalhe.saida_2 else time_to_min(detalhe.saida_1) if detalhe.saida_1 else None
+                if ultima_prevista:
+                    saida_antecipada_min = max(0, ultima_prevista - time_to_min(regs[-1].hora))
+
+            # Atraso Intervalo: Entrada 2 Real - Entrada 2 Prevista
+            atraso_intervalo_min = 0
+            if detalhe and detalhe.entrada_2 and len(regs) >= 3:
+                atraso_intervalo_min = max(0, time_to_min(regs[2].hora) - time_to_min(detalhe.entrada_2))
 
             dados_apuracao.append({
                 'data': current_date.strftime('%d/%m'),
@@ -1808,7 +1832,14 @@ def api_rh_apuracao_dados(request):
                 'noturnas_normais': min_to_str(no_normais_min),
                 'total_noturno': min_to_str(total_noturno_min),
                 'intervalo': min_to_str(intervalo_min),
-                'dia_util': dia_util
+                'dia_util': dia_util,
+                
+                # FASE 3
+                'dia_falta': dia_falta,
+                'dias_trabalhados': dias_trabalhados,
+                'atraso_entrada': min_to_str(atraso_entrada_min) if atraso_entrada_min > 0 else "",
+                'saida_antecipada': min_to_str(saida_antecipada_min) if saida_antecipada_min > 0 else "",
+                'atraso_intervalo': min_to_str(atraso_intervalo_min) if atraso_intervalo_min > 0 else ""
             })
 
         return JsonResponse({

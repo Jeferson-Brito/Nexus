@@ -463,6 +463,11 @@
             { id: 'col_total_noturno', nome: 'Total Noturno' }
         ]},
         { categoria: 'Extras e Faltas', id: 'cat_ext_falta', colunas: [
+            { id: 'col_dia_falta', nome: 'Dia Falta' },
+            { id: 'col_dias_trabalhados', nome: 'Dias Trab.' },
+            { id: 'col_atraso_entrada', nome: 'Atraso Ent.' },
+            { id: 'col_saida_antecipada', nome: 'Saída Ante.' },
+            { id: 'col_atraso_intervalo', nome: 'Atraso Int.' },
             { id: 'col_abono', nome: 'Abono' },
             { id: 'col_ext_50', nome: 'Extra 50%' },
             { id: 'col_ext_100', nome: 'Extra 100%' }
@@ -859,6 +864,12 @@
             <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_dia_util" style="color: #6c757d;">Dia Útil</th>
             <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_total_noturno" style="color: #6c757d;">Total<br>Noturno</th>
             
+            <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_dia_falta" style="color: #6c757d;">Dia<br>Falta</th>
+            <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_dias_trabalhados" style="color: #6c757d;">Dias<br>Trab.</th>
+            <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_atraso_entrada" style="color: #6c757d;">Atraso<br>Ent.</th>
+            <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_saida_antecipada" style="color: #6c757d;">Saída<br>Ante.</th>
+            <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_atraso_intervalo" style="color: #6c757d;">Atraso<br>Int.</th>
+            
             <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_abono" style="color: #6c757d;">Abono</th>
             <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_ext_50" style="color: #6c757d;">Extra<br>50,0%</th>
             <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_ext_100" style="color: #6c757d;">Extra<br>100,0%</th>
@@ -919,6 +930,12 @@
                     <td class="text-center py-3 border-light text-muted col-dyna" data-col-id="col_intervalo">${dia.intervalo || ''}</td>
                     <td class="text-center py-3 border-light text-muted col-dyna" data-col-id="col_dia_util">${dia.dia_util || ''}</td>
                     <td class="text-center py-3 border-light text-muted col-dyna" data-col-id="col_total_noturno">${dia.total_noturno || ''}</td>
+
+                    <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_dia_falta">${dia.dia_falta || ''}</td>
+                    <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_dias_trabalhados">${dia.dias_trabalhados || ''}</td>
+                    <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_atraso_entrada">${dia.atraso_entrada || ''}</td>
+                    <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_saida_antecipada">${dia.saida_antecipada || ''}</td>
+                    <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_atraso_intervalo">${dia.atraso_intervalo || ''}</td>
 
                     <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_abono"></td>
                     <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_ext_50"></td>
