@@ -197,18 +197,18 @@
         <div class="card-header border-0 py-3 px-4 d-flex align-items-center justify-content-between" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
             <div class="d-flex align-items-center">
                 <h5 class="fw-bold mb-0 text-white"><i class="bi bi-calendar3"></i> Cartão de Ponto</h5>
-                <button class="btn btn-white btn-sm ms-3 fw-bold text-primary px-3 shadow-sm" style="border-radius: 20px; font-size: 0.75rem;" onclick="toggleFiltros()">
+                <button class="btn btn-white btn-sm ms-3 fw-bold text-primary px-3 shadow-sm" style="border-radius: 20px; font-size: 0.75rem; background: white !important; opacity: 1 !important;" onclick="toggleFiltros()">
                     <i class="bi bi-search me-1"></i> Mostrar filtros
                 </button>
-                <div class="ms-4 text-white-50 d-flex align-items-center gap-2" style="font-size: 0.85rem;">
+                <div class="ms-4 text-white d-flex align-items-center gap-2" style="font-size: 0.85rem;">
                     <span id="txtPeriodoAtual" class="text-white fw-bold">Selecione um período</span>
                     <div class="btn-group btn-group-sm ms-2">
-                        <button class="btn btn-link text-white-50 p-0 px-1" onclick="navegarPeriodo(-1)"><i class="bi bi-chevron-left"></i></button>
-                        <button class="btn btn-link text-white-50 p-0 px-1" onclick="navegarPeriodo(1)"><i class="bi bi-chevron-right"></i></button>
+                        <button class="btn btn-link text-white p-0 px-1" onclick="navegarPeriodo(-1)"><i class="bi bi-chevron-left"></i></button>
+                        <button class="btn btn-link text-white p-0 px-1" onclick="navegarPeriodo(1)"><i class="bi bi-chevron-right"></i></button>
                     </div>
                 </div>
             </div>
-            <div class="text-white-50 small d-none d-lg-block">
+            <div class="text-white small d-none d-lg-block fw-bold">
                 <span id="infoEmpresa">Empresa (Todas)</span> • <span id="infoDepto">Dep. (Todos)</span>
             </div>
         </div>
@@ -218,11 +218,21 @@
             <div class="d-flex align-items-center gap-3">
                 <div class="position-relative d-flex align-items-center shadow-sm rounded border bg-light">
                     <button class="btn btn-light btn-sm border-0" onclick="navegarColaborador(-1)" title="Anterior"><i class="bi bi-chevron-left"></i></button>
+                    
                     <div class="dropdown border-start border-end">
-                        <input type="text" class="form-control form-control-sm border-0 bg-white fw-bold text-dark text-center" 
-                               id="lblEmpregadoAtual" readonly style="width: 300px; cursor: pointer;" 
-                               value="Selecione um funcionário" onclick="focarSelectColaborador()">
+                        <button class="btn btn-white btn-sm border-0 dropdown-toggle fw-bold text-dark d-flex align-items-center justify-content-between" 
+                                type="button" data-bs-toggle="dropdown" id="dropdownColaborador" style="width: 300px; background: white;">
+                            <span class="text-truncate me-2" id="lblEmpregadoAtual">Selecione um funcionário</span>
+                        </button>
+                        <div class="dropdown-menu p-3 shadow-lg border-0" style="width: 350px; border-radius: 12px;">
+                            <input type="text" class="form-control form-control-sm mb-3 border-light bg-light" id="buscaColaboradorToolbar" placeholder="Buscar colaborador..." onkeyup="filtrarColaboradoresToolbar()">
+                            <div id="listaColaboradoresToolbar" style="max-height: 350px; overflow-y: auto;">
+                                <!-- Opções geradas por JS -->
+                                <div class="text-center py-3 text-muted small">Carregando lista...</div>
+                            </div>
+                        </div>
                     </div>
+
                     <button class="btn btn-light btn-sm border-0" onclick="navegarColaborador(1)" title="Próximo"><i class="bi bi-chevron-right"></i></button>
                 </div>
             </div>
@@ -567,14 +577,15 @@
         }
         sel.innerHTML = htmlOption;
 
-        // Populate also the Relatorio select if needed
-        if (id === 'filtro_pessoas') {
-            const relatorioEmpregados = document.getElementById('relatorio_funcionarios');
-            if (relatorioEmpregados) {
-                relatorioEmpregados.innerHTML = '<option value="">Todos da Apuração atual</option>' + 
-                    items.map(item => `<option value="${item[value_key]}">${item[text_key]}</option>`).join('');
+            // Populate also the Relatorio select if needed
+            if (id === 'filtro_pessoas') {
+                renderListaColaboradoresToolbar(items);
+                const relatorioEmpregados = document.getElementById('relatorio_funcionarios');
+                if (relatorioEmpregados) {
+                    relatorioEmpregados.innerHTML = '<option value="">Todos da Apuração atual</option>' + 
+                        items.map(item => `<option value="${item[value_key]}">${item[text_key]}</option>`).join('');
+                }
             }
-        }
     }
 
         // Define o layout padrao inicial baseado no JS array
@@ -601,6 +612,39 @@
         }
     });
 
+    window.renderListaColaboradoresToolbar = function(items) {
+        const container = document.getElementById('listaColaboradoresToolbar');
+        if (!container) return;
+        window.allColaboradoresToolbar = items; // Cache para busca
+        
+        let html = '';
+        items.forEach(c => {
+            html += `
+                <a href="javascript:void(0)" class="dropdown-item d-flex align-items-center py-2 px-3 hover-bg-light border-bottom border-light border-opacity-50" 
+                   onclick="selecionarColaboradorToolbar('${c.id}', '${c.nome_completo || c.nome}')" style="font-size: 0.85rem; border-radius: 6px;">
+                    <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 32px; height: 32px; flex-shrink: 0;">
+                        <i class="bi bi-person"></i>
+                    </div>
+                    <div class="text-truncate fw-semibold text-dark">${c.nome_completo || c.nome}</div>
+                </a>`;
+        });
+        container.innerHTML = html || '<div class="text-center py-3 text-muted small">Nenhum colaborador encontrado</div>';
+    };
+
+    window.filtrarColaboradoresToolbar = function() {
+        const query = document.getElementById('buscaColaboradorToolbar').value.toLowerCase();
+        const filtered = window.allColaboradoresToolbar.filter(c => 
+            (c.nome_completo || c.nome).toLowerCase().includes(query)
+        );
+        renderListaColaboradoresToolbar(filtered);
+    };
+
+    window.selecionarColaboradorToolbar = function(id, nome) {
+        document.getElementById('filtro_pessoas').value = id;
+        document.getElementById('lblEmpregadoAtual').innerText = nome;
+        carregarApuracao();
+    };
+
     function carregarApuracao() {
         const colabId = document.getElementById('filtro_pessoas').value;
         const dataInicio = document.getElementById('filtro_inicio').value;
@@ -619,7 +663,7 @@
         .then(r => r.json())
         .then(res => {
             if (res.success) {
-                document.getElementById('lblEmpregadoAtual').value = res.colaborador_nome;
+                document.getElementById('lblEmpregadoAtual').innerText = res.colaborador_nome;
                 window.dadosApuracaoAtual = res.dias;
                 
                 // Atualizar labels de contexto
@@ -635,13 +679,13 @@
                 renderTabelaApuracao(res.dias);
                 aplicarLayoutNaTabela();
             } else {
-                document.getElementById('lblEmpregadoAtual').value = 'Erro ao carregar';
+                document.getElementById('lblEmpregadoAtual').innerText = 'Erro ao carregar';
                 Swal.fire({icon: 'error', title: 'Erro', text: res.error || 'Falha ao buscar dados.'});
             }
         })
         .catch(err => {
             console.error(err);
-            document.getElementById('lblEmpregadoAtual').value = 'Erro de conexão';
+            document.getElementById('lblEmpregadoAtual').innerText = 'Erro de conexão';
             Swal.fire({icon: 'error', title: 'Erro', text: 'Não foi possível conectar à API de apuração.'});
         });
     }
