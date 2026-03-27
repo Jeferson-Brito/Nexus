@@ -130,7 +130,7 @@
     </div>
 
     <!-- Tela de Filtros (Card) -->
-    <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px; overflow: hidden;">
+    <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px; overflow: hidden; display: none;" id="cardFiltros">
         <div class="card-header border-0 py-3 px-4" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
             <h5 class="fw-bold mb-0 text-white"><i class="bi bi-funnel"></i> Filtros de Busca</h5>
         </div>
@@ -194,20 +194,35 @@
     </div>
     <!-- Tabela de Apuração e Toolbar -->
     <div class="card border-0 shadow-sm" style="border-radius: 12px; display: none;" id="cardApuracao">
-        <div class="card-header border-0 py-3 px-4" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
-            <h5 class="fw-bold mb-0 text-white"><i class="bi bi-calendar3"></i> Cartão de Ponto</h5>
+        <div class="card-header border-0 py-3 px-4 d-flex align-items-center justify-content-between" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
+            <div class="d-flex align-items-center">
+                <h5 class="fw-bold mb-0 text-white"><i class="bi bi-calendar3"></i> Cartão de Ponto</h5>
+                <button class="btn btn-white btn-sm ms-3 fw-bold text-primary px-3 shadow-sm" style="border-radius: 20px; font-size: 0.75rem;" onclick="toggleFiltros()">
+                    <i class="bi bi-search me-1"></i> Mostrar filtros
+                </button>
+                <div class="ms-4 text-white-50 d-flex align-items-center gap-2" style="font-size: 0.85rem;">
+                    <span id="txtPeriodoAtual" class="text-white fw-bold">Selecione um período</span>
+                    <div class="btn-group btn-group-sm ms-2">
+                        <button class="btn btn-link text-white-50 p-0 px-1" onclick="navegarPeriodo(-1)"><i class="bi bi-chevron-left"></i></button>
+                        <button class="btn btn-link text-white-50 p-0 px-1" onclick="navegarPeriodo(1)"><i class="bi bi-chevron-right"></i></button>
+                    </div>
+                </div>
+            </div>
+            <div class="text-white-50 small d-none d-lg-block">
+                <span id="infoEmpresa">Empresa (Todas)</span> • <span id="infoDepto">Dep. (Todos)</span>
+            </div>
         </div>
         
         <!-- Toolbar -->
-        <div class="bg-white border-bottom p-3 d-flex justify-content-between align-items-center flex-wrap gap-3">
             <div class="d-flex align-items-center gap-3">
-                <h6 class="mb-0 fw-bold px-3 py-2 bg-light rounded text-dark" id="lblEmpregadoAtual">Selecione um funcionário</h6>
-                
-                <!-- Paginação Inline -->
-                <div class="btn-group btn-group-sm">
-                    <button class="btn btn-outline-secondary"><i class="bi bi-chevron-left"></i></button>
-                    <span class="btn btn-outline-secondary disabled text-dark" id="lblPaginacao">1 de 1</span>
-                    <button class="btn btn-outline-secondary"><i class="bi bi-chevron-right"></i></button>
+                <div class="position-relative d-flex align-items-center shadow-sm rounded border bg-light">
+                    <button class="btn btn-light btn-sm border-0" onclick="navegarColaborador(-1)" title="Anterior"><i class="bi bi-chevron-left"></i></button>
+                    <div class="dropdown border-start border-end">
+                        <input type="text" class="form-control form-control-sm border-0 bg-white fw-bold text-dark text-center" 
+                               id="lblEmpregadoAtual" readonly style="width: 300px; cursor: pointer;" 
+                               value="Selecione um funcionário" onclick="focarSelectColaborador()">
+                    </div>
+                    <button class="btn btn-light btn-sm border-0" onclick="navegarColaborador(1)" title="Próximo"><i class="bi bi-chevron-right"></i></button>
                 </div>
             </div>
             
@@ -262,6 +277,14 @@
                     <div class="form-check form-switch border-start ps-4">
                         <input class="form-check-input" type="checkbox" id="toggleColunasAjuste">
                         <label class="form-check-label small fw-bold">Colunas ajuste</label>
+                    </div>
+                    <div class="form-check form-switch border-start ps-4">
+                        <input class="form-check-input" type="checkbox" id="toggleColunasBanco" checked>
+                        <label class="form-check-label small fw-bold">Colunas banco</label>
+                    </div>
+                    <div class="form-check form-switch border-start ps-4">
+                        <input class="form-check-input" type="checkbox" id="toggleColunasDSR">
+                        <label class="form-check-label small fw-bold">Colunas DSR</label>
                     </div>
                 </div>
             </div>
@@ -492,6 +515,16 @@
             { id: 'col_ext_50', nome: 'Extra 50%' },
             { id: 'col_ext_100', nome: 'Extra 100%' }
         ]},
+        { categoria: 'Banco e DSR', id: 'cat_banco_dsr', colunas: [
+            { id: 'col_extra_intervalo', nome: 'Extra Intervalo' },
+            { id: 'col_entrada_antecipada', nome: 'Entrada Antecipada' },
+            { id: 'col_pulou_almoco', nome: 'Pulou Almoço' },
+            { id: 'col_dsr_cons', nome: 'DSR Cons.' },
+            { id: 'col_desconta_dsr', nome: 'Desconta DSR' },
+            { id: 'col_dsr_deb', nome: 'DSR Deb.' },
+            { id: 'col_banco_cred_deb', nome: 'Banco Cred/Deb' },
+            { id: 'col_banco_saldo', nome: 'Banco Saldo', padrao: true }
+        ]},
     ];
 
     let visuaisSalvos = [];
@@ -585,12 +618,23 @@
         .then(r => r.json())
         .then(res => {
             if (res.success) {
-                document.getElementById('lblEmpregadoAtual').innerText = res.colaborador_nome;
+                document.getElementById('lblEmpregadoAtual').value = res.colaborador_nome;
                 window.dadosApuracaoAtual = res.dias;
+                
+                // Atualizar labels de contexto
+                const startFmt = dataInicio ? dataInicio.split('-').reverse().join('/') : '...';
+                const endFmt = dataFim ? dataFim.split('-').reverse().join('/') : '...';
+                document.getElementById('txtPeriodoAtual').innerText = `De: ${startFmt} a ${endFmt}`;
+                
+                const selEmp = document.getElementById('filtro_empresa');
+                document.getElementById('infoEmpresa').innerText = selEmp.options[selEmp.selectedIndex].text;
+                const selDep = document.getElementById('filtro_departamento');
+                document.getElementById('infoDepto').innerText = selDep.options[selDep.selectedIndex].text;
+
                 renderTabelaApuracao(res.dias);
                 aplicarLayoutNaTabela();
             } else {
-                document.getElementById('lblEmpregadoAtual').innerText = 'Erro ao carregar';
+                document.getElementById('lblEmpregadoAtual').value = 'Erro ao carregar';
                 Swal.fire({icon: 'error', title: 'Erro', text: res.error || 'Falha ao buscar dados.'});
             }
         })
@@ -603,6 +647,51 @@
 
     window.carregarApuracao = carregarApuracao;
 
+    // --- Lógica de Navegação e UI ---
+    window.toggleFiltros = function() {
+        const card = document.getElementById('cardFiltros');
+        if (card.style.display === 'none') {
+            card.style.display = 'block';
+            card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
+            card.style.display = 'none';
+        }
+    };
+
+    window.navegarPeriodo = function(direcao) {
+        const inicioInput = document.getElementById('filtro_inicio');
+        const fimInput = document.getElementById('filtro_fim');
+        if (!inicioInput.value) return;
+
+        let dataBase = new Date(inicioInput.value + 'T00:00:00');
+        dataBase.setMonth(dataBase.getMonth() + direcao);
+        
+        // Primeiro dia do mês
+        let primeiroDia = new Date(dataBase.getFullYear(), dataBase.getMonth(), 1);
+        // Ultimo dia do mês
+        let ultimoDia = new Date(dataBase.getFullYear(), dataBase.getMonth() + 1, 0);
+
+        inicioInput.value = primeiroDia.toISOString().split('T')[0];
+        fimInput.value = ultimoDia.toISOString().split('T')[0];
+        
+        carregarApuracao();
+    };
+
+    window.navegarColaborador = function(direcao) {
+        const select = document.getElementById('filtro_pessoas');
+        let newIndex = select.selectedIndex + direcao;
+        
+        if (newIndex >= 1 && newIndex < select.options.length) {
+            select.selectedIndex = newIndex;
+            carregarApuracao();
+        }
+    };
+
+    window.focarSelectColaborador = function() {
+        document.getElementById('cardFiltros').style.display = 'block';
+        document.getElementById('filtro_pessoas').focus();
+    };
+
     // --- Lógica dos Gatilhos (Switches) ---
     const gruposColunas = {
         'toggleColunasApuracao': ['col_comp', 'col_almoco', 'col_folga', 'col_neutro', 'col_excluidas', 'col_previstas', 'col_total_trabalhado'],
@@ -611,7 +700,9 @@
             'col_dia_falta', 'col_dias_trabalhados', 'col_horas_falta', 'col_horas_atraso', 'col_atraso_diurno', 
             'col_atraso_noturno', 'col_falta_atraso', 'col_atraso_entrada', 'col_saida_antecipada', 'col_atraso_intervalo',
             'col_abono', 'col_ajuste', 'col_extra_diurna', 'col_extra_noturna', 'col_extra_total', 'col_interjornada', 'col_ext_50', 'col_ext_100'
-        ]
+        ],
+        'toggleColunasBanco': ['col_banco_cred_deb', 'col_banco_saldo'],
+        'toggleColunasDSR': ['col_dsr_cons', 'col_desconta_dsr', 'col_dsr_deb']
     };
 
     function inicializarGatilhos() {
@@ -990,8 +1081,16 @@
             <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_extra_noturna" style="color: #6c757d;">Extra<br>Not.</th>
             <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_extra_total" style="color: #6c757d;">Extra<br>Total</th>
             <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_interjornada" style="color: #6c757d;">Interj.</th>
-            <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_ext_50" style="color: #6c757d;">Extra<br>50,0%</th>
             <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_ext_100" style="color: #6c757d;">Extra<br>100,0%</th>
+
+            <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_extra_intervalo" style="color: #6c757d;">Extra<br>Int.</th>
+            <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_entrada_antecipada" style="color: #6c757d;">Entr.<br>Ante.</th>
+            <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_pulou_almoco" style="color: #6c757d;">Pula<br>Alm.</th>
+            <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_dsr_cons" style="color: #6c757d;">DSR<br>Cons.</th>
+            <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_desconta_dsr" style="color: #6c757d;">Desc.<br>DSR</th>
+            <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_dsr_deb" style="color: #6c757d;">DSR<br>Deb.</th>
+            <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_banco_cred_deb" style="color: #6c757d;">Banco<br>C/D</th>
+            <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_banco_saldo" style="color: #2563eb; background-color: rgba(37, 99, 235, 0.05);">Banco<br>Saldo</th>
         `;
         document.getElementById('tabelaApuracaoThead').innerHTML = thead;
 
@@ -1069,6 +1168,15 @@
                     <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_interjornada">${dia.interjornada || ''}</td>
                     <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_ext_50"></td>
                     <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_ext_100"></td>
+
+                    <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_extra_intervalo">${dia.extra_intervalo || ''}</td>
+                    <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_entrada_antecipada">${dia.entrada_antecipada || ''}</td>
+                    <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_pulou_almoco">${dia.pulou_almoco || ''}</td>
+                    <td class="py-3 text-muted text-center border-light col-dyna ${dia.dsr_cons ? 'text-success fw-bold' : ''}" data-col-id="col_dsr_cons">${dia.dsr_cons || ''}</td>
+                    <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_desconta_dsr">${dia.desconta_dsr || ''}</td>
+                    <td class="py-3 text-muted text-center border-light col-dyna ${dia.dsr_deb ? 'text-danger fw-bold' : ''}" data-col-id="col_dsr_deb">${dia.dsr_deb || ''}</td>
+                    <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_banco_cred_deb">${dia.banco_cred_deb || ''}</td>
+                    <td class="py-3 text-center border-light col-dyna fw-bold" data-col-id="col_banco_saldo" style="color: #2563eb; background-color: rgba(37, 99, 235, 0.02);">${dia.banco_saldo || '00:00'}</td>
                 </tr>
             `;
         });

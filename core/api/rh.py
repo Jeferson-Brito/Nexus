@@ -1645,8 +1645,16 @@ def api_rh_apuracao_dados(request):
         
         last_out_min = None # Para cálculo de interjornada
         
+        # Variáveis para Banco de Horas e DSR
+        current_banco_acumulado = 0
+        semanas_info = {} # {week_year: {"faltas": 0, "atrasos": 0}}
+        
         for i in range(delta.days + 1):
             current_date = start_date + timedelta(days=i)
+            week_id = current_date.strftime('%Y-%U') # Semana do ano
+            if week_id not in semanas_info:
+                semanas_info[week_id] = {"atrasos": 0, "faltas": 0}
+            
             dia_semana = dias_semana_nome[current_date.weekday()]
             
             regs = registros_por_dia.get(current_date, [])
@@ -1783,6 +1791,35 @@ def api_rh_apuracao_dados(request):
             dia_util = 1 if p_intervals else ""
 
             # ─────────────────────────────────────────────────────────────
+            #  FASE 4: EXTRAS ESPECÍFICAS (Intervalo/Antecipada)
+            # ─────────────────────────────────────────────────────────────
+            
+            # 1. Extra Intervalo: Trabalho nos gaps entre p_intervals
+            p_breaks = []
+            if len(p_intervals) > 1:
+                for j in range(len(p_intervals) - 1):
+                    p_breaks.append((p_intervals[j][1], p_intervals[j+1][0]))
+            
+            extra_interval_min = get_interval_intersections(w_intervals, p_breaks)
+            
+            # 2. Entrada Antecipada: Trabalho antes do 1º previsto
+            entrada_ante_min = 0
+            if p_intervals and regs:
+                primeira_prev = p_intervals[0][0]
+                primeira_real = time_to_min(regs[0].hora)
+                if primeira_real < primeira_prev:
+                    # Só conta se o primeiro intervalo trabalhado intersectar ou começar antes
+                    entrada_ante_min = max(0, primeira_prev - primeira_real)
+
+            # 3. Pulou Almoço: 1 se tem 2 batidas mas deveria ter 4
+            # (Regra simplificada: dia_util=1 e refeicao_tipo requer intervalo)
+            pulou_almoco = 0
+            if p_intervals and len(regs) == 2:
+                # Se o horário previsto tem mais de 1 intervalo, subentende-se que há almoço
+                if len(p_intervals) > 1:
+                    pulou_almoco = 1
+
+            # ─────────────────────────────────────────────────────────────
             #  FASE 3: ABSENTEÍSMO E ATRASOS
             # ─────────────────────────────────────────────────────────────
             
@@ -1832,6 +1869,10 @@ def api_rh_apuracao_dados(request):
             
             # Falta e Atraso (Soma consolidada de dívida)
             falta_atraso_min = horas_atraso_min
+            
+            # Registrar para DSR da semana
+            if horas_falta_min > 0: semanas_info[week_id]["faltas"] += 1
+            semanas_info[week_id]["atrasos"] += horas_atraso_min
 
             # ─────────────────────────────────────────────────────────────
             #  FASE 4: EXTRAS E INTERJORNADA
@@ -1911,9 +1952,41 @@ def api_rh_apuracao_dados(request):
                 'extra_noturna': min_to_str(extra_noturna_min),
                 'extra_total': min_to_str(extra_total_min),
                 'interjornada': min_to_str(interjornada_min),
-                'abono': "00:00", # Placeholder
-                'ajuste': "00:00", # Placeholder
+                'extra_intervalo': min_to_str(extra_interval_min),
+                'entrada_antecipada': min_to_str(entrada_ante_min),
+                'pulou_almoco': pulou_almoco,
+                
+                # DSR e Banco (Serão preenchidos em uma segunda passada ou ao final)
+                'dsr_cons': "00:00",
+                'desconta_dsr': 0,
+                'dsr_deb': "00:00",
+                'banco_cred_deb': min_to_str(extra_total_min - falta_atraso_min),
+                'banco_saldo': "00:00",
+                'banco_minutos': extra_total_min - falta_atraso_min,
+                'abono': "00:00",
+                'ajuste': "00:00",
             })
+        
+        # Segunda Passada: DSR e Saldo Acumulado
+        banco_acumulado = 0
+        for dia in dados_apuracao:
+            # DSR: Se na semana desse dia houve falta ou atraso excessivo (>10 min por ex)
+            # Pegamos o week_id do banco_db
+            d_obj = datetime.strptime(dia['data_db'], '%Y-%m-%d')
+            w_id = d_obj.strftime('%Y-%U')
+            
+            # Se é o dia de DSR (ex: Domingo)
+            if d_obj.weekday() == 6: # Domingo
+                if semanas_info[w_id]["faltas"] > 0 or semanas_info[w_id]["atrasos"] > 10:
+                    dia['desconta_dsr'] = 1
+                    dia['dsr_deb'] = "07:20" # Padrão ou do modelo
+                else:
+                    dia['dsr_cons'] = "07:20"
+
+            # Saldo Acumulado
+            banco_acumulado += dia['banco_minutos']
+            dia['banco_saldo'] = ('' if banco_acumulado >= 0 else '-') + min_to_str(abs(banco_acumulado))
+            if not dia['banco_saldo']: dia['banco_saldo'] = "00:00"
 
         return JsonResponse({
             'success': True,
