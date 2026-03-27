@@ -6,6 +6,7 @@
     /* Fixar cabeçalho e toolbar do Cartão de Ponto */
     #cardApuracao {
         position: relative;
+        overflow: visible !important;
     }
     
     /* Cabeçalho Azul Fixo */
@@ -56,7 +57,7 @@
 
     /* Área de Rolagem da Tabela */
     #cardApuracao .table-responsive {
-        max-height: calc(100vh - 350px); /* Ajuste dinâmico para sobrar espaço pros filtros */
+        max-height: calc(100vh - 350px);
         min-height: 400px;
         overflow-y: auto;
         overflow-x: auto;
@@ -64,6 +65,7 @@
         border-radius: 8px;
         position: relative;
         background: #fff;
+        z-index: 10; /* Abaixo do dropdown */
     }
 
     #tabelaApuracao {
@@ -210,7 +212,7 @@
             <div class="d-flex align-items-center gap-2">
                 <!-- Dropdown de Visuais de Colunas -->
                 <div class="dropdown">
-                    <button class="btn btn-outline-secondary btn-sm dropdown-toggle d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                    <button class="btn btn-outline-secondary btn-sm dropdown-toggle d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" data-bs-boundary="viewport">
                         <i class="bi bi-gear"></i> Colunas
                     </button>
                     <div class="dropdown-menu dropdown-menu-end p-0 shadow border-0" style="width: 700px; border-radius: 12px; overflow: hidden; z-index: 2000 !important;">
