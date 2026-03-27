@@ -1438,6 +1438,42 @@ def get_dia_index_para_horario(horario, current_date):
     return current_date.weekday()
 
 @login_required
+@require_http_methods(["POST"])
+def api_rh_save_escala_flags(request):
+    """Atualiza as flags de um dia na escala (Compensado, Almoço Livre, Folga, Neutro)"""
+    try:
+        data = json.loads(request.body)
+        colaborador_id = data.get('colaborador_id')
+        data_str = data.get('data') # YYYY-MM-DD
+        flag = data.get('flag') # is_compensado, is_almoco_livre, is_folga, is_neutro
+        checked = data.get('checked', False)
+        
+        if not all([colaborador_id, data_str, flag]):
+            return JsonResponse({'success': False, 'error': 'Parâmetros incompletos'}, status=400)
+            
+        valid_flags = ['is_compensado', 'is_almoco_livre', 'is_folga', 'is_neutro']
+        if flag not in valid_flags:
+            return JsonResponse({'success': False, 'error': 'Flag inválida'}, status=400)
+            
+        # Converter data para objeto date
+        try:
+            data_obj = datetime.strptime(data_str, '%Y-%m-%d').date()
+        except ValueError:
+             data_obj = datetime.strptime(data_str, '%d/%m/%Y').date()
+        
+        escala, created = EscalaMensal.objects.get_or_create(
+            colaborador_id=colaborador_id,
+            data=data_obj
+        )
+        
+        setattr(escala, flag, checked)
+        escala.save()
+        
+        return JsonResponse({'success': True})
+    except Exception as ex:
+        return JsonResponse({'success': False, 'error': str(ex)}, status=500)
+
+@login_required
 @require_http_methods(["GET"])
 def api_rh_apuracao_dados(request):
     """
@@ -1486,16 +1522,29 @@ def api_rh_apuracao_dados(request):
                 end_date = date(a, m, last_day)
 
         # Buscar registros de ponto por período para organizar em memória
-        registros = RegistroPonto.objects.filter(
+        registros_todos = RegistroPonto.objects.filter(
             colaborador=colaborador,
             data__range=[start_date, end_date]
         ).order_by('data', 'hora')
+
+        registros = [r for r in registros_todos if not r.is_deleted]
+        excluidos = [r for r in registros_todos if r.is_deleted]
 
         registros_por_dia = {}
         for r in registros:
             if r.data not in registros_por_dia:
                 registros_por_dia[r.data] = []
             registros_por_dia[r.data].append(r)
+            
+        excluidos_por_dia = {}
+        for r in excluidos:
+            if r.data not in excluidos_por_dia:
+                excluidos_por_dia[r.data] = []
+            excluidos_por_dia[r.data].append({
+                'hora': r.hora.strftime('%H:%M'),
+                'motivo': r.observacao or "Não informado",
+                'tipo': r.get_tipo_display()
+            })
 
         # Buscar escalas do mês
         escalas = EscalaMensal.objects.filter(
@@ -1543,12 +1592,14 @@ def api_rh_apuracao_dados(request):
             # Cálculo básico de horas trabalhadas (minutos)
             total_minutos = 0
             try:
-                if ent1 and sai1:
-                    t1 = datetime.strptime(sai1, '%H:%M') - datetime.strptime(ent1, '%H:%M')
-                    total_minutos += max(0, t1.total_seconds() / 60)
-                if ent2 and sai2:
-                    t2 = datetime.strptime(sai2, '%H:%M') - datetime.strptime(ent2, '%H:%M')
-                    total_minutos += max(0, t2.total_seconds() / 60)
+                # Soma bruta de todos os pares entrada-saida (Total Trabalhado)
+                # Assumindo registros ordenados cronologicamente
+                for j in range(0, len(regs) - 1, 2):
+                    r_ent = regs[j]
+                    r_sai = regs[j+1]
+                    if r_ent.tipo in ['entrada', 'retorno_almoco'] and r_sai.tipo in ['saida_almoco', 'saida']:
+                        t_diff = datetime.combine(date.min, r_sai.hora) - datetime.combine(date.min, r_ent.hora)
+                        total_minutos += max(0, t_diff.total_seconds() / 60)
             except Exception:
                 pass
             
@@ -1599,18 +1650,39 @@ def api_rh_apuracao_dados(request):
                     else:
                         previsto = "08:00-12:00<br>13:00-17:00"
 
+            # Horas previstas do dia (soma de HorarioDetalhe)
+            minutos_previstos = 0
+            if escala and escala.horario_previsto:
+                di = get_dia_index_para_horario(escala.horario_previsto, current_date)
+                det = detalhes_map.get((escala.horario_previsto.id, di))
+                if det:
+                    if det.entrada_1 and det.saida_1:
+                        d1 = datetime.combine(date.min, det.saida_1) - datetime.combine(date.min, det.entrada_1)
+                        minutos_previstos += max(0, d1.total_seconds() / 60)
+                    if det.entrada_2 and det.saida_2:
+                        d2 = datetime.combine(date.min, det.saida_2) - datetime.combine(date.min, det.entrada_2)
+                        minutos_previstos += max(0, d2.total_seconds() / 60)
+
             dados_apuracao.append({
                 'data': current_date.strftime('%d/%m'),
                 'data_full': current_date.strftime('%d/%m/%Y'),
+                'data_db': current_date.strftime('%Y-%m-%d'),
                 'dia_semana': dia_semana,
                 'is_weekend': current_date.weekday() >= 5,
                 'previsto': previsto,
+                'horas_previstas': fmt_min(minutos_previstos),
                 'horario_id': horario_id,
                 'ent1': ent1,
                 'sai1': sai1,
                 'ent2': ent2,
                 'sai2': sai2,
                 'total_normais': fmt_min(total_minutos),
+                'total_trabalhado': fmt_min(total_minutos),
+                'excluidos': excluidos_por_dia.get(current_date, []),
+                'is_compensado': escala.is_compensado if escala else False,
+                'is_almoco_livre': escala.is_almoco_livre if escala else False,
+                'is_folga': escala.is_folga if escala else (escala.tipo == 'folga' if escala else current_date.weekday() >= 5),
+                'is_neutro': escala.is_neutro if escala else False,
                 'status': 'OK' if (len(regs) % 2 == 0 and len(regs) > 0) or len(regs) == 0 else 'Inconsistência'
             })
 

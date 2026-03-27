@@ -2530,6 +2530,12 @@ class EscalaMensal(models.Model):
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    
+    # Flags RHID (independentes)
+    is_compensado = models.BooleanField(default=False)
+    is_almoco_livre = models.BooleanField(default=False)
+    is_folga = models.BooleanField(default=False)
+    is_neutro = models.BooleanField(default=False)
 
     class Meta:
         verbose_name = "Escala Mensal"
@@ -2618,6 +2624,7 @@ class RegistroPonto(models.Model):
     observacao = models.TextField(
         blank=True, verbose_name='Observação'
     )
+    is_deleted = models.BooleanField(default=False, verbose_name='Excluído')
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

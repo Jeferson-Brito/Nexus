@@ -419,7 +419,9 @@
             { id: 'col_almoco', nome: 'Almoço livre' },
             { id: 'col_folga', nome: 'Folga' },
             { id: 'col_neutro', nome: 'Neutro' },
-            { id: 'col_excluidas', nome: 'Marcações excluídas' }
+            { id: 'col_excluidas', nome: 'Marcações excluídas' },
+            { id: 'col_previstas', nome: 'Horas Previstas' },
+            { id: 'col_total_trabalhado', nome: 'Total Trabalhado' }
         ]},
         { categoria: 'Horas Normais', id: 'cat_normais', colunas: [
             { id: 'col_total_normais', nome: 'Total Normais', padrao: true },
@@ -827,6 +829,8 @@
             <th class="py-3 text-center fw-semibold border-bottom-0 col-dyna" data-col-id="col_folga" style="color: #6c757d;">Folga</th>
             <th class="py-3 text-center fw-semibold border-bottom-0 col-dyna" data-col-id="col_neutro" style="color: #6c757d;">Neutro</th>
             <th class="py-3 text-center fw-semibold border-bottom-0 col-dyna" data-col-id="col_excluidas" style="color: #6c757d;">Exclusões</th>
+            <th class="py-3 text-center fw-semibold border-bottom-0 col-dyna" data-col-id="col_previstas" style="color: #6c757d;">Hs. Prev.</th>
+            <th class="py-3 text-center fw-semibold border-bottom-0 col-dyna" data-col-id="col_total_trabalhado" style="color: #6c757d;">Tot. Trab.</th>
             
             <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_total_normais" style="color: #6c757d;">Total<br>Normais</th>
             <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_total_noturno" style="color: #6c757d;">Total<br>Noturno</th>
@@ -863,11 +867,24 @@
                     <td class="py-3 border-light" style="cursor: pointer; color: #5b62d8;" onclick="abrirInclusaoPonto('${dia.data_full}', 'Ent 2')">${dia.ent2}</td>
                     <td class="py-3 border-light" style="cursor: pointer; color: #5b62d8;" onclick="abrirInclusaoPonto('${dia.data_full}', 'Sai 2')">${dia.sai2}</td>
                     
-                    <td class="text-center align-middle border-light col-dyna" data-col-id="col_comp"><input class="form-check-input border-secondary" type="checkbox"></td>
-                    <td class="text-center align-middle border-light col-dyna" data-col-id="col_almoco"><input class="form-check-input border-secondary" type="checkbox"></td>
-                    <td class="text-center align-middle border-light col-dyna" data-col-id="col_folga"><input class="form-check-input border-secondary" type="checkbox" ${dia.is_weekend ? 'checked' : ''}></td>
-                    <td class="text-center align-middle border-light col-dyna" data-col-id="col_neutro"><input class="form-check-input border-secondary" type="checkbox"></td>
-                    <td class="align-middle border-light text-center col-dyna" data-col-id="col_excluidas"></td>
+                    <td class="text-center align-middle border-light col-dyna" data-col-id="col_comp">
+                        <input class="form-check-input border-secondary" type="checkbox" ${dia.is_compensado ? 'checked' : ''} onchange="salvarFlagDia('${dia.data_db}', 'is_compensado', this.checked)">
+                    </td>
+                    <td class="text-center align-middle border-light col-dyna" data-col-id="col_almoco">
+                        <input class="form-check-input border-secondary" type="checkbox" ${dia.is_almoco_livre ? 'checked' : ''} onchange="salvarFlagDia('${dia.data_db}', 'is_almoco_livre', this.checked)">
+                    </td>
+                    <td class="text-center align-middle border-light col-dyna" data-col-id="col_folga">
+                        <input class="form-check-input border-secondary" type="checkbox" ${dia.is_folga ? 'checked' : ''} onchange="salvarFlagDia('${dia.data_db}', 'is_folga', this.checked)">
+                    </td>
+                    <td class="text-center align-middle border-light col-dyna" data-col-id="col_neutro">
+                        <input class="form-check-input border-secondary" type="checkbox" ${dia.is_neutro ? 'checked' : ''} onchange="salvarFlagDia('${dia.data_db}', 'is_neutro', this.checked)">
+                    </td>
+                    <td class="align-middle border-light text-center col-dyna" data-col-id="col_excluidas">
+                        ${dia.excluidos && dia.excluidos.length > 0 ? 
+                            `<span class="badge bg-light text-danger border border-danger-subtle" title="${dia.excluidos.map(e => `${e.hora} (${e.tipo}): ${e.motivo}`).join(' | ')}" data-bs-toggle="tooltip">${dia.excluidos.length}</span>` : ''}
+                    </td>
+                    <td class="text-center py-3 border-light text-muted col-dyna" data-col-id="col_previstas">${dia.horas_previstas || ''}</td>
+                    <td class="text-center py-3 border-light text-muted col-dyna" data-col-id="col_total_trabalhado">${dia.total_trabalhado || ''}</td>
                     
                     <td class="text-center py-3 border-light text-muted col-dyna" data-col-id="col_total_normais">${dia.total_normais}</td>
                     <td class="text-center py-3 border-light text-muted col-dyna" data-col-id="col_total_noturno"></td>
@@ -888,9 +905,41 @@
         });
         document.getElementById('tabelaApuracaoTbody').innerHTML = trHtml;
         
-        const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-        const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+    function salvarFlagDia(dataStr, flag, checked) {
+        const colId = document.getElementById('filtro_pessoas').value;
+        if (!colId) return;
+
+        fetch('/api/rh/apuracao/salvar-flags/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                colaborador_id: colId,
+                data: dataStr,
+                flag: flag,
+                checked: checked
+            })
+        })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success) {
+                if (window.showToast) showToast('success', 'Alteração salva.');
+            } else {
+                if (window.showToast) showToast('error', res.error || 'Erro ao salvar.');
+                // Reverter interface se falhar (opcional)
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            if (window.showToast) showToast('error', 'Erro na comunicação.');
+        });
     }
+
+    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+}
     function abrirInclusaoPonto(dataObj, horarioFaltante) {
         // Obter ID do colaborador selecionado no filtro
         const colId = document.getElementById('filtro_pessoas').value;
