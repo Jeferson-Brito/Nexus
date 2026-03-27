@@ -445,39 +445,28 @@
 <script>
     // Lógica Frontend da Apuração de Ponto
     const colunasDisponiveis = [
-        { categoria: 'Geral', id: 'cat_geral', colunas: [
-            { id: 'col_comp', nome: 'Compensação diária' },
+        { categoria: 'RHID Geral', id: 'cat_rhid', colunas: [
+            { id: 'col_comp', nome: 'Compensação' },
             { id: 'col_almoco', nome: 'Almoço livre' },
             { id: 'col_folga', nome: 'Folga' },
             { id: 'col_neutro', nome: 'Neutro' },
-            { id: 'col_excluidas', nome: 'Marcações excluídas' },
-            { id: 'col_previstas', nome: 'Horas Previstas' },
-            { id: 'col_total_trabalhado', nome: 'Total Trabalhado' }
+            { id: 'col_excluidas', nome: 'Exclusões' },
+            { id: 'col_previstas', nome: 'Hs. Prev.', padrao: true },
+            { id: 'col_total_trabalhado', nome: 'Tot. Trab.', padrao: true }
         ]},
-        { categoria: 'Horas Normais', id: 'cat_normais', colunas: [
+        { categoria: 'Cálculos RHID', id: 'cat_calculos', colunas: [
             { id: 'col_total_normais', nome: 'Total Normais', padrao: true },
-            { id: 'col_total_noturno', nome: 'Total Noturno', padrao: true }
+            { id: 'col_diurnas_normais', nome: 'Diurnas Normais' },
+            { id: 'col_noturnas_normais', nome: 'Noturnas Normais' },
+            { id: 'col_intervalo', nome: 'Intervalo' },
+            { id: 'col_dia_util', nome: 'Dia Útil' },
+            { id: 'col_total_noturno', nome: 'Total Noturno' }
         ]},
-        { categoria: 'Faltas e Atrasos', id: 'cat_faltas', colunas: [
-            { id: 'col_dia_falta', nome: 'Dia Falta', padrao: true },
-            { id: 'col_falta_atraso', nome: 'Falta e atraso', padrao: true },
-            { id: 'col_abono', nome: 'Abono' }
+        { categoria: 'Extras e Faltas', id: 'cat_ext_falta', colunas: [
+            { id: 'col_abono', nome: 'Abono' },
+            { id: 'col_ext_50', nome: 'Extra 50%' },
+            { id: 'col_ext_100', nome: 'Extra 100%' }
         ]},
-        { categoria: 'Horas Extras', id: 'cat_ext', colunas: [
-            { id: 'col_ext_diurna', nome: 'Extra Diurna', padrao: true },
-            { id: 'col_ext_noturna', nome: 'Extra Noturna', padrao: true },
-            { id: 'col_ext_50', nome: 'Extra 50,0%' },
-            { id: 'col_ext_100', nome: 'Extra 100,0%' }
-        ]},
-        { categoria: 'DSR', id: 'cat_dsr', colunas: [
-            { id: 'col_dsr_prop', nome: 'DSR Proporcional' },
-            { id: 'col_dsr_integral', nome: 'DSR Integral' }
-        ]},
-        { categoria: 'Banco de Horas', id: 'cat_bh', colunas: [
-            { id: 'col_bh_cred', nome: 'Crédito BH' },
-            { id: 'col_bh_deb', nome: 'Débito BH' },
-            { id: 'col_bh_saldo', nome: 'Saldo BH' }
-        ]}
     ];
 
     let visuaisSalvos = [];
@@ -864,20 +853,15 @@
             <th class="py-3 text-center fw-semibold border-bottom-0 col-dyna" data-col-id="col_total_trabalhado" style="color: #6c757d;">Tot. Trab.</th>
             
             <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_total_normais" style="color: #6c757d;">Total<br>Normais</th>
+            <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_diurnas_normais" style="color: #6c757d;">Diurnas<br>Normais</th>
+            <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_noturnas_normais" style="color: #6c757d;">Noturnas<br>Normais</th>
+            <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_intervalo" style="color: #6c757d;">Intervalo</th>
+            <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_dia_util" style="color: #6c757d;">Dia Útil</th>
             <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_total_noturno" style="color: #6c757d;">Total<br>Noturno</th>
-            <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_dia_falta" style="color: #6c757d;">Dia Falta</th>
-            <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_falta_atraso" style="color: #6c757d;">Falta ou<br>atraso</th>
+            
             <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_abono" style="color: #6c757d;">Abono</th>
-            <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_ext_diurna" style="color: #6c757d;">Extra<br>Diurna</th>
-            <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_ext_noturna" style="color: #6c757d;">Extra<br>Noturna</th>
             <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_ext_50" style="color: #6c757d;">Extra<br>50,0%</th>
             <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_ext_100" style="color: #6c757d;">Extra<br>100,0%</th>
-
-            <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_dsr_prop" style="color: #6c757d;">DSR<br>Prop.</th>
-            <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_dsr_integral" style="color: #6c757d;">DSR<br>Integal</th>
-            <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_bh_cred" style="color: #6c757d;">BH<br>Crédito</th>
-            <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_bh_deb" style="color: #6c757d;">BH<br>Débito</th>
-            <th class="py-3 fw-semibold border-bottom-0 col-dyna text-center" data-col-id="col_bh_saldo" style="color: #6c757d;">BH<br>Saldo</th>
         `;
         document.getElementById('tabelaApuracaoThead').innerHTML = thead;
 
@@ -929,26 +913,29 @@
                     <td class="text-center py-3 border-light text-muted col-dyna" data-col-id="col_previstas">${dia.horas_previstas || ''}</td>
                     <td class="text-center py-3 border-light text-muted col-dyna" data-col-id="col_total_trabalhado">${dia.total_trabalhado || ''}</td>
                     
-                    <td class="text-center py-3 border-light text-muted col-dyna" data-col-id="col_total_normais">${dia.total_normais}</td>
-                    <td class="text-center py-3 border-light text-muted col-dyna" data-col-id="col_total_noturno"></td>
-                    <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_dia_falta"></td>
-                    <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_falta_atraso"></td>
+                    <td class="text-center py-3 border-light text-muted col-dyna" data-col-id="col_total_normais">${dia.total_normais || ''}</td>
+                    <td class="text-center py-3 border-light text-muted col-dyna" data-col-id="col_diurnas_normais">${dia.diurnas_normais || ''}</td>
+                    <td class="text-center py-3 border-light text-muted col-dyna" data-col-id="col_noturnas_normais">${dia.noturnas_normais || ''}</td>
+                    <td class="text-center py-3 border-light text-muted col-dyna" data-col-id="col_intervalo">${dia.intervalo || ''}</td>
+                    <td class="text-center py-3 border-light text-muted col-dyna" data-col-id="col_dia_util">${dia.dia_util || ''}</td>
+                    <td class="text-center py-3 border-light text-muted col-dyna" data-col-id="col_total_noturno">${dia.total_noturno || ''}</td>
+
                     <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_abono"></td>
-                    <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_ext_diurna"></td>
-                    <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_ext_noturna"></td>
                     <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_ext_50"></td>
                     <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_ext_100"></td>
-                    <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_dsr_prop"></td>
-                    <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_dsr_integral"></td>
-                    <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_bh_cred"></td>
-                    <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_bh_deb"></td>
-                    <td class="py-3 text-muted text-center border-light col-dyna" data-col-id="col_bh_saldo"></td>
                 </tr>
             `;
         });
         document.getElementById('tabelaApuracaoTbody').innerHTML = trHtml;
-        
-    function salvarFlagDia(dataStr, flag, checked) {
+
+        // Auto-ativar tooltips
+        const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+        const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+        aplicarLayoutNaTabela();
+    }
+
+    // Tornar as funções globais para serem chamadas pelo onclick
+    window.salvarFlagDia = function(dataStr, flag, checked) {
         const colId = document.getElementById('filtro_pessoas').value;
         if (!colId) return;
 
@@ -971,16 +958,16 @@
                 if (window.showToast) showToast('success', 'Alteração salva.');
             } else {
                 if (window.showToast) showToast('error', res.error || 'Erro ao salvar.');
-                // Reverter interface se falhar (opcional)
             }
         })
         .catch(err => {
             console.error(err);
             if (window.showToast) showToast('error', 'Erro na comunicação.');
         });
-    }
+    };
 
-    function confirmarExcluirPonto(id, data, hora) {
+    window.confirmarExcluirPonto = function(id, data, hora) {
+        if (!id) return;
         Swal.fire({
             title: 'Excluir Marcação?',
             text: `Deseja realmente excluir a batida de ${hora} no dia ${data}?`,
@@ -1003,9 +990,9 @@
                 excluirPonto(id, result.value);
             }
         });
-    }
+    };
 
-    function excluirPonto(id, motivo) {
+    window.excluirPonto = function(id, motivo) {
         fetch('/api/rh/apuracao/excluir-ponto/', {
             method: 'POST',
             headers: {
@@ -1030,11 +1017,8 @@
             console.error(err);
             if (window.showToast) showToast('error', 'Erro na comunicação.');
         });
-    }
+    };
 
-    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-    const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
-}
     function abrirInclusaoPonto(dataObj, horarioFaltante) {
         // Obter ID do colaborador selecionado no filtro
         const colId = document.getElementById('filtro_pessoas').value;
@@ -1045,12 +1029,11 @@
 
         document.getElementById('marc_colaborador_id').value = colId;
         document.getElementById('marc_empregado').value = document.getElementById('lblEmpregadoAtual').innerText;
-        document.getElementById('marc_pis').value = '-'; // PIS fixo ou opcional
+        document.getElementById('marc_pis').value = '-'; 
         document.getElementById('marc_data').value = dataObj;
         document.getElementById('marc_hora').value = '';
         document.getElementById('marc_motivo').value = 'Inserção manual';
 
-        // Mapear o texto da coluna para o tipo técnico
         const mapa = {
             'Ent 1': 'entrada',
             'Sai 1': 'saida_almoco',
@@ -1060,17 +1043,15 @@
         document.getElementById('marc_tipo').value = mapa[horarioFaltante] || 'entrada';
         
         const modalEl = document.getElementById('modalIncluirMarcacao');
-        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-        modal.show();
+        bootstrap.Modal.getOrCreateInstance(modalEl).show();
     }
     window.abrirInclusaoPonto = abrirInclusaoPonto;
 
-    // Logic for saving the manual mark
     document.getElementById('btnSalvarMarcacao')?.addEventListener('click', function() {
         const data = {
             colaborador_id: document.getElementById('marc_colaborador_id').value,
             tipo: document.getElementById('marc_tipo').value,
-            data: document.getElementById('marc_data').value.split('/').reverse().join('-'), // DD/MM/YYYY -> YYYY-MM-DD
+            data: document.getElementById('marc_data').value.split('/').reverse().join('-'),
             hora: document.getElementById('marc_hora').value,
             observacao: document.getElementById('marc_motivo').value
         };
@@ -1093,15 +1074,14 @@
             if (res.sucesso) {
                 if (window.showToast) showToast('success', 'Marcação incluída com sucesso!');
                 bootstrap.Modal.getInstance(document.getElementById('modalIncluirMarcacao')).hide();
-                // Recarregar apuração
-                carregarApuracao();
+                carregarDadosApuracao();
             } else {
                 if (window.showToast) showToast('error', res.erro || 'Erro ao salvar marcação.');
             }
         })
         .catch(err => {
             console.error(err);
-            if (window.showToast) showToast('error', 'Erro na comunicação com o servidor.');
+            if (window.showToast) showToast('error', 'Erro na comunicação.');
         });
     });
     

@@ -39,6 +39,55 @@ def parse_decimal(value):
     except (ValueError, TypeError):
         return None
 
+def time_to_min(t):
+    if not t: return 0
+    return t.hour * 60 + t.minute
+
+def min_to_str(m):
+    if m <= 0: return ""
+    h = int(m // 60)
+    mi = int(m % 60)
+    return f"{h:02d}:{mi:02d}"
+
+def get_intersection(r1_start, r1_end, r2_start, r2_end):
+    """Retorna o total de minutos de interseção entre dois intervalos [start, end]"""
+    s = max(r1_start, r2_start)
+    e = min(r1_end, r2_end)
+    return max(0, e - s)
+
+def get_interval_intersections(intervals1, intervals2):
+    """
+    Soma a interseção de múltiplos intervalos.
+    intervals: lista de tuplas (start_min, end_min)
+    """
+    total = 0
+    for s1, e1 in intervals1:
+        for s2, e2 in intervals2:
+            total += get_intersection(s1, e1, s2, e2)
+    return total
+
+def split_night_shift(start_min, end_min, night_start=1320, night_end=300):
+    """
+    Divide um intervalo em diurno e noturno (padrão 22h-05h).
+    Retorna (diurno_min, noturno_min)
+    """
+    # Período noturno: [1320, 1440] e [0, 300]
+    # Se o intervalo cruza meia-noite (end < start), tratamos como dois intervalos
+    intervals = []
+    if end_min < start_min:
+        intervals.append((start_min, 1440))
+        intervals.append((0, end_min))
+    else:
+        intervals.append((start_min, end_min))
+    
+    total_min = sum(e - s for s, e in intervals)
+    
+    night_intervals = [(night_start, 1440), (0, night_end)]
+    noturno_min = get_interval_intersections(intervals, night_intervals)
+    diurno_min = total_min - noturno_min
+    
+    return diurno_min, noturno_min
+
 @login_required
 @require_http_methods(["GET"])
 def api_colaboradores_list(request):
@@ -1650,54 +1699,85 @@ def api_rh_apuracao_dados(request):
             
             previsto = ""
             horario_id = None
+            detalhe = None
             
             if escala and escala.horario_previsto:
                 horario_id = str(escala.horario_previsto.id)
                 di = get_dia_index_para_horario(escala.horario_previsto, current_date)
                 detalhe = detalhes_map.get((escala.horario_previsto.id, di))
-                if detalhe:
-                    partes = []
-                    if detalhe.entrada_1 and detalhe.saida_1:
-                        partes.append(f"{detalhe.entrada_1.strftime('%H:%M')}-{detalhe.saida_1.strftime('%H:%M')}")
-                    if detalhe.entrada_2 and detalhe.saida_2:
-                        partes.append(f"{detalhe.entrada_2.strftime('%H:%M')}-{detalhe.saida_2.strftime('%H:%M')}")
-                    previsto = "<br>".join(partes)
-                else:
-                    previsto = "Folga" if escala.tipo == 'folga' else "S/ Horário"
-            else:
-                # Fallback: Usar horário padrão do colaborador
-                if colaborador.horario_padrao:
-                    horario_id = str(colaborador.horario_padrao.id)
-                    di = get_dia_index_para_horario(colaborador.horario_padrao, current_date)
-                    detalhe = detalhes_map.get((colaborador.horario_padrao.id, di))
-                    if detalhe:
-                        partes = []
-                        if detalhe.entrada_1 and detalhe.saida_1:
-                            partes.append(f"{detalhe.entrada_1.strftime('%H:%M')}-{detalhe.saida_1.strftime('%H:%M')}")
-                        if detalhe.entrada_2 and detalhe.saida_2:
-                            partes.append(f"{detalhe.entrada_2.strftime('%H:%M')}-{detalhe.saida_2.strftime('%H:%M')}")
-                        previsto = "<br>".join(partes)
-                    else:
-                        previsto = "Folga"
-                else:
-                    is_weekend = current_date.weekday() >= 5
-                    if is_weekend:
-                        previsto = "Folga"
-                    else:
-                        previsto = "08:00-12:00<br>13:00-17:00"
+            elif colaborador.horario_padrao:
+                horario_id = str(colaborador.horario_padrao.id)
+                di = get_dia_index_para_horario(colaborador.horario_padrao, current_date)
+                detalhe = detalhes_map.get((colaborador.horario_padrao.id, di))
 
-            # Horas previstas do dia (soma de HorarioDetalhe)
-            minutos_previstos = 0
-            if escala and escala.horario_previsto:
-                di = get_dia_index_para_horario(escala.horario_previsto, current_date)
-                det = detalhes_map.get((escala.horario_previsto.id, di))
-                if det:
-                    if det.entrada_1 and det.saida_1:
-                        d1 = datetime.combine(date.min, det.saida_1) - datetime.combine(date.min, det.entrada_1)
-                        minutos_previstos += max(0, d1.total_seconds() / 60)
-                    if det.entrada_2 and det.saida_2:
-                        d2 = datetime.combine(date.min, det.saida_2) - datetime.combine(date.min, det.entrada_2)
-                        minutos_previstos += max(0, d2.total_seconds() / 60)
+            if detalhe:
+                partes = []
+                if detalhe.entrada_1 and detalhe.saida_1:
+                    partes.append(f"{detalhe.entrada_1.strftime('%H:%M')}-{detalhe.saida_1.strftime('%H:%M')}")
+                if detalhe.entrada_2 and detalhe.saida_2:
+                    partes.append(f"{detalhe.entrada_2.strftime('%H:%M')}-{detalhe.saida_2.strftime('%H:%M')}")
+                previsto = "<br>".join(partes)
+            else:
+                if escala and escala.tipo == 'folga': previsto = "Folga"
+                elif current_date.weekday() >= 5: previsto = "Folga"
+                else: previsto = "S/ Horário"
+
+            # ─────────────────────────────────────────────────────────────
+            #  CÁLCULOS AVANÇADOS RHID
+            # ─────────────────────────────────────────────────────────────
+            
+            # 1. Intervalos Previstos (P)
+            p_intervals = []
+            if detalhe:
+                if detalhe.entrada_1 and detalhe.saida_1:
+                    p_intervals.append((time_to_min(detalhe.entrada_1), time_to_min(detalhe.saida_1)))
+                if detalhe.entrada_2 and detalhe.saida_2:
+                    p_intervals.append((time_to_min(detalhe.entrada_2), time_to_min(detalhe.saida_2)))
+            
+            # 2. Intervalos Trabalhados (W)
+            w_intervals = []
+            for j in range(0, len(regs) - 1, 2):
+                r_ent = regs[j]
+                r_sai = regs[j+1]
+                w_intervals.append((time_to_min(r_ent.hora), time_to_min(r_sai.hora)))
+
+            # Total Normais: Interseção entre Trabalhado e Previsto
+            total_normais_min = get_interval_intersections(w_intervals, p_intervals)
+            
+            # Diurnas/Noturnas Normais (quebra das horas normais)
+            normal_intervals = []
+            for ws, we in w_intervals:
+                for ps, pe in p_intervals:
+                    s = max(ws, ps)
+                    e = min(we, pe)
+                    if s < e: normal_intervals.append((s, e))
+            
+            di_normais_min = 0
+            no_normais_min = 0
+            for ns, ne in normal_intervals:
+                d, n = split_night_shift(ns, ne)
+                di_normais_min += d
+                no_normais_min += n
+            
+            # Intervalo: Gaps entre batidas (saida -> entrada)
+            intervalo_min = 0
+            for j in range(1, len(regs) - 1, 2):
+                r_sai = regs[j]
+                r_ent = regs[j+1]
+                diff = time_to_min(r_ent.hora) - time_to_min(r_sai.hora)
+                intervalo_min += max(0, diff)
+            
+            # Total Noturno: Tudo trabalhado no período noturno
+            total_noturno_min = 0
+            for ws, we in w_intervals:
+                _, n = split_night_shift(ws, we)
+                total_noturno_min += n
+
+            # Dia Útil (1 se tem horário)
+            dia_util = 1 if p_intervals else ""
+
+            # Horas previstas do dia
+            minutos_previstos = sum(e - s for s, e in p_intervals)
 
             dados_apuracao.append({
                 'data': current_date.strftime('%d/%m'),
@@ -1705,21 +1785,30 @@ def api_rh_apuracao_dados(request):
                 'data_db': current_date.strftime('%Y-%m-%d'),
                 'dia_semana': dia_semana,
                 'is_weekend': current_date.weekday() >= 5,
+                
                 'previsto': previsto,
-                'horas_previstas': fmt_min(minutos_previstos),
                 'horario_id': horario_id,
                 'ent1': ent1, 'ent1_id': ent1_id,
                 'sai1': sai1, 'sai1_id': sai1_id,
                 'ent2': ent2, 'ent2_id': ent2_id,
                 'sai2': sai2, 'sai2_id': sai2_id,
-                'total_normais': fmt_min(total_minutos),
-                'total_trabalhado': fmt_min(total_minutos),
-                'excluidos': excluidos_por_dia.get(current_date, []),
+                
+                'status': 'OK' if (len(regs) % 2 == 0 or len(regs) == 0) else 'Inconsistência',
                 'is_compensado': escala.is_compensado if escala else False,
                 'is_almoco_livre': escala.is_almoco_livre if escala else False,
                 'is_folga': escala.is_folga if escala else (escala.tipo == 'folga' if escala else current_date.weekday() >= 5),
                 'is_neutro': escala.is_neutro if escala else False,
-                'status': 'OK' if (len(regs) % 2 == 0 and len(regs) > 0) or len(regs) == 0 else 'Inconsistência'
+                'excluidos': excluidos_por_dia.get(current_date, []),
+                
+                # Novos Cálculos RHID
+                'horas_previstas': min_to_str(minutos_previstos),
+                'total_trabalhado': min_to_str(total_minutos),
+                'total_normais': min_to_str(total_normais_min),
+                'diurnas_normais': min_to_str(di_normais_min),
+                'noturnas_normais': min_to_str(no_normais_min),
+                'total_noturno': min_to_str(total_noturno_min),
+                'intervalo': min_to_str(intervalo_min),
+                'dia_util': dia_util
             })
 
         return JsonResponse({
