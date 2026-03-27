@@ -13,7 +13,8 @@
     #cardApuracao .card-header {
         position: sticky;
         top: 0;
-        z-index: 1030;
+        z-index: 1010; /* Abaixo do sidebar se houver */
+        border-radius: 12px 12px 0 0 !important;
     }
     
     /* Toolbar Branca Fixa */
@@ -216,7 +217,7 @@
                     <button class="btn btn-outline-secondary btn-sm dropdown-toggle d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" data-bs-boundary="viewport">
                         <i class="bi bi-gear"></i> Colunas
                     </button>
-                    <div class="dropdown-menu dropdown-menu-end p-0 shadow border-0" style="width: 700px; border-radius: 12px; overflow: hidden; z-index: 2000 !important;">
+                    <div class="dropdown-menu dropdown-menu-end p-0 shadow border-0" style="width: 650px; max-width: 90vw; border-radius: 12px; overflow: hidden; z-index: 2000 !important;">
                         <div class="row g-0">
                             <!-- Coluna Esquerda: Categorias -->
                             <div class="col-md-6 border-end p-4" style="max-height: 550px; overflow-y: auto; background: #fff;">
@@ -232,7 +233,7 @@
                                         <i class="bi bi-rocket-takeoff d-block fs-3 mb-1 text-primary"></i>
                                         <div class="small fw-bold text-dark">Criar visual</div>
                                     </button>
-                                    <button class="btn btn-white border border-dashed flex-fill p-3 text-center shadow-sm hover-elevate transition-all" style="border-style: dashed !important; border-width: 2px !important; border-color: #cbd5e1 !important; border-radius: 12px;">
+                                    <button class="btn btn-white border border-dashed flex-fill p-3 text-center shadow-sm hover-elevate transition-all" onclick="ativarModoEdicao()" style="border-style: dashed !important; border-width: 2px !important; border-color: #cbd5e1 !important; border-radius: 12px;">
                                         <i class="bi bi-pencil-square d-block fs-3 mb-1 text-primary"></i>
                                         <div class="small fw-bold text-dark">Editar visuais</div>
                                     </button>
@@ -610,6 +611,49 @@
         }
     }
 
+    let editandoVisualId = null;
+
+    function ativarModoEdicao() {
+        if (visuaisSalvos.length === 0) {
+            Swal.fire('Informação', 'Você não possui visuais salvos para editar.', 'info');
+            return;
+        }
+        
+        Swal.fire({
+            title: 'Editar Visual',
+            text: 'Selecione abaixo qual visual você deseja editar:',
+            icon: 'info',
+            input: 'select',
+            inputOptions: visuaisSalvos.reduce((acc, v) => { acc[v.id] = v.nome; return acc; }, {}),
+            showCancelButton: true,
+            confirmButtonText: 'Editar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const visual = visuaisSalvos.find(v => v.id == result.value);
+                if (visual) {
+                    editandoVisualId = visual.id;
+                    abrirModalEdicao(visual);
+                }
+            }
+        });
+    }
+
+    function abrirModalEdicao(visual) {
+        document.getElementById('visual_nome').value = visual.nome;
+        document.getElementById('visual_icone').value = visual.icone || 'bi-layout-text-window';
+        renderGridIcones();
+        atualizarCheckboxes(visual.colunas, 'modal_chk_');
+        
+        const modalEl = document.getElementById('modalCriarVisual');
+        modalEl.querySelector('.modal-title').innerText = 'Editar layout de colunas';
+        
+        const btnSalvar = document.getElementById('btnSalvarVisual');
+        btnSalvar.innerText = 'Atualizar';
+        
+        bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    }
+
     function atualizarCheckboxes(ativos, prefix) {
         document.querySelectorAll(`input[id^='${prefix}']`).forEach(chk => {
             chk.checked = ativos.includes(chk.value);
@@ -635,6 +679,7 @@
         }
 
         const payload = {
+            id: editandoVisualId,
             nome: nome,
             icone: icone,
             colunas: getSelectedCheckboxes('modal_chk_')
@@ -642,7 +687,7 @@
 
         const btn = document.getElementById('btnSalvarVisual');
         btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Salvando...';
+        btn.innerHTML = `<span class="spinner-border spinner-border-sm"></span> ${editandoVisualId ? 'Atualizando...' : 'Salvando...'}`;
 
         fetch('/api/rh/apuracao/layout/salvar/', {
             method: 'POST',
@@ -657,10 +702,15 @@
             btn.disabled = false;
             btn.innerHTML = 'Salvar';
             if (res.success) {
-                Swal.fire({icon: 'success', title: 'Sucesso', text: 'Visual salvo!', timer: 2000, showConfirmButton: false});
+                Swal.fire({icon: 'success', title: 'Sucesso', text: editandoVisualId ? 'Visual atualizado!' : 'Visual salvo!', timer: 2000, showConfirmButton: false});
                 const modalEl = document.getElementById('modalCriarVisual');
                 const modal = bootstrap.Modal.getInstance(modalEl);
                 if(modal) modal.hide();
+                
+                editandoVisualId = null; // Limpa estado
+                document.getElementById('btnSalvarVisual').innerText = 'Salvar';
+                modalEl.querySelector('.modal-title').innerText = 'Criar layout de colunas';
+
                 carregarVisuais();
                 layoutAtual = payload.colunas;
                 aplicarLayoutNaTabela();
@@ -754,10 +804,10 @@
         if(!grid) return;
         
         grid.innerHTML = iconesDisponiveis.map(icon => `
-            <div class="icon-option p-2 border rounded bg-white shadow-sm cursor-pointer transition-all ${hiddenInput.value === icon ? 'border-primary border-2 bg-primary bg-opacity-10' : ''}" 
+            <div class="icon-option p-2 border rounded bg-white shadow-sm cursor-pointer transition-all ${hiddenInput.value === icon ? 'bg-primary border-primary border-2' : ''}" 
                  onclick="selecionarIconeVisual('${icon}', this)" 
                  style="cursor: pointer; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center;">
-                <i class="bi ${icon} fs-5 ${hiddenInput.value === icon ? 'text-primary' : 'text-muted'}"></i>
+                <i class="bi ${icon} fs-5 ${hiddenInput.value === icon ? 'text-white' : 'text-muted'}"></i>
             </div>
         `).join('');
     }
@@ -765,23 +815,15 @@
     window.selecionarIconeVisual = function(icon, el) {
         document.getElementById('visual_icone').value = icon;
         document.querySelectorAll('.icon-option').forEach(opt => {
-            opt.classList.remove('border-primary', 'border-2', 'bg-primary', 'bg-opacity-10');
-            opt.querySelector('i').classList.remove('text-primary');
+            opt.classList.remove('bg-primary', 'border-primary', 'border-2');
+            opt.querySelector('i').classList.remove('text-white');
             opt.querySelector('i').classList.add('text-muted');
         });
-        el.classList.add('border-primary', 'border-2', 'bg-primary', 'bg-opacity-10');
+        el.classList.add('bg-primary', 'border-primary', 'border-2');
         el.querySelector('i').classList.remove('text-muted');
-        el.querySelector('i').classList.add('text-primary');
+        el.querySelector('i').classList.add('text-white');
     }
 
-    function selecionarVisual(id) {
-        const visual = visuaisSalvos.find(v => v.id == id);
-        if (visual) {
-            layoutAtual = visual.colunas;
-            aplicarLayoutNaTabela();
-            atualizarCheckboxes(layoutAtual, 'chk_');
-        }
-    }
 
     function aplicarLayoutNaTabela() {
         const dynCols = document.querySelectorAll('.col-dyna');
