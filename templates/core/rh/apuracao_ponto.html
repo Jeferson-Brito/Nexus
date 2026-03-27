@@ -586,6 +586,7 @@
         .then(res => {
             if (res.success) {
                 document.getElementById('lblEmpregadoAtual').innerText = res.colaborador_nome;
+                window.dadosApuracaoAtual = res.dias;
                 renderTabelaApuracao(res.dias);
                 aplicarLayoutNaTabela();
             } else {
@@ -638,6 +639,12 @@
 
     document.addEventListener('DOMContentLoaded', () => {
         inicializarGatilhos();
+        
+        document.getElementById('filtro_inconsistencias')?.addEventListener('change', function() {
+            if (window.dadosApuracaoAtual) {
+                renderTabelaApuracao(window.dadosApuracaoAtual);
+            }
+        });
     });
 
     function selecionarVisual(id) {
@@ -939,6 +946,9 @@
     }
 
     function renderTabelaApuracao(dias) {
+        const apenasInconsistencias = document.getElementById('filtro_inconsistencias')?.checked;
+        const diasFiltrados = apenasInconsistencias ? dias.filter(d => d.status !== 'OK') : dias;
+
         let thead = `
             <th class="py-3 text-start fw-semibold border-bottom-0" style="color: #6c757d;">Dia</th>
             <th class="py-3 text-center fw-semibold border-bottom-0"></th>
@@ -986,7 +996,7 @@
         document.getElementById('tabelaApuracaoThead').innerHTML = thead;
 
         let trHtml = '';
-        dias.forEach(dia => {
+        diasFiltrados.forEach(dia => {
             const rowClass = dia.is_weekend ? 'style="background-color: #f7f8f9;"' : '';
             const statusIcon = dia.status === 'OK' ? 
                 '<i class="bi bi-check-lg fs-5 text-success" title="OK"></i>' : 
@@ -1062,7 +1072,7 @@
                 </tr>
             `;
         });
-        document.getElementById('tabelaApuracaoTbody').innerHTML = trHtml;
+        document.getElementById('tabelaApuracaoTbody').innerHTML = trHtml || '<tr><td colspan="25" class="text-center py-4 text-muted">Nenhum registro encontrado com os filtros atuais.</td></tr>';
 
         // Auto-ativar tooltips
         const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
