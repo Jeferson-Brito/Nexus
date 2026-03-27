@@ -70,7 +70,7 @@ def _calcular_horas_dia(registros):
 def _atualizar_banco_horas(colaborador, data_ref=None):
     """Recalcula e salva o banco de horas de um colaborador."""
     if data_ref is None:
-        data_ref = date.today()
+        data_ref = timezone.localtime().date()
 
     # Config de ponto do departamento
     config = ConfiguracaoPonto.objects.filter(
@@ -154,8 +154,7 @@ def buscar_colaborador(request):
         foto_url = request.build_absolute_uri(encontrado.foto.url)
 
     # Tipos já registrados hoje (para desabilitar botões no kiosk)
-    from datetime import date as _date
-    hoje = _date.today()
+    hoje = timezone.localtime().date()
     tipos_hoje = list(
         RegistroPonto.objects.filter(
             colaborador=encontrado, data=hoje
@@ -538,7 +537,7 @@ def relatorio_mensal(request):
     if not _is_admin_or_gestor(request.user):
         return JsonResponse({'erro': 'Sem permissão'}, status=403)
 
-    hoje = date.today()
+    hoje = timezone.localtime().date()
     mes = int(request.GET.get('mes', hoje.month))
     ano = int(request.GET.get('ano', hoje.year))
     dept_id = request.GET.get('department_id')
@@ -602,8 +601,8 @@ def exportar_excel(request):
 
     from openpyxl import Workbook
     from openpyxl.styles import Font, PatternFill, Alignment
-
-    hoje = date.today()
+    from django.utils import timezone
+    hoje = timezone.localtime().date()
     mes = int(request.GET.get('mes', hoje.month))
     ano = int(request.GET.get('ano', hoje.year))
     dept_id = request.GET.get('department_id')

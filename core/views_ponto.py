@@ -25,9 +25,8 @@ def ponto_kiosk(request):
     
     colaborador_data = None
     if can_web_punch:
-        from core.models import RegistroPonto
-        import datetime
-        hoje = datetime.date.today()
+        from django.utils import timezone
+        hoje = timezone.localtime().date()
         tipos_hoje = list(RegistroPonto.objects.filter(
             colaborador=colaborador, 
             data=hoje

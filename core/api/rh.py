@@ -1587,7 +1587,7 @@ def api_rh_apuracao_dados(request):
                 start_date = date(ano, mes, 1)
                 end_date = date(ano, mes, last_day)
             else:
-                now = timezone.now()
+                now = timezone.localtime()
                 m = mes or now.month
                 a = ano or now.year
                 last_day = calendar.monthrange(a, m)[1]
@@ -1642,6 +1642,9 @@ def api_rh_apuracao_dados(request):
         dias_semana_nome = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
         dados_apuracao = []
         delta = end_date - start_date
+        
+        last_out_min = None # Para cálculo de interjornada
+        
         for i in range(delta.days + 1):
             current_date = start_date + timedelta(days=i)
             dia_semana = dias_semana_nome[current_date.weekday()]
