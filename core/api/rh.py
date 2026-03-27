@@ -1776,6 +1776,9 @@ def api_rh_apuracao_dados(request):
             # Horas previstas do dia
             minutos_previstos = sum(e - s for s, e in p_intervals)
 
+            # Dia Útil (1 se tem horário)
+            dia_util = 1 if p_intervals else ""
+
             # ─────────────────────────────────────────────────────────────
             #  FASE 3: ABSENTEÍSMO E ATRASOS
             # ─────────────────────────────────────────────────────────────
