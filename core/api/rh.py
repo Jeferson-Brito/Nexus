@@ -1014,7 +1014,7 @@ def api_rh_horario_detail(request, pk):
                 'considera_atraso_fim': h.considera_atraso_fim,
                 'considera_atraso_intervalo': h.considera_atraso_intervalo,
                 
-                # Novos campos RHID - Tolerâncias
+                # Novos campos - Tolerâncias
                 'tol_clt': h.tol_clt,
                 'tol_extra_batida': h.tol_extra_batida,
                 'tol_falta_batida': h.tol_falta_batida,
@@ -1025,7 +1025,7 @@ def api_rh_horario_detail(request, pk):
                 'quando_limite_extra': h.quando_limite_extra,
                 'quando_limite_falta': h.quando_limite_falta,
                 
-                # Novos campos RHID - DSR
+                # Novos campos - DSR
                 'primeiro_dia_semana': h.primeiro_dia_semana,
                 'tempo_dsr': h.tempo_dsr,
                 'max_faltas_dsr': h.max_faltas_dsr,
@@ -1113,7 +1113,7 @@ def api_save_horario(request):
             h.considera_atraso_fim = data.get('considera_atraso_fim', 'considera')
             h.considera_atraso_intervalo = data.get('considera_atraso_intervalo', 'considera')
             
-            # Novos campos RHID - Tolerâncias
+            # Novos campos - Tolerâncias
             h.tol_clt = data.get('tol_clt', True)
             h.tol_extra_batida = data.get('tol_extra_batida', 5)
             h.tol_falta_batida = data.get('tol_falta_batida', 5)
@@ -1124,7 +1124,7 @@ def api_save_horario(request):
             h.quando_limite_extra = data.get('quando_limite_extra', 'considera_tudo')
             h.quando_limite_falta = data.get('quando_limite_falta', 'considera_tudo')
             
-            # Novos campos RHID - DSR
+            # Novos campos - DSR
             h.primeiro_dia_semana = data.get('primeiro_dia_semana', 1)
             h.tempo_dsr = data.get('tempo_dsr', '07:20')
             h.max_faltas_dsr = data.get('max_faltas_dsr', '02:00')
@@ -1726,7 +1726,7 @@ def api_rh_apuracao_dados(request):
                 else: previsto = "S/ Horário"
 
             # ─────────────────────────────────────────────────────────────
-            #  CÁLCULOS AVANÇADOS RHID
+            #  CÁLCULOS AVANÇADOS
             # ─────────────────────────────────────────────────────────────
             
             # 1. Intervalos Previstos (P)
@@ -1882,7 +1882,7 @@ def api_rh_apuracao_dados(request):
                 'is_neutro': escala.is_neutro if escala else False,
                 'excluidos': excluidos_por_dia.get(current_date, []),
                 
-                # Novos Cálculos RHID
+                # Novos Cálculos
                 'horas_previstas': min_to_str(minutos_previstos),
                 'total_trabalhado': min_to_str(total_minutos),
                 'total_normais': min_to_str(total_normais_min),

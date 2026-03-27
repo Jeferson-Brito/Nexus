@@ -454,7 +454,7 @@
 <script>
     // Lógica Frontend da Apuração de Ponto
     const colunasDisponiveis = [
-        { categoria: 'RHID Geral', id: 'cat_rhid', colunas: [
+        { categoria: 'Geral', id: 'cat_ponto_geral', colunas: [
             { id: 'col_comp', nome: 'Compensação' },
             { id: 'col_almoco', nome: 'Almoço livre' },
             { id: 'col_folga', nome: 'Folga' },
@@ -463,7 +463,7 @@
             { id: 'col_previstas', nome: 'Hs. Prev.', padrao: true },
             { id: 'col_total_trabalhado', nome: 'Tot. Trab.', padrao: true }
         ]},
-        { categoria: 'Cálculos RHID', id: 'cat_calculos', colunas: [
+        { categoria: 'Cálculos', id: 'cat_calculos', colunas: [
             { id: 'col_total_normais', nome: 'Total Normais', padrao: true },
             { id: 'col_diurnas_normais', nome: 'Diurnas Normais' },
             { id: 'col_noturnas_normais', nome: 'Noturnas Normais' },
@@ -1064,7 +1064,7 @@
         .then(res => {
             if (res.success) {
                 if (window.showToast) showToast('success', 'Marcação excluída com sucesso.');
-                carregarDadosApuracao(); // Recarregar tabela
+                carregarApuracao(); // Recarregar tabela
             } else {
                 if (window.showToast) showToast('error', res.error || 'Erro ao excluir.');
             }
@@ -1130,7 +1130,7 @@
             if (res.sucesso) {
                 if (window.showToast) showToast('success', 'Marcação incluída com sucesso!');
                 bootstrap.Modal.getInstance(document.getElementById('modalIncluirMarcacao')).hide();
-                carregarDadosApuracao();
+                carregarApuracao();
             } else {
                 if (window.showToast) showToast('error', res.erro || 'Erro ao salvar marcação.');
             }

@@ -2354,7 +2354,7 @@ class Horario(models.Model):
     considera_atraso_fim = models.CharField(max_length=50, default='considera', blank=True, null=True)
     considera_atraso_intervalo = models.CharField(max_length=50, default='considera', blank=True, null=True)
 
-    # Novos campos RHID - Tolerâncias
+    # Novos campos - Tolerâncias
     tol_clt = models.BooleanField(default=True)
     tol_extra_batida = models.IntegerField(default=5)
     tol_falta_batida = models.IntegerField(default=5)
@@ -2365,7 +2365,7 @@ class Horario(models.Model):
     quando_limite_extra = models.CharField(max_length=50, default='considera_tudo', blank=True, null=True)
     quando_limite_falta = models.CharField(max_length=50, default='considera_tudo', blank=True, null=True)
 
-    # Novos campos RHID - DSR
+    # Novos campos - DSR
     primeiro_dia_semana = models.IntegerField(default=1) # 0=Dom, 1=Seg...
     tempo_dsr = models.CharField(max_length=10, default='07:20')
     max_faltas_dsr = models.CharField(max_length=10, default='02:00')
@@ -2531,7 +2531,7 @@ class EscalaMensal(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
-    # Flags RHID (independentes)
+    # Flags (independentes)
     is_compensado = models.BooleanField(default=False)
     is_almoco_livre = models.BooleanField(default=False)
     is_folga = models.BooleanField(default=False)
