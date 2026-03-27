@@ -1806,6 +1806,58 @@ def api_rh_apuracao_dados(request):
             if detalhe and detalhe.entrada_2 and len(regs) >= 3:
                 atraso_intervalo_min = max(0, time_to_min(regs[2].hora) - time_to_min(detalhe.entrada_2))
 
+            # ─────────────────────────────────────────────────────────────
+            #  FASE 3 (EXT): ABSENTEÍSMO EM HORAS
+            # ─────────────────────────────────────────────────────────────
+            
+            # Horas Falta: Se Dia Falta=1, é o previsto total do dia
+            horas_falta_min = minutos_previstos if dia_falta == 1 else 0
+            
+            # Horas Atraso: Previsto - Normal (o que ele "deveu" na jornada)
+            horas_atraso_min = max(0, minutos_previstos - total_normais_min)
+            
+            # Atraso Diurno/Noturno: Split do previsto para comparar
+            di_prev_min = 0
+            no_prev_min = 0
+            for ps, pe in p_intervals:
+                d, n = split_night_shift(ps, pe)
+                di_prev_min += d
+                no_prev_min += n
+            
+            atraso_diurno_min = max(0, di_prev_min - di_normais_min)
+            atraso_noturno_min = max(0, no_prev_min - no_normais_min)
+            
+            # Falta e Atraso (Soma consolidada de dívida)
+            falta_atraso_min = horas_atraso_min
+
+            # ─────────────────────────────────────────────────────────────
+            #  FASE 4: EXTRAS E INTERJORNADA
+            # ─────────────────────────────────────────────────────────────
+            
+            # Extra Diurna: Trabalhado Diurno - Normal Diurno
+            extra_diurna_min = max(0, (total_minutos - total_noturno_min) - di_normais_min)
+            
+            # Extra Noturna: Trabalhado Noturno - Normal Noturno
+            extra_noturna_min = max(0, total_noturno_min - no_normais_min)
+            
+            # Extra Total: Soma
+            extra_total_min = extra_diurna_min + extra_noturna_min
+
+            # Interjornada: 11h de descanso (660min)
+            interjornada_min = 0
+            if last_out_min is not None and regs:
+                first_in_min = time_to_min(regs[0].hora)
+                diff_descanso = (1440 - last_out_min) + first_in_min
+                if diff_descanso < 660:
+                    interjornada_min = 660 - diff_descanso
+            
+            # Atualiza last_out para o próximo dia
+            if regs:
+                last_out_min = time_to_min(regs[-1].hora)
+            elif last_out_min is not None:
+                # Se não trabalhou, o descanso "estica"
+                last_out_min -= 1440 
+
             dados_apuracao.append({
                 'data': current_date.strftime('%d/%m'),
                 'data_full': current_date.strftime('%d/%m/%Y'),
@@ -1825,7 +1877,7 @@ def api_rh_apuracao_dados(request):
                 'is_almoco_livre': escala.is_almoco_livre if escala else False,
                 'is_folga': escala.is_folga if escala else (escala.tipo == 'folga' if escala else current_date.weekday() >= 5),
                 'is_neutro': escala.is_neutro if escala else False,
-                'excluidos': excluidos_por_dia.get(current_date, []),
+                'excluidos': excluidos_por_dia.get(current_date.date(), []),
                 
                 # Novos Cálculos RHID
                 'horas_previstas': min_to_str(minutos_previstos),
@@ -1841,8 +1893,23 @@ def api_rh_apuracao_dados(request):
                 'dia_falta': dia_falta,
                 'dias_trabalhados': dias_trabalhados,
                 'atraso_entrada': min_to_str(atraso_entrada_min) if atraso_entrada_min > 0 else "",
-                'saida_antecipada': min_to_str(saida_antecipada_min) if saida_antecipada_min > 0 else "",
-                'atraso_intervalo': min_to_str(atraso_intervalo_min) if atraso_intervalo_min > 0 else ""
+                'saida_antecipada': min_to_str(saida_antecipada_min),
+                'atraso_intervalo': min_to_str(atraso_intervalo_min),
+                
+                # Extended Phase 3
+                'horas_falta': min_to_str(horas_falta_min),
+                'horas_atraso': min_to_str(horas_atraso_min),
+                'atraso_diurno': min_to_str(atraso_diurno_min),
+                'atraso_noturno': min_to_str(atraso_noturno_min),
+                'falta_atraso': min_to_str(falta_atraso_min),
+
+                # Phase 4
+                'extra_diurna': min_to_str(extra_diurna_min),
+                'extra_noturna': min_to_str(extra_noturna_min),
+                'extra_total': min_to_str(extra_total_min),
+                'interjornada': min_to_str(interjornada_min),
+                'abono': "00:00", # Placeholder
+                'ajuste': "00:00", # Placeholder
             })
 
         return JsonResponse({

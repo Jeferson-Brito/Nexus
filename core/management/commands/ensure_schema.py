@@ -14,10 +14,12 @@ class Command(BaseCommand):
         self.stdout.write("==> ensure_schema: Verificando colunas críticas...")
         
         with connection.cursor() as cursor:
+            for table, column, col_def in self.REQUIRED_COLUMNS:
                 try:
                     # Verifica se a tabela existe antes de tentar alterar
                     cursor.execute(f"SELECT to_regclass('public.{table}')")
-                    if not cursor.fetchone()[0]:
+                    res = cursor.fetchone()
+                    if not res or not res[0]:
                          self.stdout.write(self.style.WARNING(f"  ! Tabela {table} ainda não existe. Ignorando por enquanto."))
                          continue
 
