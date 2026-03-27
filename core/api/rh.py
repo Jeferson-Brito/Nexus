@@ -1880,7 +1880,7 @@ def api_rh_apuracao_dados(request):
                 'is_almoco_livre': escala.is_almoco_livre if escala else False,
                 'is_folga': escala.is_folga if escala else (escala.tipo == 'folga' if escala else current_date.weekday() >= 5),
                 'is_neutro': escala.is_neutro if escala else False,
-                'excluidos': excluidos_por_dia.get(current_date.date(), []),
+                'excluidos': excluidos_por_dia.get(current_date, []),
                 
                 # Novos Cálculos RHID
                 'horas_previstas': min_to_str(minutos_previstos),
