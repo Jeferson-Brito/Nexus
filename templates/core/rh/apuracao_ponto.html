@@ -130,7 +130,7 @@
     </div>
 
     <!-- Tela de Filtros (Card) -->
-    <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px; overflow: hidden; display: none;" id="cardFiltros">
+    <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px; overflow: hidden;" id="cardFiltros">
         <div class="card-header border-0 py-3 px-4" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
             <h5 class="fw-bold mb-0 text-white"><i class="bi bi-funnel"></i> Filtros de Busca</h5>
         </div>
@@ -612,7 +612,7 @@
         }
 
         document.getElementById('cardApuracao').style.display = 'block';
-        document.getElementById('lblEmpregadoAtual').innerText = 'Carregando dados...';
+        document.getElementById('lblEmpregadoAtual').value = 'Carregando dados...';
         document.getElementById('tabelaApuracaoTbody').innerHTML = '<tr><td colspan="20" class="text-center py-5"><div class="spinner-border text-primary"></div></td></tr>';
         
         fetch(`/api/rh/apuracao-dados/?colaborador_id=${colabId}&data_inicio=${dataInicio}&data_fim=${dataFim}`)
@@ -641,7 +641,7 @@
         })
         .catch(err => {
             console.error(err);
-            document.getElementById('lblEmpregadoAtual').innerText = 'Erro de conexão';
+            document.getElementById('lblEmpregadoAtual').value = 'Erro de conexão';
             Swal.fire({icon: 'error', title: 'Erro', text: 'Não foi possível conectar à API de apuração.'});
         });
     }
