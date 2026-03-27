@@ -12,16 +12,16 @@
     /* Cabeçalho Azul Fixo */
     #cardApuracao .card-header {
         position: sticky;
-        top: 0;
-        z-index: 1010; /* Abaixo do sidebar se houver */
+        top: 70px; /* Abaixo do header do Nexus (70px) */
+        z-index: 1010;
         border-radius: 12px 12px 0 0 !important;
     }
     
     /* Toolbar Branca Fixa */
     #cardApuracao .bg-white.border-bottom {
         position: sticky;
-        top: 55px; /* Altura do header azul */
-        z-index: 1025;
+        top: 125px; /* header (70px) + card-header (55px) */
+        z-index: 1005;
         background: #fff !important;
     }
 
@@ -601,6 +601,44 @@
     }
 
     window.carregarApuracao = carregarApuracao;
+
+    // --- Lógica dos Gatilhos (Switches) ---
+    const gruposColunas = {
+        'toggleColunasApuracao': ['col_comp', 'col_almoco', 'col_folga', 'col_neutro', 'col_excluidas', 'col_previstas', 'col_total_trabalhado'],
+        'toggleColunasCalculo': ['col_total_normais', 'col_diurnas_normais', 'col_noturnas_normais', 'col_intervalo', 'col_dia_util', 'col_total_noturno'],
+        'toggleColunasAjuste': [
+            'col_dia_falta', 'col_dias_trabalhados', 'col_horas_falta', 'col_horas_atraso', 'col_atraso_diurno', 
+            'col_atraso_noturno', 'col_falta_atraso', 'col_atraso_entrada', 'col_saida_antecipada', 'col_atraso_intervalo',
+            'col_abono', 'col_ajuste', 'col_extra_diurna', 'col_extra_noturna', 'col_extra_total', 'col_interjornada', 'col_ext_50', 'col_ext_100'
+        ]
+    };
+
+    function inicializarGatilhos() {
+        Object.keys(gruposColunas).forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            
+            el.addEventListener('change', function() {
+                const checked = this.checked;
+                const cols = gruposColunas[id];
+                
+                cols.forEach(colId => {
+                    if (checked) {
+                        if (!layoutAtual.includes(colId)) layoutAtual.push(colId);
+                    } else {
+                        layoutAtual = layoutAtual.filter(i => i !== colId);
+                    }
+                });
+                
+                aplicarLayoutNaTabela();
+                atualizarCheckboxes(layoutAtual, 'chk_');
+            });
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        inicializarGatilhos();
+    });
 
     function selecionarVisual(id) {
         const visual = visuaisSalvos.find(v => v.id == id);
