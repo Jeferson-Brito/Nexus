@@ -1474,6 +1474,30 @@ def api_rh_save_escala_flags(request):
         return JsonResponse({'success': False, 'error': str(ex)}, status=500)
 
 @login_required
+@require_http_methods(["POST"])
+def api_rh_delete_ponto(request):
+    """Marca um registro de ponto como excluído (soft delete) com motivo"""
+    try:
+        data = json.loads(request.body)
+        ponto_id = data.get('ponto_id')
+        motivo = data.get('motivo')
+        
+        if not all([ponto_id, motivo]):
+            return JsonResponse({'success': False, 'error': 'ID e motivo são obrigatórios'}, status=400)
+            
+        ponto = RegistroPonto.objects.get(id=ponto_id)
+        ponto.is_deleted = True
+        ponto.observacao = motivo
+        ponto.registrado_por = request.user
+        ponto.save()
+        
+        return JsonResponse({'success': True})
+    except RegistroPonto.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Registro não encontrado'}, status=404)
+    except Exception as ex:
+        return JsonResponse({'success': False, 'error': str(ex)}, status=500)
+
+@login_required
 @require_http_methods(["GET"])
 def api_rh_apuracao_dados(request):
     """
@@ -1577,17 +1601,29 @@ def api_rh_apuracao_dados(request):
             
             # Mapear batidas (assumindo ordem cronológica para simplificar)
             ent1 = next((r.hora.strftime('%H:%M') for r in regs if r.tipo == 'entrada'), "")
+            ent1_id = next((r.id for r in regs if r.tipo == 'entrada'), None)
             sai1 = next((r.hora.strftime('%H:%M') for r in regs if r.tipo == 'saida_almoco'), "")
+            sai1_id = next((r.id for r in regs if r.tipo == 'saida_almoco'), None)
             ent2 = next((r.hora.strftime('%H:%M') for r in regs if r.tipo == 'retorno_almoco'), "")
+            ent2_id = next((r.id for r in regs if r.tipo == 'retorno_almoco'), None)
             sai2 = next((r.hora.strftime('%H:%M') for r in regs if r.tipo == 'saida'), "")
+            sai2_id = next((r.id for r in regs if r.tipo == 'saida'), None)
 
             # Se as batidas não estiverem tipadas corretamente, pega as 4 primeiras
             if not any([ent1, sai1, ent2, sai2]) and len(regs) > 0:
-                times = sorted([r.hora.strftime('%H:%M') for r in regs])
-                if len(times) >= 1: ent1 = times[0]
-                if len(times) >= 2: sai1 = times[1]
-                if len(times) >= 3: ent2 = times[2]
-                if len(times) >= 4: sai2 = times[3]
+                regs_sorted = sorted(regs, key=lambda x: x.hora)
+                if len(regs_sorted) >= 1: 
+                    ent1 = regs_sorted[0].hora.strftime('%H:%M')
+                    ent1_id = regs_sorted[0].id
+                if len(regs_sorted) >= 2: 
+                    sai1 = regs_sorted[1].hora.strftime('%H:%M')
+                    sai1_id = regs_sorted[1].id
+                if len(regs_sorted) >= 3: 
+                    ent2 = regs_sorted[2].hora.strftime('%H:%M')
+                    ent2_id = regs_sorted[2].id
+                if len(regs_sorted) >= 4: 
+                    sai2 = regs_sorted[3].hora.strftime('%H:%M')
+                    sai2_id = regs_sorted[3].id
 
             # Cálculo básico de horas trabalhadas (minutos)
             total_minutos = 0
@@ -1672,10 +1708,10 @@ def api_rh_apuracao_dados(request):
                 'previsto': previsto,
                 'horas_previstas': fmt_min(minutos_previstos),
                 'horario_id': horario_id,
-                'ent1': ent1,
-                'sai1': sai1,
-                'ent2': ent2,
-                'sai2': sai2,
+                'ent1': ent1, 'ent1_id': ent1_id,
+                'sai1': sai1, 'sai1_id': sai1_id,
+                'ent2': ent2, 'ent2_id': ent2_id,
+                'sai2': sai2, 'sai2_id': sai2_id,
                 'total_normais': fmt_min(total_minutos),
                 'total_trabalhado': fmt_min(total_minutos),
                 'excluidos': excluidos_por_dia.get(current_date, []),

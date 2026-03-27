@@ -332,6 +332,7 @@ urlpatterns = [
     path('api/rh/apuracao/layout/excluir/<int:pk>/', api_rh.api_excluir_visual_apuracao, name='api_excluir_visual_apuracao'),
     path('api/rh/apuracao-dados/', api_rh.api_rh_apuracao_dados, name='api_rh_apuracao_dados'),
     path('api/rh/apuracao/salvar-flags/', api_rh.api_rh_save_escala_flags, name='api_rh_save_escala_flags'),
+    path('api/rh/apuracao/excluir-ponto/', api_rh.api_rh_delete_ponto, name='api_rh_delete_ponto'),
 
     # Ponto Eletrônico - Views
     path('ponto/tablet/', views_ponto.ponto_kiosk, name='ponto_kiosk'),

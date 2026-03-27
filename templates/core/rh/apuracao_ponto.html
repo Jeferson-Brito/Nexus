@@ -23,6 +23,14 @@
         background: #fff !important;
     }
 
+    .delete-ponto-btn { 
+        opacity: 0; 
+        transition: opacity 0.2s; 
+        cursor: pointer; 
+        font-size: 0.8rem;
+    }
+    td:hover .delete-ponto-btn { opacity: 1; }
+
     /* Área de Rolagem da Tabela */
     #cardApuracao .table-responsive {
         max-height: 65vh; /* Altura dinâmica baseada na viewport */
@@ -862,10 +870,22 @@
                     <td class="text-start text-dark py-3 border-light">${dia.data} <span class="text-muted ms-1 small">${dia.dia_semana}</span></td>
                     <td class="border-light">${statusIcon} <i class="bi bi-chevron-down text-muted small ms-1" style="cursor: pointer;"></i></td>
                     <td class="text-muted py-2 small border-light" style="font-size: 0.75rem; cursor: pointer;" ${dia.horario_id ? `onclick="window.open('/rh/horarios/${dia.horario_id}/', '_blank')"` : ''}>${dia.previsto}</td>
-                    <td class="py-3 border-light" style="cursor: pointer; color: #5b62d8;" onclick="abrirInclusaoPonto('${dia.data_full}', 'Ent 1')">${dia.ent1}</td>
-                    <td class="py-3 border-light" style="cursor: pointer; color: #5b62d8;" onclick="abrirInclusaoPonto('${dia.data_full}', 'Sai 1')">${dia.sai1}</td>
-                    <td class="py-3 border-light" style="cursor: pointer; color: #5b62d8;" onclick="abrirInclusaoPonto('${dia.data_full}', 'Ent 2')">${dia.ent2}</td>
-                    <td class="py-3 border-light" style="cursor: pointer; color: #5b62d8;" onclick="abrirInclusaoPonto('${dia.data_full}', 'Sai 2')">${dia.sai2}</td>
+                    <td class="py-3 border-light position-relative" style="cursor: pointer; color: #5b62d8;" onclick="abrirInclusaoPonto('${dia.data_full}', 'Ent 1')">
+                        ${dia.ent1}
+                        ${dia.ent1_id ? `<i class="bi bi-x-circle text-danger ms-1 delete-ponto-btn" onclick="event.stopPropagation(); confirmarExcluirPonto(${dia.ent1_id}, '${dia.data_full}', '${dia.ent1}')"></i>` : ''}
+                    </td>
+                    <td class="py-3 border-light position-relative" style="cursor: pointer; color: #5b62d8;" onclick="abrirInclusaoPonto('${dia.data_full}', 'Sai 1')">
+                        ${dia.sai1}
+                        ${dia.sai1_id ? `<i class="bi bi-x-circle text-danger ms-1 delete-ponto-btn" onclick="event.stopPropagation(); confirmarExcluirPonto(${dia.sai1_id}, '${dia.data_full}', '${dia.sai1}')"></i>` : ''}
+                    </td>
+                    <td class="py-3 border-light position-relative" style="cursor: pointer; color: #5b62d8;" onclick="abrirInclusaoPonto('${dia.data_full}', 'Ent 2')">
+                        ${dia.ent2}
+                        ${dia.ent2_id ? `<i class="bi bi-x-circle text-danger ms-1 delete-ponto-btn" onclick="event.stopPropagation(); confirmarExcluirPonto(${dia.ent2_id}, '${dia.data_full}', '${dia.ent2}')"></i>` : ''}
+                    </td>
+                    <td class="py-3 border-light position-relative" style="cursor: pointer; color: #5b62d8;" onclick="abrirInclusaoPonto('${dia.data_full}', 'Sai 2')">
+                        ${dia.sai2}
+                        ${dia.sai2_id ? `<i class="bi bi-x-circle text-danger ms-1 delete-ponto-btn" onclick="event.stopPropagation(); confirmarExcluirPonto(${dia.sai2_id}, '${dia.data_full}', '${dia.sai2}')"></i>` : ''}
+                    </td>
                     
                     <td class="text-center align-middle border-light col-dyna" data-col-id="col_comp">
                         <input class="form-check-input border-secondary" type="checkbox" ${dia.is_compensado ? 'checked' : ''} onchange="salvarFlagDia('${dia.data_db}', 'is_compensado', this.checked)">
@@ -929,6 +949,58 @@
             } else {
                 if (window.showToast) showToast('error', res.error || 'Erro ao salvar.');
                 // Reverter interface se falhar (opcional)
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            if (window.showToast) showToast('error', 'Erro na comunicação.');
+        });
+    }
+
+    function confirmarExcluirPonto(id, data, hora) {
+        Swal.fire({
+            title: 'Excluir Marcação?',
+            text: `Deseja realmente excluir a batida de ${hora} no dia ${data}?`,
+            icon: 'warning',
+            input: 'text',
+            inputPlaceholder: 'Motivo da exclusão (obrigatório)',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Sim, excluir',
+            cancelButtonText: 'Cancelar',
+            preConfirm: (motivo) => {
+                if (!motivo) {
+                    Swal.showValidationMessage('O motivo é obrigatório');
+                }
+                return motivo;
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                excluirPonto(id, result.value);
+            }
+        });
+    }
+
+    function excluirPonto(id, motivo) {
+        fetch('/api/rh/apuracao/excluir-ponto/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                ponto_id: id,
+                motivo: motivo
+            })
+        })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success) {
+                if (window.showToast) showToast('success', 'Marcação excluída com sucesso.');
+                carregarDadosApuracao(); // Recarregar tabela
+            } else {
+                if (window.showToast) showToast('error', res.error || 'Erro ao excluir.');
             }
         })
         .catch(err => {
