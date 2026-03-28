@@ -1639,6 +1639,10 @@ def api_rh_apuracao_dados(request):
         for d in detalhes_qs:
             detalhes_map[(d.horario_id, d.dia_index)] = d
 
+        # Mapear Horários
+        horarios_objs = Horario.objects.filter(id__in=horarios_ids)
+        horarios_map = {h.id: h for h in horarios_objs}
+
         dias_semana_nome = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
         dados_apuracao = []
         delta = end_date - start_date
@@ -1977,21 +1981,33 @@ def api_rh_apuracao_dados(request):
             
             # Se é o dia de DSR (ex: Domingo no semanal, ou folga no cíclico)
             is_dsr_day = False
-            if hor_obj.tipo == 'semanal':
-                is_dsr_day = (d_obj.weekday() == hor_obj.dia_dsr)
-            elif hor_obj.tipo == 'ciclico':
-                # No cíclico, os dias com 0 horas previstas são os DSRs
-                is_dsr_day = dia.get('is_folga', False)
+            h_id_int = int(dia['horario_id']) if dia.get('horario_id') else None
+            hor_obj = horarios_map.get(h_id_int) if h_id_int else None
 
-            if is_dsr_day:
-                # Carregamos o tempo configurado para o DSR
-                tempo_dsr_min = parse_time_to_minutes(hor_obj.tempo_dsr) if hor_obj.tempo_dsr else 440
-                
-                if semanas_info[w_id]["faltas"] > 0 or semanas_info[w_id]["atrasos"] > 10:
-                    dia['desconta_dsr'] = 1
-                    dia['dsr_deb'] = min_to_str(tempo_dsr_min)
-                else:
-                    dia['dsr_cons'] = min_to_str(tempo_dsr_min)
+            if hor_obj:
+                if hor_obj.tipo == 'semanal':
+                    is_dsr_day = (d_obj.weekday() == hor_obj.dia_dsr)
+                elif hor_obj.tipo == 'ciclico':
+                    # No cíclico, os dias com 0 horas previstas são os DSRs
+                    is_dsr_day = dia.get('is_folga', False)
+
+                if is_dsr_day:
+                    # Carregamos o tempo configurado para o DSR
+                    tempo_dsr_min = parse_time_to_minutes(hor_obj.tempo_dsr) if hor_obj.tempo_dsr else 440
+                    
+                    if semanas_info[w_id]["faltas"] > 0 or semanas_info[w_id]["atrasos"] > 10:
+                        dia['desconta_dsr'] = 1
+                        dia['dsr_deb'] = min_to_str(tempo_dsr_min)
+                    else:
+                        dia['dsr_cons'] = min_to_str(tempo_dsr_min)
+            else:
+                # Comportamento padrão caso não tenha horário vinculado
+                if d_obj.weekday() == 6: # Domingo
+                    if semanas_info[w_id]["faltas"] > 0 or semanas_info[w_id]["atrasos"] > 10:
+                        dia['desconta_dsr'] = 1
+                        dia['dsr_deb'] = "07:20"
+                    else:
+                        dia['dsr_cons'] = "07:20"
 
             # Saldo Acumulado
             banco_acumulado += dia['banco_minutos']
