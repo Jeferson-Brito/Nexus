@@ -1917,10 +1917,10 @@ def api_rh_apuracao_dados(request):
                 'sai2': sai2, 'sai2_id': sai2_id,
                 
                 'status': 'OK' if (len(regs) % 2 == 0 and not (minutos_previstos > 0 and len(regs) == 0)) else 'Inconsistência',
-                'is_compensado': dia_detalhe.compensado if dia_detalhe else False,
-                'is_almoco_livre': dia_detalhe.almoco_livre if dia_detalhe else False,
+                'is_compensado': detalhe.compensado if detalhe else False,
+                'is_almoco_livre': detalhe.almoco_livre if detalhe else False,
                 'is_folga': minutos_previstos == 0,
-                'is_neutro': dia_detalhe.neutro if dia_detalhe else False,
+                'is_neutro': detalhe.neutro if detalhe else False,
                 'excluidos': excluidos_por_dia.get(current_date, []),
                 
                 # Novos Cálculos
