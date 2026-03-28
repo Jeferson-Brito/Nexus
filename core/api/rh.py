@@ -41,6 +41,11 @@ def parse_decimal(value):
 
 def time_to_min(t):
     if not t: return 0
+    if isinstance(t, str):
+        try:
+            parts = t.split(':')
+            return int(parts[0]) * 60 + int(parts[1])
+        except: return 0
     return t.hour * 60 + t.minute
 
 def min_to_str(m):
