@@ -1,0 +1,396 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4 align-items-center">
+        <div class="col">
+            <h2 class="h4 mb-0 text-gray-800">
+                <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>
+                Tipos de Inconsistência
+            </h2>
+            <p class="text-muted small mb-0">Configure os alertas automáticos que aparecem na apuração de ponto.</p>
+        </div>
+        <div class="col-auto">
+            <button class="btn btn-primary d-flex align-items-center gap-2 shadow-sm" onclick="abrirModalInconsistencia()">
+                <i class="bi bi-plus-lg"></i>
+                Adicionar Nova
+            </button>
+        </div>
+    </div>
+
+    <!-- Tabela de Inconsistências -->
+    <div class="card border-0 shadow-sm overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-4">Nome</th>
+                        <th class="text-center">Ícone</th>
+                        <th>Campo de Referência</th>
+                        <th class="text-center">Tolerância</th>
+                        <th class="text-center">Prioridade</th>
+                        <th class="text-end pe-4">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="listaInconsistencias">
+                    <!-- Preenchido via JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Cadastro -->
+<div class="modal fade" id="modalInconsistencia" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title fw-bold" id="modalTitle">Nova Inconsistência</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body py-4">
+                <form id="formInconsistencia">
+                    <input type="hidden" id="incon_id">
+                    
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-muted">Nome da Inconsistência</label>
+                            <input type="text" id="incon_nome" class="form-control" placeholder="Ex: Atraso acima de 10 min" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-muted">Campo de Referência</label>
+                            <select id="incon_campo" class="form-select" required>
+                                <option value="atraso">Horas de Atraso</option>
+                                <option value="falta">Dia de Falta</option>
+                                <option value="extra_total">Horas Extras</option>
+                                <option value="banco_pos">Banco de Horas (Crédito)</option>
+                                <option value="banco_neg">Banco de Horas (Débito)</option>
+                                <option value="intervalo_curto">Intervalo Curto</option>
+                                <option value="interjornada">Interjornada</option>
+                                <option value="marcacoes_impares">Marcações Ímpares / Pular Almoço</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-muted">A partir de (minutos)</label>
+                            <input type="number" id="incon_tolerancia" class="form-control" value="1" min="0">
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-muted">Prioridade (1-10)</label>
+                            <select id="incon_prioridade" class="form-select">
+                                <option value="1">1 (Máxima)</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                                <option value="6">6</option>
+                                <option value="7">7</option>
+                                <option value="8">8</option>
+                                <option value="9">9</option>
+                                <option value="10">10 (Mínima)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-muted">Status</label>
+                            <div class="form-check form-switch mt-2">
+                                <input class="form-check-input" type="checkbox" id="incon_ativo" checked>
+                                <label class="form-check-label small" for="incon_ativo">Regra Ativa</label>
+                            </div>
+                        </div>
+
+                        <!-- Seletor de Ícone -->
+                        <div class="col-md-12">
+                            <label class="form-label small fw-bold text-muted d-block mb-3">Escolha o Ícone</label>
+                            <div class="d-flex flex-wrap gap-2 p-3 bg-light rounded-3 shadow-sm border border-light-subtle" id="iconPicker">
+                                <button type="button" class="btn btn-outline-secondary icon-btn p-2" data-icon="bi-exclamation-triangle-fill">
+                                    <i class="bi bi-exclamation-triangle-fill fs-4"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary icon-btn p-2" data-icon="bi-exclamation-circle-fill">
+                                    <i class="bi bi-exclamation-circle-fill fs-4"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary icon-btn p-2" data-icon="bi-x-circle-fill">
+                                    <i class="bi bi-x-circle-fill fs-4"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary icon-btn p-2" data-icon="bi-clock-fill">
+                                    <i class="bi bi-clock-fill fs-4"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary icon-btn p-2" data-icon="bi- moon-fill">
+                                    <i class="bi bi-moon-fill fs-4"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary icon-btn p-2" data-icon="bi-star-fill">
+                                    <i class="bi bi-star-fill fs-4"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary icon-btn p-2" data-icon="bi-alarm-fill">
+                                    <i class="bi bi-alarm-fill fs-4"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary icon-btn p-2" data-icon="bi-person-x-fill">
+                                    <i class="bi bi-person-x-fill fs-4"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary icon-btn p-2" data-icon="bi-info-circle-fill">
+                                    <i class="bi bi-info-circle-fill fs-4"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary icon-btn p-2" data-icon="bi-lightning-fill">
+                                    <i class="bi bi-lightning-fill fs-4"></i>
+                                </button>
+                            </div>
+                            <input type="hidden" id="incon_icone" value="bi-exclamation-triangle-fill">
+                        </div>
+
+                        <!-- Seletor de Cor -->
+                        <div class="col-md-12">
+                            <label class="form-label small fw-bold text-muted d-block mb-3">Escolha a Cor</label>
+                            <div class="d-flex gap-3" id="colorPicker">
+                                <div class="color-circle shadow-sm" data-color="#dc3545" style="background: #dc3545;"></div>
+                                <div class="color-circle shadow-sm" data-color="#fd7e14" style="background: #fd7e14;"></div>
+                                <div class="color-circle shadow-sm" data-color="#ffc107" style="background: #ffc107;"></div>
+                                <div class="color-circle shadow-sm" data-color="#198754" style="background: #198754;"></div>
+                                <div class="color-circle shadow-sm" data-color="#0dcaf0" style="background: #0dcaf0;"></div>
+                                <div class="color-circle shadow-sm" data-color="#0d6efd" style="background: #0d6efd;"></div>
+                                <div class="color-circle shadow-sm" data-color="#6610f2" style="background: #6610f2;"></div>
+                                <div class="color-circle shadow-sm border" data-color="#adb5bd" style="background: #adb5bd;"></div>
+                            </div>
+                            <input type="hidden" id="incon_cor" value="#dc3545">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-top-0 pt-0">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary px-4 shadow-sm" id="btnSalvar" onclick="salvarInconsistencia()">
+                    <span id="labelSalvar">Salvar</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .icon-btn.selected {
+        background-color: var(--bs-primary-bg-subtle);
+        border-color: var(--bs-primary);
+        color: var(--bs-primary);
+    }
+    .color-circle {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+    .color-circle:hover {
+        transform: scale(1.2);
+    }
+    .color-circle.selected {
+        border: 3px solid #000;
+        box-shadow: 0 0 8px rgba(0,0,0,0.2);
+    }
+    .table thead th {
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.5px;
+        color: #6c757d;
+        border-bottom: 2px solid #f8f9fa;
+    }
+    .badge-inconsistency {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+    }
+</style>
+
+<script>
+    let modalEl;
+    let modalInstance;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        modalEl = document.getElementById('modalInconsistencia');
+        modalInstance = new bootstrap.Modal(modalEl);
+        
+        carregarInconsistencias();
+
+        // Icon Picker events
+        document.querySelectorAll('.icon-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.icon-btn').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                document.getElementById('incon_icone').value = btn.dataset.icon;
+            });
+        });
+
+        // Color Picker events
+        document.querySelectorAll('.color-circle').forEach(circle => {
+            circle.addEventListener('click', () => {
+                document.querySelectorAll('.color-circle').forEach(c => c.classList.remove('selected'));
+                circle.classList.add('selected');
+                document.getElementById('incon_cor').value = circle.dataset.color;
+            });
+        });
+    });
+
+    async function carregarInconsistencias() {
+        try {
+            const resp = await fetch('{% url "api_inconsistencias_list" %}');
+            const data = await resp.json();
+            
+            const tbody = document.getElementById('listaInconsistencias');
+            tbody.innerHTML = '';
+            
+            data.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="ps-4">
+                        <div class="fw-bold text-dark">${item.nome}</div>
+                        ${!item.ativo ? '<span class="badge bg-light text-muted small border">Inativo</span>' : ''}
+                    </td>
+                    <td class="text-center">
+                        <div class="badge-inconsistency m-auto" style="background-color: ${item.cor}20;">
+                            <i class="bi ${item.icone} fs-4" style="color: ${item.cor};"></i>
+                        </div>
+                    </td>
+                    <td><span class="badge bg-light text-dark border">${item.campo_str}</span></td>
+                    <td class="text-center">
+                        <span class="text-muted">${item.tolerancia} min</span>
+                    </td>
+                    <td class="text-center">
+                        <span class="badge rounded-pill bg-light text-dark border">P${item.prioridade}</span>
+                    </td>
+                    <td class="text-end pe-4">
+                        <div class="btn-group shadow-sm bg-white rounded">
+                            <button class="btn btn-sm btn-outline-light text-primary border-0" onclick="editarInconsistencia(${JSON.stringify(item).replace(/"/g, '&quot;')})">
+                                <i class="bi bi-pencil-square"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-light text-danger border-0" onclick="excluirInconsistencia(${item.id})">
+                                <i class="bi bi-trash3"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        } catch (e) {
+            console.error(e);
+            Swal.fire('Erro', 'Não foi possível carregar as inconsistências.', 'error');
+        }
+    }
+
+    function abrirModalInconsistencia() {
+        document.getElementById('formInconsistencia').reset();
+        document.getElementById('incon_id').value = '';
+        document.getElementById('modalTitle').innerText = 'Nova Inconsistência';
+        
+        // Reset selections
+        document.querySelectorAll('.icon-btn').forEach(b => b.classList.remove('selected'));
+        document.querySelector('.icon-btn[data-icon="bi-exclamation-triangle-fill"]').classList.add('selected');
+        document.getElementById('incon_icone').value = 'bi-exclamation-triangle-fill';
+        
+        document.querySelectorAll('.color-circle').forEach(c => c.classList.remove('selected'));
+        document.querySelector('.color-circle[data-color="#dc3545"]').classList.add('selected');
+        document.getElementById('incon_cor').value = '#dc3545';
+        
+        modalInstance.show();
+    }
+
+    function editarInconsistencia(item) {
+        document.getElementById('incon_id').value = item.id;
+        document.getElementById('incon_nome').value = item.nome;
+        document.getElementById('incon_campo').value = item.campo;
+        document.getElementById('incon_tolerancia').value = item.tolerancia;
+        document.getElementById('incon_prioridade').value = item.prioridade;
+        document.getElementById('incon_ativo').checked = item.ativo;
+        document.getElementById('incon_icone').value = item.icone;
+        document.getElementById('incon_cor').value = item.cor;
+        
+        document.getElementById('modalTitle').innerText = 'Editar Inconsistência';
+        
+        // Setup icons
+        document.querySelectorAll('.icon-btn').forEach(b => {
+            b.classList.toggle('selected', b.dataset.icon === item.icone);
+        });
+        
+        // Setup colors
+        document.querySelectorAll('.color-circle').forEach(c => {
+            c.classList.toggle('selected', c.dataset.color === item.cor);
+        });
+        
+        modalInstance.show();
+    }
+
+    async function salvarInconsistencia() {
+        const btn = document.getElementById('btnSalvar');
+        const label = document.getElementById('labelSalvar');
+        
+        const payload = {
+            id: document.getElementById('incon_id').value || null,
+            nome: document.getElementById('incon_nome').value,
+            campo: document.getElementById('incon_campo').value,
+            tolerancia: document.getElementById('incon_tolerancia').value,
+            prioridade: document.getElementById('incon_prioridade').value,
+            ativo: document.getElementById('incon_ativo').checked,
+            icone: document.getElementById('incon_icone').value,
+            cor: document.getElementById('incon_cor').value,
+        };
+        
+        if (!payload.nome) return Swal.fire('Atenção', 'Preencha o nome.', 'warning');
+
+        label.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Salvando...';
+        btn.disabled = true;
+
+        try {
+            const resp = await fetch('{% url "api_save_inconsistencia" %}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+                body: JSON.stringify(payload)
+            });
+            const res = await resp.json();
+            
+            if (res.success) {
+                modalInstance.hide();
+                carregarInconsistencias();
+                Swal.fire('Sucesso!', 'Inconsistência salva com sucesso.', 'success');
+            } else {
+                Swal.fire('Erro', res.erro || 'Erro ao salvar.', 'error');
+            }
+        } catch (e) {
+            Swal.fire('Erro', 'Falha na conexão.', 'error');
+        } finally {
+            label.innerText = 'Salvar';
+            btn.disabled = false;
+        }
+    }
+
+    async function excluirInconsistencia(id) {
+        const result = await Swal.fire({
+            title: 'Tem certeza?',
+            text: "Esta regra deixará de ser aplicada no cartão de ponto.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            confirmButtonText: 'Sim, excluir',
+            cancelButtonText: 'Cancelar'
+        });
+        
+        if (result.isConfirmed) {
+            try {
+                const resp = await fetch(`/api/rh/configuracao/inconsistencias/${id}/delete/`, {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+                });
+                const res = await resp.json();
+                if (res.success) {
+                    carregarInconsistencias();
+                    Swal.fire('Excluído!', 'A regra foi removida.', 'success');
+                }
+            } catch (e) {
+                Swal.fire('Erro', 'Falha ao excluir.', 'error');
+            }
+        }
+    }
+</script>
+{% endblock %}

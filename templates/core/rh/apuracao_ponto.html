@@ -1142,9 +1142,17 @@
         let trHtml = '';
         diasFiltrados.forEach(dia => {
             const rowClass = dia.is_weekend ? 'style="background-color: #f7f8f9;"' : '';
-            const statusIcon = dia.status === 'OK' ? 
-                '<i class="bi bi-check-lg fs-5 text-success" title="OK"></i>' : 
-                '<i class="bi bi-exclamation-lg fs-5 text-danger fw-bold" title="Inconsistencia"></i>';
+            let statusIcon = '';
+            if (dia.inconsistencia) {
+                statusIcon = `<i class="bi ${dia.inconsistencia.icone} fs-5 fw-bold" 
+                                style="color: ${dia.inconsistencia.cor};" 
+                                data-bs-toggle="tooltip" 
+                                title="${dia.inconsistencia.nome}"></i>`;
+            } else {
+                statusIcon = dia.status === 'OK' ? 
+                    '<i class="bi bi-check-lg fs-5 text-success" title="OK"></i>' : 
+                    '<i class="bi bi-exclamation-lg fs-5 text-danger fw-bold" title="Inconsistencia"></i>';
+            }
             
             trHtml += `
                 <tr ${rowClass}>

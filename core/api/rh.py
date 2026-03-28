@@ -16,7 +16,8 @@ from datetime import datetime, timedelta, date
 from ..models import (
     Colaborador, Department, HistoricoProfissional, 
     PerformanceRH, User, DocumentoColaborador,    Empresa, Cargo, CentroCusto, Holiday, Turno, 
-    JustificativaPonto, EscalaMensal, Horario, HorarioDetalhe, RegistroPonto, VisualColunaApuracao
+    JustificativaPonto, EscalaMensal, Horario, HorarioDetalhe, RegistroPonto, VisualColunaApuracao,
+    TipoInconsistencia
 )
 
 logger = logging.getLogger(__name__)
@@ -2019,6 +2020,11 @@ def api_rh_apuracao_dados(request):
             dia['banco_saldo'] = ('' if banco_acumulado >= 0 else '-') + min_to_str(abs(banco_acumulado))
             if not dia['banco_saldo']: dia['banco_saldo'] = "00:00"
 
+        # Terceira Passada: Inconsistências
+        incon_config = list(TipoInconsistencia.objects.filter(ativo=True).order_by('prioridade'))
+        for dia in dados_apuracao:
+            dia['inconsistencia'] = detectar_inconsistencias(dia, incon_config)
+
         return JsonResponse({
             'success': True,
             'colaborador_nome': colaborador.nome_completo,
@@ -2027,3 +2033,190 @@ def api_rh_apuracao_dados(request):
     except Exception as ex:
         logger.error(f"Erro na api_rh_apuracao_dados: {str(ex)}")
         return JsonResponse({'success': False, 'error': str(ex)}, status=500)
+
+@login_required
+@require_http_methods(["GET"])
+def api_inconsistencias_list(request):
+    """Lista todos os tipos de inconsistência configurados"""
+    incon = TipoInconsistencia.objects.all()
+    data = []
+    for i in incon:
+        data.append({
+            'id': i.id,
+            'nome': i.nome,
+            'campo': i.campo,
+            'campo_str': i.get_campo_display(),
+            'tolerancia': i.tolerancia,
+            'prioridade': i.prioridade,
+            'icone': i.icone,
+            'cor': i.cor,
+            'ativo': i.ativo
+        })
+    return JsonResponse(data, safe=False)
+
+@login_required
+@require_http_methods(["POST"])
+def api_save_inconsistencia(request):
+    """Cria ou atualiza um tipo de inconsistência"""
+    if not request.user.is_administrador():
+        return JsonResponse({'erro': 'Acesso negado'}, status=403)
+    
+    try:
+        data = json.loads(request.body)
+        pk = data.get('id')
+        
+        if pk:
+            incon = get_object_or_404(TipoInconsistencia, pk=pk)
+        else:
+            incon = TipoInconsistencia()
+            
+        incon.nome = data.get('nome')
+        incon.campo = data.get('campo')
+        incon.tolerancia = int(data.get('tolerancia', 1))
+        incon.prioridade = int(data.get('prioridade', 5))
+        incon.icone = data.get('icone', 'bi-exclamation-circle-fill')
+        incon.cor = data.get('cor', '#dc3545')
+        incon.ativo = data.get('ativo', True)
+        incon.save()
+        
+        return JsonResponse({'success': True, 'id': incon.id})
+    except Exception as e:
+        return JsonResponse({'success': False, 'erro': str(e)}, status=500)
+
+@login_required
+@require_http_methods(["POST"])
+def api_delete_inconsistencia(request, pk):
+    """Exclui um tipo de inconsistência"""
+    if not request.user.is_administrador():
+        return JsonResponse({'erro': 'Acesso negado'}, status=403)
+    
+    incon = get_object_or_404(TipoInconsistencia, pk=pk)
+    incon.delete()
+    return JsonResponse({'success': True})
+
+def detectar_inconsistencias(dia_data, inconsistencias_config):
+    """
+    Analisa um dia de apuração e retorna a inconsistência de maior prioridade detectada.
+    """
+    for config in inconsistencias_config:
+        valor_min = 0
+        disparar = False
+        
+        if config.campo == 'atraso':
+            valor_min = time_to_min(dia_data.get('horas_atraso', '00:00'))
+        elif config.campo == 'falta':
+            disparar = (dia_data.get('status') == 'Inconsistência' or dia_data.get('dia_falta') == '08:00')
+        elif config.campo == 'extra_total':
+            valor_min = time_to_min(dia_data.get('extra_total', '00:00'))
+        elif config.campo == 'banco_pos':
+            b_min = dia_data.get('banco_minutos', 0)
+            valor_min = b_min if b_min > 0 else 0
+        elif config.campo == 'banco_neg':
+            b_min = dia_data.get('banco_minutos', 0)
+            valor_min = abs(b_min) if b_min < 0 else 0
+        elif config.campo == 'intervalo_curto':
+            valor_min = time_to_min(dia_data.get('extra_intervalo', '00:00'))
+        elif config.campo == 'interjornada':
+            valor_min = time_to_min(dia_data.get('interjornada', '00:00'))
+        elif config.campo == 'marcacoes_impares':
+            disparar = dia_data.get('pulou_almoco', False)
+            
+        if not disparar and valor_min >= config.tolerancia:
+            disparar = True
+            
+        if disparar:
+            return {
+                'nome': config.nome,
+                'icone': config.icone,
+                'cor': config.cor,
+                'prioridade': config.prioridade
+            }
+    return None
+
+@login_required
+@require_http_methods(["GET"])
+def api_rh_ponto_diario_dados(request):
+    """
+    Retorna os dados de apuração de múltiplos colaboradores para um único dia.
+    Usado na tela de Ponto Diário (Equipe).
+    """
+    try:
+        data_sel = request.GET.get('data')
+        if not data_sel:
+            return JsonResponse({'success': False, 'erro': 'Data não informada'}, status=400)
+        
+        # Filtros
+        empresa_id = request.GET.get('empresa')
+        dept_id = request.GET.get('department')
+        cargo_id = request.GET.get('cargo')
+        cc_id = request.GET.get('centro_custo')
+        horario_id = request.GET.get('horario')
+        apenas_incon = request.GET.get('apenas_incon') == 'true'
+        
+        # Colaboradores
+        colaboradores = Colaborador.objects.filter(ativo=True)
+        if empresa_id: colaboradores = colaboradores.filter(empresa_id=empresa_id)
+        if dept_id: colaboradores = colaboradores.filter(department_id=dept_id)
+        if cargo_id: colaboradores = colaboradores.filter(cargo_id=cargo_id)
+        if cc_id: colaboradores = colaboradores.filter(centro_custo_id=cc_id)
+        
+        target_date = datetime.strptime(data_sel, '%Y-%m-%d').date()
+        incon_config = list(TipoInconsistencia.objects.filter(ativo=True).order_by('prioridade'))
+        
+        # Otimização: Pegamos todos os registros de ponto do dia para os colaboradores filtrados
+        registros_ponto = RegistroPonto.objects.filter(data=target_date, colaborador__in=colaboradores).select_related('colaborador')
+        regs_map = {}
+        for r in registros_ponto:
+            if r.colaborador_id not in regs_map: regs_map[r.colaborador_id] = []
+            regs_map[r.colaborador_id].append(r)
+
+        # Pegamos os históricos profissionais ativos para saber o horário
+        historicos = HistoricoProfissional.objects.filter(
+            data_inicio__lte=target_date
+        ).order_by('colaborador_id', '-data_inicio')
+        
+        hist_map = {}
+        for h in historicos:
+            if h.colaborador_id not in hist_map:
+                hist_map[h.colaborador_id] = h
+
+        # Horários
+        horarios_list = Horario.objects.all().prefetch_related('detalhes')
+        horarios_map = {h.id: h for h in horarios_list}
+        
+        resultados = []
+        for colab in colaboradores:
+            # Lógica simplificada de apuração para 1 dia
+            hist = hist_map.get(colab.id)
+            horario = horarios_map.get(hist.horario_id) if hist else None
+            regs = regs_map.get(colab.id, [])
+            
+            # Aqui deveríamos chamar a mesma lógica de cálculo, mas por ser 1 dia 
+            # e para performance, vamos omitir o loop pesado e focar no essencial.
+            # TODO: Refatorar core para permitir cálculo de dia isolado sem overhead.
+            
+            dia_item = {
+                'colaborador_id': colab.id,
+                'colaborador_nome': colab.nome_completo,
+                'cargo_nome': colab.cargo.nome if colab.cargo else '',
+                'data_db': data_sel,
+                'status': 'OK' if regs else 'Inconsistência',
+                'ent1': regs[0].hora.strftime('%H:%M') if len(regs) > 0 else '',
+                'sai1': regs[1].hora.strftime('%H:%M') if len(regs) > 1 else '',
+                'ent2': regs[2].hora.strftime('%H:%M') if len(regs) > 2 else '',
+                'sai2': regs[3].hora.strftime('%H:%M') if len(regs) > 3 else '',
+                # ... (Preencher com zeros para os campos de cálculo por enquanto)
+            }
+            
+            # Detecção de inconsistência básica
+            dia_item['inconsistencia'] = detectar_inconsistencias(dia_item, incon_config)
+            
+            if apenas_incon and not dia_item['inconsistencia'] and dia_item['status'] == 'OK':
+                continue
+                
+            resultados.append(dia_item)
+
+        return JsonResponse({'success': True, 'dias': resultados})
+    except Exception as e:
+        logger.error(f"Erro na api_rh_ponto_diario_dados: {str(e)}")
+        return JsonResponse({'success': False, 'erro': str(e)}, status=500)

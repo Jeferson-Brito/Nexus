@@ -2685,3 +2685,33 @@ class VisualColunaApuracao(models.Model):
 
     def __str__(self):
         return f'{self.nome} ({self.usuario.username})'
+
+class TipoInconsistencia(models.Model):
+    """Configuração de tipos de inconsistência detectáveis na apuração"""
+    CAMPO_CHOICES = [
+        ('atraso', 'Horas Atraso'),
+        ('falta', 'Dia de Falta'),
+        ('extra_total', 'Extras Total'),
+        ('banco_pos', 'Banco Positivo'),
+        ('banco_neg', 'Banco Negativo'),
+        ('intervalo_curto', 'Intervalo Curto'),
+        ('interjornada', 'Interjornada'),
+        ('marcacoes_impares', 'Marcações Ímpares'),
+    ]
+    
+    nome = models.CharField(max_length=100)
+    campo = models.CharField(max_length=30, choices=CAMPO_CHOICES)
+    tolerancia = models.IntegerField(default=1, help_text="A partir de quantos minutos disparar?")
+    prioridade = models.IntegerField(default=5) # 1 mais alta
+    icone = models.CharField(max_length=100, default='bi-exclamation-circle-fill')
+    cor = models.CharField(max_length=7, default='#dc3545') # Hex code
+    ativo = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['prioridade', 'nome']
+        verbose_name = 'Tipo de Inconsistência'
+        verbose_name_plural = 'Tipos de Inconsistência'
+
+    def __str__(self):
+        return self.nome

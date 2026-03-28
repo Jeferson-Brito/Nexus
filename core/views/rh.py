@@ -154,3 +154,19 @@ def rh_cadastro_horario_view(request, pk=None):
 @login_required
 def rh_apuracao_view(request):
     return render(request, 'core/rh/apuracao_ponto.html', {'page_title': 'Apuração de Ponto'})
+
+@login_required
+def rh_ponto_diario_view(request):
+    """Página de apuração em lote por dia (Equipe)"""
+    if not (request.user.is_gestor() or request.user.is_administrador() or getattr(request.user.department, 'name', '') == 'RH'):
+        messages.error(request, 'Acesso restrito para Gestores ou Departamento de RH.')
+        return redirect('dashboard')
+    return render(request, 'core/rh/ponto_diario.html', {'page_title': 'Ponto Diário'})
+
+@login_required
+def rh_inconsistencias_view(request):
+    """Página de gestão de tipos de inconsistência"""
+    if not request.user.is_administrador():
+        messages.error(request, 'Acesso restrito para administradores.')
+        return redirect('dashboard')
+    return render(request, 'core/rh/config_inconsistencias.html', {'page_title': 'Tipos de Inconsistência'})
