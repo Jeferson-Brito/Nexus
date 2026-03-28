@@ -1993,7 +1993,7 @@ def api_rh_apuracao_dados(request):
 
                 if is_dsr_day:
                     # Carregamos o tempo configurado para o DSR
-                    tempo_dsr_min = parse_time_to_minutes(hor_obj.tempo_dsr) if hor_obj.tempo_dsr else 440
+                    tempo_dsr_min = time_to_min(hor_obj.tempo_dsr) if hor_obj.tempo_dsr else 440
                     
                     if semanas_info[w_id]["faltas"] > 0 or semanas_info[w_id]["atrasos"] > 10:
                         dia['desconta_dsr'] = 1
