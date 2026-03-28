@@ -1824,10 +1824,10 @@ def api_rh_apuracao_dados(request):
             # ─────────────────────────────────────────────────────────────
             
             # Dia Falta: 1 se tem jornada prevista mas < 2 marcações
-            dia_falta = 1 if minutos_previstos > 0 and len(regs) < 2 else ""
+            dia_falta = 1 if minutos_previstos > 0 and len(regs) < 2 else 0
             
             # Dias Trabalhados: 1 se tem >= 2 marcações
-            dias_trabalhados = 1 if len(regs) >= 2 else ""
+            dias_trabalhados = 1 if len(regs) >= 2 else 0
             
             # Atraso Entrada: 1ª Real - 1ª Prevista
             atraso_entrada_min = 0
@@ -1909,18 +1909,18 @@ def api_rh_apuracao_dados(request):
                 'dia_semana': dia_semana,
                 'is_weekend': current_date.weekday() >= 5,
                 
-                'previsto': previsto,
+                'previsto': previsto if minutos_previstos > 0 else "FOLGA",
                 'horario_id': horario_id,
                 'ent1': ent1, 'ent1_id': ent1_id,
                 'sai1': sai1, 'sai1_id': sai1_id,
                 'ent2': ent2, 'ent2_id': ent2_id,
                 'sai2': sai2, 'sai2_id': sai2_id,
                 
-                'status': 'OK' if (len(regs) % 2 == 0 or len(regs) == 0) else 'Inconsistência',
-                'is_compensado': escala.is_compensado if escala else False,
-                'is_almoco_livre': escala.is_almoco_livre if escala else False,
-                'is_folga': escala.is_folga if escala else (escala.tipo == 'folga' if escala else current_date.weekday() >= 5),
-                'is_neutro': escala.is_neutro if escala else False,
+                'status': 'OK' if (len(regs) % 2 == 0 and not (minutos_previstos > 0 and len(regs) == 0)) else 'Inconsistência',
+                'is_compensado': dia_detalhe.compensado if dia_detalhe else False,
+                'is_almoco_livre': dia_detalhe.almoco_livre if dia_detalhe else False,
+                'is_folga': minutos_previstos == 0,
+                'is_neutro': dia_detalhe.neutro if dia_detalhe else False,
                 'excluidos': excluidos_por_dia.get(current_date, []),
                 
                 # Novos Cálculos
@@ -1975,13 +1975,23 @@ def api_rh_apuracao_dados(request):
             d_obj = datetime.strptime(dia['data_db'], '%Y-%m-%d')
             w_id = d_obj.strftime('%Y-%U')
             
-            # Se é o dia de DSR (ex: Domingo)
-            if d_obj.weekday() == 6: # Domingo
+            # Se é o dia de DSR (ex: Domingo no semanal, ou folga no cíclico)
+            is_dsr_day = False
+            if hor_obj.tipo == 'semanal':
+                is_dsr_day = (d_obj.weekday() == hor_obj.dia_dsr)
+            elif hor_obj.tipo == 'ciclico':
+                # No cíclico, os dias com 0 horas previstas são os DSRs
+                is_dsr_day = dia.get('is_folga', False)
+
+            if is_dsr_day:
+                # Carregamos o tempo configurado para o DSR
+                tempo_dsr_min = parse_time_to_minutes(hor_obj.tempo_dsr) if hor_obj.tempo_dsr else 440
+                
                 if semanas_info[w_id]["faltas"] > 0 or semanas_info[w_id]["atrasos"] > 10:
                     dia['desconta_dsr'] = 1
-                    dia['dsr_deb'] = "07:20" # Padrão ou do modelo
+                    dia['dsr_deb'] = min_to_str(tempo_dsr_min)
                 else:
-                    dia['dsr_cons'] = "07:20"
+                    dia['dsr_cons'] = min_to_str(tempo_dsr_min)
 
             # Saldo Acumulado
             banco_acumulado += dia['banco_minutos']
