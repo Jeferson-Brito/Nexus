@@ -134,7 +134,8 @@ urlpatterns = [
     # Apuração de Ponto
     path('rh/apuracao/', views.rh_apuracao_view, name='rh_apuracao'),
     path('rh/ponto-diario/', views.rh_ponto_diario_view, name='rh_ponto_diario'),
-    path('rh/configuracao/inconsistencias/', views.rh_inconsistencias_view, name='rh_inconsistencias'),
+    path('rh/apuracao/inconsistencias/', views.rh_inconsistencias_apuracao_view, name='rh_inconsistencias_apuracao'),
+    path('rh/configuracao/inconsistencias/', views.rh_inconsistencias_config_view, name='rh_inconsistencias_config'),
     # API Empresas
     path('api/rh/empresas/', api_rh.api_empresas_list, name='api_empresas_list'),
     path('api/rh/empresas/save/', api_rh.api_save_empresa, name='api_save_empresa'),
@@ -334,6 +335,7 @@ urlpatterns = [
     path('api/rh/apuracao/layout/excluir/<int:pk>/', api_rh.api_excluir_visual_apuracao, name='api_excluir_visual_apuracao'),
     path('api/rh/apuracao-dados/', api_rh.api_rh_apuracao_dados, name='api_rh_apuracao_dados'),
     path('api/rh/ponto-diario/dados/', api_rh.api_rh_ponto_diario_dados, name='api_rh_ponto_diario_dados'),
+    path('api/rh/apuracao/inconsistencias/dados/', api_rh.api_rh_filtro_inconsistencias_dados, name='api_rh_filtro_inconsistencias_dados'),
     path('api/rh/configuracao/inconsistencias/', api_rh.api_inconsistencias_list, name='api_inconsistencias_list'),
     path('api/rh/configuracao/inconsistencias/save/', api_rh.api_save_inconsistencia, name='api_save_inconsistencia'),
     path('api/rh/configuracao/inconsistencias/<int:pk>/delete/', api_rh.api_delete_inconsistencia, name='api_delete_inconsistencia'),

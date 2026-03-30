@@ -164,9 +164,17 @@ def rh_ponto_diario_view(request):
     return render(request, 'core/rh/ponto_diario.html', {'page_title': 'Ponto Diário'})
 
 @login_required
-def rh_inconsistencias_view(request):
+def rh_inconsistencias_config_view(request):
     """Página de gestão de tipos de inconsistência"""
     if not request.user.is_administrador():
         messages.error(request, 'Acesso restrito para administradores.')
         return redirect('dashboard')
     return render(request, 'core/rh/config_inconsistencias.html', {'page_title': 'Tipos de Inconsistência'})
+
+@login_required
+def rh_inconsistencias_apuracao_view(request):
+    """Página do Filtro de Inconsistências (Apuração)"""
+    if not (request.user.is_gestor() or request.user.is_administrador() or getattr(request.user.department, 'name', '') == 'RH'):
+        messages.error(request, 'Acesso restrito para Gestores ou Departamento de RH.')
+        return redirect('dashboard')
+    return render(request, 'core/rh/filtro_inconsistencias.html', {'page_title': 'Inconsistências'})

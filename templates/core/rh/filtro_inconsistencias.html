@@ -1,0 +1,379 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block content %}
+<style>
+    /* Estilos Premium Nexus para Inconsistências */
+    #cardInconsistenciasGrid .table-responsive {
+        max-height: calc(100vh - 350px);
+        overflow-y: auto;
+        border-radius: 0.5rem;
+    }
+    .col-horario { width: 90px; text-align: center; }
+    .table thead th {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: #f8fafc;
+        white-space: nowrap;
+        font-weight: 600;
+        color: #475569;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid #e2e8f0;
+    }
+    .table tbody tr:hover {
+        background-color: #f1f5f9;
+    }
+    .table td {
+        vertical-align: middle;
+        font-size: 0.9rem;
+    }
+    .inconsistencia-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    
+    /* Multiselect premium fake */
+    .form-select-sm, .form-control-sm {
+        border-radius: 0.4rem;
+        border: 1px solid #cbd5e1;
+        padding: 0.4rem 0.75rem;
+    }
+    .form-select-sm:focus, .form-control-sm:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
+    }
+    
+    /* Animacao Loader */
+    .spinner-premium {
+        width: 3rem;
+        height: 3rem;
+        color: #3b82f6;
+    }
+</style>
+
+<div class="container-fluid py-4 px-lg-5">
+    <div class="row mb-4 align-items-center">
+        <div class="col">
+            <h2 class="h3 mb-1 text-gray-800 fw-bold" style="letter-spacing: -0.5px;">
+                <i class="bi bi-funnel text-primary me-2"></i>
+                Filtro de Inconsistências
+            </h2>
+            <p class="text-muted small mb-0">Busque e visualize dias com divergências para correção de ponto.</p>
+        </div>
+    </div>
+
+    <!-- Bloco 1: Formulário de Pesquisa (Ref. Imagem 1) -->
+    <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px; overflow: hidden;">
+        <div class="card-body p-4 bg-white">
+            <form id="formFiltro" onsubmit="event.preventDefault(); buscarInconsistencias();">
+                <!-- Linha 1 -->
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold text-secondary mb-1">Empresa</label>
+                        <select id="f_empresa" class="form-select form-select-sm text-dark bg-light border-0" style="padding: 0.5rem;"><option value="">Selecione</option></select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold text-secondary mb-1">Departamento</label>
+                        <select id="f_depto" class="form-select form-select-sm text-dark bg-light border-0" style="padding: 0.5rem;"><option value="">Selecione</option></select>
+                    </div>
+                </div>
+                <!-- Linha 2 -->
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold text-secondary mb-1">Centro de custo</label>
+                        <select id="f_cc" class="form-select form-select-sm text-dark bg-light border-0" style="padding: 0.5rem;"><option value="">Selecione</option></select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold text-secondary mb-1">Cargo</label>
+                        <select id="f_cargo" class="form-select form-select-sm text-dark bg-light border-0" style="padding: 0.5rem;"><option value="">Selecione</option></select>
+                    </div>
+                </div>
+                <!-- Linha 3 -->
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold text-secondary mb-1">Horário</label>
+                        <select id="f_horario" disabled class="form-select form-select-sm text-dark bg-light border-0 opacity-50" style="padding: 0.5rem;"><option value="">Todas (Padrão)</option></select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold text-secondary mb-1">Pessoas</label>
+                        <input type="text" id="f_pessoas" class="form-control form-control-sm border-0 bg-light" style="padding: 0.5rem;" placeholder="ID do funcionário">
+                    </div>
+                </div>
+                <!-- Linha 4 (Datas) -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold text-secondary mb-1">Início</label>
+                        <input type="date" id="f_inicio" required class="form-control form-control-sm border-0 bg-light text-dark" style="padding: 0.5rem;" value="{% now 'Y-1m-d' %}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold text-secondary mb-1">Fim</label>
+                        <input type="date" id="f_fim" required class="form-control form-control-sm border-0 bg-light text-dark" style="padding: 0.5rem;" value="{% now 'Y-m-d' %}">
+                    </div>
+                </div>
+                
+                <hr class="border-light my-3">
+                
+                <!-- Linha 5 (Inconsistencias) -->
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-10">
+                        <label class="form-label small fw-semibold text-secondary mb-1">Tipos de inconsistência</label>
+                        <select id="f_inconsistencias" multiple class="form-select form-select-sm" style="height: 100px; padding: 0.5rem; border-color: #e2e8f0;">
+                            <!-- Carregado via js -->
+                        </select>
+                        <div class="form-text small text-muted mt-1"><i class="bi bi-info-circle me-1"></i> Segure CTRL/CMD ou arraste para selecionar várias. Deixe em branco para trazer todas.</div>
+                    </div>
+                    <div class="col-md-2 text-end">
+                        <button type="button" onclick="buscarInconsistencias()" class="btn btn-primary w-100 fw-semibold" style="padding: 0.65rem 1rem; border-radius: 8px;">
+                            <i class="bi bi-search me-1"></i> Buscar
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bloco 2: Tabela de Resultados (Ref. Imagem 2) -->
+    <div class="card border-0 shadow-sm" id="cardInconsistenciasGrid" style="border-radius: 12px; overflow: hidden; display: none;">
+        <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-bold text-dark fs-6 d-flex align-items-center gap-2">
+                Inconsistências Identificadas
+                <div id="resultadoPills" class="d-flex flex-wrap gap-2 ms-3"></div>
+            </h5>
+        </div>
+        <div class="table-responsive bg-white">
+            <table class="table table-hover align-middle mb-0 text-center">
+                <thead>
+                    <tr>
+                        <th class="ps-4 text-start">Dia</th>
+                        <th class="text-start">Funcionário</th>
+                        <th>Alerta</th>
+                        <th>Previsto</th>
+                        <th class="col-horario">Ent 1</th>
+                        <th class="col-horario">Sai 1</th>
+                        <th class="col-horario">Ent 2</th>
+                        <th class="col-horario">Sai 2</th>
+                        <th>Tot Normais</th>
+                        <th>Atraso</th>
+                        <th>Extras</th>
+                        <th class="pe-4">Ação</th>
+                    </tr>
+                </thead>
+                <tbody id="listaInconsistencias">
+                    <!-- Registros -->
+                </tbody>
+                <tfoot id="tfootTotal" style="display: none;" class="bg-light fw-bold text-dark border-top-0">
+                    <tr>
+                        <td colspan="12" class="py-3 text-center opacity-75 small">Fim dos registros</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    let globalInconsistencias = [];
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        // Inicializa combos
+        await Promise.all([carregarFiltros(), carregarTiposInconsistencias()]);
+        
+        // Setup dates
+        const date = new Date();
+        const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
+        document.getElementById('f_inicio').value = firstDay.toISOString().split('T')[0];
+        document.getElementById('f_fim').value = date.toISOString().split('T')[0];
+    });
+
+    async function carregarFiltros() {
+        try {
+            const resp = await fetch('/api/rh/auxiliar-data/');
+            const data = await resp.json();
+            if(data.success) {
+                populateSelect('f_empresa', data.empresas);
+                populateSelect('f_depto', data.departments, 'id', 'name');
+                populateSelect('f_cc', data.centros_custo || [], 'id', 'nome');
+                populateSelect('f_cargo', data.cargos);
+            }
+        } catch(e) {
+            console.error("Erro carregando combos auxiliares", e);
+        }
+    }
+
+    async function carregarTiposInconsistencias() {
+        try {
+            const resp = await fetch('/api/rh/configuracao/inconsistencias/');
+            const tipos = await resp.json();
+            globalInconsistencias = tipos;
+            const sel = document.getElementById('f_inconsistencias');
+            
+            // Ordena ativos primeiro
+            const atv = tipos.filter(t => t.ativo).sort((a,b) => a.nome.localeCompare(b.nome));
+            
+            atv.forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t.id;
+                opt.innerText = t.nome;
+                sel.appendChild(opt);
+            });
+        } catch(e) {
+            console.error("Erro carregando tipos de inconsistencias", e);
+        }
+    }
+
+    function populateSelect(id, items, val='id', txt='nome') {
+        const sel = document.getElementById(id);
+        items.forEach(i => {
+            const opt = document.createElement('option');
+            opt.value = i[val];
+            opt.innerText = i[txt];
+            sel.appendChild(opt);
+        });
+    }
+
+    async function buscarInconsistencias() {
+        const fInicio = document.getElementById('f_inicio').value;
+        const fFim = document.getElementById('f_fim').value;
+        
+        if(!fInicio || !fFim) {
+            Swal.fire({icon: 'warning', title: 'Datas Obrigatórias', text: 'Preencha início e fim.', customClass: {popup: 'swal2-toast-premium'}});
+            return;
+        }
+
+        // Pega multiplos valores do select
+        const selIncon = document.getElementById('f_inconsistencias');
+        const idsIncon = Array.from(selIncon.selectedOptions).map(opt => opt.value).join(',');
+
+        const query = new URLSearchParams({
+            data_inicio: fInicio,
+            data_fim: fFim,
+            empresa: document.getElementById('f_empresa').value,
+            department: document.getElementById('f_depto').value,
+            centro_custo: document.getElementById('f_cc').value,
+            cargo: document.getElementById('f_cargo').value,
+            pessoas: document.getElementById('f_pessoas').value,
+            tipos_inconsistencia: idsIncon
+        });
+
+        const grid = document.getElementById('cardInconsistenciasGrid');
+        const tbody = document.getElementById('listaInconsistencias');
+        const tfoot = document.getElementById('tfootTotal');
+        
+        grid.style.display = 'block';
+        tfoot.style.display = 'none';
+        
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="12" class="py-5 text-center text-primary">
+                    <div class="spinner-border spinner-premium mb-3" role="status"></div>
+                    <div class="fw-semibold">Verificando banco de dados...</div>
+                    <div class="small opacity-75 mt-1">Este processo faz a apuração das datas para os selecionados. Pode levar alguns instantes.</div>
+                </td>
+            </tr>
+        `;
+
+        try {
+            const endpoint = `/api/rh/apuracao/inconsistencias/dados/?${query.toString()}`;
+            const resp = await fetch(endpoint);
+            const res = await resp.json();
+            
+            if (res.success) {
+                renderLista(res.dias, idsIncon);
+            } else {
+                tbody.innerHTML = `<tr><td colspan="12" class="py-5 text-danger fw-bold"><i class="bi bi-x-circle me-2"></i>Erro: ${res.error || res.erro || 'Falha desconhecida'}</td></tr>`;
+            }
+        } catch (e) {
+            console.error(e);
+            tbody.innerHTML = '<tr><td colspan="12" class="py-5 text-danger fw-bold"><i class="bi bi-wifi-off me-2"></i>Erro de conexão com o servidor.</td></tr>';
+        }
+    }
+
+    function renderLista(dias, idsIncon) {
+        const tbody = document.getElementById('listaInconsistencias');
+        const tfoot = document.getElementById('tfootTotal');
+        
+        if (!dias || dias.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="12" class="py-5 text-center text-muted">
+                        <i class="bi bi-check2-circle text-success fs-1 d-block mb-3 opacity-50"></i>
+                        <span class="fs-5 fw-semibold text-dark">Nenhum registro encontrado</span>
+                        <div class="mt-1 small">Não existem marcações com os tipos de inconsistência selecionados neste período.</div>
+                    </td>
+                </tr>`;
+            renderPills(idsIncon);
+            return;
+        }
+
+        tbody.innerHTML = '';
+        renderPills(idsIncon);
+
+        dias.forEach(d => {
+            const tr = document.createElement('tr');
+            
+            let statusIcon = '';
+            if (d.inconsistencia) {
+                statusIcon = `<span class="inconsistencia-tag" style="background-color: ${d.inconsistencia.cor}1a; color: ${d.inconsistencia.cor}; border: 1px solid ${d.inconsistencia.cor}33;">
+                    <i class="bi ${d.inconsistencia.icone}"></i> ${d.inconsistencia.nome}
+                </span>`;
+            }
+
+            tr.innerHTML = `
+                <td class="ps-4 text-start fw-semibold text-dark">${d.data}</td>
+                <td class="text-start">
+                    <div class="fw-bold text-dark text-truncate" style="max-width: 200px;" title="${d.colaborador_nome}">${d.colaborador_nome}</div>
+                    <div class="text-muted extra-small">PIS: ${d.pis || '-'}</div>
+                </td>
+                <td>${statusIcon}</td>
+                <td class="small text-muted" style="line-height:1.2;">${d.previsto || '-'}</td>
+                <td class="fw-bold ${d.ent1 ? 'text-primary' : 'text-muted'}">${d.ent1 || '--:--'}</td>
+                <td class="fw-bold ${d.sai1 ? 'text-primary' : 'text-muted'}">${d.sai1 || '--:--'}</td>
+                <td class="fw-bold ${d.ent2 ? 'text-primary' : 'text-muted'}">${d.ent2 || '--:--'}</td>
+                <td class="fw-bold ${d.sai2 ? 'text-primary' : 'text-muted'}">${d.sai2 || '--:--'}</td>
+                
+                <td class="fw-semibold text-secondary">---</td>
+                <td class="fw-bold text-danger">${d.horas_atraso || '00:00'}</td>
+                <td class="fw-bold text-success">${d.extra_total || '00:00'}</td>
+                
+                <td class="pe-4">
+                    <a href="/rh/apuracao/?colaborador_id=${d.colaborador_id}&data=${d.data_db}" target="_blank" class="btn btn-sm btn-light border shadow-sm text-primary" title="Abrir Cartão p/ Edição">
+                        <i class="bi bi-pencil-square"></i> <span class="d-none d-xl-inline ms-1">Editar</span>
+                    </a>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+        
+        tfoot.style.display = 'table-footer-group';
+    }
+    
+    function renderPills(idsIncon) {
+        const container = document.getElementById('resultadoPills');
+        container.innerHTML = '';
+        
+        if (!idsIncon) {
+            container.innerHTML = `<span class="badge bg-secondary opacity-75 fw-normal rounded-pill px-3">Todas Inconsistências</span>`;
+            return;
+        }
+        
+        const arr = idsIncon.split(',');
+        arr.forEach(incId => {
+            const config = globalInconsistencias.find(i => String(i.id) === String(incId));
+            if(config) {
+                container.innerHTML += `<span class="badge bg-white border fw-semibold rounded-pill px-3 py-1 shadow-sm d-flex align-items-center gap-1" style="color: ${config.cor}; border-color: ${config.cor}44 !important; font-size: 0.75rem;">
+                    <i class="bi ${config.icone}"></i> ${config.nome}
+                </span>`;
+            }
+        });
+    }
+</script>
+{% endblock %}

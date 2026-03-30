@@ -2144,12 +2144,75 @@ def detectar_inconsistencias(dia_data, inconsistencias_config):
             
         if disparar:
             return {
+                'id': config.id,
                 'nome': config.nome,
                 'icone': config.icone,
                 'cor': config.cor,
                 'prioridade': config.prioridade
             }
     return None
+
+@login_required
+@require_http_methods(["GET"])
+def api_rh_filtro_inconsistencias_dados(request):
+    """
+    Pesquisa inconsistências em um range de datas para N funcionários.
+    Utiliza o motor do api_rh_apuracao_dados.
+    """
+    empresa = request.GET.get('empresa')
+    departamento = request.GET.get('department')
+    centro_custo = request.GET.get('centro_custo')
+    cargo = request.GET.get('cargo')
+    pessoas = request.GET.get('pessoas', '')
+    inconsistencias_selecionadas = request.GET.get('tipos_inconsistencia', '')
+
+    colaboradores = Colaborador.objects.filter(ativo=True).order_by('nome_completo')
+    
+    if empresa: colaboradores = colaboradores.filter(empresa_id=empresa)
+    if departamento: colaboradores = colaboradores.filter(department_id=departamento)
+    if centro_custo: colaboradores = colaboradores.filter(centro_custo_id=centro_custo)
+    if cargo: colaboradores = colaboradores.filter(cargo_id=cargo)
+    
+    if pessoas:
+        lista_ids = [int(x.strip()) for x in pessoas.split(',') if x.strip()]
+        if lista_ids:
+            colaboradores = colaboradores.filter(id__in=lista_ids)
+
+    tipos_busca = [int(x.strip()) for x in inconsistencias_selecionadas.split(',') if x.strip()]
+
+    from django.http import QueryDict
+    req_copy = request.GET.copy()
+    
+    resultados_finais = []
+    
+    import json
+    for colab in colaboradores:
+        req_copy['colaborador_id'] = colab.id
+        request.GET = req_copy
+        
+        # Chama a API de apuração original
+        resp = api_rh_apuracao_dados(request)
+        if resp.status_code == 200:
+            try:
+                data = json.loads(resp.content)
+                dias = data.get('dias', [])
+                
+                for dia in dias:
+                    incon = dia.get('inconsistencia')
+                    if not incon: 
+                        continue # Dia sem inconsistencia nao interessa
+                    
+                    if not tipos_busca or incon.get('id') in tipos_busca:
+                        # Adicionamos metadados do funcionário pois a grid é misturada
+                        dia['colaborador_id'] = colab.id
+                        dia['colaborador_nome'] = colab.nome_completo
+                        dia['pis'] = colab.pis if colab.pis else ''
+                        resultados_finais.append(dia)
+            except Exception as e:
+                logger.error(f"Erro analisando {colab.nome_completo}: {str(e)}")
+                pass
+                
+    return JsonResponse({'success': True, 'dias': resultados_finais})
 
 @login_required
 @require_http_methods(["GET"])
