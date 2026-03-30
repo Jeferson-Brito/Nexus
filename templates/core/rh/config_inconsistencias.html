@@ -101,7 +101,7 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label small fw-bold text-muted">Campo de Referência</label>
-                            <select id="incon_campo" class="form-select" required>
+                            <select id="incon_campo" class="form-select shadow-sm" required onchange="atualizarHintCampo()">
                                 <option value="atraso">Horas de Atraso</option>
                                 <option value="falta">Dia de Falta</option>
                                 <option value="extra_total">Horas Extras</option>
@@ -111,6 +111,9 @@
                                 <option value="interjornada">Interjornada</option>
                                 <option value="marcacoes_impares">Marcações Ímpares / Pular Almoço</option>
                             </select>
+                            <div id="incon_campo_hint" class="small text-muted mt-2 px-1 fst-italic" style="min-height: 1.25rem;">
+                                <!-- Preenchido via JS -->
+                            </div>
                         </div>
                         
                         <div class="col-md-4">
@@ -391,7 +394,26 @@
         document.querySelector('.color-circle[data-color="#dc3545"]').classList.add('selected');
         document.getElementById('incon_cor').value = '#dc3545';
         
+        atualizarHintCampo();
         modalInstance.show();
+    }
+
+    function atualizarHintCampo() {
+        const campo = document.getElementById('incon_campo').value;
+        const hintEl = document.getElementById('incon_campo_hint');
+        
+        const hints = {
+            'atraso': '<i class="bi bi-info-circle me-1"></i> Identifica atrasos na entrada ou saídas antecipadas em relação ao horário previsto.',
+            'falta': '<i class="bi bi-info-circle me-1"></i> Detecta dias úteis com ausência total de registros de ponto e sem justificativa.',
+            'extra_total': '<i class="bi bi-info-circle me-1"></i> Soma de minutos trabalhados além da jornada regular diária.',
+            'banco_pos': '<i class="bi bi-info-circle me-1"></i> Saldo positivo de horas que será enviado para crédito no banco do funcionário.',
+            'banco_neg': '<i class="bi bi-info-circle me-1"></i> Saldo negativo de horas que gerará débito no banco de horas.',
+            'intervalo_curto': '<i class="bi bi-info-circle me-1"></i> Alerta para descanso intrajornada realizado abaixo do tempo mínimo configurado.',
+            'interjornada': '<i class="bi bi-info-circle me-1"></i> Alerta para descanso entre dois dias de trabalho menor do que 11 horas.',
+            'marcacoes_impares': '<i class="bi bi-info-circle me-1"></i> Identifica registros faltantes (batidas ímpares) que impedem o cálculo do dia.'
+        };
+        
+        hintEl.innerHTML = hints[campo] || '';
     }
 
     function editarInconsistencia(item) {
@@ -403,6 +425,8 @@
         document.getElementById('incon_ativo').checked = item.ativo;
         document.getElementById('incon_icone').value = item.icone;
         document.getElementById('incon_cor').value = item.cor;
+        
+        atualizarHintCampo();
         
         document.getElementById('modalTitle').innerText = 'Editar Inconsistência';
         

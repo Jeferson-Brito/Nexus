@@ -2212,7 +2212,7 @@ def api_rh_filtro_inconsistencias_dados(request):
                 logger.error(f"Erro analisando {colab.nome_completo}: {str(e)}")
                 pass
                 
-    return JsonResponse({'success': True, 'dias': resultados_finais})
+    return JsonResponse({'success': True, 'items': resultados_finais})
 
 @login_required
 @require_http_methods(["GET"])
@@ -2235,7 +2235,7 @@ def api_rh_ponto_diario_dados(request):
         apenas_incon = request.GET.get('apenas_incon') == 'true'
         
         # Colaboradores
-        colaboradores = Colaborador.objects.filter(ativo=True)
+        colaboradores = Colaborador.objects.filter(status='ativo')
         if empresa_id: colaboradores = colaboradores.filter(empresa_id=empresa_id)
         if dept_id: colaboradores = colaboradores.filter(department_id=dept_id)
         if cargo_id: colaboradores = colaboradores.filter(cargo_id=cargo_id)
