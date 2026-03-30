@@ -1229,20 +1229,13 @@ def api_delete_horario(request, pk):
 def api_feriados_list(request):
     """Lista todos os feriados"""
     try:
-        feriados = Holiday.objects.all().order_by('date')
-        data = []
-        for f in feriados:
-            data.append({
-                'id': str(f.id),
-                'name': f.name,
-                'date': f.date.isoformat(),
-                'date_display': f.date.strftime('%d/%m/%Y') if not f.repeats_annually else f.date.strftime('%d/%m'),
-                'repeats_annually': f.repeats_annually,
-                'apply_to_all': f.apply_to_all,
-                'target_companies': list(f.target_companies.values_list('id', flat=True)),
-                'target_departments': list(f.target_departments.values_list('id', flat=True)),
-                'target_turnos': list(f.target_turnos.values_list('id', flat=True)),
-            })
+        from core.utils.holidays_util import get_all_holidays
+        from datetime import date
+        
+        # Gerar cobertura de 3 anos (ano passado, atual e proximo) para folga e listagens
+        current_year = date.today().year
+        data = get_all_holidays(current_year - 1, current_year + 1)
+        
         return JsonResponse({'success': True, 'feriados': data})
     except Exception as ex:
         return JsonResponse({'success': False, 'error': str(ex)}, status=500)
@@ -1649,6 +1642,24 @@ def api_rh_apuracao_dados(request):
         horarios_objs = Horario.objects.filter(id__in=horarios_ids)
         horarios_map = {h.id: h for h in horarios_objs}
 
+        from core.utils.holidays_util import get_all_holidays
+        all_feriados = get_all_holidays(start_date.year, end_date.year)
+        datas_feriados_set = set()
+        for f_dict in all_feriados:
+            if not f_dict['apply_to_all']:
+                if (colaborador.empresa_id not in f_dict['target_companies'] and 
+                    (colaborador.department_id not in f_dict['target_departments'] if colaborador.department_id else True)):
+                    continue
+            d = f_dict['date']
+            if f_dict['repeats_annually']:
+                for y in range(start_date.year, end_date.year + 1):
+                    try:
+                        datas_feriados_set.add(date(y, d.month, d.day))
+                    except ValueError:
+                        datas_feriados_set.add(date(y, 2, 28))
+            else:
+                datas_feriados_set.add(d)
+
         dias_semana_nome = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
         dados_apuracao = []
         delta = end_date - start_date
@@ -1795,10 +1806,14 @@ def api_rh_apuracao_dados(request):
                 total_noturno_min += n
 
             # Horas previstas do dia
-            minutos_previstos = sum(e - s for s, e in p_intervals)
-
-            # Dia Útil (1 se tem horário)
-            dia_util = 1 if p_intervals else ""
+            if current_date in datas_feriados_set:
+                minutos_previstos = 0
+                previsto = "Feriado"
+                dia_util = ""
+                p_intervals = [] # Limpando para garantir que não seja intersecionado indevidamente
+            else:
+                minutos_previstos = sum(e - s for s, e in p_intervals)
+                dia_util = 1 if p_intervals else ""
 
             # ─────────────────────────────────────────────────────────────
             #  FASE 4: EXTRAS ESPECÍFICAS (Intervalo/Antecipada)

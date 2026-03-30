@@ -91,11 +91,25 @@ def _atualizar_banco_horas(colaborador, data_ref=None):
 
     # Buscar feriados do mês para evitar múltiplas queries se necessário
     # Mas como _atualizar_banco_horas costuma ser para um colaborador/mês, podemos otimizar
-    feriados = Holiday.objects.filter(
-        Q(date__year=data_ref.year, date__month=data_ref.month) | 
-        Q(repeats_annually=True, date__month=data_ref.month)
-    )
-    datas_feriados = {f.date.replace(year=data_ref.year) if f.repeats_annually else f.date for f in feriados}
+    from core.utils.holidays_util import get_all_holidays
+    all_feriados = get_all_holidays(data_ref.year, data_ref.year)
+    datas_feriados = set()
+    for h in all_feriados:
+        if not h['apply_to_all']:
+            if (colaborador.empresa_id not in h['target_companies'] and 
+                (colaborador.department_id not in h['target_departments'] if colaborador.department_id else True)):
+                continue
+
+        d = h['date']
+        if h['repeats_annually']:
+            if d.month == data_ref.month:
+                try:
+                    datas_feriados.add(d.replace(year=data_ref.year))
+                except ValueError: # Tratamento para 29 de fevereiro
+                    datas_feriados.add(date(data_ref.year, 2, 28))
+        else:
+            if d.year == data_ref.year and d.month == data_ref.month:
+                datas_feriados.add(d)
 
     total_trabalhado = 0
     total_esperado = 0
