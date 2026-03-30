@@ -280,7 +280,7 @@
             const res = await resp.json();
             
             if (res.success) {
-                renderLista(res.dias, idsIncon);
+                renderLista(res.items, idsIncon);
             } else {
                 tbody.innerHTML = `<tr><td colspan="12" class="py-5 text-danger fw-bold"><i class="bi bi-x-circle me-2"></i>Erro: ${res.error || res.erro || 'Falha desconhecida'}</td></tr>`;
             }
