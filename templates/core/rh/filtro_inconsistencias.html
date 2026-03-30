@@ -119,11 +119,12 @@
 
                     <!-- Linha 5 (Manual 7.3.3: Filtro Específico de Tipos) -->
                     <div class="col-12 mt-4 pt-2">
-                        <label class="form-label small fw-bold text-primary border-bottom pb-1 d-block mb-3"><i class="bi bi-filter-square me-1"></i> Tipos de Inconsistência para Filtrar</label>
-                        <select id="f_inconsistencias" multiple class="form-select border-light-subtle" style="height: 100px; font-size: 0.85rem; border-radius: 10px;">
+                        <label class="form-label small fw-bold text-primary border-bottom pb-1 d-block mb-3"><i class="bi bi-filter-square me-1"></i> Tipo de Inconsistência</label>
+                        <select id="f_inconsistencias" class="form-select border-light-subtle shadow-sm" style="font-size: 0.85rem; border-radius: 10px;">
+                            <option value="">Todas as Inconsistências (Padrão)</option>
                             <!-- Carregado via js -->
                         </select>
-                        <div class="form-text small text-muted mt-2"><i class="bi bi-info-circle me-1"></i> Deixe em branco para ver todas. Segure CTRL para selecionar múltiplas.</div>
+                        <div class="form-text small text-muted mt-2"><i class="bi bi-info-circle me-1"></i> Selecione um tipo específico ou deixe em "Todas" para ver todos os alertas.</div>
                     </div>
                 </div>
             </form>
@@ -242,9 +243,8 @@
             return;
         }
 
-        // Pega multiplos valores do select
-        const selIncon = document.getElementById('f_inconsistencias');
-        const idsIncon = Array.from(selIncon.selectedOptions).map(opt => opt.value).join(',');
+        // Pega valor do select (menu suspenso)
+        const idsIncon = document.getElementById('f_inconsistencias').value;
 
         const query = new URLSearchParams({
             data_inicio: fInicio,
