@@ -60,81 +60,70 @@
     }
 </style>
 
-<div class="container-fluid py-4 px-lg-5">
-    <div class="row mb-4 align-items-center">
-        <div class="col">
-            <h2 class="h3 mb-1 text-gray-800 fw-bold" style="letter-spacing: -0.5px;">
-                <i class="bi bi-funnel text-primary me-2"></i>
-                Filtro de Inconsistências
-            </h2>
-            <p class="text-muted small mb-0">Busque e visualize dias com divergências para correção de ponto.</p>
-        </div>
+<div class="container-fluid py-4">
+    <!-- Título da Página (Igual Imagem 2) -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <h4 class="fw-bold mb-0 text-dark">Filtro de Inconsistências</h4>
     </div>
 
-    <!-- Bloco 1: Formulário de Pesquisa (Ref. Imagem 1) -->
-    <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px; overflow: hidden;">
+    <!-- Tela de Filtros (Card com Header Azul - Igual Imagem 2) -->
+    <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px; overflow: hidden;" id="cardFiltros">
+        <div class="card-header border-0 py-3 px-4" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
+            <h5 class="fw-bold mb-0 text-white"><i class="bi bi-funnel"></i> Filtros de Busca</h5>
+        </div>
         <div class="card-body p-4 bg-white">
             <form id="formFiltro" onsubmit="event.preventDefault(); buscarInconsistencias();">
-                <!-- Linha 1 -->
-                <div class="row g-3 mb-3">
+                <div class="row g-4">
+                    <!-- Linha 1 -->
                     <div class="col-md-6">
-                        <label class="form-label small fw-semibold text-secondary mb-1">Empresa</label>
-                        <select id="f_empresa" class="form-select form-select-sm text-dark bg-light border-0" style="padding: 0.5rem;"><option value="">Selecione</option></select>
+                        <label class="form-label small fw-bold">Empresa</label>
+                        <select id="f_empresa" class="form-select border-light-subtle shadow-sm"><option value="">Selecione</option></select>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label small fw-semibold text-secondary mb-1">Departamento</label>
-                        <select id="f_depto" class="form-select form-select-sm text-dark bg-light border-0" style="padding: 0.5rem;"><option value="">Selecione</option></select>
+                        <label class="form-label small fw-bold">Departamento</label>
+                        <select id="f_depto" class="form-select border-light-subtle shadow-sm"><option value="">Selecione</option></select>
                     </div>
-                </div>
-                <!-- Linha 2 -->
-                <div class="row g-3 mb-3">
+                    
+                    <!-- Linha 2 -->
                     <div class="col-md-6">
-                        <label class="form-label small fw-semibold text-secondary mb-1">Centro de custo</label>
-                        <select id="f_cc" class="form-select form-select-sm text-dark bg-light border-0" style="padding: 0.5rem;"><option value="">Selecione</option></select>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label small fw-semibold text-secondary mb-1">Cargo</label>
-                        <select id="f_cargo" class="form-select form-select-sm text-dark bg-light border-0" style="padding: 0.5rem;"><option value="">Selecione</option></select>
-                    </div>
-                </div>
-                <!-- Linha 3 -->
-                <div class="row g-3 mb-3">
-                    <div class="col-md-6">
-                        <label class="form-label small fw-semibold text-secondary mb-1">Horário</label>
-                        <select id="f_horario" disabled class="form-select form-select-sm text-dark bg-light border-0 opacity-50" style="padding: 0.5rem;"><option value="">Todas (Padrão)</option></select>
+                        <label class="form-label small fw-bold">Centro de custo</label>
+                        <select id="f_cc" class="form-select border-light-subtle shadow-sm"><option value="">Selecione</option></select>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label small fw-semibold text-secondary mb-1">Pessoas</label>
-                        <input type="text" id="f_pessoas" class="form-control form-control-sm border-0 bg-light" style="padding: 0.5rem;" placeholder="ID do funcionário">
+                        <label class="form-label small fw-bold">Cargo</label>
+                        <select id="f_cargo" class="form-select border-light-subtle shadow-sm"><option value="">Selecione</option></select>
                     </div>
-                </div>
-                <!-- Linha 4 (Datas) -->
-                <div class="row g-3 mb-4">
+
+                    <!-- Linha 3 -->
                     <div class="col-md-6">
-                        <label class="form-label small fw-semibold text-secondary mb-1">Início</label>
-                        <input type="date" id="f_inicio" required class="form-control form-control-sm border-0 bg-light text-dark" style="padding: 0.5rem;" value="{% now 'Y-1m-d' %}">
+                        <label class="form-label small fw-bold">Horário</label>
+                        <select id="f_horario" disabled class="form-select opacity-75 border-light-subtle shadow-sm"><option value="">Selecione</option></select>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label small fw-semibold text-secondary mb-1">Fim</label>
-                        <input type="date" id="f_fim" required class="form-control form-control-sm border-0 bg-light text-dark" style="padding: 0.5rem;" value="{% now 'Y-m-d' %}">
+                        <label class="form-label small fw-bold">Pessoas</label>
+                        <select id="f_pessoas_select" class="form-select border-light-subtle shadow-sm"><option value="">Selecione</option></select>
                     </div>
-                </div>
-                
-                <hr class="border-light my-3">
-                
-                <!-- Linha 5 (Inconsistencias) -->
-                <div class="row g-3 align-items-end">
-                    <div class="col-md-10">
-                        <label class="form-label small fw-semibold text-secondary mb-1">Tipos de inconsistência</label>
-                        <select id="f_inconsistencias" multiple class="form-select form-select-sm" style="height: 100px; padding: 0.5rem; border-color: #e2e8f0;">
+
+                    <!-- Linha 4 (Datas + Botão) -->
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold">Início</label>
+                        <input type="date" id="f_inicio" class="form-control border-light-subtle shadow-sm" required value="{% now 'Y-m-01' %}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold">Fim</label>
+                        <input type="date" id="f_fim" class="form-control border-light-subtle shadow-sm" required value="{% now 'Y-m-d' %}">
+                    </div>
+                    <div class="col-md-6 d-flex align-items-end">
+                        <button type="button" onclick="buscarInconsistencias()" class="btn btn-primary px-5 fw-bold shadow-sm" id="btnBuscar" style="border-radius: 8px;">Buscar</button>
+                    </div>
+
+                    <!-- Linha 5 (Manual 7.3.3: Filtro Específico de Tipos) -->
+                    <div class="col-12 mt-4 pt-2">
+                        <label class="form-label small fw-bold text-primary border-bottom pb-1 d-block mb-3"><i class="bi bi-filter-square me-1"></i> Tipos de Inconsistência para Filtrar</label>
+                        <select id="f_inconsistencias" multiple class="form-select border-light-subtle" style="height: 100px; font-size: 0.85rem; border-radius: 10px;">
                             <!-- Carregado via js -->
                         </select>
-                        <div class="form-text small text-muted mt-1"><i class="bi bi-info-circle me-1"></i> Segure CTRL/CMD ou arraste para selecionar várias. Deixe em branco para trazer todas.</div>
-                    </div>
-                    <div class="col-md-2 text-end">
-                        <button type="button" onclick="buscarInconsistencias()" class="btn btn-primary w-100 fw-semibold" style="padding: 0.65rem 1rem; border-radius: 8px;">
-                            <i class="bi bi-search me-1"></i> Buscar
-                        </button>
+                        <div class="form-text small text-muted mt-2"><i class="bi bi-info-circle me-1"></i> Deixe em branco para ver todas. Segure CTRL para selecionar múltiplas.</div>
                     </div>
                 </div>
             </form>
@@ -143,8 +132,8 @@
 
     <!-- Bloco 2: Tabela de Resultados (Ref. Imagem 2) -->
     <div class="card border-0 shadow-sm" id="cardInconsistenciasGrid" style="border-radius: 12px; overflow: hidden; display: none;">
-        <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
-            <h5 class="mb-0 fw-bold text-dark fs-6 d-flex align-items-center gap-2">
+        <div class="card-header border-0 py-3 px-4 d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
+            <h5 class="mb-0 fw-bold text-white d-flex align-items-center gap-2">
                 Inconsistências Identificadas
                 <div id="resultadoPills" class="d-flex flex-wrap gap-2 ms-3"></div>
             </h5>
@@ -203,6 +192,10 @@
                 populateSelect('f_depto', data.departments, 'id', 'name');
                 populateSelect('f_cc', data.centros_custo || [], 'id', 'nome');
                 populateSelect('f_cargo', data.cargos);
+                
+                // Popula o select de pessoas (novo padrão Imagem 2)
+                const pessoas = data.colaboradores || data.funcionarios || [];
+                populateSelect('f_pessoas_select', pessoas, 'id', 'nome_completo');
             }
         } catch(e) {
             console.error("Erro carregando combos auxiliares", e);
@@ -260,7 +253,7 @@
             department: document.getElementById('f_depto').value,
             centro_custo: document.getElementById('f_cc').value,
             cargo: document.getElementById('f_cargo').value,
-            pessoas: document.getElementById('f_pessoas').value,
+            colaborador_id: document.getElementById('f_pessoas_select').value,
             tipos_inconsistencia: idsIncon
         });
 

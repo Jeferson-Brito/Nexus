@@ -2166,7 +2166,7 @@ def api_rh_filtro_inconsistencias_dados(request):
     pessoas = request.GET.get('pessoas', '')
     inconsistencias_selecionadas = request.GET.get('tipos_inconsistencia', '')
 
-    colaboradores = Colaborador.objects.filter(ativo=True).order_by('nome_completo')
+    colaboradores = Colaborador.objects.filter(status='ativo').order_by('nome_completo')
     
     if empresa: colaboradores = colaboradores.filter(empresa_id=empresa)
     if departamento: colaboradores = colaboradores.filter(department_id=departamento)
