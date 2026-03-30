@@ -1474,7 +1474,8 @@ def get_dia_index_para_horario(horario, current_date):
     if horario.tipo == 'ciclico' and horario.data_inicio:
         delta = (current_date - horario.data_inicio).days
         if delta < 0:
-            return current_date.weekday()
+            # Ajustar Python weekday (0=Seg) para bater com Frontend/DB (0=Dom)
+            return (current_date.weekday() + 1) % 7
         
         # Busca o total de dias do ciclo (maior dia_index + 1)
         from django.db.models import Max
@@ -1483,7 +1484,8 @@ def get_dia_index_para_horario(horario, current_date):
             ciclo_total = max_dia + 1
             return delta % ciclo_total
             
-    return current_date.weekday()
+    # Ajustar Python weekday (0=Seg) para bater com Frontend/DB (0=Dom)
+    return (current_date.weekday() + 1) % 7
 
 @login_required
 @require_http_methods(["POST"])
@@ -2007,7 +2009,8 @@ def api_rh_apuracao_dados(request):
 
             if hor_obj:
                 if hor_obj.tipo == 'semanal':
-                    is_dsr_day = (d_obj.weekday() == hor_obj.dia_dsr)
+                    # Ajusta Python weekday para comparar com frontend (0=Dom)
+                    is_dsr_day = (((d_obj.weekday() + 1) % 7) == hor_obj.dia_dsr)
                 elif hor_obj.tipo == 'ciclico':
                     # No cíclico, os dias com 0 horas previstas são os DSRs
                     is_dsr_day = dia.get('is_folga', False)
