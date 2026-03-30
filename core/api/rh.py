@@ -2163,6 +2163,7 @@ def api_rh_filtro_inconsistencias_dados(request):
     departamento = request.GET.get('department')
     centro_custo = request.GET.get('centro_custo')
     cargo = request.GET.get('cargo')
+    colaborador_id = request.GET.get('colaborador_id', '')
     pessoas = request.GET.get('pessoas', '')
     inconsistencias_selecionadas = request.GET.get('tipos_inconsistencia', '')
 
