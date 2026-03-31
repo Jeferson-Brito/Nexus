@@ -2134,8 +2134,12 @@ def detectar_inconsistencias(dia_data, inconsistencias_config):
         if config.campo == 'atraso':
             valor_min = time_to_min(dia_data.get('horas_atraso', '00:00'))
         elif config.campo == 'falta':
-            # Only trigger 'falta' if there is an actual absence identified by dia_falta == 1
-            disparar = (dia_data.get('dia_falta') == 1 or dia_data.get('horas_falta') != '00:00' and dia_data.get('horas_falta') != '')
+            if dia_data.get('dia_falta') == 1:
+                # Dia total de falta flagrado; set a high value to definitely trigger
+                valor_min = 1000
+            else:
+                # Falta parcial: use horas_falta respecting tolerance
+                valor_min = time_to_min(dia_data.get('horas_falta', '00:00'))
         elif config.campo == 'extra_total':
             valor_min = time_to_min(dia_data.get('extra_total', '00:00'))
         elif config.campo == 'banco_pos':
