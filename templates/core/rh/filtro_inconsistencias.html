@@ -8,6 +8,7 @@
         max-height: calc(100vh - 350px);
         overflow-y: auto;
         border-radius: 0.5rem;
+        position: relative;
     }
     .col-horario { width: 90px; text-align: center; }
     .table thead th {
@@ -22,44 +23,44 @@
         text-transform: uppercase;
         letter-spacing: 0.5px;
         border-bottom: 2px solid #e2e8f0;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.06); /* separa visualmente ao scrollar */
+        box-shadow: 0 2px 4px rgba(0,0,0,0.06);
     }
-    .table tbody tr:hover {
-        background-color: #f1f5f9;
-    }
-    .table td {
-        vertical-align: middle;
-        font-size: 0.9rem;
-    }
+    .table tbody td { border-bottom: 1px solid #dee2e6 !important; }
+    .table tbody tr:hover { background-color: #f1f5f9; }
+    .table td { vertical-align: middle; font-size: 0.9rem; }
+    
     /* Ícone compacto de inconsistência */
     .incon-icon {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 30px;
-        height: 30px;
-        border-radius: 50%;
-        font-size: 1rem;
-        cursor: default;
-        flex-shrink: 0;
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 30px; height: 30px; border-radius: 50%;
+        font-size: 1rem; cursor: default; flex-shrink: 0;
     }
     
-    /* Multiselect premium fake */
     .form-select-sm, .form-control-sm {
-        border-radius: 0.4rem;
-        border: 1px solid #cbd5e1;
-        padding: 0.4rem 0.75rem;
+        border-radius: 0.4rem; border: 1px solid #cbd5e1; padding: 0.4rem 0.75rem;
     }
     .form-select-sm:focus, .form-control-sm:focus {
-        border-color: #3b82f6;
-        box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
+        border-color: #3b82f6; box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
     }
+    .spinner-premium { width: 3rem; height: 3rem; color: #3b82f6; }
+
+    /* Estilos de Edição In-Place e Células */
+    .delete-ponto-btn { 
+        position: absolute; top: -8px; right: -8px; background: #ef4444; color: white;
+        border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2); opacity: 0; transition: all 0.2s; cursor: pointer; font-size: 0.7rem; z-index: 20;
+    }
+    .ponto-cell { position: relative; transition: background 0.2s; }
+    .ponto-cell:hover { background-color: rgba(91, 98, 216, 0.05) !important; }
+    .ponto-cell:hover .delete-ponto-btn { opacity: 1; transform: scale(1.1); }
+    .cursor-pointer { cursor: pointer; }
+    .time-text { pointer-events: none; }
     
-    /* Animacao Loader */
-    .spinner-premium {
-        width: 3rem;
-        height: 3rem;
-        color: #3b82f6;
+    .table tbody td.ponto-cell:hover {
+        background-color: #eef2ff !important;
+        color: #2563eb !important;
+        font-weight: 600;
+        box-shadow: inset 0 0 10px rgba(37, 99, 235, 0.1);
     }
 </style>
 
@@ -77,12 +78,12 @@
                 <strong class="text-dark d-block mb-1">Sobre esta página: Filtro de Inconsistências</strong>
                 Identifique e analise ocorrências no ponto dos funcionários em um período específico.
                 Use os filtros para segmentar por empresa, departamento, cargo, funcionário ou tipo de inconsistência.
-                Os resultados mostram apenas dias com alguma irregularidade — dias sem alertas não aparecem na lista.
+                Os resultados mostram apenas dias com alguma irregularidade. Edite as marcações clicando no horário.
             </div>
         </div>
     </div>
 
-    <!-- Tela de Filtros (Card com Header Azul - Igual Imagem 2) -->
+    <!-- Tela de Filtros (Card com Header Azul) -->
     <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px; overflow: hidden;" id="cardFiltros">
         <div class="card-header border-0 py-3 px-4" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
             <h5 class="fw-bold mb-0 text-white"><i class="bi bi-funnel"></i> Filtros de Busca</h5>
@@ -133,55 +134,155 @@
                         <button type="button" onclick="buscarInconsistencias()" class="btn btn-primary px-5 fw-bold shadow-sm" id="btnBuscar" style="border-radius: 8px;">Buscar</button>
                     </div>
 
-                    <!-- Linha 5 (Manual 7.3.3: Filtro Específico de Tipos) -->
-                    <div class="col-12 mt-4 pt-2">
-                        <label class="form-label small fw-bold text-primary border-bottom pb-1 d-block mb-3"><i class="bi bi-filter-square me-1"></i> Tipo de Inconsistência</label>
-                        <select id="f_inconsistencias" class="form-select border-light-subtle shadow-sm" style="font-size: 0.85rem; border-radius: 10px;">
-                            <option value="">Todas as Inconsistências (Padrão)</option>
-                            <!-- Carregado via js -->
-                        </select>
-                        <div class="form-text small text-muted mt-2"><i class="bi bi-info-circle me-1"></i> Selecione um tipo específico ou deixe em "Todas" para ver todos os alertas.</div>
+                    <!-- Linha 5 -->
+                    <div class="col-12 mt-4 pt-2 border-top">
+                        <label class="form-label small fw-bold text-primary pb-1 d-block mb-3 mt-2"><i class="bi bi-filter-square me-1"></i> Tipo de Inconsistência</label>
+                        <div class="d-flex flex-wrap gap-2">
+                            <select id="f_inconsistencias" class="form-select border-light-subtle shadow-sm w-100" style="font-size: 0.85rem; border-radius: 10px; max-width: 400px;">
+                                <option value="">Todas as Inconsistências (Padrão)</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Bloco 2: Tabela de Resultados (Ref. Imagem 2) -->
+    <!-- Bloco 2: Módulo Tabela Editável -->
     <div class="card border-0 shadow-sm" id="cardInconsistenciasGrid" style="border-radius: 12px; overflow: hidden; display: none;">
-        <div class="card-header border-0 py-3 px-4 d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
-            <h5 class="mb-0 fw-bold text-white d-flex align-items-center gap-2">
-                Inconsistências Identificadas
-                <div id="resultadoPills" class="d-flex flex-wrap gap-2 ms-3"></div>
-            </h5>
+        
+        <!-- Toolbar estilo Imagem 2 -->
+        <div class="bg-white border-bottom p-3 d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <span class="small fw-bold text-muted me-2">Inconsistências filtradas:</span>
+                <div id="resultadoPills" class="d-flex flex-wrap gap-1"></div>
+            </div>
+            
+            <div class="d-flex align-items-center gap-2">
+                <div class="dropdown">
+                    <button class="btn btn-outline-secondary btn-sm dropdown-toggle d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" style="border-radius: 6px;">
+                        <i class="bi bi-gear"></i> Colunas
+                    </button>
+                    <div class="dropdown-menu p-3 shadow-lg border-0" style="width: 250px; border-radius: 12px; z-index: 2000;">
+                        <h6 class="text-uppercase fw-bold text-primary mb-3" style="font-size: 0.75rem;">Visibilidade</h6>
+                        <div class="form-check text-start mb-2"><input class="form-check-input" type="checkbox" checked onchange="toggleColuna(this, 'col_total_normais')"><label class="form-check-label small">Total Normais</label></div>
+                        <div class="form-check text-start mb-2"><input class="form-check-input" type="checkbox" checked onchange="toggleColuna(this, 'col_total_noturno')"><label class="form-check-label small">Total Noturno</label></div>
+                        <div class="form-check text-start mb-2"><input class="form-check-input" type="checkbox" checked onchange="toggleColuna(this, 'col_dia_falta')"><label class="form-check-label small">Dia Falta</label></div>
+                        <div class="form-check text-start mb-2"><input class="form-check-input" type="checkbox" checked onchange="toggleColuna(this, 'col_falta_atraso')"><label class="form-check-label small">Falta/Atraso</label></div>
+                        <div class="form-check text-start mb-2"><input class="form-check-input" type="checkbox" checked onchange="toggleColuna(this, 'col_abono')"><label class="form-check-label small">Abono</label></div>
+                        <div class="form-check text-start mb-2"><input class="form-check-input" type="checkbox" checked onchange="toggleColuna(this, 'col_extra')"><label class="form-check-label small">Extra</label></div>
+                    </div>
+                </div>
+                
+                <button class="btn btn-outline-secondary btn-sm" title="Recarregar" onclick="buscarInconsistencias()" style="border-radius: 6px;"><i class="bi bi-arrow-repeat"></i></button>
+                
+                <div class="d-flex align-items-center gap-3 ms-3 border-start ps-3 flex-wrap">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input gatilho-col" type="checkbox" checked data-cols="col_total_normais,col_total_noturno">
+                        <label class="form-check-label small fw-bold text-muted">Colunas apuração</label>
+                    </div>
+                    <div class="form-check form-switch border-start ps-4">
+                        <input class="form-check-input gatilho-col" type="checkbox" checked data-cols="col_dia_falta,col_falta_atraso,col_extra">
+                        <label class="form-check-label small fw-bold text-muted">Colunas cálculo</label>
+                    </div>
+                    <div class="form-check form-switch border-start ps-4">
+                        <input class="form-check-input gatilho-col" type="checkbox" checked data-cols="col_abono">
+                        <label class="form-check-label small fw-bold text-muted">Colunas ajuste</label>
+                    </div>
+                </div>
+            </div>
         </div>
+
         <div class="table-responsive bg-white">
-            <table class="table table-hover align-middle mb-0 text-center">
+            <table class="table table-hover align-middle mb-0 text-center" id="tabelaInconsistencia">
                 <thead>
                     <tr>
                         <th class="ps-4 text-start">Dia</th>
                         <th class="text-start">Funcionário</th>
+                        <th>PIS</th>
                         <th>Alerta</th>
                         <th>Previsto</th>
                         <th class="col-horario">Ent 1</th>
                         <th class="col-horario">Sai 1</th>
                         <th class="col-horario">Ent 2</th>
                         <th class="col-horario">Sai 2</th>
-                        <th>Tot Normais</th>
-                        <th>Atraso</th>
-                        <th>Extras</th>
-                        <th class="pe-4">Ação</th>
+                        <th class="col-dyna" data-col-id="col_total_normais">Total Normais</th>
+                        <th class="col-dyna" data-col-id="col_total_noturno">Total Noturno</th>
+                        <th class="col-dyna" data-col-id="col_dia_falta">Dia Falta</th>
+                        <th class="col-dyna" data-col-id="col_falta_atraso">Falta/Atraso</th>
+                        <th class="col-dyna" data-col-id="col_abono">Abono</th>
+                        <th class="col-dyna pe-4" data-col-id="col_extra">Extra 0,0%D</th>
                     </tr>
                 </thead>
                 <tbody id="listaInconsistencias">
                     <!-- Registros -->
                 </tbody>
                 <tfoot id="tfootTotal" style="display: none;" class="bg-light fw-bold text-dark border-top-0">
-                    <tr>
-                        <td colspan="12" class="py-3 text-center opacity-75 small">Fim dos registros</td>
-                    </tr>
+                    <!-- Registros Dinamicos -->
                 </tfoot>
             </table>
+        </div>
+        
+        <div class="card-footer bg-white border-top p-3 d-flex gap-2">
+            <button class="btn btn-primary px-5 fw-bold shadow-sm" style="border-radius: 8px;" onclick="buscarInconsistencias()"><i class="bi bi-save me-1"></i> Salvar</button>
+            <button class="btn btn-light px-4 border shadow-sm" style="border-radius: 8px;" onclick="location.reload()">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Incluir Marcação -->
+<div class="modal fade" id="modalIncluirMarcacao" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title fw-bold">Incluir marcação</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formIncluirMarcacao">
+                    <input type="hidden" id="marc_colaborador_id">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Empregado</label>
+                        <input type="text" class="form-control bg-light" id="marc_empregado" readonly>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold">PIS</label>
+                        <input type="text" class="form-control bg-light" id="marc_pis" readonly>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Data</label>
+                            <input type="text" class="form-control fw-bold fs-5" id="marc_data" readonly style="border: none; background: transparent; padding-left: 0;">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Novo horário</label>
+                            <div class="input-group">
+                                <input type="time" class="form-control" id="marc_hora">
+                                <button class="btn btn-danger" type="button" onclick="document.getElementById('marc_hora').value=''" title="Limpar"><i class="bi bi-x"></i></button>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Tipo</label>
+                            <select class="form-select" id="marc_tipo">
+                                <option value="entrada">Entrada</option>
+                                <option value="saida_almoco">Saída Intervalo</option>
+                                <option value="retorno_almoco">Retorno Intervalo</option>
+                                <option value="saida">Saída Final</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Motivo</label>
+                        <textarea class="form-control" id="marc_motivo" rows="3" placeholder="Insira o motivo da marcação manual..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-top-0 pt-0 justify-content-end">
+                <button type="button" class="btn btn-light border px-4" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary px-4" id="btnSalvarMarcacao">Salvar</button>
+            </div>
         </div>
     </div>
 </div>
@@ -190,15 +291,25 @@
     let globalInconsistencias = [];
 
     document.addEventListener('DOMContentLoaded', async () => {
-        // Inicializa combos
         await Promise.all([carregarFiltros(), carregarTiposInconsistencias()]);
         
-        // Setup dates — usa fuso local (toISOString retorna UTC e exibiria dia errado após 21h)
         const localDateStr = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
         const date = new Date();
         const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
         document.getElementById('f_inicio').value = localDateStr(firstDay);
         document.getElementById('f_fim').value = localDateStr(date);
+
+        // Inicializar Switches de Colunas
+        document.querySelectorAll('.gatilho-col').forEach(chk => {
+            chk.addEventListener('change', function() {
+                const cols = this.getAttribute('data-cols').split(',');
+                cols.forEach(c => {
+                    document.querySelectorAll(`[data-col-id='${c}']`).forEach(el => {
+                        el.style.display = this.checked ? 'table-cell' : 'none';
+                    });
+                });
+            });
+        });
     });
 
     async function carregarFiltros() {
@@ -211,7 +322,6 @@
                 populateSelect('f_cc', data.centros_custo || [], 'id', 'nome');
                 populateSelect('f_cargo', data.cargos);
                 
-                // Popula o select de pessoas (novo padrão Imagem 2)
                 const pessoas = data.colaboradores || data.funcionarios || [];
                 populateSelect('f_pessoas_select', pessoas, 'id', 'nome_completo');
             }
@@ -227,9 +337,7 @@
             globalInconsistencias = tipos;
             const sel = document.getElementById('f_inconsistencias');
             
-            // Ordena ativos primeiro
             const atv = tipos.filter(t => t.ativo).sort((a,b) => a.nome.localeCompare(b.nome));
-            
             atv.forEach(t => {
                 const opt = document.createElement('option');
                 opt.value = t.id;
@@ -251,6 +359,12 @@
         });
     }
 
+    window.toggleColuna = function(checkbox, colId) {
+        document.querySelectorAll(`[data-col-id='${colId}']`).forEach(el => {
+            el.style.display = checkbox.checked ? 'table-cell' : 'none';
+        });
+    };
+
     async function buscarInconsistencias() {
         const fInicio = document.getElementById('f_inicio').value;
         const fFim = document.getElementById('f_fim').value;
@@ -260,7 +374,6 @@
             return;
         }
 
-        // Pega valor do select (menu suspenso)
         const idsIncon = document.getElementById('f_inconsistencias').value;
 
         const query = new URLSearchParams({
@@ -283,35 +396,32 @@
         
         tbody.innerHTML = `
             <tr>
-                <td colspan="12" class="py-5 text-center text-primary">
+                <td colspan="15" class="py-5 text-center text-primary">
                     <div class="spinner-border spinner-premium mb-3" role="status"></div>
                     <div class="fw-semibold">Verificando banco de dados...</div>
-                    <div class="small opacity-75 mt-1">Este processo faz a apuração das datas para os selecionados. Pode levar alguns instantes.</div>
                 </td>
             </tr>
         `;
 
         try {
-            const endpoint = `/api/rh/apuracao/inconsistencias/dados/?${query.toString()}`;
-            const resp = await fetch(endpoint);
-
-            if (!resp.ok) {
-                const text = await resp.text();
-                throw new Error(`HTTP ${resp.status}: ${text.substring(0, 200)}`);
-            }
-
+            const resp = await fetch(`/api/rh/apuracao/inconsistencias/dados/?${query.toString()}`);
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
             const res = await resp.json();
 
             if (res.success) {
                 renderLista(res.items || [], idsIncon);
             } else {
-                tbody.innerHTML = `<tr><td colspan="12" class="py-5 text-danger fw-bold"><i class="bi bi-x-circle me-2"></i>Erro: ${res.error || res.erro || 'Falha desconhecida'}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="15" class="py-5 text-danger fw-bold"><i class="bi bi-x-circle me-2"></i>Erro: ${res.error || res.erro || 'Falha desconhecida'}</td></tr>`;
             }
         } catch (e) {
             console.error('[Inconsistências] Erro:', e);
-            tbody.innerHTML = `<tr><td colspan="12" class="py-5 text-danger fw-bold"><i class="bi bi-wifi-off me-2"></i>Erro: ${e.message || 'Falha desconhecida'}</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="15" class="py-5 text-danger fw-bold"><i class="bi bi-wifi-off me-2"></i>Erro: ${e.message || 'Falha desconhecida'}</td></tr>`;
         }
     }
+
+    // Minutos auxiliares para totalizador
+    function t2m(t) { if(!t||t==='--:--') return 0; const [h,m] = t.split(':'); return parseInt(h)*60+parseInt(m); }
+    function m2t(m) { if(m<=0) return ''; const h=Math.floor(m/60); const mi=m%60; return `${String(h).padStart(2,'0')}:${String(mi).padStart(2,'0')}`; }
 
     function renderLista(dias, idsIncon) {
         const tbody = document.getElementById('listaInconsistencias');
@@ -320,10 +430,9 @@
         if (!dias || dias.length === 0) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="12" class="py-5 text-center text-muted">
+                    <td colspan="15" class="py-5 text-center text-muted">
                         <i class="bi bi-check2-circle text-success fs-1 d-block mb-3 opacity-50"></i>
                         <span class="fs-5 fw-semibold text-dark">Nenhum registro encontrado</span>
-                        <div class="mt-1 small">Não existem marcações com os tipos de inconsistência selecionados neste período.</div>
                     </td>
                 </tr>`;
             renderPills(idsIncon);
@@ -333,123 +442,104 @@
         tbody.innerHTML = '';
         renderPills(idsIncon);
 
+        let sumNormais = 0, sumNoturno = 0, sumFaltaAtraso = 0, sumExtra = 0;
+
         dias.forEach(d => {
-            try {
-                const tr = document.createElement('tr');
+            const tr = document.createElement('tr');
 
-                // Célula: Dia
-                const tdDia = document.createElement('td');
-                tdDia.className = 'ps-4 text-start fw-semibold text-dark';
-                tdDia.textContent = d.data || '';
+            // TD helper
+            const mkTd = (html, classes='') => { const t=document.createElement('td'); t.className=classes; t.innerHTML=html; return t; };
 
-                // Célula: Funcionário
-                const tdFunc = document.createElement('td');
-                tdFunc.className = 'text-start';
-                const divNome = document.createElement('div');
-                divNome.className = 'fw-bold text-dark text-truncate';
-                divNome.style.maxWidth = '200px';
-                divNome.title = d.colaborador_nome || '';
-                divNome.textContent = d.colaborador_nome || '';
-                const divPis = document.createElement('div');
-                divPis.className = 'text-muted extra-small';
-                divPis.textContent = 'PIS: ' + (d.pis || '-');
-                tdFunc.appendChild(divNome);
-                tdFunc.appendChild(divPis);
-
-                // Célula: Alerta — ícone compacto com tooltip
-                const tdAlert = document.createElement('td');
-                tdAlert.className = 'text-center';
-                if (d.inconsistencia) {
-                    const cor = d.inconsistencia.cor || '#dc3545';
-                    const span = document.createElement('span');
-                    span.className = 'incon-icon';
-                    span.style.cssText = `background-color:${cor}1a; color:${cor};`;
-                    span.title = d.inconsistencia.nome || '';
-                    span.setAttribute('data-bs-toggle', 'tooltip');
-                    span.setAttribute('data-bs-placement', 'top');
-                    const ico = document.createElement('i');
-                    ico.className = `bi ${d.inconsistencia.icone || 'bi-exclamation-circle'}`;
-                    span.appendChild(ico);
-                    tdAlert.appendChild(span);
-                }
-
-                // Célula: Previsto (pode conter <br>)
-                const tdPrev = document.createElement('td');
-                tdPrev.className = 'small text-muted';
-                tdPrev.style.lineHeight = '1.2';
-                tdPrev.innerHTML = d.previsto || '-';
-
-                // Células de horários
-                function mkHorario(val) {
-                    const td = document.createElement('td');
-                    td.className = 'fw-bold ' + (val ? 'text-primary' : 'text-muted');
-                    td.textContent = val || '--:--';
-                    return td;
-                }
-
-                // Tot Normais
-                const tdNorm = document.createElement('td');
-                tdNorm.className = 'fw-semibold text-secondary';
-                tdNorm.textContent = d.total_normais || '---';
-
-                // Atraso
-                const tdAtraso = document.createElement('td');
-                tdAtraso.className = 'fw-bold text-danger';
-                tdAtraso.textContent = d.horas_atraso || '00:00';
-
-                // Extras
-                const tdExtra = document.createElement('td');
-                tdExtra.className = 'fw-bold text-success';
-                tdExtra.textContent = d.extra_total || '00:00';
-
-                // Ação
-                const tdAcao = document.createElement('td');
-                tdAcao.className = 'pe-4';
-                const link = document.createElement('a');
-                link.href = `/rh/apuracao/?colaborador_id=${encodeURIComponent(d.colaborador_id || '')}&data=${encodeURIComponent(d.data_db || '')}`;
-                link.className = 'btn btn-sm btn-light border shadow-sm text-primary';
-                link.title = 'Abrir Cartão p/ Edição';
-                link.innerHTML = '<i class="bi bi-pencil-square"></i> <span class="d-none d-xl-inline ms-1">Editar</span>';
-                tdAcao.appendChild(link);
-
-                tr.appendChild(tdDia);
-                tr.appendChild(tdFunc);
-                tr.appendChild(tdAlert);
-                tr.appendChild(tdPrev);
-                tr.appendChild(mkHorario(d.ent1));
-                tr.appendChild(mkHorario(d.sai1));
-                tr.appendChild(mkHorario(d.ent2));
-                tr.appendChild(mkHorario(d.sai2));
-                tr.appendChild(tdNorm);
-                tr.appendChild(tdAtraso);
-                tr.appendChild(tdExtra);
-                tr.appendChild(tdAcao);
-
-                tbody.appendChild(tr);
-            } catch (rowErr) {
-                console.error('[Inconsistências] Erro ao renderizar linha:', rowErr, d);
+            const nomeEl = `<div class="fw-bold text-dark text-truncate" style="max-width:200px;" title="${d.colaborador_nome||''}">${d.colaborador_nome||''}</div>`;
+            
+            let alertHtml = '';
+            if (d.inconsistencia) {
+                const cor = d.inconsistencia.cor || '#dc3545';
+                alertHtml = `<span class="incon-icon" style="background-color:${cor}1a; color:${cor};" title="${d.inconsistencia.nome||''}" data-bs-toggle="tooltip">
+                                <i class="bi ${d.inconsistencia.icone || 'bi-exclamation-circle'}"></i>
+                             </span>`;
+            } else if (d.status !== 'OK') {
+                 alertHtml = `<span class="text-danger fw-bold">!</span>`;
             }
+
+            function mkHorario(val, horId, tipo) {
+                const isFalta = d.inconsistencia && !val;
+                let cV = ''; 
+                if (val) {
+                    cV = `<span class="time-text fw-bold">${val}</span>`;
+                    if(horId) cV += `<div class="delete-ponto-btn" title="Excluir" onclick="event.stopPropagation(); confirmarExcluirPonto(${horId}, '${d.data_full}', '${val}')"><i class="bi bi-x"></i></div>`;
+                } else if (isFalta) {
+                    const bg = (tipo === 'Ent 1' || tipo === 'Ent 2') ? '#fb923c' : '#f87171'; // Laranja para entrada, vermelho saida
+                    cV = `<span class="badge" style="background-color: ${bg}; color: white; padding: 0.4rem 0.6rem; font-size: 0.75rem;">Falta</span>`;
+                } else {
+                    cV = `<span class="text-muted opacity-50 fw-bold">--:--</span>`;
+                }
+                
+                const clickCall = `abrirInclusaoPonto('${d.data_full||d.data_db}', '${tipo}', '${d.colaborador_id}', '${d.colaborador_nome}', '${d.pis||'-'}')`;
+                return mkTd(cV, 'py-3 border-light ponto-cell align-middle cursor-pointer text-primary').outerHTML.replace('<td>', `<td onclick="${clickCall}">`);
+            }
+
+            const faltaOuAtraso = d.horas_falta || d.horas_atraso || '';
+            const extraTot = d.extra_total || d.ext_0 || '';
+
+            sumNormais += t2m(d.total_normais);
+            sumNoturno += t2m(d.total_noturno);
+            sumFaltaAtraso += t2m(faltaOuAtraso);
+            sumExtra += t2m(extraTot);
+
+            tr.innerHTML = `
+                <td class="ps-4 text-start fw-semibold text-dark">${d.data || ''}</td>
+                <td class="text-start">${nomeEl}</td>
+                <td class="text-muted small">${d.pis || '1111111'}</td>
+                <td class="text-center">${alertHtml}</td>
+                <td class="small text-muted" style="line-height:1.2;">${d.previsto || '-'}</td>
+                ${mkHorario(d.ent1, d.ent1_id, 'Ent 1')}
+                ${mkHorario(d.sai1, d.sai1_id, 'Sai 1')}
+                ${mkHorario(d.ent2, d.ent2_id, 'Ent 2')}
+                ${mkHorario(d.sai2, d.sai2_id, 'Sai 2')}
+                <td class="fw-semibold text-secondary col-dyna" data-col-id="col_total_normais">${d.total_normais || ''}</td>
+                <td class="fw-semibold text-secondary col-dyna" data-col-id="col_total_noturno">${d.total_noturno || ''}</td>
+                <td class="fw-bold text-danger col-dyna" data-col-id="col_dia_falta">${d.dia_falta || ''}</td>
+                <td class="fw-bold text-danger col-dyna" data-col-id="col_falta_atraso">${faltaOuAtraso}</td>
+                <td class="fw-bold text-success col-dyna" data-col-id="col_abono">${d.abono || ''}</td>
+                <td class="fw-bold text-success col-dyna pe-4" data-col-id="col_extra">${extraTot}</td>
+            `;
+
+            tbody.appendChild(tr);
         });
 
-        // Inicializa tooltips Bootstrap nos ícones de alerta
-        tbody.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
-            new bootstrap.Tooltip(el, { trigger: 'hover' });
-        });
-
+        // Tfoot content
+        tfoot.innerHTML = `
+            <tr>
+                <td colspan="5" class="py-3 text-center pe-4 text-dark fs-6 fw-bold">Total</td>
+                <td class="col-horario"></td>
+                <td class="col-horario"></td>
+                <td class="col-horario"></td>
+                <td class="col-horario"></td>
+                <td class="col-dyna fw-bold text-dark" data-col-id="col_total_normais">${m2t(sumNormais)}</td>
+                <td class="col-dyna fw-bold text-dark" data-col-id="col_total_noturno">${m2t(sumNoturno)}</td>
+                <td class="col-dyna" data-col-id="col_dia_falta"></td>
+                <td class="col-dyna text-danger fw-bold" data-col-id="col_falta_atraso">${m2t(sumFaltaAtraso)}</td>
+                <td class="col-dyna" data-col-id="col_abono"></td>
+                <td class="col-dyna text-success pe-4 fw-bold" data-col-id="col_extra">${m2t(sumExtra)}</td>
+            </tr>
+        `;
         tfoot.style.display = 'table-footer-group';
+
+        tbody.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => new bootstrap.Tooltip(el, { trigger: 'hover' }));
+        
+        // Disparar o recálculo visual das colunas
+        document.querySelectorAll('.gatilho-col').forEach(chk => { chk.dispatchEvent(new Event('change')); });
     }
     
     function renderPills(idsIncon) {
         const container = document.getElementById('resultadoPills');
         container.innerHTML = '';
-        
         if (!idsIncon) {
             container.innerHTML = `<span class="badge bg-secondary opacity-75 fw-normal rounded-pill px-3">Todas Inconsistências</span>`;
             return;
         }
-        
-        const arr = idsIncon.split(',');
-        arr.forEach(incId => {
+        idsIncon.split(',').forEach(incId => {
             const config = globalInconsistencias.find(i => String(i.id) === String(incId));
             if(config) {
                 container.innerHTML += `<span class="badge bg-white border fw-semibold rounded-pill px-3 py-1 shadow-sm d-flex align-items-center gap-1" style="color: ${config.cor}; border-color: ${config.cor}44 !important; font-size: 0.75rem;">
@@ -457,6 +547,103 @@
                 </span>`;
             }
         });
+    }
+
+    // Modal Inclusões
+    window.abrirInclusaoPonto = function(dataObj, horarioFaltante, colId, colNome, colPis) {
+        document.getElementById('marc_colaborador_id').value = colId;
+        document.getElementById('marc_empregado').value = colNome;
+        document.getElementById('marc_pis').value = colPis; 
+        document.getElementById('marc_data').value = dataObj;
+        document.getElementById('marc_hora').value = '';
+        document.getElementById('marc_motivo').value = 'Inserção por edição analítica rápida';
+
+        const mapa = { 'Ent 1': 'entrada', 'Sai 1': 'saida_almoco', 'Ent 2': 'retorno_almoco', 'Sai 2': 'saida' };
+        document.getElementById('marc_tipo').value = mapa[horarioFaltante] || 'entrada';
+        
+        const modalEl = document.getElementById('modalIncluirMarcacao');
+        bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    }
+
+    document.getElementById('btnSalvarMarcacao')?.addEventListener('click', function() {
+        const data = {
+            colaborador_id: document.getElementById('marc_colaborador_id').value,
+            tipo: document.getElementById('marc_tipo').value,
+            data: document.getElementById('marc_data').value.split('/').reverse().join('-'), // Tratamento de ISO if needed
+            hora: document.getElementById('marc_hora').value,
+            observacao: document.getElementById('marc_motivo').value
+        };
+
+        if (!data.hora) { Swal.fire({icon:'error', title:'Atenção', text:'Informe o horário!'}); return; }
+
+        const btn = this; btn.disabled = true;
+
+        fetch('/api/ponto/ajustar/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+            body: JSON.stringify(data)
+        })
+        .then(r => r.json())
+        .then(res => {
+            btn.disabled = false;
+            if (res.sucesso) {
+                Swal.fire({icon:'success', title:'Salvo', timer:1500, showConfirmButton:false});
+                bootstrap.Modal.getInstance(document.getElementById('modalIncluirMarcacao')).hide();
+                buscarInconsistencias();
+            } else {
+                Swal.fire('Erro', res.erro || 'Erro ao salvar marcação.', 'error');
+            }
+        }).catch(err => { btn.disabled = false; console.error(err); });
+    });
+
+    window.confirmarExcluirPonto = function(id, data, hora) {
+        if (!id) return;
+        Swal.fire({
+            title: 'Excluir Marcação?',
+            text: `Excluir a batida de ${hora} no dia ${data}?`,
+            icon: 'warning',
+            input: 'text',
+            inputPlaceholder: 'Motivo da exclusão (obrigatório)',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonText: 'Cancelar',
+            confirmButtonText: 'Sim, excluir',
+            preConfirm: (motivo) => { if (!motivo) Swal.showValidationMessage('O motivo é obrigatório'); return motivo; }
+        }).then((result) => {
+            if (result.isConfirmed) excluirPonto(id, result.value);
+        });
+    };
+
+    window.excluirPonto = function(id, motivo) {
+        fetch('/api/rh/apuracao/excluir-ponto/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+            body: JSON.stringify({ ponto_id: id, motivo: motivo })
+        })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success) {
+                Swal.fire({icon:'success', title:'Batida Excluída', timer:1500, showConfirmButton:false});
+                buscarInconsistencias();
+            } else {
+                Swal.fire('Erro', res.error || 'Erro ao excluir.', 'error');
+            }
+        }).catch(err => console.error(err));
+    };
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
     }
 </script>
 {% endblock %}
