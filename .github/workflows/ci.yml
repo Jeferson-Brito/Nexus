@@ -1,0 +1,40 @@
+name: CI - Testes Automatizados
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Rodar Testes Django
+    runs-on: ubuntu-latest
+
+    env:
+      SECRET_KEY: "ci-test-secret-key-insecure"
+      DEBUG: "True"
+      DATABASE_URL: ""          # Vazio → usa SQLite local (definido em ci_settings.py)
+      REDIS_URL: ""             # Vazio → usa cache em memória
+      AWS_ACCESS_KEY_ID: ""     # Vazio → sem storage S3
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Instalar dependências
+        run: pip install -r requirements.txt
+
+      - name: Rodar testes
+        run: |
+          python manage.py test core.tests --settings=nexus.ci_settings -v 2
+
+      - name: Notificar resultado
+        if: failure()
+        run: echo "❌ Testes falharam! Deploy bloqueado."
