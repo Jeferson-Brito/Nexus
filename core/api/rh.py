@@ -1838,17 +1838,19 @@ def api_rh_apuracao_dados(request):
                     # Só conta se o primeiro intervalo trabalhado intersectar ou começar antes
                     entrada_ante_min = max(0, primeira_prev - primeira_real)
 
-            # 3. Marcações Ímpares / Pulou Almoço
-            # Detecta se há batidas faltando (número ímpar de batidas no dia)
-            # ou se pulou almoço (tem apenas 2 batidas mas horário previu 4)
+            # 3. Marcações Faltantes / Ímpares / Pulou Almoço
+            # Detecta se:
+            # - O número de batidas é ímpar (batida faltando).
+            # - Ou o número de batidas é menor que o esperado (ex: fez 2 mas previu 4).
             pulou_almoco = 0
+            expected_punches = len(p_intervals) * 2
+            
             if len(regs) % 2 != 0:
-                # Batida faltando (ímpar)
+                # Batida ímpar
                 pulou_almoco = 1
-            elif p_intervals and len(regs) == 2:
-                # Se o horário previsto tem mais de 1 intervalo (ex: manhã e tarde), e pessoa fez só 2 batidas
-                if len(p_intervals) > 1:
-                    pulou_almoco = 1
+            elif expected_punches > 0 and len(regs) < expected_punches:
+                # Fez menos batidas do que os intervalos previstos exigiriam (ex: devia ter 4, deu 2. Ou devia 4, deu 0)
+                pulou_almoco = 1
 
             # ─────────────────────────────────────────────────────────────
             #  FASE 3: ABSENTEÍSMO E ATRASOS
