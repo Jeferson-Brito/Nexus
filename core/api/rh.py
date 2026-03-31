@@ -1838,11 +1838,15 @@ def api_rh_apuracao_dados(request):
                     # Só conta se o primeiro intervalo trabalhado intersectar ou começar antes
                     entrada_ante_min = max(0, primeira_prev - primeira_real)
 
-            # 3. Pulou Almoço: 1 se tem 2 batidas mas deveria ter 4
-            # (Regra simplificada: dia_util=1 e refeicao_tipo requer intervalo)
+            # 3. Marcações Ímpares / Pulou Almoço
+            # Detecta se há batidas faltando (número ímpar de batidas no dia)
+            # ou se pulou almoço (tem apenas 2 batidas mas horário previu 4)
             pulou_almoco = 0
-            if p_intervals and len(regs) == 2:
-                # Se o horário previsto tem mais de 1 intervalo, subentende-se que há almoço
+            if len(regs) % 2 != 0:
+                # Batida faltando (ímpar)
+                pulou_almoco = 1
+            elif p_intervals and len(regs) == 2:
+                # Se o horário previsto tem mais de 1 intervalo (ex: manhã e tarde), e pessoa fez só 2 batidas
                 if len(p_intervals) > 1:
                     pulou_almoco = 1
 
