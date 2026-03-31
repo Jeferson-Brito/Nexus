@@ -1150,8 +1150,8 @@
                                 title="${dia.inconsistencia.nome}"></i>`;
             } else {
                 statusIcon = dia.status === 'OK' ? 
-                    '<i class="bi bi-check-circle fs-5 text-success" title="OK"></i>' : 
-                    '<i class="bi bi-x-circle fs-5 text-danger fw-bold" title="Inconsistencia"></i>';
+                    '<i class="bi bi-check-circle fs-5 text-success" title="OK" style="pointer-events: none;"></i>' : 
+                    '<i class="bi bi-x-circle fs-5 text-danger fw-bold" title="Inconsistencia" style="pointer-events: none;"></i>';
             }
             
             trHtml += `
@@ -1552,9 +1552,12 @@ function abrirMenuContextual(btn, colaboradorId, data) {
     _justCtxData  = data;
 
     const menu = document.getElementById('menuContextualDia');
+    if (!menu) return;
+
     const rect = btn.getBoundingClientRect();
-    menu.style.top  = (rect.bottom + window.scrollY + 4) + 'px';
-    menu.style.left = (rect.left + window.scrollX) + 'px';
+    // Como o menu é position: fixed, as coordenadas do getBoundingClientRect() já são relativas ao viewport.
+    menu.style.top  = (rect.bottom + 4) + 'px'; 
+    menu.style.left = (rect.left) + 'px';
     menu.style.display = 'block';
 }
 
