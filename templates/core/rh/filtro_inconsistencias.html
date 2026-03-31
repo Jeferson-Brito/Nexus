@@ -277,23 +277,29 @@
         try {
             const endpoint = `/api/rh/apuracao/inconsistencias/dados/?${query.toString()}`;
             const resp = await fetch(endpoint);
+
+            if (!resp.ok) {
+                const text = await resp.text();
+                throw new Error(`HTTP ${resp.status}: ${text.substring(0, 200)}`);
+            }
+
             const res = await resp.json();
-            
+
             if (res.success) {
-                renderLista(res.items, idsIncon);
+                renderLista(res.items || [], idsIncon);
             } else {
                 tbody.innerHTML = `<tr><td colspan="12" class="py-5 text-danger fw-bold"><i class="bi bi-x-circle me-2"></i>Erro: ${res.error || res.erro || 'Falha desconhecida'}</td></tr>`;
             }
         } catch (e) {
-            console.error(e);
-            tbody.innerHTML = '<tr><td colspan="12" class="py-5 text-danger fw-bold"><i class="bi bi-wifi-off me-2"></i>Erro de conexão com o servidor.</td></tr>';
+            console.error('[Inconsistências] Erro:', e);
+            tbody.innerHTML = `<tr><td colspan="12" class="py-5 text-danger fw-bold"><i class="bi bi-wifi-off me-2"></i>Erro: ${e.message || 'Falha desconhecida'}</td></tr>`;
         }
     }
 
     function renderLista(dias, idsIncon) {
         const tbody = document.getElementById('listaInconsistencias');
         const tfoot = document.getElementById('tfootTotal');
-        
+
         if (!dias || dias.length === 0) {
             tbody.innerHTML = `
                 <tr>
@@ -311,41 +317,101 @@
         renderPills(idsIncon);
 
         dias.forEach(d => {
-            const tr = document.createElement('tr');
-            
-            let statusIcon = '';
-            if (d.inconsistencia) {
-                statusIcon = `<span class="inconsistencia-tag" style="background-color: ${d.inconsistencia.cor}1a; color: ${d.inconsistencia.cor}; border: 1px solid ${d.inconsistencia.cor}33;">
-                    <i class="bi ${d.inconsistencia.icone}"></i> ${d.inconsistencia.nome}
-                </span>`;
-            }
+            try {
+                const tr = document.createElement('tr');
 
-            tr.innerHTML = `
-                <td class="ps-4 text-start fw-semibold text-dark">${d.data}</td>
-                <td class="text-start">
-                    <div class="fw-bold text-dark text-truncate" style="max-width: 200px;" title="${d.colaborador_nome}">${d.colaborador_nome}</div>
-                    <div class="text-muted extra-small">PIS: ${d.pis || '-'}</div>
-                </td>
-                <td>${statusIcon}</td>
-                <td class="small text-muted" style="line-height:1.2;">${d.previsto || '-'}</td>
-                <td class="fw-bold ${d.ent1 ? 'text-primary' : 'text-muted'}">${d.ent1 || '--:--'}</td>
-                <td class="fw-bold ${d.sai1 ? 'text-primary' : 'text-muted'}">${d.sai1 || '--:--'}</td>
-                <td class="fw-bold ${d.ent2 ? 'text-primary' : 'text-muted'}">${d.ent2 || '--:--'}</td>
-                <td class="fw-bold ${d.sai2 ? 'text-primary' : 'text-muted'}">${d.sai2 || '--:--'}</td>
-                
-                <td class="fw-semibold text-secondary">---</td>
-                <td class="fw-bold text-danger">${d.horas_atraso || '00:00'}</td>
-                <td class="fw-bold text-success">${d.extra_total || '00:00'}</td>
-                
-                <td class="pe-4">
-                    <a href="/rh/apuracao/?colaborador_id=${d.colaborador_id}&data=${d.data_db}" target="_blank" class="btn btn-sm btn-light border shadow-sm text-primary" title="Abrir Cartão p/ Edição">
-                        <i class="bi bi-pencil-square"></i> <span class="d-none d-xl-inline ms-1">Editar</span>
-                    </a>
-                </td>
-            `;
-            tbody.appendChild(tr);
+                // Célula: Dia
+                const tdDia = document.createElement('td');
+                tdDia.className = 'ps-4 text-start fw-semibold text-dark';
+                tdDia.textContent = d.data || '';
+
+                // Célula: Funcionário
+                const tdFunc = document.createElement('td');
+                tdFunc.className = 'text-start';
+                const divNome = document.createElement('div');
+                divNome.className = 'fw-bold text-dark text-truncate';
+                divNome.style.maxWidth = '200px';
+                divNome.title = d.colaborador_nome || '';
+                divNome.textContent = d.colaborador_nome || '';
+                const divPis = document.createElement('div');
+                divPis.className = 'text-muted extra-small';
+                divPis.textContent = 'PIS: ' + (d.pis || '-');
+                tdFunc.appendChild(divNome);
+                tdFunc.appendChild(divPis);
+
+                // Célula: Alerta (tag de inconsistência)
+                const tdAlert = document.createElement('td');
+                if (d.inconsistencia) {
+                    const cor = d.inconsistencia.cor || '#dc3545';
+                    const span = document.createElement('span');
+                    span.className = 'inconsistencia-tag';
+                    span.style.cssText = `background-color:${cor}1a;color:${cor};border:1px solid ${cor}33;`;
+                    const ico = document.createElement('i');
+                    ico.className = `bi ${d.inconsistencia.icone || 'bi-exclamation-circle'}`;
+                    span.appendChild(ico);
+                    span.append(' ' + (d.inconsistencia.nome || ''));
+                    tdAlert.appendChild(span);
+                }
+
+                // Célula: Previsto (pode conter <br>)
+                const tdPrev = document.createElement('td');
+                tdPrev.className = 'small text-muted';
+                tdPrev.style.lineHeight = '1.2';
+                tdPrev.innerHTML = d.previsto || '-';
+
+                // Células de horários
+                function mkHorario(val) {
+                    const td = document.createElement('td');
+                    td.className = 'fw-bold ' + (val ? 'text-primary' : 'text-muted');
+                    td.textContent = val || '--:--';
+                    return td;
+                }
+
+                // Tot Normais
+                const tdNorm = document.createElement('td');
+                tdNorm.className = 'fw-semibold text-secondary';
+                tdNorm.textContent = d.total_normais || '---';
+
+                // Atraso
+                const tdAtraso = document.createElement('td');
+                tdAtraso.className = 'fw-bold text-danger';
+                tdAtraso.textContent = d.horas_atraso || '00:00';
+
+                // Extras
+                const tdExtra = document.createElement('td');
+                tdExtra.className = 'fw-bold text-success';
+                tdExtra.textContent = d.extra_total || '00:00';
+
+                // Ação
+                const tdAcao = document.createElement('td');
+                tdAcao.className = 'pe-4';
+                const link = document.createElement('a');
+                link.href = `/rh/apuracao/?colaborador_id=${encodeURIComponent(d.colaborador_id || '')}&data=${encodeURIComponent(d.data_db || '')}`;
+                link.target = '_blank';
+                link.className = 'btn btn-sm btn-light border shadow-sm text-primary';
+                link.title = 'Abrir Cartão p/ Edição';
+                link.innerHTML = '<i class="bi bi-pencil-square"></i> <span class="d-none d-xl-inline ms-1">Editar</span>';
+                tdAcao.appendChild(link);
+
+                tr.appendChild(tdDia);
+                tr.appendChild(tdFunc);
+                tr.appendChild(tdAlert);
+                tr.appendChild(tdPrev);
+                tr.appendChild(mkHorario(d.ent1));
+                tr.appendChild(mkHorario(d.sai1));
+                tr.appendChild(mkHorario(d.ent2));
+                tr.appendChild(mkHorario(d.sai2));
+                tr.appendChild(tdNorm);
+                tr.appendChild(tdAtraso);
+                tr.appendChild(tdExtra);
+                tr.appendChild(tdAcao);
+
+                tbody.appendChild(tr);
+            } catch (rowErr) {
+                console.error('[Inconsistências] Erro ao renderizar linha:', rowErr, d);
+            }
         });
-        
+
         tfoot.style.display = 'table-footer-group';
     }
     
