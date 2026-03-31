@@ -1939,6 +1939,7 @@ def api_rh_apuracao_dados(request):
                 last_out_min -= 1440 
 
             dados_apuracao.append({
+                'colaborador_id': str(colaborador.id),
                 'data': current_date.strftime('%d/%m'),
                 'data_full': current_date.strftime('%d/%m/%Y'),
                 'data_db': current_date.strftime('%Y-%m-%d'),
