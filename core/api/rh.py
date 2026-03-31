@@ -2159,61 +2159,77 @@ def api_rh_filtro_inconsistencias_dados(request):
     Pesquisa inconsistências em um range de datas para N funcionários.
     Utiliza o motor do api_rh_apuracao_dados.
     """
-    empresa = request.GET.get('empresa')
-    departamento = request.GET.get('department')
-    centro_custo = request.GET.get('centro_custo')
-    cargo = request.GET.get('cargo')
-    colaborador_id = request.GET.get('colaborador_id', '')
-    pessoas = request.GET.get('pessoas', '')
-    inconsistencias_selecionadas = request.GET.get('tipos_inconsistencia', '')
+    try:
+        empresa = request.GET.get('empresa')
+        departamento = request.GET.get('department')
+        centro_custo = request.GET.get('centro_custo')
+        cargo = request.GET.get('cargo')
+        colaborador_id = request.GET.get('colaborador_id', '')
+        pessoas = request.GET.get('pessoas', '')
+        inconsistencias_selecionadas = request.GET.get('tipos_inconsistencia', '')
 
-    colaboradores = Colaborador.objects.filter(status='ativo').order_by('nome_completo')
-    
-    if empresa: colaboradores = colaboradores.filter(empresa_id=empresa)
-    if departamento: colaboradores = colaboradores.filter(department_id=departamento)
-    if centro_custo: colaboradores = colaboradores.filter(centro_custo_id=centro_custo)
-    if cargo: colaboradores = colaboradores.filter(cargo_id=cargo)
-    
-    if pessoas:
-        lista_ids = [int(x.strip()) for x in pessoas.split(',') if x.strip()]
-        if lista_ids:
-            colaboradores = colaboradores.filter(id__in=lista_ids)
-
-    tipos_busca = [int(x.strip()) for x in inconsistencias_selecionadas.split(',') if x.strip()]
-
-    from django.http import QueryDict
-    req_copy = request.GET.copy()
-    
-    resultados_finais = []
-    
-    import json
-    for colab in colaboradores:
-        req_copy['colaborador_id'] = colab.id
-        request.GET = req_copy
+        colaboradores = Colaborador.objects.filter(status='ativo').order_by('nome_completo')
         
-        # Chama a API de apuração original
-        resp = api_rh_apuracao_dados(request)
-        if resp.status_code == 200:
+        if empresa: colaboradores = colaboradores.filter(empresa_id=empresa)
+        if departamento: colaboradores = colaboradores.filter(department_id=departamento)
+        if centro_custo: colaboradores = colaboradores.filter(centro_custo_id=centro_custo)
+        if cargo: colaboradores = colaboradores.filter(cargo_id=cargo)
+        
+        # Filtro por colaborador específico (campo 'colaborador_id' do formulário)
+        if colaborador_id:
             try:
-                data = json.loads(resp.content)
-                dias = data.get('dias', [])
-                
-                for dia in dias:
-                    incon = dia.get('inconsistencia')
-                    if not incon: 
-                        continue # Dia sem inconsistencia nao interessa
-                    
-                    if not tipos_busca or incon.get('id') in tipos_busca:
-                        # Adicionamos metadados do funcionário pois a grid é misturada
-                        dia['colaborador_id'] = colab.id
-                        dia['colaborador_nome'] = colab.nome_completo
-                        dia['pis'] = colab.pis if colab.pis else ''
-                        resultados_finais.append(dia)
-            except Exception as e:
-                logger.error(f"Erro analisando {colab.nome_completo}: {str(e)}")
+                colaboradores = colaboradores.filter(id=int(colaborador_id))
+            except (ValueError, TypeError):
                 pass
+
+        # Filtro legado por lista de pessoas separadas por vírgula
+        if pessoas:
+            lista_ids = [int(x.strip()) for x in pessoas.split(',') if x.strip()]
+            if lista_ids:
+                colaboradores = colaboradores.filter(id__in=lista_ids)
+
+        tipos_busca = [int(x.strip()) for x in inconsistencias_selecionadas.split(',') if x.strip()]
+
+        req_copy = request.GET.copy()
+        original_get = request.GET
+        
+        resultados_finais = []
+        
+        import json
+        for colab in colaboradores:
+            try:
+                req_copy['colaborador_id'] = str(colab.id)
+                request.GET = req_copy
                 
-    return JsonResponse({'success': True, 'items': resultados_finais})
+                # Chama a API de apuração original
+                resp = api_rh_apuracao_dados(request)
+                if resp.status_code == 200:
+                    data = json.loads(resp.content)
+                    dias = data.get('dias', [])
+                    
+                    for dia in dias:
+                        incon = dia.get('inconsistencia')
+                        if not incon: 
+                            continue # Dia sem inconsistencia nao interessa
+                        
+                        if not tipos_busca or incon.get('id') in tipos_busca:
+                            # Adicionamos metadados do funcionário pois a grid é misturada
+                            dia['colaborador_id'] = colab.id
+                            dia['colaborador_nome'] = colab.nome_completo
+                            dia['pis'] = colab.pis if colab.pis else ''
+                            resultados_finais.append(dia)
+                else:
+                    logger.warning(f"api_rh_apuracao_dados retornou {resp.status_code} para {colab.nome_completo}")
+            except Exception as e:
+                logger.error(f"Erro analisando colaborador {colab.nome_completo}: {str(e)}")
+                continue
+            finally:
+                request.GET = original_get
+                
+        return JsonResponse({'success': True, 'items': resultados_finais})
+    except Exception as ex:
+        logger.error(f"Erro fatal em api_rh_filtro_inconsistencias_dados: {str(ex)}")
+        return JsonResponse({'success': False, 'error': str(ex)}, status=500)
 
 @login_required
 @require_http_methods(["GET"])
