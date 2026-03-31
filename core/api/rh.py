@@ -1845,12 +1845,15 @@ def api_rh_apuracao_dados(request):
             pulou_almoco = 0
             expected_punches = len(p_intervals) * 2
             
-            if len(regs) % 2 != 0:
-                # Batida ímpar
-                pulou_almoco = 1
-            elif expected_punches > 0 and len(regs) < expected_punches:
-                # Fez menos batidas do que os intervalos previstos exigiriam (ex: devia ter 4, deu 2. Ou devia 4, deu 0)
-                pulou_almoco = 1
+            # Só disparamos a inconsistência de "Marcação Incompleta" se houver pelo menos 1 registro.
+            # Se for 0 registros, isso se classifica como "Falta" e já será pego na Fase 3.
+            if len(regs) > 0:
+                if len(regs) % 2 != 0:
+                    # Batida ímpar
+                    pulou_almoco = 1
+                elif minutos_previstos > 0 and expected_punches > 0 and len(regs) < expected_punches:
+                    # Fez menos batidas do que os intervalos previstos exigiriam (ex: devia ter 4, deu 2)
+                    pulou_almoco = 1
 
             # ─────────────────────────────────────────────────────────────
             #  FASE 3: ABSENTEÍSMO E ATRASOS
