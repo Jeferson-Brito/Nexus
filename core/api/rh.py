@@ -2132,7 +2132,8 @@ def detectar_inconsistencias(dia_data, inconsistencias_config):
         if config.campo == 'atraso':
             valor_min = time_to_min(dia_data.get('horas_atraso', '00:00'))
         elif config.campo == 'falta':
-            disparar = (dia_data.get('status') == 'Inconsistência' or dia_data.get('dia_falta') == '08:00')
+            # Only trigger 'falta' if there is an actual absence identified by dia_falta == 1
+            disparar = (dia_data.get('dia_falta') == 1 or dia_data.get('horas_falta') != '00:00' and dia_data.get('horas_falta') != '')
         elif config.campo == 'extra_total':
             valor_min = time_to_min(dia_data.get('extra_total', '00:00'))
         elif config.campo == 'banco_pos':
@@ -2146,7 +2147,7 @@ def detectar_inconsistencias(dia_data, inconsistencias_config):
         elif config.campo == 'interjornada':
             valor_min = time_to_min(dia_data.get('interjornada', '00:00'))
         elif config.campo == 'marcacoes_impares':
-            disparar = dia_data.get('pulou_almoco', False)
+            disparar = bool(dia_data.get('pulou_almoco', 0))
             
         if not disparar and valor_min >= config.tolerancia:
             disparar = True
