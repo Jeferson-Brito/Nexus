@@ -44,27 +44,33 @@ class Command(BaseCommand):
             role = 'administrador' # Mudado para administrador conforme User.ROLE_CHOICES
             ativo = True
 
-            # Garantir unicidade do e-mail (evitar que filter().first() pegue o usuário errado)
-            conflicting_users = User.objects.filter(email__iexact=email).exclude(username=username)
-            if conflicting_users.exists():
-                self.stdout.write(self.style.WARNING(f'Limpando conflitos de e-mail para: {email}'))
-                for conflict in conflicting_users:
-                    # Mudar o email do conflitante em vez de apagar (mais seguro)
-                    conflict.email = f"conflict_{conflict.username}_{conflict.email}"
-                    conflict.save()
-
-            user, created = User.objects.update_or_create(
-                username=username,
-                defaults={
-                    'email': email,
-                    'first_name': first_name,
-                    'last_name': last_name,
-                    'role': role,
-                    'ativo': ativo,
-                    'is_staff': True,
-                    'is_superuser': True,
-                }
-            )
+            # Buscar primeiro pelo e-mail para evitar criar duplicatas ou renomear e-mails existentes
+            user = User.objects.filter(email__iexact=email).first()
+            
+            if user:
+                # Se o usuário já existe com este e-mail, apenas atualiza suas permissões e mantém o username original
+                user.first_name = first_name
+                user.last_name = last_name
+                user.role = role
+                user.ativo = ativo
+                user.is_staff = True
+                user.is_superuser = True
+                user.save()
+                created = False
+                username = user.username  # Atualiza a variável para exibir no log corretamente
+            else:
+                user, created = User.objects.update_or_create(
+                    username=username,
+                    defaults={
+                        'email': email,
+                        'first_name': first_name,
+                        'last_name': last_name,
+                        'role': role,
+                        'ativo': ativo,
+                        'is_staff': True,
+                        'is_superuser': True,
+                    }
+                )
             
             # Forçar a senha sempre que o comando rodar (para garantir acesso se as env vars mudarem)
             user.set_password(password)

@@ -1,230 +1,287 @@
 {% extends 'base.html' %}
 {% load l10n %}
+{% load user_tags %}
 
 {% block title %}Usuários - Nexus{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4" style="max-width: 1400px; margin: 0 auto;">
-<div class="page-header fade-in">
-    <div class="row align-items-center">
-        <div class="col-md-8">
-            <h1 class="page-title">
-                <i class="bi bi-people"></i> Gerenciar Usuários
-            </h1>
-            <p class="page-subtitle">Gerencie usuários do sistema</p>
-        </div>
-        <div class="col-md-4 text-md-end text-start mt-3 mt-md-0">
-            {% if user.is_administrador %}
-            <a href="{% url 'user_access_history' %}" class="btn btn-info text-white me-2">
-                <i class="bi bi-clock-history"></i> Histórico
-            </a>
-            {% endif %}
-            <a href="{% url 'user_create' %}" class="btn btn-primary">
-                <i class="bi bi-person-plus"></i> Novo Usuário
-            </a>
-        </div>
-    </div>
-</div>
+<style>
+    .users-container {
+        background-color: #ffffff;
+        border-radius: 8px;
+        padding: 32px;
+        margin: 24px auto;
+        max-width: 1400px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .page-title {
+        font-size: 24px;
+        font-weight: 400;
+        color: #1f2937;
+        margin-bottom: 24px;
+        font-family: inherit;
+    }
+    .search-input-group .form-control {
+        border-color: #e5e7eb;
+        border-right: none;
+        box-shadow: none;
+        font-size: 14px;
+        padding: 8px 16px;
+    }
+    .search-input-group .form-control::placeholder {
+        color: #9ca3af;
+    }
+    .search-input-group .btn-primary {
+        background-color: #3b82f6; 
+        border-color: #3b82f6;
+        font-size: 14px;
+        padding: 8px 16px;
+    }
+    .action-btn {
+        background-color: #3b82f6;
+        border-color: #3b82f6;
+        color: #ffffff;
+        font-size: 14px;
+        padding: 8px 16px;
+        border-radius: 4px;
+    }
+    .action-btn:hover, .action-btn:focus, .action-btn:active {
+        background-color: #2563eb !important;
+        border-color: #2563eb !important;
+        color: #ffffff !important;
+        box-shadow: none !important;
+    }
+    .filter-select {
+        border-color: #e5e7eb;
+        box-shadow: none;
+        color: #6b7280;
+        font-size: 14px;
+        padding: 8px 32px 8px 16px;
+        height: auto;
+    }
+    .divider {
+        height: 1px;
+        background-color: #e5e7eb;
+        margin: 24px 0;
+    }
+    .clean-table {
+        width: 100%;
+        margin-bottom: 0;
+    }
+    .clean-table th {
+        font-weight: 500;
+        color: #4b5563;
+        font-size: 13px;
+        border-bottom: none;
+        padding: 12px 16px;
+    }
+    .clean-table td {
+        vertical-align: middle;
+        padding: 16px;
+        border-bottom: none; 
+        color: #111827;
+        font-size: 13px;
+    }
+    .clean-table tbody tr {
+        border-bottom: 1px solid #f3f4f6;
+    }
+    .clean-table tbody tr:hover {
+        background-color: #f9fafb;
+    }
+    .options-btn {
+        color: #9ca3af;
+        background: none;
+        border: none;
+        padding: 4px;
+    }
+    .options-btn:hover {
+        color: #4b5563;
+    }
+    .dropdown-toggle-no-caret::after {
+        display: none;
+    }
+    .user-avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-right: 12px;
+    }
+    .user-initials {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background-color: #e5e7eb;
+        color: #4b5563;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 11px;
+        margin-right: 12px;
+    }
+    .text-true {
+        color: #111827;
+    }
+    .text-false {
+        color: #6b7280;
+    }
+</style>
 
-<div class="card mb-4 fade-in">
-    <div class="card-header">
-        <h5 class="mb-0">
-            <i class="bi bi-funnel"></i> Filtros de Busca
-        </h5>
-    </div>
-    <div class="card-body">
-        <form method="get" class="row g-3">
-            <div class="col-md-4">
-                <label class="form-label">
-                    <i class="bi bi-search"></i> Buscar
-                </label>
-                <input type="text" name="search" class="form-control" placeholder="Usuário, E-mail, Nome..."
-                    value="{{ request.GET.search }}">
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">
-                    <i class="bi bi-person-badge"></i> Perfil
-                </label>
-                <select name="role" class="form-control">
-                    <option value="">Todos os perfis</option>
-                    <option value="gestor" {% if request.GET.role == 'gestor' %}selected{% endif %}>Gestor</option>
-                    <option value="analista" {% if request.GET.role == 'analista' %}selected{% endif %}>Analista</option>
-                </select>
-            </div>
-            {% if request.user.is_administrador %}
-            <div class="col-md-3">
-                <label class="form-label">
-                    <i class="bi bi-diagram-3"></i> Departamento
-                </label>
-                <select name="department" class="form-control">
-                    <option value="">Todos os departamentos</option>
-                    {% for dept in departments %}
-                    {% localize off %}
-                    <option value="{{ dept.id }}" {% if request.GET.department == dept.id|stringformat:"i" %}selected{% endif %}>
-                        {{ dept.name }}
-                    </option>
-                    {% endlocalize %}
-                    {% endfor %}
-                </select>
-            </div>
-            {% endif %}
-            <div class="col-md-2">
-                <label class="form-label">
-                    <i class="bi bi-toggle-on"></i> Status
-                </label>
-                <select name="status" class="form-control">
-                    <option value="">Todos</option>
-                    <option value="ativo" {% if request.GET.status == 'ativo' %}selected{% endif %}>Ativo</option>
-                    <option value="inativo" {% if request.GET.status == 'inativo' %}selected{% endif %}>Inativo</option>
-                </select>
-            </div>
-            <div class="col-md-2 d-flex align-items-end gap-2">
-                <button type="submit" class="btn btn-primary flex-fill">
-                    <i class="bi bi-funnel-fill"></i> Filtrar
+<div class="users-container fade-in">
+    <h1 class="page-title">Usuários</h1>
+
+    <form method="get" class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+        <!-- Left: Search and Filters -->
+        <div class="d-flex flex-wrap gap-3 align-items-center flex-grow-1">
+            <div class="input-group search-input-group" style="width: 320px;">
+                <input type="text" name="search" class="form-control" placeholder="Pesquisar Usuários" value="{{ request.GET.search }}">
+                <button class="btn btn-primary" type="submit">
+                    <i class="bi bi-search me-1"></i> Pesquisar
                 </button>
-                {% if user.is_gestor or user.is_administrador %}
-                <div class="btn-group">
-                    <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown"
-                        aria-expanded="false" title="Exportar">
-                        <i class="bi bi-download"></i>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" href="{% url 'export_users_csv' %}">
-                                <i class="bi bi-filetype-csv"></i> Exportar CSV
-                            </a></li>
-                        <li><a class="dropdown-item" href="{% url 'export_users_xlsx' %}">
-                                <i class="bi bi-file-earmark-excel"></i> Exportar XLSX
-                            </a></li>
-                    </ul>
-                </div>
-                {% endif %}
             </div>
-        </form>
-    </div>
-</div>
+            
+            <select name="role" class="form-select filter-select" style="width: auto;" onchange="this.form.submit()">
+                <option value="">Todos os perfis</option>
+                <option value="gestor" {% if request.GET.role == 'gestor' %}selected{% endif %}>Gestor</option>
+                <option value="analista" {% if request.GET.role == 'analista' %}selected{% endif %}>Analista</option>
+            </select>
 
-<div class="card fade-in">
-    <div class="card-header">
-        <h5 class="mb-0">
-            <i class="bi bi-table"></i> Lista de Usuários
-            <span class="badge bg-light text-dark ms-2">{{ users.paginator.count }} total</span>
-        </h5>
-    </div>
-    <div class="card-body">
-        {% if users %}
-        <div class="table-responsive">
-            <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th style="width: 60px;"></th>
-                        <th>Nome</th>
-                        <th>E-mail</th>
-                        <th>Perfil</th>
-                        <th>Departamento</th>
-                        <th>Status</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% load user_tags %}
-                    {% for user_obj in users %}
-                    <tr>
-                        <td>
-                            {% if user_obj.profile_photo %}
-                            <img src="{{ user_obj.profile_photo.url }}"
-                                alt="{{ user_obj.get_full_name|default:user_obj.username }}" class="user-photo">
-                            {% else %}
-                            <div class="user-photo-placeholder">
-                                {{ user_obj|get_user_initials }}
-                            </div>
-                            {% endif %}
-                        </td>
-                        <td><strong>{{ user_obj.get_full_name|default:user_obj.username }}</strong></td>
-                        <td>{{ user_obj.email }}</td>
-                        <td>
-                            {% if user_obj.role == 'administrador' %}
-                            <span class="badge badge-admin">
-                                <i class="bi bi-shield-lock-fill"></i> {{ user_obj.get_role_display }}
-                            </span>
-                            {% elif user_obj.role == 'gestor' %}
-                            <span class="badge badge-gestor">
-                                <i class="bi bi-shield-check"></i> {{ user_obj.get_role_display }}
-                            </span>
-                            {% else %}
-                            <span class="badge badge-analista">
-                                <i class="bi bi-person"></i> {{ user_obj.get_role_display }}
-                            </span>
-                            {% endif %}
-                        </td>
-                        <td>{{ user_obj.department.name|default:"-" }}</td>
-                        <td>
-                            {% if user_obj.ativo %}
-                            <span class="badge bg-success">
-                                <i class="bi bi-check-circle"></i> Ativo
-                            </span>
-                            {% else %}
-                            <span class="badge bg-danger">
-                                <i class="bi bi-x-circle"></i> Inativo
-                            </span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            <div class="btn-group" role="group">
-                                <a href="{% url 'user_edit' user_obj.pk %}" class="btn btn-sm btn-secondary"
-                                    title="Editar">
-                                    <i class="bi bi-pencil"></i>
-                                </a>
-                                {% if user_obj != user %}
-                                <a href="{% url 'user_delete' user_obj.pk %}" class="btn btn-sm btn-danger"
-                                    title="Excluir">
-                                    <i class="bi bi-trash"></i>
-                                </a>
-                                {% endif %}
-                            </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+            {% if request.user.is_administrador %}
+            <select name="department" class="form-select filter-select" style="width: auto;" onchange="this.form.submit()">
+                <option value="">Departamentos</option>
+                {% for dept in departments %}
+                {% localize off %}
+                <option value="{{ dept.id }}" {% if request.GET.department == dept.id|stringformat:"i" %}selected{% endif %}>
+                    {{ dept.name }}
+                </option>
+                {% endlocalize %}
+                {% endfor %}
+            </select>
+            {% endif %}
+
+            <select name="status" class="form-select filter-select" style="width: auto;" onchange="this.form.submit()">
+                <option value="">Status</option>
+                <option value="ativo" {% if request.GET.status == 'ativo' %}selected{% endif %}>Ativo</option>
+                <option value="inativo" {% if request.GET.status == 'inativo' %}selected{% endif %}>Inativo</option>
+            </select>
         </div>
 
-        {% if users.has_other_pages %}
-        <nav aria-label="Navegação de páginas" class="mt-4">
-            <ul class="pagination justify-content-center">
-                {% if users.has_previous %}
-                <li class="page-item">
-                    <a class="page-link"
-                        href="?page={{ users.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.role %}&role={{ request.GET.role }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
-                        <i class="bi bi-chevron-left"></i> Anterior
-                    </a>
-                </li>
-                {% endif %}
-                <li class="page-item active">
-                    <span class="page-link">
-                        Página {{ users.number }} de {{ users.paginator.num_pages }}
-                    </span>
-                </li>
-                {% if users.has_next %}
-                <li class="page-item">
-                    <a class="page-link"
-                        href="?page={{ users.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.role %}&role={{ request.GET.role }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
-                        Próximo <i class="bi bi-chevron-right"></i>
-                    </a>
-                </li>
-                {% endif %}
-            </ul>
-        </nav>
-        {% endif %}
-        {% else %}
-        <div class="text-center py-5">
-            <i class="bi bi-people" style="font-size: 64px; color: #d1d5db;"></i>
-            <p class="text-muted mt-3 fs-5">Nenhum usuário encontrado</p>
-            <a href="{% url 'user_create' %}" class="btn btn-primary mt-3">
-                <i class="bi bi-person-plus"></i> Criar Primeiro Usuário
+        <!-- Right: Action Buttons -->
+        <div class="d-flex gap-3">
+            <a href="{% url 'user_create' %}" class="btn action-btn text-white d-flex align-items-center">
+                <i class="bi bi-person-plus me-2"></i> Novo Usuário
             </a>
+            
+            <div class="dropdown">
+                <button class="btn action-btn text-white d-flex align-items-center dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-person-gear me-2"></i> Gerenciar Múltiplos Usuários
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
+                    {% if user.is_gestor or user.is_administrador %}
+                    <li><h6 class="dropdown-header">Exportar Dados</h6></li>
+                    <li><a class="dropdown-item py-2" href="{% url 'export_users_csv' %}"><i class="bi bi-filetype-csv me-2 text-secondary"></i> CSV</a></li>
+                    <li><a class="dropdown-item py-2" href="{% url 'export_users_xlsx' %}"><i class="bi bi-file-earmark-excel me-2 text-secondary"></i> Excel (XLSX)</a></li>
+                    {% endif %}
+                    
+                    {% if user.is_administrador %}
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item py-2" href="{% url 'user_access_history' %}"><i class="bi bi-clock-history me-2 text-secondary"></i> Ver Histórico de Acessos</a></li>
+                    {% endif %}
+                </ul>
+            </div>
         </div>
-        {% endif %}
+    </form>
+
+    <div class="divider"></div>
+
+    <!-- Table -->
+    <div class="table-responsive">
+        <table class="table clean-table">
+            <thead>
+                <tr>
+                    <th>Usuário</th>
+                    <th>E-mail</th>
+                    <th>Perfil</th>
+                    <th>Departamento</th>
+                    <th>Status</th>
+                    <th class="text-end"></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user_obj in users %}
+                <tr>
+                    <td class="d-flex align-items-center">
+                        {% if user_obj.profile_photo %}
+                        <img src="{{ user_obj.profile_photo.url }}" alt="{{ user_obj.username }}" class="user-avatar">
+                        {% else %}
+                        <div class="user-initials">{{ user_obj|get_user_initials }}</div>
+                        {% endif %}
+                        {{ user_obj.get_full_name|default:user_obj.username }}
+                    </td>
+                    <td>{{ user_obj.email }}</td>
+                    <td class="{% if user_obj.role == 'administrador' %}text-true{% else %}text-false{% endif %}">
+                        {{ user_obj.get_role_display }}
+                    </td>
+                    <td>{{ user_obj.department.name|default:"-" }}</td>
+                    <td class="{% if user_obj.ativo %}text-true{% else %}text-false{% endif %}">
+                        {{ user_obj.ativo|yesno:"Ativo,Inativo" }}
+                    </td>
+                    <td class="text-end">
+                        <div class="dropdown">
+                            <button class="options-btn dropdown-toggle-no-caret" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Opções">
+                                <i class="bi bi-sliders"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
+                                <li><a class="dropdown-item py-2" href="{% url 'user_edit' user_obj.pk %}"><i class="bi bi-pencil me-2 text-secondary"></i> Editar</a></li>
+                                {% if user_obj != user %}
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item py-2 text-danger" href="{% url 'user_delete' user_obj.pk %}"><i class="bi bi-trash me-2"></i> Excluir</a></li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center py-5">
+                        <i class="bi bi-people" style="font-size: 48px; color: #e5e7eb;"></i>
+                        <p class="text-muted mt-3">Nenhum usuário encontrado</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
-</div>
+    
+    <!-- Pagination -->
+    {% if users.has_other_pages %}
+    <div class="d-flex justify-content-end mt-4">
+        <ul class="pagination pagination-sm mb-0">
+            {% if users.has_previous %}
+            <li class="page-item">
+                <a class="page-link text-secondary" style="border-color: #e5e7eb;" href="?page={{ users.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.role %}&role={{ request.GET.role }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
+                    Anterior
+                </a>
+            </li>
+            {% endif %}
+            
+            <li class="page-item active">
+                <span class="page-link" style="background-color: #3b82f6; border-color: #3b82f6;">
+                    {{ users.number }}
+                </span>
+            </li>
+            
+            {% if users.has_next %}
+            <li class="page-item">
+                <a class="page-link text-secondary" style="border-color: #e5e7eb;" href="?page={{ users.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.role %}&role={{ request.GET.role }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
+                     Próximo
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </div>
+    {% endif %}
+
 </div>
 {% endblock %}
