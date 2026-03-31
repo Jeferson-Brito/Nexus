@@ -1083,7 +1083,7 @@
 
     function renderTabelaApuracao(dias) {
         const apenasInconsistencias = document.getElementById('filtro_inconsistencias')?.checked;
-        const diasFiltrados = apenasInconsistencias ? dias.filter(d => d.status !== 'OK') : dias;
+        const diasFiltrados = apenasInconsistencias ? dias.filter(d => d.status !== 'OK' || d.inconsistencia) : dias;
 
         let thead = `
             <th class="py-3 text-start fw-semibold border-bottom-0" style="color: #6c757d;">Dia</th>
