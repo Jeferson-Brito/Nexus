@@ -2125,6 +2125,8 @@ def detectar_inconsistencias(dia_data, inconsistencias_config):
     """
     Analisa um dia de apuração e retorna a inconsistência de maior prioridade detectada.
     """
+    disparadas = []
+    
     for config in inconsistencias_config:
         valor_min = 0
         disparar = False
@@ -2153,14 +2155,33 @@ def detectar_inconsistencias(dia_data, inconsistencias_config):
             disparar = True
             
         if disparar:
-            return {
-                'id': config.id,
-                'nome': config.nome,
-                'icone': config.icone,
-                'cor': config.cor,
-                'prioridade': config.prioridade
-            }
-    return None
+            disparadas.append(config)
+            
+    if not disparadas:
+        return None
+        
+    # Desempate de severidade estrutural para itens de mesma prioridade
+    severity = {
+        'marcacoes_impares': 1,
+        'falta': 2,
+        'banco_neg': 3,
+        'atraso': 4,
+        'interjornada': 5,
+        'intervalo_curto': 6,
+        'banco_pos': 7,
+        'extra_total': 8
+    }
+    
+    disparadas.sort(key=lambda c: (c.prioridade, severity.get(c.campo, 99)))
+    
+    best = disparadas[0]
+    return {
+        'id': best.id,
+        'nome': best.nome,
+        'icone': best.icone,
+        'cor': best.cor,
+        'prioridade': best.prioridade
+    }
 
 @login_required
 @require_http_methods(["GET"])
