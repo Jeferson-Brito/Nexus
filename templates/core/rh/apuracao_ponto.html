@@ -120,6 +120,61 @@
     .extra-small { font-size: 0.65rem; }
     .transition-all { transition: all 0.2s ease-in-out; }
     .cursor-pointer { cursor: pointer; }
+
+    /* Popover Menu Contextual */
+    .popover-menu {
+        animation: fadeInScale 0.2s ease-out;
+        transform-origin: top left;
+        border: 1px solid #e2e8f0 !important;
+        filter: drop-shadow(0 10px 15px rgba(0,0,0,0.1));
+    }
+    @keyframes fadeInScale {
+        from { opacity: 0; transform: scale(0.95) translateY(-10px); }
+        to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .popover-arrow {
+        position: absolute;
+        top: -8px;
+        left: 20px;
+        width: 16px;
+        height: 16px;
+        background: white;
+        transform: rotate(45deg);
+        border-top: 1px solid #e2e8f0;
+        border-left: 1px solid #e2e8f0;
+        z-index: -1;
+    }
+    .menu-ctx-link {
+        display: flex;
+        align-items: center;
+        padding: 8px 12px;
+        border-radius: 6px;
+        color: #475569;
+        text-decoration: none;
+        font-size: 0.85rem;
+        transition: all 0.2s;
+    }
+    .menu-ctx-link:hover:not(.disabled) {
+        background-color: #f1f5f9;
+        color: #2563eb;
+    }
+    .menu-ctx-link.active {
+        color: #2563eb;
+        font-weight: 600;
+    }
+    .menu-ctx-link.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    .form-switch-premium .form-check-input {
+        width: 2.5em;
+        height: 1.25em;
+        cursor: pointer;
+    }
+    .form-switch-premium .form-check-label {
+        cursor: pointer;
+        user-select: none;
+    }
 </style>
 
 <div class="container-fluid py-4" style="background-color: #f8f9fa; min-height: 100vh;">
@@ -1150,8 +1205,8 @@
                                 title="${dia.inconsistencia.nome}"></i>`;
             } else {
                 statusIcon = dia.status === 'OK' ? 
-                    '<i class="bi bi-check-circle fs-5 text-success" title="OK" style="pointer-events: none;"></i>' : 
-                    '<i class="bi bi-x-circle fs-5 text-danger fw-bold" title="Inconsistencia" style="pointer-events: none;"></i>';
+                    '<i class="bi bi-check-circle fs-5 text-success" title="OK"></i>' : 
+                    '<i class="bi bi-x-circle fs-5 text-danger fw-bold" title="Inconsistencia"></i>';
             }
             
             trHtml += `
@@ -1411,35 +1466,68 @@
 </script>
 
 <!-- ══════════════════════════════════════════════════════
-     MENU CONTEXTUAL (AJUSTES DO DIA) - IMAGEM 4
+     MENU CONTEXTUAL (AJUSTES DO DIA) - IMAGEM 4 (POP-OVER)
      ══════════════════════════════════════════════════════ -->
-<div id="menuContextualDia" class="shadow border bg-white rounded-3"
-     style="position:fixed; z-index:9999; display:none; min-width:240px; padding:8px 0;">
-    <div class="px-3 py-2 border-bottom mb-1">
-        <div class="fw-bold small text-muted text-uppercase" style="letter-spacing:.5px;">Ajustes</div>
+<div id="menuContextualDia" class="popover-menu shadow-lg border-0 bg-white rounded-3"
+     style="position:fixed; z-index:9999; display:none; min-width:480px; padding:0; overflow: visible;">
+    
+    <!-- Seta do Popover (Pointer) -->
+    <div class="popover-arrow"></div>
+
+    <div class="p-4">
+        <div class="row g-4">
+            <!-- Coluna 1: AJUSTES -->
+            <div class="col-6 border-end pe-4">
+                <h6 class="text-uppercase fw-bold text-primary mb-3" style="font-size: 0.7rem; letter-spacing: 0.05rem;">Ajustes</h6>
+                <div class="d-flex flex-column gap-1">
+                    <a href="#" class="menu-ctx-link active" onclick="abrirModalJustificativa(); return false;">
+                        <i class="bi bi-calendar-check me-2"></i> Justificativas
+                    </a>
+                    <a href="#" class="menu-ctx-link disabled" title="Em breve">
+                        <i class="bi bi-clock-history me-2"></i> Marcação automática
+                    </a>
+                    <a href="#" class="menu-ctx-link disabled" title="Em breve">
+                        <i class="bi bi-calendar-event me-2"></i> Ajuste Banco
+                    </a>
+                    <a href="#" class="menu-ctx-link disabled" title="Em breve">
+                        <i class="bi bi-calendar-x me-2"></i> Zerar BH
+                    </a>
+                    <a href="#" class="menu-ctx-link disabled" title="Em breve">
+                        <i class="bi bi-calendar-plus me-2"></i> Banco
+                    </a>
+                    <a href="#" class="menu-ctx-link disabled" title="Em breve">
+                        <i class="bi bi-calendar-date me-2"></i> Feriado
+                    </a>
+                    <a href="#" class="menu-ctx-link disabled" title="Em breve">
+                        <i class="bi bi-calendar-minus me-2"></i> Não Banco
+                    </a>
+                </div>
+            </div>
+
+            <!-- Coluna 2: HABILITAR/DESABILITAR -->
+            <div class="col-6 ps-4">
+                <h6 class="text-uppercase fw-bold text-primary mb-3" style="font-size: 0.7rem; letter-spacing: 0.05rem;">Habilitar / Desabilitar</h6>
+                <div class="d-flex flex-column gap-2">
+                    <div class="form-check form-switch-premium">
+                        <input class="form-check-input" type="checkbox" id="ctx_is_compensado">
+                        <label class="form-check-label small ms-2" for="ctx_is_compensado">Compensação diária</label>
+                    </div>
+                    <div class="form-check form-switch-premium">
+                        <input class="form-check-input" type="checkbox" id="ctx_is_almoco_livre">
+                        <label class="form-check-label small ms-2" for="ctx_is_almoco_livre">Almoço livre</label>
+                    </div>
+                    <div class="form-check form-switch-premium">
+                        <input class="form-check-input" type="checkbox" id="ctx_is_folga">
+                        <label class="form-check-label small ms-2" for="ctx_is_folga">Folga</label>
+                    </div>
+                    <div class="form-check form-switch-premium">
+                        <input class="form-check-input" type="checkbox" id="ctx_is_neutro">
+                        <label class="form-check-label small ms-2" for="ctx_is_neutro">Neutro</label>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-    <a href="#" class="d-flex align-items-center gap-2 px-3 py-2 text-decoration-none text-dark small menu-ctx-item"
-       onclick="abrirModalJustificativa(); return false;">
-        <i class="bi bi-journal-check text-primary"></i> Justificativas
-    </a>
-    <a href="#" class="d-flex align-items-center gap-2 px-3 py-2 text-decoration-none text-dark small menu-ctx-item disabled opacity-50" title="Em breve">
-        <i class="bi bi-clock-history text-secondary"></i> Marcação Automática
-    </a>
-    <a href="#" class="d-flex align-items-center gap-2 px-3 py-2 text-decoration-none text-dark small menu-ctx-item disabled opacity-50" title="Em breve">
-        <i class="bi bi-bank2 text-secondary"></i> Ajuste Banco
-    </a>
-    <div class="px-3 py-2 border-top border-bottom my-1">
-        <div class="fw-bold small text-muted text-uppercase" style="letter-spacing:.5px;">Habilitar/Desabilitar</div>
-    </div>
-    <a href="#" class="d-flex align-items-center gap-2 px-3 py-2 text-decoration-none text-dark small menu-ctx-item disabled opacity-50" title="Em breve">
-        <i class="bi bi-square text-secondary"></i> Compensação diária
-    </a>
-    <a href="#" class="d-flex align-items-center gap-2 px-3 py-2 text-decoration-none text-dark small menu-ctx-item disabled opacity-50" title="Em breve">
-        <i class="bi bi-square text-secondary"></i> Almoço livre
-    </a>
-    <a href="#" class="d-flex align-items-center gap-2 px-3 py-2 text-decoration-none text-dark small menu-ctx-item disabled opacity-50" title="Em breve">
-        <i class="bi bi-square text-secondary"></i> Folga
-    </a>
 </div>
 
 <!-- ══════════════════════════════════════════════════════
@@ -1554,11 +1642,42 @@ function abrirMenuContextual(btn, colaboradorId, data) {
     const menu = document.getElementById('menuContextualDia');
     if (!menu) return;
 
+    // Encontrar dados do dia para preencher switches
+    const dia = window.dadosApuracaoAtual?.find(d => d.data_db === data);
+    if (dia) {
+        const flags = ['is_compensado', 'is_almoco_livre', 'is_folga', 'is_neutro'];
+        flags.forEach(f => {
+            const el = document.getElementById('ctx_' + f);
+            if (el) {
+                el.checked = !!dia[f];
+                el.onchange = () => {
+                    window.salvarFlagDia(data, f, el.checked);
+                    // Opcionalmente atualizar objeto local
+                    dia[f] = el.checked;
+                };
+            }
+        });
+    }
+
     const rect = btn.getBoundingClientRect();
-    // Como o menu é position: fixed, as coordenadas do getBoundingClientRect() já são relativas ao viewport.
-    menu.style.top  = (rect.bottom + 4) + 'px'; 
-    menu.style.left = (rect.left) + 'px';
+    const menuWidth = 480; 
+    let left = rect.left - 20; 
+    
+    if (left + menuWidth > window.innerWidth) {
+        left = window.innerWidth - menuWidth - 20;
+    }
+    if (left < 10) left = 10;
+
+    menu.style.top  = (rect.bottom + 12) + 'px'; 
+    menu.style.left = left + 'px';
     menu.style.display = 'block';
+
+    const arrow = menu.querySelector('.popover-arrow');
+    if (arrow) {
+        const triggerCenter = rect.left + (rect.width / 2);
+        const arrowPos = triggerCenter - left - 8; 
+        arrow.style.left = Math.max(20, Math.min(menuWidth - 40, arrowPos)) + 'px';
+    }
 }
 
 async function carregarTiposJustificativa() {
