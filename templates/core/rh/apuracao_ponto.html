@@ -1157,8 +1157,8 @@
             trHtml += `
                 <tr ${rowClass}>
                     <td class="text-start text-dark py-3 border-light">${dia.data} <span class="text-muted ms-1 small">${dia.dia_semana}</span></td>
-                    <td class="border-light cursor-pointer" onclick="abrirMenuContextual(this, '${dia.colaborador_id}', '${dia.data_db}')">
-                        ${statusIcon} <i class="bi bi-chevron-down text-muted small ms-1"></i>
+                    <td class="border-light cursor-pointer" onclick="event.stopPropagation(); abrirMenuContextual(this, '${dia.colaborador_id}', '${dia.data_db}')">
+                        ${statusIcon} <i class="bi bi-chevron-down text-muted small ms-1" style="pointer-events: none;"></i>
                     </td>
                     <td class="text-muted py-2 small border-light" style="font-size: 0.75rem; cursor: pointer;" ${dia.horario_id ? `onclick="window.open('/rh/horarios/${dia.horario_id}/', '_blank')"` : ''}>${dia.previsto}</td>
                     <td class="py-3 border-light ponto-cell" style="cursor: pointer; color: #5b62d8;" onclick="abrirInclusaoPonto('${dia.data_full}', 'Ent 1')">
@@ -1539,7 +1539,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Fechar menu contextual ao clicar fora
     document.addEventListener('click', (e) => {
         const menu = document.getElementById('menuContextualDia');
-        if (menu && !menu.contains(e.target)) menu.style.display = 'none';
+        if (menu && menu.style.display === 'block') {
+            if (!menu.contains(e.target)) {
+                menu.style.display = 'none';
+            }
+        }
     });
 });
 
@@ -1646,7 +1650,7 @@ async function salvarLancamentoJust() {
             _justModalInst.hide();
             Swal.fire({ icon: 'success', title: 'Justificativa lançada!', text: d.message, timer: 2200, showConfirmButton: false });
             // Recarregar a apuração se a função existir
-            if (typeof buscarApuracao === 'function') buscarApuracao();
+            if (typeof carregarApuracao === 'function') carregarApuracao();
         } else {
             Swal.fire('Erro', d.error || 'Erro ao salvar.', 'error');
         }
