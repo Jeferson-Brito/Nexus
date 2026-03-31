@@ -245,7 +245,9 @@
 </div>
 
 <script>
-const hoje = new Date().toISOString().split('T')[0];
+// Data local (toISOString retorna UTC e mostraria dia errado após 21h no Brasil)
+const _now = new Date();
+const hoje = `${_now.getFullYear()}-${String(_now.getMonth()+1).padStart(2,'0')}-${String(_now.getDate()).padStart(2,'0')}`;
 document.getElementById('filter-date').value = hoje;
 document.getElementById('ajuste-data').value = hoje;
 

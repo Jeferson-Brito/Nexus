@@ -193,11 +193,12 @@
         // Inicializa combos
         await Promise.all([carregarFiltros(), carregarTiposInconsistencias()]);
         
-        // Setup dates
+        // Setup dates — usa fuso local (toISOString retorna UTC e exibiria dia errado após 21h)
+        const localDateStr = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
         const date = new Date();
         const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
-        document.getElementById('f_inicio').value = firstDay.toISOString().split('T')[0];
-        document.getElementById('f_fim').value = date.toISOString().split('T')[0];
+        document.getElementById('f_inicio').value = localDateStr(firstDay);
+        document.getElementById('f_fim').value = localDateStr(date);
     });
 
     async function carregarFiltros() {

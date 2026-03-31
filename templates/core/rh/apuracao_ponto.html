@@ -716,8 +716,9 @@
         // Ultimo dia do mês
         let ultimoDia = new Date(dataBase.getFullYear(), dataBase.getMonth() + 1, 0);
 
-        inicioInput.value = primeiroDia.toISOString().split('T')[0];
-        fimInput.value = ultimoDia.toISOString().split('T')[0];
+    const localDateStr = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        inicioInput.value = localDateStr(primeiroDia);
+        fimInput.value = localDateStr(ultimoDia);
         
         carregarApuracao();
     };
