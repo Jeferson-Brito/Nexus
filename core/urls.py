@@ -352,6 +352,9 @@ urlpatterns = [
     path('api/rh/lancamento-justificativa/<int:pk>/delete/', api_rh.api_delete_lancamento_justificativa, name='api_delete_lancamento_justificativa'),
     path('api/rh/lancamento-justificativa/list/', api_rh.api_list_lancamentos_justificativa, name='api_list_lancamentos_justificativa'),
 
+    # Relatório de Inconsistências
+    path('rh/relatorios/inconsistencias/', views.rh_relatorio_inconsistencias_view, name='rh_relatorio_inconsistencias'),
+    path('api/rh/relatorio/inconsistencias/csv/', api_rh.api_relatorio_inconsistencias_csv, name='api_relatorio_inconsistencias_csv'),
 
     # Ponto Eletrônico - Views
     path('ponto/tablet/', views_ponto.ponto_kiosk, name='ponto_kiosk'),

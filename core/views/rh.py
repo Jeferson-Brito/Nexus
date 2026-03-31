@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from ..models import Colaborador, Department, Empresa, CentroCusto, Cargo, Holiday, Horario
+from ..models import Colaborador, Department, Empresa, CentroCusto, Cargo, Holiday, Horario, TipoInconsistencia
 
 @login_required
 def rh_colaboradores_view(request):
@@ -187,4 +187,22 @@ def rh_justificativas_view(request):
         messages.error(request, 'Acesso restrito para Gestores ou Departamento de RH.')
         return redirect('dashboard')
     return render(request, 'core/rh/cadastro_justificativas.html', {'page_title': 'Tipos de Justificativa'})
+
+
+@login_required
+def rh_relatorio_inconsistencias_view(request):
+    """Página de Relatório de Inconsistências (7.3.4 do manual RHID)"""
+    if not (request.user.is_gestor() or request.user.is_administrador() or getattr(request.user.department, 'name', '') == 'RH'):
+        messages.error(request, 'Acesso restrito para Gestores ou Departamento de RH.')
+        return redirect('dashboard')
+        
+    context = {
+        'page_title': 'Relatório de Inconsistências',
+        'empresas': Empresa.objects.all().order_by('nome_fantasia'),
+        'departamentos': Department.objects.all().order_by('name'),
+        'tipos_inconsistencia': TipoInconsistencia.objects.filter(ativo=True).order_by('prioridade'),
+        'colaboradores': Colaborador.objects.filter(status='ativo').order_by('nome_completo'),
+    }
+    return render(request, 'core/rh/relatorio_inconsistencias.html', context)
+
 

@@ -2528,3 +2528,122 @@ def api_list_lancamentos_justificativa(request):
         ]})
     except Exception as ex:
         return JsonResponse({'success': False, 'error': str(ex)}, status=500)
+
+
+# ─────────────────────────────────────────────
+#  RELATÓRIO DE INCONSISTÊNCIAS (CSV)
+# ─────────────────────────────────────────────
+
+@login_required
+def api_relatorio_inconsistencias_csv(request):
+    """
+    Exporta as inconsistências detectadas em formato CSV.
+    Baseado nos mesmos filtros da busca de inconsistências.
+    """
+    import csv
+    import json
+    from django.http import HttpResponse
+    from datetime import datetime
+    import logging
+
+    logger = logging.getLogger(__name__)
+
+    try:
+        # 1. Filtros (Reutilizando a lógica da API de dados)
+        empresa_id = request.GET.get('empresa')
+        dept_id = request.GET.get('department')
+        colab_id = request.GET.get('colaborador_id')
+        data_ini = request.GET.get('data_inicio')
+        data_fim = request.GET.get('data_fim')
+        tipos_incon_str = request.GET.get('tipos_inconsistencia', '')
+        
+        # Colunas selecionadas pelo usuário (CSV separado por vírgula no param 'columns')
+        columns_str = request.GET.get('columns', 'colaborador_nome,data,pis,inconsistencia_nome')
+        selected_columns = [c.strip() for c in columns_str.split(',') if c.strip()]
+
+        from core.models import Colaborador
+        colaboradores = Colaborador.objects.filter(status='ativo').order_by('nome_completo')
+        if empresa_id: colaboradores = colaboradores.filter(empresa_id=empresa_id)
+        if dept_id: colaboradores = colaboradores.filter(department_id=dept_id)
+        if colab_id: colaboradores = colaboradores.filter(id=colab_id)
+
+        tipos_busca = [int(x.strip()) for x in tipos_incon_str.split(',') if x.strip()]
+
+        # 2. Setup do Response CSV
+        filename = f"relatorio_inconsistencias_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        
+        # BOM for Excel UTF-8
+        response.write(u'\ufeff'.encode('utf8'))
+        
+        writer = csv.writer(response, delimiter=';')
+
+        # Map de headers amigáveis
+        header_map = {
+            'colaborador_nome': 'Funcionário',
+            'pis': 'PIS',
+            'data': 'Data',
+            'inconsistencia_nome': 'Inconsistência',
+            'ent1': 'Ent. 1', 'sai1': 'Saí. 1', 'ent2': 'Ent. 2', 'sai2': 'Saí. 2',
+            'horas_trabalhadas': 'Trab.',
+            'horas_falta': 'Falta',
+            'horas_atraso': 'Atraso',
+            'extra_total': 'Extra',
+            'total_diario': 'Total Dia'
+        }
+        
+        # Cabeçalho formatado
+        writer.writerow([header_map.get(c, c) for c in selected_columns])
+
+        # 3. Processamento
+        # Salvamos o estado original do GET pois vamos modificá-lo para cada chamada
+        original_get = request.GET
+        req_copy = request.GET.copy()
+
+        for colab in colaboradores:
+            try:
+                # Simulamos o request para cada colaborador usando a API de apuração existente
+                req_copy['colaborador_id'] = str(colab.id)
+                request.GET = req_copy
+                
+                # Importamos localmente para evitar circular dependency se houver
+                from core.api.rh import api_rh_apuracao_dados
+                
+                resp = api_rh_apuracao_dados(request)
+                if resp.status_code == 200:
+                    data_json = json.loads(resp.content)
+                    dias = data_json.get('dias', [])
+                    
+                    for dia in dias:
+                        incon = dia.get('inconsistencia')
+                        if not incon: 
+                            continue
+                        
+                        inc_id = incon.get('id')
+                        if not tipos_busca or inc_id in tipos_busca:
+                            row = []
+                            for col in selected_columns:
+                                val = ''
+                                if col == 'colaborador_nome': 
+                                    val = colab.nome_completo
+                                elif col == 'pis': 
+                                    val = colab.pis or ''
+                                elif col == 'inconsistencia_nome': 
+                                    val = incon.get('nome', '')
+                                elif col == 'data': 
+                                    val = dia.get('data', '')
+                                else: 
+                                    val = dia.get(col, '')
+                                row.append(val)
+                            writer.writerow(row)
+            except Exception as e:
+                logger.error(f"Erro processando colab {colab.id} no relatorio: {e}")
+                continue
+            finally:
+                request.GET = original_get
+
+        return response
+    except Exception as ex:
+        logger.error(f"Erro fatal gerando CSV de inconsistências: {ex}")
+        return HttpResponse(f"Erro ao gerar CSV: {str(ex)}", status=500)

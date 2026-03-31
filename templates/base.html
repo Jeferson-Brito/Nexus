@@ -370,10 +370,26 @@
 
             <div class="nav-group-title">Análise</div>
             <!-- Relatórios -->
-            <a href="#" class="nav-link disabled opacity-50" title="Em breve">
+            <a href="#relatoriosSubmenu"
+               class="nav-link dropdown-toggle-custom {% if 'rh_relatorio_inconsistencias' in request.resolver_match.url_name %}active{% endif %}"
+               data-bs-toggle="collapse"
+               aria-expanded="{% if 'rh_relatorio_inconsistencias' in request.resolver_match.url_name %}true{% else %}false{% endif %}"
+               aria-controls="relatoriosSubmenu">
                 <i class="bi bi-file-earmark-bar-graph"></i>
                 <span class="link-text">Relatórios</span>
+                <i class="bi bi-chevron-down ms-auto arrow-icon"></i>
             </a>
+            <div class="collapse nav-submenu-container {% if 'rh_relatorio_inconsistencias' in request.resolver_match.url_name %}show{% endif %}"
+                 id="relatoriosSubmenu">
+                <div class="nav-submenu">
+                    <a href="{% url 'rh_relatorio_inconsistencias' %}"
+                       class="nav-link sub-link {% if request.resolver_match.url_name == 'rh_relatorio_inconsistencias' %}active{% endif %}"
+                       title="Inconsistências">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <span class="link-text">Inconsistências</span>
+                    </a>
+                </div>
+            </div>
 
             <!-- Portaria 1510 -->
             <a href="#" class="nav-link disabled opacity-50" title="Em breve">

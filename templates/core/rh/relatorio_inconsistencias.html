@@ -1,0 +1,424 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Relatório de Inconsistências - Nexus{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --nexus-blue: #2563eb;
+        --nexus-blue-dark: #1e40af;
+        --nexus-bg: #f8fafc;
+        --nexus-border: #e2e8f0;
+    }
+
+    body { background-color: var(--nexus-bg); }
+
+    .report-card {
+        background: #fff;
+        border-radius: 12px;
+        border: 1px solid var(--nexus-border);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        margin-bottom: 24px;
+        overflow: hidden;
+    }
+
+    .report-header {
+        background: linear-gradient(135deg, var(--nexus-blue) 0%, var(--nexus-blue-dark) 100%);
+        padding: 20px 24px;
+        color: white;
+    }
+
+    .filter-section {
+        padding: 24px;
+        background: white;
+        border-bottom: 1px solid var(--nexus-border);
+    }
+
+    .column-selector {
+        padding: 16px 24px;
+        background: #f1f5f9;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        border-bottom: 1px solid var(--nexus-border);
+    }
+
+    .form-check-input:checked {
+        background-color: var(--nexus-blue);
+        border-color: var(--nexus-blue);
+    }
+
+    .btn-premium {
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-search { background: var(--nexus-blue); color: white; border: none; }
+    .btn-search:hover { background: var(--nexus-blue-dark); transform: translateY(-1px); }
+    
+    .btn-export { background: #10b981; color: white; border: none; }
+    .btn-export:hover { background: #059669; transform: translateY(-1px); }
+
+    .btn-print { background: #64748b; color: white; border: none; }
+    .btn-print:hover { background: #475569; transform: translateY(-1px); }
+
+    .table-report {
+        width: 100%;
+        margin-bottom: 0;
+    }
+
+    .table-report thead th {
+        background: #f8fafc;
+        color: #64748b;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding: 12px 16px;
+        border-bottom: 2px solid var(--nexus-border);
+    }
+
+    .table-report tbody td {
+        padding: 12px 16px;
+        font-size: 0.875rem;
+        color: #334155;
+        border-bottom: 1px solid #f1f5f9;
+        vertical-align: middle;
+    }
+
+    .inconsistency-tag {
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    /* Print Styles */
+    @media print {
+        .sidebar, .header, .filter-section, .column-selector, .action-bar, .no-print {
+            display: none !important;
+        }
+        .main-content { margin-left: 0 !important; padding: 0 !important; }
+        .report-card { border: none; box-shadow: none; }
+        .report-header { background: white !important; color: black !important; padding: 0 0 20px 0; }
+        .report-header h4 { font-size: 24pt; }
+        .table-report { width: 100% !important; border-collapse: collapse; }
+        .table-report thead th { border-bottom: 2pt solid black !important; color: black !important; }
+        .table-report td { border-bottom: 1pt solid #ccc !important; }
+        body { background: white !important; }
+    }
+
+    .preview-container {
+        min-height: 300px;
+        position: relative;
+    }
+
+    .loader-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(255,255,255,0.7);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+        backdrop-filter: blur(2px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="report-card">
+        <!-- Header -->
+        <div class="report-header d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="mb-0 fw-bold"><i class="bi bi-file-earmark-bar-graph me-2"></i>Relatório de Inconsistências</h4>
+                <p class="opacity-75 small mb-0 mt-1">Gere relatórios detalhados de ocorrências e divergências de ponto.</p>
+            </div>
+            <div class="no-print">
+                <span class="badge bg-white text-primary px-3 py-2 rounded-pill fw-bold">Manual 7.3.4</span>
+            </div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="filter-section no-print">
+            <form id="formRelatorio">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold text-muted">Período</label>
+                        <div class="input-group input-group-sm">
+                            <input type="date" id="data_inicio" class="form-control" value="{{ first_day_month|default:'' }}">
+                            <span class="input-group-text">até</span>
+                            <input type="date" id="data_fim" class="form-control" value="{{ last_day_month|default:'' }}">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold text-muted">Empresa</label>
+                        <select id="sel_empresa" class="form-select form-select-sm">
+                            <option value="">Todas as Empresas</option>
+                            {% for e in empresas %}
+                            <option value="{{ e.id }}">{{ e.nome_fantasia }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold text-muted">Departamento</label>
+                        <select id="sel_dept" class="form-select form-select-sm">
+                            <option value="">Todos os Departamentos</option>
+                            {% for d in departamentos %}
+                            <option value="{{ d.id }}">{{ d.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold text-muted">Funcionário Específico (Opcional)</label>
+                        <select id="sel_colab" class="form-select form-select-sm">
+                            <option value="">Todos os Funcionários</option>
+                            {% for c in colaboradores %}
+                            <option value="{{ c.id }}">{{ c.nome_completo }} ({{ c.matricula|default:'' }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold text-muted">Tipos de Inconsistência</label>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary w-100 text-start d-flex justify-content-between align-items-center" type="button" data-bs-toggle="dropdown" aria-expanded="false" id="btnInconTypes">
+                                Todos os Tipos
+                                <i class="bi bi-chevron-down"></i>
+                            </button>
+                            <div class="dropdown-menu p-3 w-100 shadow border-0" style="max-height: 250px; overflow-y: auto;">
+                                <div class="form-check mb-2 border-bottom pb-2">
+                                    <input class="form-check-input" type="checkbox" value="" id="checkAllIncon" checked>
+                                    <label class="form-check-label fw-bold" for="checkAllIncon">Selecionar Todos</label>
+                                </div>
+                                {% for t in tipos_inconsistencia %}
+                                <div class="form-check">
+                                    <input class="form-check-input check-incon" type="checkbox" value="{{ t.id }}" id="incon_{{ t.id }}" checked>
+                                    <label class="form-check-label" for="incon_{{ t.id }}">{{ t.nome }}</label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Seleção de Colunas -->
+        <div class="column-selector no-print">
+            <span class="small fw-bold text-muted mt-1 me-2"><i class="bi bi-layout-three-columns me-1"></i>Colunas:</span>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input col-toggle" type="checkbox" id="col_nome" value="colaborador_nome" checked disabled>
+                <label class="form-check-label small" for="col_nome">Funcionário</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input col-toggle" type="checkbox" id="col_data" value="data" checked>
+                <label class="form-check-label small" for="col_data">Data</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input col-toggle" type="checkbox" id="col_batidas" value="batidas" checked>
+                <label class="form-check-label small" for="col_batidas">Marcações</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input col-toggle" type="checkbox" id="col_incon" value="inconsistencia_nome" checked>
+                <label class="form-check-label small" for="col_incon">Ocorrência</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input col-toggle" type="checkbox" id="col_horas" value="horas" checked>
+                <label class="form-check-label small" for="col_horas">Horas (Faltas/Atrasos)</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input col-toggle" type="checkbox" id="col_total" value="total_diario">
+                <label class="form-check-label small" for="col_total">Total Diário</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input col-toggle" type="checkbox" id="col_pis" value="pis">
+                <label class="form-check-label small" for="col_pis">PIS/CPF</label>
+            </div>
+        </div>
+
+        <!-- Ações -->
+        <div class="px-4 py-3 bg-light action-bar d-flex justify-content-between align-items-center no-print">
+            <button type="button" class="btn btn-premium btn-search" onclick="gerarPreview()">
+                <i class="bi bi-play-fill"></i> Gerar Preview
+            </button>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-premium btn-print" onclick="window.print()">
+                    <i class="bi bi-printer"></i> Imprimir PDF
+                </button>
+                <button type="button" class="btn btn-premium btn-export" onclick="exportarCSV()">
+                    <i class="bi bi-file-earmark-spreadsheet"></i> Exportar CSV
+                </button>
+            </div>
+        </div>
+
+        <!-- Preview -->
+        <div class="preview-container">
+            <div class="loader-overlay" id="loader">
+                <div class="text-center">
+                    <div class="spinner-border text-primary mb-2" role="status"></div>
+                    <p class="mb-0 small fw-bold">Processando dados...</p>
+                </div>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table-report" id="tabelaPreview">
+                    <thead>
+                        <tr id="tableHeader">
+                            <th>Funcionário</th>
+                            <th>Data</th>
+                            <th>Marcações</th>
+                            <th>Ocorrência</th>
+                            <th>Horas</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <tr>
+                            <td colspan="5" class="text-center py-5 text-muted">
+                                <i class="bi bi-arrow-up-circle d-block fs-2 mb-2"></i>
+                                Preencha os filtros e clique em "Gerar Preview"
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Configura datas iniciais
+    const now = new Date();
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+    document.getElementById('data_inicio').value = firstDay;
+    document.getElementById('data_fim').value = lastDay;
+
+    // Handle check all inconsistências
+    document.getElementById('checkAllIncon').addEventListener('change', function() {
+        document.querySelectorAll('.check-incon').forEach(cb => cb.checked = this.checked);
+    });
+});
+
+function getSelectedInconsistencies() {
+    return Array.from(document.querySelectorAll('.check-incon:checked')).map(cb => cb.value).join(',');
+}
+
+function getSelectedColumns() {
+    // Retorna lista legível para o back e para o front
+    return Array.from(document.querySelectorAll('.col-toggle:checked')).map(cb => cb.value);
+}
+
+async function gerarPreview() {
+    const loader = document.getElementById('loader');
+    const tableBody = document.getElementById('tableBody');
+    const tableHeader = document.getElementById('tableHeader');
+    
+    loader.style.display = 'flex';
+    
+    const params = new URLSearchParams({
+        data_inicio: document.getElementById('data_inicio').value,
+        data_fim: document.getElementById('data_fim').value,
+        empresa: document.getElementById('sel_empresa').value,
+        department: document.getElementById('sel_dept').value,
+        colaborador_id: document.getElementById('sel_colab').value,
+        tipos_inconsistencia: getSelectedInconsistencies()
+    });
+
+    try {
+        const response = await fetch(`{% url "api_rh_filtro_inconsistencias_dados" %}?${params.toString()}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            renderTable(data.items);
+        } else {
+            Swal.fire('Erro', data.error || 'Erro ao carregar dados', 'error');
+        }
+    } catch (error) {
+        console.error(error);
+        Swal.fire('Erro', 'Falha na comunicação com o servidor', 'error');
+    } finally {
+        loader.style.display = 'none';
+    }
+}
+
+function renderTable(items) {
+    const tableHeader = document.getElementById('tableHeader');
+    const tableBody = document.getElementById('tableBody');
+    const selectedCols = getSelectedColumns();
+    
+    // Header Map
+    const headerMap = {
+        'colaborador_nome': 'Funcionário',
+        'pis': 'PIS/CPF',
+        'data': 'Data',
+        'inconsistencia_nome': 'Ocorrência',
+        'batidas': 'Marcações',
+        'horas': 'Horas (F/A)',
+        'total_diario': 'Total Dia'
+    };
+
+    // Render Header
+    tableHeader.innerHTML = selectedCols.map(col => `<th>${headerMap[col] || col}</th>`).join('');
+
+    if (items.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="${selectedCols.length}" class="text-center py-5">Nenhuma inconsistência encontrada no período.</td></tr>`;
+        return;
+    }
+
+    // Render Rows
+    tableBody.innerHTML = items.map(item => {
+        return `<tr>${selectedCols.map(col => {
+            if (col === 'colaborador_nome') return `<td><div class="fw-bold">${item.colaborador_nome}</div></td>`;
+            if (col === 'data') return `<td>${item.data.split('-').reverse().join('/')}</td>`;
+            if (col === 'batidas') {
+                const bts = [item.ent1, item.sai1, item.ent2, item.sai2].filter(x => x).join(' | ');
+                return `<td><span class="small font-monospace">${bts || '—'}</span></td>`;
+            }
+            if (col === 'inconsistencia_nome') {
+                const inc = item.inconsistencia || {};
+                return `<td><span class="inconsistency-tag" style="background: ${inc.cor}20; color: ${inc.cor}"><i class="bi ${inc.icone} me-1"></i>${inc.nome || 'N/A'}</span></td>`;
+            }
+            if (col === 'horas') {
+                const fa = item.horas_falta !== '00:00' ? `F: ${item.horas_falta}` : '';
+                const at = item.horas_atraso !== '00:00' ? `A: ${item.horas_atraso}` : '';
+                return `<td><div class="small">${fa} ${at}</div></td>`;
+            }
+            return `<td>${item[col] || '—'}</td>`;
+        }).join('')}</tr>`;
+    }).join('');
+}
+
+function exportarCSV() {
+    const cols = getSelectedColumns();
+    // No CSV, transformamos batidas e horas em colunas reais que o backend entende
+    let csvCols = [...cols];
+    const batIdx = csvCols.indexOf('batidas');
+    if (batIdx > -1) {
+        csvCols.splice(batIdx, 1, 'ent1', 'sai1', 'ent2', 'sai2');
+    }
+    const hrIdx = csvCols.indexOf('horas');
+    if (hrIdx > -1) {
+        csvCols.splice(hrIdx, 1, 'horas_falta', 'horas_atraso');
+    }
+
+    const params = new URLSearchParams({
+        data_inicio: document.getElementById('data_inicio').value,
+        data_fim: document.getElementById('data_fim').value,
+        empresa: document.getElementById('sel_empresa').value,
+        department: document.getElementById('sel_dept').value,
+        colaborador_id: document.getElementById('sel_colab').value,
+        tipos_inconsistencia: getSelectedInconsistencies(),
+        columns: csvCols.join(',')
+    });
+
+    window.location.href = `{% url "api_relatorio_inconsistencias_csv" %}?${params.toString()}`;
+}
+</script>
+{% endblock %}
