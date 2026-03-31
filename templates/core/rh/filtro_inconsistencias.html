@@ -22,6 +22,7 @@
         text-transform: uppercase;
         letter-spacing: 0.5px;
         border-bottom: 2px solid #e2e8f0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.06); /* separa visualmente ao scrollar */
     }
     .table tbody tr:hover {
         background-color: #f1f5f9;
@@ -30,15 +31,17 @@
         vertical-align: middle;
         font-size: 0.9rem;
     }
-    .inconsistencia-tag {
+    /* Ícone compacto de inconsistência */
+    .incon-icon {
         display: inline-flex;
         align-items: center;
-        gap: 0.35rem;
-        padding: 0.25rem 0.75rem;
-        border-radius: 9999px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        justify-content: center;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        font-size: 1rem;
+        cursor: default;
+        flex-shrink: 0;
     }
     
     /* Multiselect premium fake */
@@ -61,9 +64,22 @@
 </style>
 
 <div class="container-fluid py-4">
-    <!-- Título da Página (Igual Imagem 2) -->
-    <div class="d-flex align-items-center justify-content-between mb-4">
+    <!-- Título da Página -->
+    <div class="d-flex align-items-center justify-content-between mb-3">
         <h4 class="fw-bold mb-0 text-dark">Filtro de Inconsistências</h4>
+    </div>
+
+    <!-- Sobre esta página -->
+    <div class="alert alert-light border shadow-sm mb-4">
+        <div class="d-flex align-items-start gap-2">
+            <i class="bi bi-info-circle text-primary mt-1"></i>
+            <div class="small text-muted">
+                <strong class="text-dark d-block mb-1">Sobre esta página: Filtro de Inconsistências</strong>
+                Identifique e analise ocorrências no ponto dos funcionários em um período específico.
+                Use os filtros para segmentar por empresa, departamento, cargo, funcionário ou tipo de inconsistência.
+                Os resultados mostram apenas dias com alguma irregularidade — dias sem alertas não aparecem na lista.
+            </div>
+        </div>
     </div>
 
     <!-- Tela de Filtros (Card com Header Azul - Igual Imagem 2) -->
@@ -339,17 +355,20 @@
                 tdFunc.appendChild(divNome);
                 tdFunc.appendChild(divPis);
 
-                // Célula: Alerta (tag de inconsistência)
+                // Célula: Alerta — ícone compacto com tooltip
                 const tdAlert = document.createElement('td');
+                tdAlert.className = 'text-center';
                 if (d.inconsistencia) {
                     const cor = d.inconsistencia.cor || '#dc3545';
                     const span = document.createElement('span');
-                    span.className = 'inconsistencia-tag';
-                    span.style.cssText = `background-color:${cor}1a;color:${cor};border:1px solid ${cor}33;`;
+                    span.className = 'incon-icon';
+                    span.style.cssText = `background-color:${cor}1a; color:${cor};`;
+                    span.title = d.inconsistencia.nome || '';
+                    span.setAttribute('data-bs-toggle', 'tooltip');
+                    span.setAttribute('data-bs-placement', 'top');
                     const ico = document.createElement('i');
                     ico.className = `bi ${d.inconsistencia.icone || 'bi-exclamation-circle'}`;
                     span.appendChild(ico);
-                    span.append(' ' + (d.inconsistencia.nome || ''));
                     tdAlert.appendChild(span);
                 }
 
@@ -410,6 +429,11 @@
             } catch (rowErr) {
                 console.error('[Inconsistências] Erro ao renderizar linha:', rowErr, d);
             }
+        });
+
+        // Inicializa tooltips Bootstrap nos ícones de alerta
+        tbody.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
+            new bootstrap.Tooltip(el, { trigger: 'hover' });
         });
 
         tfoot.style.display = 'table-footer-group';
