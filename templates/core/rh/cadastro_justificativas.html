@@ -1,0 +1,496 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-4">
+
+    <!-- Alert Info -->
+    <div class="alert alert-light border shadow-sm mb-4">
+        <div class="d-flex align-items-start gap-2">
+            <i class="bi bi-info-circle text-primary mt-1"></i>
+            <div class="small text-muted">
+                <strong class="text-dark d-block mb-1">Sobre esta página: Tipos de Justificativa</strong>
+                Configure os tipos de justificativa utilizados pelos funcionários e pelo RH ao tratar ocorrências como faltas, atrasos e saídas antecipadas.
+                O comportamento de cada tipo (abonar dia, descontar DSR, etc.) é configurado individualmente.
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabela de Justificativas -->
+    <div id="listContainer" class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
+        <!-- Header -->
+        <div class="card-header border-0 d-flex align-items-center justify-content-between py-3 px-4"
+             style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
+            <div class="d-flex align-items-center gap-3">
+                <div style="background:rgba(255,255,255,0.15); width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center;">
+                    <i class="bi bi-journal-check text-white fs-5"></i>
+                </div>
+                <h5 class="fw-bold mb-0 text-white">Tipos de Justificativa</h5>
+            </div>
+            <button class="btn d-flex align-items-center gap-2" onclick="abrirModal()"
+               style="background:rgba(255,255,255,0.2); color:#fff; border:1.5px solid rgba(255,255,255,0.6); font-weight:600; border-radius:8px;">
+                <i class="bi bi-plus-lg"></i> Adicionar
+            </button>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="card-body border-bottom py-3 px-4">
+            <div class="d-flex flex-wrap align-items-center gap-3">
+                <div class="d-flex align-items-center gap-2 text-muted small">
+                    Mostrar
+                    <select id="perPageSelect" class="form-select form-select-sm" style="width: auto;" onchange="renderLista()">
+                        <option value="10">10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                    </select>
+                    registros
+                </div>
+                <div class="ms-auto d-flex align-items-center gap-2">
+                    <label class="text-muted small mb-0">Buscar:</label>
+                    <input type="text" id="searchInput" class="form-control form-control-sm"
+                           placeholder="Nome da justificativa..." style="width: 240px;" oninput="renderLista()">
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabela -->
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="px-4 py-3">Nome</th>
+                        <th class="py-3 text-center">Abrev.</th>
+                        <th class="py-3">Tipo</th>
+                        <th class="py-3 text-center">Abona Falta</th>
+                        <th class="py-3 text-center">Pede Texto</th>
+                        <th class="py-3 text-center">Pede CID</th>
+                        <th class="py-3 text-end pe-4">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="listaJustificativas">
+                    <tr>
+                        <td colspan="7" class="text-center py-5 text-muted">
+                            <div class="spinner-border spinner-border-sm me-2"></div> Carregando...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Footer: contagem + paginação -->
+        <div class="card-footer bg-white border-top d-flex align-items-center justify-content-between py-3 px-4">
+            <span class="text-muted small" id="paginacaoInfo">—</span>
+            <nav>
+                <ul class="pagination pagination-sm mb-0 gap-1" id="paginacaoControles"></ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     MODAL DE CADASTRO DE TIPO DE JUSTIFICATIVA
+     ══════════════════════════════════════════════════════ -->
+<div class="modal fade" id="modalJustificativa" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <!-- Header com Tabs -->
+            <div class="modal-header border-bottom d-flex align-items-center justify-content-between py-3 px-4"
+                 style="background: #f8fafd;">
+                <div>
+                    <h5 class="modal-title fw-bold mb-0" id="modalTitle">Nova Justificativa</h5>
+                    <div class="d-flex gap-3 mt-2">
+                        <span class="fw-semibold text-primary border-bottom border-primary pb-1 small"
+                              style="cursor:default; border-width:2px!important;">Informações Gerais</span>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body py-4 px-4">
+                <form id="formJustificativa">
+                    <input type="hidden" id="just_id">
+
+                    <div class="row g-4">
+                        <!-- Descrição -->
+                        <div class="col-md-5">
+                            <label class="form-label small fw-bold text-muted">Descrição <span class="text-danger">*</span></label>
+                            <input type="text" id="just_nome" class="form-control" placeholder="Descrição" required>
+                            <div class="invalid-feedback">Favor preencha corretamente o campo Descrição</div>
+                        </div>
+
+                        <!-- Abreviação -->
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold text-muted">Abreviação <span class="text-danger">*</span></label>
+                            <input type="text" id="just_abreviacao" class="form-control" placeholder="Abreviação" maxlength="10" required>
+                            <div class="invalid-feedback">Favor preencha corretamente o campo Abreviação</div>
+                        </div>
+
+                        <!-- Tipo -->
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-muted">Tipo</label>
+                            <select id="just_tipo" class="form-select" onchange="atualizarDescricaoTipo()">
+                                <option value="dia_inteiro">Justificar dia inteiro</option>
+                                <option value="periodo_especifico">Período Específico</option>
+                                <option value="abonar_horas">Abonar quantidade de horas</option>
+                                <option value="ajustar_horas">Ajustar quantidade de horas</option>
+                                <option value="relocar_extrafalta">Relocar extra/falta do dia</option>
+                                <option value="abonar_dsr">Abonar apenas DSR (não a ausência)</option>
+                            </select>
+                            <div id="just_tipo_desc" class="small text-muted mt-1 fst-italic"></div>
+                        </div>
+
+                        <!-- Separador -->
+                        <div class="col-12"><hr class="my-0"></div>
+
+                        <!-- DSR -->
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-muted d-block mb-2">DSR:</label>
+                            <div class="d-flex gap-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="just_dsr" id="dsr_nao" value="false" checked>
+                                    <label class="form-check-label small" for="dsr_nao">Não descontar DSR</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="just_dsr" id="dsr_sim" value="true">
+                                    <label class="form-check-label small" for="dsr_sim">Descontar DSR</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pedir texto -->
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-muted d-block mb-2">Pedir texto de motivo a cada lançamento:</label>
+                            <div class="d-flex gap-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="just_texto" id="texto_nao" value="false">
+                                    <label class="form-check-label small" for="texto_nao">Não pedir</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="just_texto" id="texto_sim" value="true" checked>
+                                    <label class="form-check-label small" for="texto_sim">Pedir texto</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Dia Falta -->
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-muted d-block mb-2">Dia falta:</label>
+                            <div class="d-flex gap-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="just_falta" id="falta_nao" value="false">
+                                    <label class="form-check-label small" for="falta_nao">Não abonar dia falta</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="just_falta" id="falta_sim" value="true" checked>
+                                    <label class="form-check-label small" for="falta_sim">Abonar dia falta</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- CID -->
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-muted d-block mb-2">Informar CID ao lançar a justificativa:</label>
+                            <div class="d-flex gap-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="just_cid" id="cid_nao" value="false" checked>
+                                    <label class="form-check-label small" for="cid_nao">Não informar</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="just_cid" id="cid_sim" value="true">
+                                    <label class="form-check-label small" for="cid_sim">Informar CID</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Coluna para mostrar horas justificadas -->
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-muted">Coluna para mostrar horas justificadas</label>
+                            <select id="just_mostrar_coluna" class="form-select">
+                                <option value="apenas_justificar">Apenas justificar a ausência</option>
+                                <option value="abono">Coluna Abono</option>
+                                <option value="extra">Coluna Extra</option>
+                                <option value="banco">Banco de Horas</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="modal-footer border-top-0 pt-0 px-4 pb-4 gap-2">
+                <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary px-4 shadow-sm" id="btnSalvar" onclick="salvarJustificativa()">
+                    <i class="bi bi-check2 me-1"></i><span id="labelSalvar">Salvar</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .table thead th {
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.72rem;
+        letter-spacing: 0.5px;
+        color: #6c757d;
+        border-bottom: 2px solid #f8f9fa;
+    }
+    .badge-tipo {
+        font-size: 0.72rem;
+        border-radius: 6px;
+        padding: 3px 8px;
+        font-weight: 500;
+    }
+    .bool-badge-yes { background: #d1fae5; color: #065f46; }
+    .bool-badge-no  { background: #fee2e2; color: #991b1b; }
+</style>
+
+<script>
+    let modalEl, modalInst, allItems = [], currentPage = 1;
+    const CSRF = '{{ csrf_token }}';
+
+    const TIPO_DESC = {
+        'dia_inteiro'      : 'Válida para o dia inteiro — ex: folga, atestado de dia completo.',
+        'periodo_especifico': 'Válida para o período definido na inserção — ex: ausência parcial.',
+        'abonar_horas'     : 'Desconsiderará a quantidade de horas definida no lançamento.',
+        'ajustar_horas'    : 'Ajusta (abona ou adiciona) a quantidade de horas no dia.',
+        'relocar_extrafalta': 'Permite enviar extras ou faltas do dia para o banco de horas.',
+        'abonar_dsr'       : 'Abona apenas o DSR, sem abonar a ausência em si.',
+    };
+
+    const TIPO_LABEL = {
+        'dia_inteiro'      : 'Dia inteiro',
+        'periodo_especifico': 'Período específico',
+        'abonar_horas'     : 'Abonar horas',
+        'ajustar_horas'    : 'Ajustar horas',
+        'relocar_extrafalta': 'Relocar extra/falta',
+        'abonar_dsr'       : 'Abonar DSR',
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+        modalEl   = document.getElementById('modalJustificativa');
+        modalInst = new bootstrap.Modal(modalEl);
+        carregarLista();
+        atualizarDescricaoTipo();
+    });
+
+    async function carregarLista() {
+        try {
+            const r = await fetch('{% url "api_justificativas_list" %}');
+            const d = await r.json();
+            if (d.success) {
+                allItems = d.justificativas || [];
+                renderLista();
+            } else {
+                throw new Error(d.error || 'Erro desconhecido');
+            }
+        } catch (e) {
+            console.error(e);
+            Swal.fire('Erro', 'Não foi possível carregar as justificativas.', 'error');
+        }
+    }
+
+    function renderLista() {
+        const q  = (document.getElementById('searchInput').value || '').toLowerCase();
+        const pp = parseInt(document.getElementById('perPageSelect').value) || 10;
+
+        const filtered = allItems.filter(i =>
+            (i.nome || '').toLowerCase().includes(q) ||
+            (i.abreviacao || '').toLowerCase().includes(q)
+        );
+
+        const total    = filtered.length;
+        const totalPag = Math.max(1, Math.ceil(total / pp));
+        if (currentPage > totalPag) currentPage = totalPag;
+
+        const ini    = (currentPage - 1) * pp;
+        const pagina = filtered.slice(ini, ini + pp);
+
+        const info = document.getElementById('paginacaoInfo');
+        if (info) info.textContent = total === 0 ? '0 registros' : `${ini + 1} a ${Math.min(ini + pp, total)} de ${total}`;
+        renderPaginacao(totalPag);
+
+        const tbody = document.getElementById('listaJustificativas');
+        if (pagina.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" class="text-center py-5 text-muted">Nenhuma justificativa encontrada.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = pagina.map(item => {
+            const tipoLabel = TIPO_LABEL[item.tipo] || item.tipo || '—';
+            const boolBadge = (val) => val
+                ? `<span class="badge bool-badge-yes"><i class="bi bi-check2 me-1"></i>Sim</span>`
+                : `<span class="badge bool-badge-no"><i class="bi bi-x me-1"></i>Não</span>`;
+
+            return `
+                <tr>
+                    <td class="px-4">
+                        <div class="fw-bold text-dark">${item.nome}</div>
+                    </td>
+                    <td class="text-center">
+                        <code class="bg-light border rounded px-2 py-1 small">${item.abreviacao || '—'}</code>
+                    </td>
+                    <td>
+                        <span class="badge-tipo bg-light border text-dark">${tipoLabel}</span>
+                    </td>
+                    <td class="text-center">${boolBadge(item.abonar_dia_falta)}</td>
+                    <td class="text-center">${boolBadge(item.pedir_texto_motivo)}</td>
+                    <td class="text-center">${boolBadge(item.informar_cid)}</td>
+                    <td class="text-end pe-4">
+                        <button class="btn btn-sm btn-light border me-1" onclick='editarItem(${JSON.stringify(item).replace(/'/g,"\\'")})'
+                                title="Editar">
+                            <i class="bi bi-pencil-square text-primary"></i>
+                        </button>
+                        <button class="btn btn-sm btn-light border" onclick="excluirItem(${item.id})"
+                                title="Excluir">
+                            <i class="bi bi-trash3 text-danger"></i>
+                        </button>
+                    </td>
+                </tr>`;
+        }).join('');
+    }
+
+    function renderPaginacao(total) {
+        const ul = document.getElementById('paginacaoControles');
+        if (!ul) return;
+        ul.innerHTML = '';
+
+        const prev = document.createElement('li');
+        prev.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+        prev.innerHTML = `<button class="page-link">‹</button>`;
+        prev.querySelector('button').onclick = () => { if (currentPage > 1) { currentPage--; renderLista(); } };
+        ul.appendChild(prev);
+
+        const start = Math.max(1, currentPage - 2);
+        const end   = Math.min(total, start + 4);
+        for (let p = start; p <= end; p++) {
+            const li = document.createElement('li');
+            li.className = `page-item ${p === currentPage ? 'active' : ''}`;
+            li.innerHTML = `<button class="page-link">${p}</button>`;
+            const pg = p;
+            li.querySelector('button').onclick = () => { currentPage = pg; renderLista(); };
+            ul.appendChild(li);
+        }
+
+        const next = document.createElement('li');
+        next.className = `page-item ${currentPage === total ? 'disabled' : ''}`;
+        next.innerHTML = `<button class="page-link">›</button>`;
+        next.querySelector('button').onclick = () => { if (currentPage < total) { currentPage++; renderLista(); } };
+        ul.appendChild(next);
+    }
+
+    function atualizarDescricaoTipo() {
+        const tipo = document.getElementById('just_tipo').value;
+        document.getElementById('just_tipo_desc').textContent = TIPO_DESC[tipo] || '';
+    }
+
+    function abrirModal() {
+        document.getElementById('formJustificativa').reset();
+        document.getElementById('just_id').value = '';
+        document.getElementById('modalTitle').textContent = 'Nova Justificativa';
+        // Default radios
+        document.getElementById('dsr_nao').checked    = true;
+        document.getElementById('texto_sim').checked  = true;
+        document.getElementById('falta_sim').checked  = true;
+        document.getElementById('cid_nao').checked    = true;
+        atualizarDescricaoTipo();
+        modalInst.show();
+    }
+
+    function editarItem(item) {
+        document.getElementById('just_id').value          = item.id;
+        document.getElementById('just_nome').value        = item.nome;
+        document.getElementById('just_abreviacao').value  = item.abreviacao || '';
+        document.getElementById('just_tipo').value        = item.tipo || 'periodo_especifico';
+        document.getElementById('just_mostrar_coluna').value = item.mostrar_em_coluna || 'apenas_justificar';
+        // Radios
+        document.querySelector(`[name="just_dsr"][value="${item.descontar_dsr ? 'true' : 'false'}"]`).checked  = true;
+        document.querySelector(`[name="just_texto"][value="${item.pedir_texto_motivo ? 'true' : 'false'}"]`).checked = true;
+        document.querySelector(`[name="just_falta"][value="${item.abonar_dia_falta ? 'true' : 'false'}"]`).checked  = true;
+        document.querySelector(`[name="just_cid"][value="${item.informar_cid ? 'true' : 'false'}"]`).checked   = true;
+        document.getElementById('modalTitle').textContent = 'Editar Justificativa';
+        atualizarDescricaoTipo();
+        modalInst.show();
+    }
+
+    async function salvarJustificativa() {
+        const nome = document.getElementById('just_nome').value.trim();
+        const abrev = document.getElementById('just_abreviacao').value.trim();
+
+        if (!nome || !abrev) {
+            document.getElementById('just_nome').classList.toggle('is-invalid', !nome);
+            document.getElementById('just_abreviacao').classList.toggle('is-invalid', !abrev);
+            return;
+        }
+        document.getElementById('just_nome').classList.remove('is-invalid');
+        document.getElementById('just_abreviacao').classList.remove('is-invalid');
+
+        const payload = {
+            id             : document.getElementById('just_id').value || null,
+            nome,
+            abreviacao     : abrev,
+            tipo           : document.getElementById('just_tipo').value,
+            descontar_dsr  : document.querySelector('[name="just_dsr"]:checked').value === 'true',
+            pedir_texto_motivo: document.querySelector('[name="just_texto"]:checked').value === 'true',
+            abonar_dia_falta  : document.querySelector('[name="just_falta"]:checked').value === 'true',
+            informar_cid      : document.querySelector('[name="just_cid"]:checked').value === 'true',
+            mostrar_em_coluna : document.getElementById('just_mostrar_coluna').value,
+        };
+
+        const btn   = document.getElementById('btnSalvar');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Salvando...';
+
+        try {
+            const r = await fetch('{% url "api_save_justificativa" %}', {
+                method  : 'POST',
+                headers : { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+                body    : JSON.stringify(payload),
+            });
+            const d = await r.json();
+
+            if (d.success) {
+                modalInst.hide();
+                await carregarLista();
+                Swal.fire({ icon: 'success', title: 'Sucesso!', text: 'Justificativa salva com sucesso.', timer: 2000, showConfirmButton: false });
+            } else {
+                Swal.fire('Erro', d.error || 'Erro ao salvar.', 'error');
+            }
+        } catch (e) {
+            Swal.fire('Erro', 'Falha na conexão.', 'error');
+        } finally {
+            btn.innerHTML = '<i class="bi bi-check2 me-1"></i>Salvar';
+            btn.disabled = false;
+        }
+    }
+
+    async function excluirItem(id) {
+        const res = await Swal.fire({
+            title: 'Tem certeza?',
+            text: 'Este tipo de justificativa não ficará mais disponível para novos lançamentos.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            confirmButtonText: 'Sim, excluir',
+            cancelButtonText: 'Cancelar',
+        });
+        if (!res.isConfirmed) return;
+
+        try {
+            const r = await fetch(`/api/rh/justificativas/${id}/delete/`, {
+                method: 'DELETE',
+                headers: { 'X-CSRFToken': CSRF },
+            });
+            const d = await r.json();
+            if (d.success) {
+                await carregarLista();
+                Swal.fire({ icon: 'success', title: 'Excluído!', text: 'A justificativa foi removida.', timer: 2000, showConfirmButton: false });
+            } else {
+                Swal.fire('Erro', d.error || 'Não foi possível excluir.', 'error');
+            }
+        } catch (e) {
+            Swal.fire('Erro', 'Falha ao excluir.', 'error');
+        }
+    }
+</script>
+{% endblock %}

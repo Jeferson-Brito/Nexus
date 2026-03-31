@@ -178,3 +178,13 @@ def rh_inconsistencias_apuracao_view(request):
         messages.error(request, 'Acesso restrito para Gestores ou Departamento de RH.')
         return redirect('dashboard')
     return render(request, 'core/rh/filtro_inconsistencias.html', {'page_title': 'Inconsistências'})
+
+
+@login_required
+def rh_justificativas_view(request):
+    """Página de cadastro e gestão de Tipos de Justificativa"""
+    if not (request.user.is_gestor() or request.user.is_administrador() or getattr(request.user.department, 'name', '') == 'RH'):
+        messages.error(request, 'Acesso restrito para Gestores ou Departamento de RH.')
+        return redirect('dashboard')
+    return render(request, 'core/rh/cadastro_justificativas.html', {'page_title': 'Tipos de Justificativa'})
+

@@ -1407,4 +1407,254 @@
         return cookieValue;
     }
 </script>
+
+<!-- ══════════════════════════════════════════════════════
+     MENU CONTEXTUAL (AJUSTES DO DIA) - IMAGEM 4
+     ══════════════════════════════════════════════════════ -->
+<div id="menuContextualDia" class="shadow border bg-white rounded-3"
+     style="position:fixed; z-index:9999; display:none; min-width:240px; padding:8px 0;">
+    <div class="px-3 py-2 border-bottom mb-1">
+        <div class="fw-bold small text-muted text-uppercase" style="letter-spacing:.5px;">Ajustes</div>
+    </div>
+    <a href="#" class="d-flex align-items-center gap-2 px-3 py-2 text-decoration-none text-dark small menu-ctx-item"
+       onclick="abrirModalJustificativa(); return false;">
+        <i class="bi bi-journal-check text-primary"></i> Justificativas
+    </a>
+    <a href="#" class="d-flex align-items-center gap-2 px-3 py-2 text-decoration-none text-dark small menu-ctx-item disabled opacity-50" title="Em breve">
+        <i class="bi bi-clock-history text-secondary"></i> Marcação Automática
+    </a>
+    <a href="#" class="d-flex align-items-center gap-2 px-3 py-2 text-decoration-none text-dark small menu-ctx-item disabled opacity-50" title="Em breve">
+        <i class="bi bi-bank2 text-secondary"></i> Ajuste Banco
+    </a>
+    <div class="px-3 py-2 border-top border-bottom my-1">
+        <div class="fw-bold small text-muted text-uppercase" style="letter-spacing:.5px;">Habilitar/Desabilitar</div>
+    </div>
+    <a href="#" class="d-flex align-items-center gap-2 px-3 py-2 text-decoration-none text-dark small menu-ctx-item disabled opacity-50" title="Em breve">
+        <i class="bi bi-square text-secondary"></i> Compensação diária
+    </a>
+    <a href="#" class="d-flex align-items-center gap-2 px-3 py-2 text-decoration-none text-dark small menu-ctx-item disabled opacity-50" title="Em breve">
+        <i class="bi bi-square text-secondary"></i> Almoço livre
+    </a>
+    <a href="#" class="d-flex align-items-center gap-2 px-3 py-2 text-decoration-none text-dark small menu-ctx-item disabled opacity-50" title="Em breve">
+        <i class="bi bi-square text-secondary"></i> Folga
+    </a>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     MODAL ADICIONAR JUSTIFICATIVA - IMAGEM 5
+     ══════════════════════════════════════════════════════ -->
+<div class="modal fade" id="modalAdicionarJustificativa" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 520px;">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-bottom">
+                <div>
+                    <h5 class="modal-title fw-bold mb-0">Adicionar Justificativa</h5>
+                    <p class="text-muted small mb-0 mt-1" id="justModalSubtitle">—</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body py-4">
+                <form id="formAdicionarJustificativa">
+                    <input type="hidden" id="just_colab_id">
+                    <input type="hidden" id="just_data_ref">
+
+                    <!-- Tipo -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">Tipo</label>
+                        <select id="just_tipo_modal" class="form-select" onchange="onJustTipoChange()">
+                            <option value="">Carregando...</option>
+                        </select>
+                    </div>
+
+                    <!-- Justificativa (texto) -->
+                    <div class="mb-3" id="just_texto_wrap">
+                        <label class="form-label small fw-bold text-muted">Justificativa:</label>
+                        <input type="text" id="just_texto_val" class="form-control" placeholder="Descreva o motivo...">
+                    </div>
+
+                    <!-- Início -->
+                    <div class="row g-3 mb-2">
+                        <div class="col-12">
+                            <label class="form-label small fw-bold text-muted">Início:</label>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small text-muted mb-1">Data:</label>
+                            <input type="date" id="just_inicio_data" class="form-control form-control-sm">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small text-muted mb-1">Hora:</label>
+                            <input type="time" id="just_inicio_hora" class="form-control form-control-sm" value="00:00">
+                        </div>
+                    </div>
+
+                    <!-- Término -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-12">
+                            <label class="form-label small fw-bold text-muted">Término:</label>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small text-muted mb-1">Data:</label>
+                            <input type="date" id="just_fim_data" class="form-control form-control-sm">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small text-muted mb-1">Hora:</label>
+                            <input type="time" id="just_fim_hora" class="form-control form-control-sm" value="23:59">
+                        </div>
+                    </div>
+
+                    <!-- CID (condicional) -->
+                    <div class="mb-3" id="just_cid_wrap" style="display:none;">
+                        <label class="form-label small fw-bold text-muted">CID — Código Internacional da Doença:</label>
+                        <input type="text" id="just_cid_val" class="form-control" placeholder="Ex: Z73">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-top-0 pt-0 gap-2">
+                <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">Fechar</button>
+                <button type="button" class="btn btn-primary px-4 shadow-sm" id="btnSalvarJust" onclick="salvarLancamentoJust()">
+                    <i class="bi bi-check2 me-1"></i> Adicionar Justificativa
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .menu-ctx-item:hover:not(.disabled) { background: #f8f9fa; }
+    .menu-ctx-item.disabled { pointer-events: none; }
+</style>
+
+<script>
+// ──── MENU CONTEXTUAL E JUSTIFICATIVAS ────────────────────────────────────────
+let _justCtxColab = null, _justCtxData = null;
+let _justModalInst = null;
+let _allJustTypes  = [];
+
+document.addEventListener('DOMContentLoaded', () => {
+    _justModalInst = new bootstrap.Modal(document.getElementById('modalAdicionarJustificativa'));
+    carregarTiposJustificativa();
+
+    // Fechar menu contextual ao clicar fora
+    document.addEventListener('click', (e) => {
+        const menu = document.getElementById('menuContextualDia');
+        if (menu && !menu.contains(e.target)) menu.style.display = 'none';
+    });
+});
+
+function abrirMenuContextual(btn, colaboradorId, data) {
+    _justCtxColab = colaboradorId;
+    _justCtxData  = data;
+
+    const menu = document.getElementById('menuContextualDia');
+    const rect = btn.getBoundingClientRect();
+    menu.style.top  = (rect.bottom + window.scrollY + 4) + 'px';
+    menu.style.left = (rect.left + window.scrollX) + 'px';
+    menu.style.display = 'block';
+}
+
+async function carregarTiposJustificativa() {
+    try {
+        const r = await fetch('{% url "api_justificativas_list" %}');
+        const d = await r.json();
+        if (d.success) {
+            _allJustTypes = d.justificativas || [];
+            populateJustSelect();
+        }
+    } catch(e) { console.warn('Erro ao carregar tipos de justificativa', e); }
+}
+
+function populateJustSelect() {
+    const sel = document.getElementById('just_tipo_modal');
+    if (!sel) return;
+    sel.innerHTML = _allJustTypes.length
+        ? _allJustTypes.map(j => `<option value="${j.id}" data-pede-cid="${j.informar_cid}" data-pede-texto="${j.pedir_texto_motivo}">${j.nome}</option>`).join('')
+        : '<option value="">Nenhum tipo cadastrado</option>';
+    onJustTipoChange();
+}
+
+function onJustTipoChange() {
+    const sel  = document.getElementById('just_tipo_modal');
+    const opt  = sel.selectedOptions[0];
+    const cidW  = document.getElementById('just_cid_wrap');
+    const txtW  = document.getElementById('just_texto_wrap');
+    if (!opt) return;
+    cidW.style.display = (opt.dataset.pedeCid === 'true') ? '' : 'none';
+    txtW.style.display = (opt.dataset.pedeTexto === 'true') ? '' : 'none';
+}
+
+function abrirModalJustificativa(colaboradorId, colaboradorNome, data) {
+    // Fechar menu contextual se aberto
+    document.getElementById('menuContextualDia').style.display = 'none';
+
+    // Usar contexto do menu ou args diretos
+    const colab = colaboradorId || _justCtxColab;
+    const dt    = data || _justCtxData;
+
+    document.getElementById('just_colab_id').value = colab || '';
+    document.getElementById('just_data_ref').value = dt || '';
+    document.getElementById('justModalSubtitle').textContent = colaboradorNome
+        ? `Funcionário: ${colaboradorNome}` + (dt ? ` | ${dt}` : '')
+        : (dt || '');
+
+    // Preencher datas default
+    const hoje = dt || new Date().toISOString().slice(0,10);
+    document.getElementById('just_inicio_data').value = hoje;
+    document.getElementById('just_fim_data').value    = hoje;
+    document.getElementById('just_inicio_hora').value = '00:00';
+    document.getElementById('just_fim_hora').value    = '23:59';
+    document.getElementById('just_texto_val').value   = '';
+    document.getElementById('just_cid_val') && (document.getElementById('just_cid_val').value = '');
+
+    populateJustSelect();
+    _justModalInst.show();
+}
+
+async function salvarLancamentoJust() {
+    const colaboradorId   = document.getElementById('just_colab_id').value;
+    const justificativaId = document.getElementById('just_tipo_modal').value;
+    const motivoTexto     = document.getElementById('just_texto_val').value;
+    const dataInicio      = document.getElementById('just_inicio_data').value;
+    const horaInicio      = document.getElementById('just_inicio_hora').value;
+    const dataFim         = document.getElementById('just_fim_data').value;
+    const horaFim         = document.getElementById('just_fim_hora').value;
+    const cidEl           = document.getElementById('just_cid_val');
+    const cid             = cidEl ? cidEl.value : '';
+
+    if (!colaboradorId || !justificativaId) {
+        Swal.fire('Atenção', 'Selecione um funcionário e um tipo de justificativa.', 'warning');
+        return;
+    }
+
+    const btn = document.getElementById('btnSalvarJust');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Salvando...';
+
+    try {
+        const r = await fetch('{% url "api_save_lancamento_justificativa" %}', {
+            method : 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+            body   : JSON.stringify({ colaborador_id: colaboradorId, justificativa_id: justificativaId,
+                                      motivo_texto: motivoTexto, cid,
+                                      data_inicio: dataInicio, hora_inicio: horaInicio,
+                                      data_fim: dataFim, hora_fim: horaFim }),
+        });
+        const d = await r.json();
+
+        if (d.success) {
+            _justModalInst.hide();
+            Swal.fire({ icon: 'success', title: 'Justificativa lançada!', text: d.message, timer: 2200, showConfirmButton: false });
+            // Recarregar a apuração se a função existir
+            if (typeof buscarApuracao === 'function') buscarApuracao();
+        } else {
+            Swal.fire('Erro', d.error || 'Erro ao salvar.', 'error');
+        }
+    } catch(e) {
+        Swal.fire('Erro', 'Falha na conexão.', 'error');
+    } finally {
+        btn.innerHTML = '<i class="bi bi-check2 me-1"></i> Adicionar Justificativa';
+        btn.disabled = false;
+    }
+}
+</script>
 {% endblock %}
+

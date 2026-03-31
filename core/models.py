@@ -2313,7 +2313,27 @@ class DocumentoColaborador(models.Model):
 
 class JustificativaPonto(models.Model):
     """Tipos de justificativa para ocorrências no ponto (faltas, atrasos, etc)"""
-    nome = models.CharField(max_length=100, verbose_name="Nome da Justificativa")
+    TIPO_CHOICES = [
+        ('dia_inteiro', 'Justificar dia inteiro'),
+        ('periodo_especifico', 'Período Específico'),
+        ('abonar_horas', 'Abonar quantidade de horas'),
+        ('ajustar_horas', 'Ajustar quantidade de horas'),
+        ('relocar_extrafalta', 'Relocar extra/falta do dia'),
+        ('abonar_dsr', 'Abonar apenas DSR (não a ausência)'),
+    ]
+
+    nome = models.CharField(max_length=100, verbose_name="Nome/Descrição")
+    abreviacao = models.CharField(max_length=20, blank=True, verbose_name="Abreviação")
+    tipo = models.CharField(max_length=30, choices=TIPO_CHOICES, default='periodo_especifico')
+    
+    # Parâmetros
+    descontar_dsr = models.BooleanField(default=False, verbose_name="Descontar DSR?")
+    pedir_texto_motivo = models.BooleanField(default=True, verbose_name="Pedir texto de motivo a cada lançamento")
+    abonar_dia_falta = models.BooleanField(default=True, verbose_name="Abonar dia faltoso?")
+    informar_cid = models.BooleanField(default=False, verbose_name="Informar CID ao lançar a justificativa")
+    mostrar_em_coluna = models.CharField(max_length=50, default='apenas_justificar', verbose_name="Coluna para mostrar")
+
+    # Legado (Mantido temporariamente para sync/retrocompatibilidade)
     codigo = models.CharField(max_length=20, blank=True, verbose_name="Código")
     abonar = models.BooleanField(default=True, verbose_name="Abona Horas?")
     descricao = models.TextField(blank=True, null=True)
@@ -2326,6 +2346,39 @@ class JustificativaPonto(models.Model):
 
     def __str__(self):
         return self.nome
+
+
+class LancamentoJustificativa(models.Model):
+    """Registro efetivo de uma justificativa aplicada a um funcionário."""
+    colaborador = models.ForeignKey(
+        'Colaborador', on_delete=models.CASCADE,
+        related_name='justificativas_lancadas'
+    )
+    justificativa = models.ForeignKey(
+        JustificativaPonto, on_delete=models.PROTECT
+    )
+    
+    data_inicio = models.DateField(verbose_name="Data Início")
+    hora_inicio = models.TimeField(null=True, blank=True, verbose_name="Hora Início")
+    data_fim = models.DateField(verbose_name="Data Término")
+    hora_fim = models.TimeField(null=True, blank=True, verbose_name="Hora Término")
+    
+    motivo_texto = models.TextField(blank=True, verbose_name="Texto Justificativa")
+    cid = models.CharField(max_length=20, blank=True, verbose_name="CID")
+    
+    lancado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    data_lancamento = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Lançamento de Justificativa"
+        verbose_name_plural = "Lançamentos de Justificativas"
+        ordering = ['-data_inicio', '-hora_inicio']
+        indexes = [
+            models.Index(fields=['colaborador', 'data_inicio']),
+        ]
+
+    def __str__(self):
+        return f"{self.colaborador.nome_completo} - {self.justificativa.nome} em {self.data_inicio}"
 
 
 class Horario(models.Model):

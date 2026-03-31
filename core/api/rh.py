@@ -2353,3 +2353,178 @@ def api_rh_ponto_diario_dados(request):
     except Exception as e:
         logger.error(f"Erro na api_rh_ponto_diario_dados: {str(e)}")
         return JsonResponse({'success': False, 'erro': str(e)}, status=500)
+
+
+# ─────────────────────────────────────────────
+#  JUSTIFICATIVAS (CADASTRO)
+# ─────────────────────────────────────────────
+
+@login_required
+@require_http_methods(["GET"])
+def api_justificativas_list(request):
+    try:
+        from core.models import JustificativaPonto
+        justificativas = JustificativaPonto.objects.all()
+        return JsonResponse({'success': True, 'justificativas': [
+            {
+                'id': str(j.id),
+                'nome': j.nome,
+                'abreviacao': j.abreviacao,
+                'tipo': j.tipo,
+                'tipo_display': j.get_tipo_display() if hasattr(j, 'get_tipo_display') else j.tipo,
+                'descontar_dsr': j.descontar_dsr,
+                'pedir_texto_motivo': j.pedir_texto_motivo,
+                'abonar_dia_falta': j.abonar_dia_falta,
+                'informar_cid': j.informar_cid,
+                'mostrar_em_coluna': j.mostrar_em_coluna,
+            } for j in justificativas
+        ]})
+    except Exception as ex:
+        return JsonResponse({'success': False, 'error': str(ex)}, status=500)
+
+@login_required
+@require_http_methods(["POST"])
+def api_save_justificativa(request):
+    from core.models import JustificativaPonto
+    try:
+        import json
+        data = json.loads(request.body)
+        pk = data.get('id')
+        
+        from django.db import transaction
+        with transaction.atomic():
+            if pk:
+                j = get_object_or_404(JustificativaPonto, pk=pk)
+            else:
+                j = JustificativaPonto()
+            
+            j.nome = data.get('nome', '')
+            j.abreviacao = data.get('abreviacao', '')
+            j.tipo = data.get('tipo', 'periodo_especifico')
+            j.descontar_dsr = data.get('descontar_dsr', False)
+            j.pedir_texto_motivo = data.get('pedir_texto_motivo', True)
+            j.abonar_dia_falta = data.get('abonar_dia_falta', True)
+            j.informar_cid = data.get('informar_cid', False)
+            j.mostrar_em_coluna = data.get('mostrar_em_coluna', 'apenas_justificar')
+            
+            j.save()
+            
+        return JsonResponse({'success': True, 'message': 'Salvo com sucesso', 'id': str(j.id)})
+    except Exception as ex:
+        import logging
+        logging.getLogger(__name__).error(f"Erro salvando justificativa: {ex}")
+        return JsonResponse({'success': False, 'error': str(ex)}, status=500)
+
+@login_required
+@require_http_methods(["DELETE"])
+def api_delete_justificativa(request, pk):
+    from core.models import JustificativaPonto
+    try:
+        j = get_object_or_404(JustificativaPonto, pk=pk)
+        j.delete()
+        return JsonResponse({'success': True, 'message': 'Excluído com sucesso'})
+    except Exception as ex:
+        return JsonResponse({'success': False, 'error': str(ex)}, status=500)
+
+
+# ─────────────────────────────────────────────
+#  LANÇAMENTOS DE JUSTIFICATIVAS
+# ─────────────────────────────────────────────
+
+@login_required
+@require_http_methods(["POST"])
+def api_save_lancamento_justificativa(request):
+    from core.models import LancamentoJustificativa, JustificativaPonto, Colaborador
+    try:
+        import json
+        data = json.loads(request.body)
+        pk = data.get('id')
+
+        colaborador_id = data.get('colaborador_id')
+        justificativa_id = data.get('justificativa_id')
+
+        if not colaborador_id or not justificativa_id:
+            return JsonResponse({'success': False, 'error': 'colaborador_id e justificativa_id são obrigatórios'}, status=400)
+
+        colaborador = get_object_or_404(Colaborador, pk=colaborador_id)
+        justificativa = get_object_or_404(JustificativaPonto, pk=justificativa_id)
+
+        from django.db import transaction
+        with transaction.atomic():
+            if pk:
+                lj = get_object_or_404(LancamentoJustificativa, pk=pk)
+            else:
+                lj = LancamentoJustificativa()
+
+            lj.colaborador = colaborador
+            lj.justificativa = justificativa
+            lj.data_inicio = data.get('data_inicio')
+            lj.hora_inicio = data.get('hora_inicio') or None
+            lj.data_fim = data.get('data_fim')
+            lj.hora_fim = data.get('hora_fim') or None
+            lj.motivo_texto = data.get('motivo_texto', '')
+            lj.cid = data.get('cid', '')
+            lj.lancado_por = request.user
+            lj.save()
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Justificativa lançada com sucesso',
+            'id': str(lj.id),
+        })
+    except Exception as ex:
+        import logging
+        logging.getLogger(__name__).error(f"Erro salvando lançamento: {ex}")
+        return JsonResponse({'success': False, 'error': str(ex)}, status=500)
+
+
+@login_required
+@require_http_methods(["DELETE"])
+def api_delete_lancamento_justificativa(request, pk):
+    from core.models import LancamentoJustificativa
+    try:
+        lj = get_object_or_404(LancamentoJustificativa, pk=pk)
+        lj.delete()
+        return JsonResponse({'success': True, 'message': 'Lançamento excluído'})
+    except Exception as ex:
+        return JsonResponse({'success': False, 'error': str(ex)}, status=500)
+
+
+@login_required
+@require_http_methods(["GET"])
+def api_list_lancamentos_justificativa(request):
+    from core.models import LancamentoJustificativa
+    try:
+        colaborador_id = request.GET.get('colaborador_id')
+        data_inicio = request.GET.get('data_inicio')
+        data_fim = request.GET.get('data_fim')
+
+        qs = LancamentoJustificativa.objects.select_related('colaborador', 'justificativa', 'lancado_por')
+
+        if colaborador_id:
+            qs = qs.filter(colaborador_id=colaborador_id)
+        if data_inicio:
+            qs = qs.filter(data_inicio__gte=data_inicio)
+        if data_fim:
+            qs = qs.filter(data_fim__lte=data_fim)
+
+        return JsonResponse({'success': True, 'lancamentos': [
+            {
+                'id': str(lj.id),
+                'colaborador_id': str(lj.colaborador_id),
+                'colaborador_nome': lj.colaborador.nome_completo,
+                'justificativa_id': str(lj.justificativa_id),
+                'justificativa_nome': lj.justificativa.nome,
+                'justificativa_tipo': lj.justificativa.tipo,
+                'data_inicio': lj.data_inicio.strftime('%Y-%m-%d'),
+                'hora_inicio': lj.hora_inicio.strftime('%H:%M') if lj.hora_inicio else None,
+                'data_fim': lj.data_fim.strftime('%Y-%m-%d'),
+                'hora_fim': lj.hora_fim.strftime('%H:%M') if lj.hora_fim else None,
+                'motivo_texto': lj.motivo_texto,
+                'cid': lj.cid,
+                'lancado_por': lj.lancado_por.get_full_name() if lj.lancado_por else '',
+                'data_lancamento': lj.data_lancamento.strftime('%d/%m/%Y %H:%M'),
+            } for lj in qs
+        ]})
+    except Exception as ex:
+        return JsonResponse({'success': False, 'error': str(ex)}, status=500)

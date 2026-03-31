@@ -131,6 +131,8 @@ urlpatterns = [
     path('rh/horarios/', views.rh_horarios_view, name='rh_horarios'),
     path('rh/horarios/add/', views.rh_cadastro_horario_view, name='rh_cadastro_horario_add'),
     path('rh/horarios/<int:pk>/', views.rh_cadastro_horario_view, name='rh_cadastro_horario'),
+    # Justificativas
+    path('rh/justificativas/', views.rh_justificativas_view, name='rh_justificativas'),
     # Apuração de Ponto
     path('rh/apuracao/', views.rh_apuracao_view, name='rh_apuracao'),
     path('rh/ponto-diario/', views.rh_ponto_diario_view, name='rh_ponto_diario'),
@@ -341,6 +343,15 @@ urlpatterns = [
     path('api/rh/configuracao/inconsistencias/<int:pk>/delete/', api_rh.api_delete_inconsistencia, name='api_delete_inconsistencia'),
     path('api/rh/apuracao/salvar-flags/', api_rh.api_rh_save_escala_flags, name='api_rh_save_escala_flags'),
     path('api/rh/apuracao/excluir-ponto/', api_rh.api_rh_delete_ponto, name='api_rh_delete_ponto'),
+
+    # API RH - Justificativas (Tipos e Lançamentos)
+    path('api/rh/justificativas/', api_rh.api_justificativas_list, name='api_justificativas_list'),
+    path('api/rh/justificativas/save/', api_rh.api_save_justificativa, name='api_save_justificativa'),
+    path('api/rh/justificativas/<int:pk>/delete/', api_rh.api_delete_justificativa, name='api_delete_justificativa'),
+    path('api/rh/lancamento-justificativa/save/', api_rh.api_save_lancamento_justificativa, name='api_save_lancamento_justificativa'),
+    path('api/rh/lancamento-justificativa/<int:pk>/delete/', api_rh.api_delete_lancamento_justificativa, name='api_delete_lancamento_justificativa'),
+    path('api/rh/lancamento-justificativa/list/', api_rh.api_list_lancamentos_justificativa, name='api_list_lancamentos_justificativa'),
+
 
     # Ponto Eletrônico - Views
     path('ponto/tablet/', views_ponto.ponto_kiosk, name='ponto_kiosk'),
