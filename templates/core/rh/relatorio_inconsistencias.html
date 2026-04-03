@@ -641,7 +641,8 @@ function montarHTMLCartaoPonto(colabGroup, diasArray, funcDetails, dataIni, data
     let minTotaisTrab = 0;
 
     diasArray.forEach(d => {
-        const dStr = d.data.split('-').reverse().slice(0,2).join('/') + ' - ' + d.nome_dia.substring(0,3).toUpperCase();
+        const nomeDiaStr = (d.nome_dia || '').substring(0, 3).toUpperCase();
+        const dStr = d.data.split('-').reverse().slice(0,2).join('/') + (nomeDiaStr ? ' - ' + nomeDiaStr : '');
         
         // Verifica se é dia de Inconsistência para desenhar borda/highlight
         const issue = issuesMap[d.data];
