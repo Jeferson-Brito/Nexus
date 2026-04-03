@@ -100,17 +100,144 @@
 
     /* Print Styles */
     @media print {
-        .sidebar, .header, .filter-section, .column-selector, .action-bar, .no-print {
+        .sidebar, .header, .filter-section, .column-selector, .action-bar, .no-print, .preview-container, .report-card {
             display: none !important;
         }
-        .main-content { margin-left: 0 !important; padding: 0 !important; }
-        .report-card { border: none; box-shadow: none; }
-        .report-header { background: white !important; color: black !important; padding: 0 0 20px 0; }
-        .report-header h4 { font-size: 24pt; }
-        .table-report { width: 100% !important; border-collapse: collapse; }
-        .table-report thead th { border-bottom: 2pt solid black !important; color: black !important; }
-        .table-report td { border-bottom: 1pt solid #ccc !important; }
-        body { background: white !important; }
+        body, html { background: white !important; padding: 0 !important; margin: 0 !important; }
+        .main-content { margin: 0 !important; padding: 0 !important; }
+        
+        #printArea { display: block !important; width: 100%; }
+
+        .cartao-ponto {
+            page-break-after: always;
+            font-family: 'Arial', sans-serif;
+            color: #333;
+            font-size: 10px;
+            padding: 10px;
+        }
+        .cartao-ponto:last-child {
+            page-break-after: auto;
+        }
+
+        .cartao-ponto-right-top {
+            text-align: right;
+            margin-bottom: 20px;
+        }
+        .cartao-ponto-right-top img {
+            height: 35px;
+            margin-bottom: 10px;
+        }
+        
+        .cartao-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            border-bottom: 2px solid #d32f2f;
+            padding-bottom: 5px;
+            margin-bottom: 15px;
+        }
+        .cartao-title h1 {
+            font-size: 38px;
+            font-weight: 800;
+            line-height: 1.1;
+            margin: 0;
+            color: #333;
+            letter-spacing: -1px;
+        }
+        .cartao-period {
+            color: #d32f2f;
+            font-weight: bold;
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+        
+        .info-container {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .info-table td {
+            border-bottom: 1px solid #eee;
+            padding: 4px 0;
+            text-transform: uppercase;
+        }
+        .info-label {
+            font-weight: bold;
+            color: #555;
+            display: block;
+            font-size: 9px;
+            margin-bottom: 2px;
+        }
+
+        .grid-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .grid-table th {
+            border-top: 1px solid #333;
+            border-bottom: 1px solid #333;
+            padding: 6px 2px;
+            font-size: 9px;
+            color: #333;
+            font-weight: bold;
+        }
+        .grid-table td {
+            border-bottom: 1px solid #eee;
+            padding: 4px 2px;
+        }
+        
+        .inconsistency-highlight {
+            border: 1px solid #d32f2f;
+            color: #d32f2f;
+            font-weight: bold;
+            display: inline-block;
+            padding: 1px 4px;
+        }
+
+        .cartao-footer {
+            margin-top: 20px;
+        }
+        .legend {
+            font-size: 9px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .alteracoes-box {
+            border: 1px solid #d32f2f;
+            padding: 10px;
+            margin-bottom: 40px;
+        }
+        .alteracoes-box strong {
+            display: block;
+            color: #333;
+            margin-bottom: 5px;
+            font-size: 11px;
+        }
+        .alteracoes-box ul {
+            margin: 0;
+            padding-left: 15px;
+        }
+        
+        .assinatura-area {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+        }
+        .assinatura-block {
+            width: 45%;
+            text-align: center;
+        }
+        .assinatura-line {
+            border-top: 1px solid #333;
+            padding-top: 5px;
+            text-transform: uppercase;
+        }
     }
 
     .preview-container {
@@ -248,8 +375,8 @@
                 <i class="bi bi-play-fill"></i> Gerar Preview
             </button>
             <div class="d-flex gap-2">
-                <button type="button" class="btn btn-premium btn-print" onclick="window.print()">
-                    <i class="bi bi-printer"></i> Imprimir PDF
+                <button type="button" class="btn btn-premium btn-print" onclick="imprimirCartoes()">
+                    <i class="bi bi-printer"></i> Imprimir Cartões (PDF)
                 </button>
                 <button type="button" class="btn btn-premium btn-export" onclick="exportarCSV()">
                     <i class="bi bi-file-earmark-spreadsheet"></i> Exportar CSV
@@ -290,6 +417,9 @@
         </div>
     </div>
 </div>
+
+<!-- Container Invisível para Impressão -->
+<div id="printArea" class="d-none d-print-block"></div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -395,9 +525,9 @@ function renderTable(items) {
     }).join('');
 }
 
+// Header Map e Funções export CSV se mantém.
 function exportarCSV() {
     const cols = getSelectedColumns();
-    // No CSV, transformamos batidas e horas em colunas reais que o backend entende
     let csvCols = [...cols];
     const batIdx = csvCols.indexOf('batidas');
     if (batIdx > -1) {
@@ -419,6 +549,245 @@ function exportarCSV() {
     });
 
     window.location.href = `{% url "api_relatorio_inconsistencias_csv" %}?${params.toString()}`;
+}
+
+// ----------------------------------------------------
+// GERAÇÃO DO CARTÃO DE PONTO PARA IMPRESSÃO
+// ----------------------------------------------------
+async function imprimirCartoes() {
+    const loader = document.getElementById('loader');
+    loader.style.display = 'flex';
+    
+    try {
+        const params = new URLSearchParams({
+            data_inicio: document.getElementById('data_inicio').value,
+            data_fim: document.getElementById('data_fim').value,
+            empresa: document.getElementById('sel_empresa').value,
+            department: document.getElementById('sel_dept').value,
+            colaborador_id: document.getElementById('sel_colab').value,
+            tipos_inconsistencia: getSelectedInconsistencies()
+        });
+
+        // Primeiro, recuperar todos os itens de inconsistência pra saber QUEM afeta
+        const responseList = await fetch(`{% url "api_rh_filtro_inconsistencias_dados" %}?${params.toString()}`);
+        const dataList = await responseList.json();
+
+        if (!dataList.success || dataList.items.length === 0) {
+            Swal.fire('Aviso', 'Nenhuma inconsistência encontrada para gerar cartões.', 'warning');
+            return;
+        }
+
+        // Agrupar itens (inconsistências) por colaborador
+        const issuesByColab = {};
+        for(const item of dataList.items) {
+            if(!item.colaborador_id) continue;
+            if(!issuesByColab[item.colaborador_id]) {
+                issuesByColab[item.colaborador_id] = { info: item, issues: [] };
+            }
+            issuesByColab[item.colaborador_id].issues.push(item);
+        }
+
+        const dataIni = document.getElementById('data_inicio').value;
+        const dataFim = document.getElementById('data_fim').value;
+        
+        let printHtml = '';
+
+        // Para cada colaborador com inconsistência, buscar o Espelho Integral e Funcionario Details
+        for(const colabId of Object.keys(issuesByColab)) {
+            const colabGroup = issuesByColab[colabId];
+            
+            // Buscar dados da Apuração
+            const espResp = await fetch(`/api/rh/apuracao-dados/?colaborador_id=${colabId}&data_inicio=${dataIni}&data_fim=${dataFim}`);
+            if(!espResp.ok) continue;
+            const espData = await espResp.json();
+            if(!espData.success || !espData.dias) continue;
+
+            // Buscar Detalhes Cadastrais (para PIS, CTPS, etc)
+            let funcDetails = {};
+            try{
+                const funcResp = await fetch(`/api/rh/colaboradores/${colabId}/`);
+                const funcData = await funcResp.json();
+                if(funcData.success) {
+                    funcDetails = funcData.colaborador;
+                }
+            }catch(e){} // Safefall
+            
+            printHtml += montarHTMLCartaoPonto(colabGroup, espData.dias, funcDetails, dataIni, dataFim);
+        }
+
+        document.getElementById('printArea').innerHTML = printHtml;
+        window.print();
+
+    } catch (error) {
+        console.error(error);
+        Swal.fire('Erro', 'Falha ao processar dados de impressão.', 'error');
+    } finally {
+        loader.style.display = 'none';
+    }
+}
+
+function montarHTMLCartaoPonto(colabGroup, diasArray, funcDetails, dataIni, dataFim) {
+    const formatDate = (d) => d.split('-').reverse().join('/');
+    const issuesMap = {};
+    colabGroup.issues.forEach(i => issuesMap[i.data] = i);
+
+    let rowsHtml = '';
+    let totalDiurnas = 0;
+    let diasFalta = 0;
+    
+    // Converter "HH:MM" pra número inteiro (minutos) caso precise somar
+    const minStr = (m) => m ? (parseInt(m.split(':')[0])*60 + parseInt(m.split(':')[1])) : 0;
+    const formatMin = (m) => `${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`;
+    let minTotaisTrab = 0;
+
+    diasArray.forEach(d => {
+        const dStr = d.data.split('-').reverse().slice(0,2).join('/') + ' - ' + d.nome_dia.substring(0,3).toUpperCase();
+        
+        // Verifica se é dia de Inconsistência para desenhar borda/highlight
+        const issue = issuesMap[d.data];
+        let hasFalta = (d.horas_falta && d.horas_falta !== '00:00');
+        let dNormais = d.horas_trabalhadas || '';
+        
+        // Se houver inconsistência e horas_trabalhadas, vamos destacar como uma "Alteração/Audit" de Diurnas Normais
+        let diurnasHtml = dNormais;
+        if(issue && issue.inconsistencia && dNormais && dNormais !== '00:00'){
+            diurnasHtml = `<span class="inconsistency-highlight">${dNormais}</span>`;
+        } else if (hasFalta && issue) {
+            diurnasHtml = `<span class="inconsistency-highlight">Falta</span>`;
+        }
+
+        if(hasFalta && !d.is_folga) diasFalta++;
+        if(dNormais) minTotaisTrab += minStr(dNormais);
+
+        rowsHtml += `
+            <tr>
+                <td>${dStr}</td>
+                <td>${d.is_folga ? 'Folga' : '08:00-12:00 13:00-17:00'}</td>
+                <td>${d.ent1 || (d.is_folga ? 'Folga' : 'Falta')}</td>
+                <td>${d.sai1 || (d.is_folga ? 'Folga' : 'Falta')}</td>
+                <td>${d.ent2 || (d.is_folga ? 'Folga' : 'Falta')}</td>
+                <td>${d.sai2 || (d.is_folga ? 'Folga' : 'Falta')}</td>
+                <td>${diurnasHtml}</td>
+                <td>${(hasFalta && !d.is_folga) ? '1' : ''}</td>
+                <td>${d.horas_atraso !== '00:00' ? d.horas_atraso : d.horas_falta}</td>
+                <td></td>
+                <td>${d.extra_total !== '00:00' ? d.extra_total : ''}</td>
+                <td>${d.banco_acumulado || ''}</td>
+                <td></td>
+            </tr>
+        `;
+    });
+
+    // Bloco de alterações (Footer)
+    let altHtml = '';
+    colabGroup.issues.forEach(i => {
+        altHtml += `<li>Alteração de registro: Ocorrência de "${i.inconsistencia_nome}" no dia ${formatDate(i.data)} - ${i.horas} horas envolvidas.</li>`;
+    });
+
+    const nowStr = new Date().toLocaleString('pt-BR');
+
+    return `
+        <div class="cartao-ponto">
+            <div class="cartao-ponto-right-top">
+                <img src="{% static 'images/nexus_logo.png' %}" alt="Nexus Logo">
+                <div style="font-size: 8px; color:#555;">Emitido em ${nowStr}</div>
+            </div>
+            
+            <div class="cartao-header">
+                <div class="cartao-title">
+                    <h1>Cartão</h1>
+                    <h1 style="color:#666;">de Ponto</h1>
+                </div>
+                <div class="cartao-period">DE ${formatDate(dataIni)} ATÉ ${formatDate(dataFim)}</div>
+            </div>
+
+            <div class="info-container">
+                <table class="info-table" style="width: 60%;">
+                    <tr>
+                        <td colspan="2"><span class="info-label">NOME DA EMPRESA:</span>${funcDetails.empresa || 'N/A'}</td>
+                    </tr>
+                    <tr>
+                        <td><span class="info-label">NOME DO FUNCIONÁRIO:</span>${funcDetails.nome_completo || colabGroup.info.colaborador_nome}</td>
+                        <td><span class="info-label">CPF DO FUNCIONÁRIO:</span>${funcDetails.cpf || 'N/A'}</td>
+                    </tr>
+                    <tr>
+                        <td><span class="info-label">NÚMERO DE MATRÍCULA:</span>${funcDetails.matricula || funcDetails.id || ''}</td>
+                        <td><span class="info-label">PIS DO FUNCIONÁRIO:</span>${funcDetails.pis || 'N/A'}</td>
+                    </tr>
+                    <tr>
+                        <td><span class="info-label">CARGO:</span>${funcDetails.cargo_atual || 'N/A'}</td>
+                        <td><span class="info-label">DATA DE ADMISSÃO:</span>${funcDetails.data_admissao || 'N/A'}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="2"><span class="info-label">DEPARTAMENTO:</span>${funcDetails.department || 'N/A'}</td>
+                    </tr>
+                </table>
+
+                <table class="info-table" style="width: 40%;">
+                    <tr>
+                        <td colspan="5" style="border:none;"><span class="info-label text-center">HORÁRIO DE TRABALHO</span></td>
+                    </tr>
+                    <tr><td width="30">SEG</td><td>08:00</td><td>12:00</td><td>13:00</td><td>17:00</td></tr>
+                    <tr><td>TER</td><td>08:00</td><td>12:00</td><td>13:00</td><td>17:00</td></tr>
+                    <tr><td>QUA</td><td>08:00</td><td>12:00</td><td>13:00</td><td>17:00</td></tr>
+                    <tr><td>QUI</td><td>08:00</td><td>12:00</td><td>13:00</td><td>17:00</td></tr>
+                    <tr><td>SEX</td><td>08:00</td><td>12:00</td><td>13:00</td><td>17:00</td></tr>
+                    <tr><td>SAB</td><td colspan="4">Folga</td></tr>
+                    <tr><td>DOM</td><td colspan="4">Folga</td></tr>
+                </table>
+            </div>
+
+            <table class="grid-table">
+                <thead>
+                    <tr>
+                        <th>DIA</th>
+                        <th>PREVISTO</th>
+                        <th>ENT. 1</th>
+                        <th>SAÍ. 1</th>
+                        <th>ENT. 2</th>
+                        <th>SAÍ. 2</th>
+                        <th>DIURNAS NORMAIS</th>
+                        <th>FALTA</th>
+                        <th>FALTA E ATRASO</th>
+                        <th>ABONO</th>
+                        <th>EXTRAS TOTAL</th>
+                        <th>BANCO TOTAL</th>
+                        <th>BANCO SALDO</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${rowsHtml}
+                    <tr>
+                        <td colspan="6" style="text-align:left; font-weight:bold;">TOTAIS</td>
+                        <td style="font-weight:bold;">${formatMin(minTotaisTrab)}</td>
+                        <td style="font-weight:bold;">${diasFalta}</td>
+                        <td colspan="5"></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="cartao-footer">
+                <div class="legend">
+                    (I)=Incluído, (P)=Pré-assinalado, (M)=Coletor Mobile/Web, (C)=Coletor Rep.
+                </div>
+                
+                <div class="alteracoes-box">
+                    <strong>Alterações & Auditoria (Inconsistências)</strong>
+                    <ul>${altHtml}</ul>
+                </div>
+
+                <div class="assinatura-area">
+                    <div class="assinatura-block">
+                        <div class="assinatura-line">${funcDetails.nome_completo || colabGroup.info.colaborador_nome}</div>
+                    </div>
+                    <div class="assinatura-block">
+                        <div class="assinatura-line">${funcDetails.empresa || 'Empresa Empregadora'}</div>
+                    </div>
+                </div>
+                <div style="text-align:left; font-size:9px; margin-top:5px; color:#555;">Reconheço a exatidão desses registros</div>
+            </div>
+        </div>
+    `;
 }
 </script>
 {% endblock %}
