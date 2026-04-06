@@ -174,18 +174,25 @@
             const tr = document.createElement('tr');
             
             let statusIcon = '';
-            if (d.inconsistencia) {
+            if (d.justificativa && d.justificativa.abona_falta) {
+                statusIcon = `<span class="badge bg-success-subtle text-success border border-success px-2 py-1" style="font-size: 0.7rem;" title="${d.justificativa.nome}">${d.justificativa.abreviacao}</span>`;
+            } else if (d.inconsistencia) {
                 statusIcon = `<i class="bi ${d.inconsistencia.icone} fs-5" style="color: ${d.inconsistencia.cor};" title="${d.inconsistencia.nome}"></i>`;
             } else {
-                statusIcon = d.status === 'OK' ? '<i class="bi bi-check-circle-fill text-success opacity-25"></i>' : '<i class="bi bi-exclamation-circle text-danger"></i>';
+                statusIcon = d.status === 'OK' ? '<i class="bi bi-check-circle-fill text-success opacity-25"></i>' : (d.status === 'Justificado' ? '<i class="bi bi-shield-check text-info"></i>' : '<i class="bi bi-exclamation-circle text-danger"></i>');
             }
+
+            const rowClass = d.is_justificado ? 'bg-light opacity-75' : '';
 
             tr.innerHTML = `
                 <td class="ps-4 text-start">
                     <div class="fw-bold text-dark">${d.colaborador_nome}</div>
-                    <div class="text-muted extra-small">${d.cargo_nome || ''}</div>
+                    <div class="text-muted extra-small d-flex align-items-center gap-1">
+                        ${d.cargo_nome || ''} 
+                        ${d.justificativa ? `<span class="badge bg-secondary-subtle text-secondary extra-small border">${d.justificativa.nome}</span>` : ''}
+                    </div>
                 </td>
-                <td>${statusIcon}</td>
+                <td class="text-center">${statusIcon}</td>
                 <td class="small opacity-75">${d.previsto || '-'}</td>
                 <td class="fw-bold">${d.ent1 || '--:--'}</td>
                 <td class="fw-bold">${d.sai1 || '--:--'}</td>
@@ -193,8 +200,10 @@
                 <td class="fw-bold">${d.sai2 || '--:--'}</td>
                 <td class="text-success">${d.extra_total || '00:00'}</td>
                 <td class="text-danger">${d.horas_atraso || '00:00'}</td>
-                <td class="${d.banco_minutos >= 0 ? 'text-primary' : 'text-danger'} fw-bold">${d.banco_saldo || '00:00'}</td>
-                <td class="pe-4">
+                <td class="${(d.banco_minutos || 0) >= 0 ? 'text-primary' : (d.is_justificado ? 'text-muted' : 'text-danger')} fw-bold">
+                    ${d.is_justificado ? '00:00' : (d.banco_saldo || '00:00')}
+                </td>
+                <td class="pe-4 text-end">
                     <a href="/rh/apuracao/?colaborador_id=${d.colaborador_id}&data=${d.data_db}" class="btn btn-sm btn-outline-primary" title="Abrir Cartão Completo">
                         <i class="bi bi-eye"></i>
                     </a>

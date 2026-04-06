@@ -17,7 +17,7 @@ from ..models import (
     Colaborador, Department, HistoricoProfissional, 
     PerformanceRH, User, DocumentoColaborador,    Empresa, Cargo, CentroCusto, Holiday, Turno, 
     JustificativaPonto, EscalaMensal, Horario, HorarioDetalhe, RegistroPonto, VisualColunaApuracao,
-    TipoInconsistencia
+    TipoInconsistencia, LancamentoJustificativa
 )
 
 logger = logging.getLogger(__name__)
@@ -2379,9 +2379,16 @@ def api_rh_ponto_diario_dados(request):
         escalas = EscalaMensal.objects.filter(data=target_date, colaborador__in=colaboradores)
         escalas_map = {e.colaborador_id: e.horario_previsto_id for e in escalas if e.horario_previsto_id}
 
-        # Horários
         horarios_list = Horario.objects.all().prefetch_related('detalhes')
         horarios_map = {h.id: h for h in horarios_list}
+        
+        # Pegamos os lançamentos de justificativa para o dia
+        lancamentos_just = LancamentoJustificativa.objects.filter(
+            data_inicio__lte=target_date, 
+            data_fim__gte=target_date,
+            colaborador__in=colaboradores
+        ).select_related('justificativa')
+        just_map = {lj.colaborador_id: lj for lj in lancamentos_just}
         
         resultados = []
         for colab in colaboradores:
@@ -2400,15 +2407,34 @@ def api_rh_ponto_diario_dados(request):
                 'cargo_nome': colab.cargo_atual,
                 'data_db': data_sel,
                 'status': 'OK' if regs else 'Inconsistência',
+                'justificativa': None,
                 'ent1': regs[0].hora.strftime('%H:%M') if len(regs) > 0 else '',
                 'sai1': regs[1].hora.strftime('%H:%M') if len(regs) > 1 else '',
                 'ent2': regs[2].hora.strftime('%H:%M') if len(regs) > 2 else '',
                 'sai2': regs[3].hora.strftime('%H:%M') if len(regs) > 3 else '',
-                # ... (Preencher com zeros para os campos de cálculo por enquanto)
+                'banco_horas': '00:00',
+                'is_justificado': False
             }
             
+            # Verificar se há justificativa
+            justificativa_ativa = just_map.get(colab.id)
+            if justificativa_ativa:
+                dia_item['justificativa'] = {
+                    'nome': justificativa_ativa.justificativa.nome,
+                    'abreviacao': justificativa_ativa.justificativa.abreviacao,
+                    'abona_falta': justificativa_ativa.justificativa.abonar_dia_falta
+                }
+                if justificativa_ativa.justificativa.abonar_dia_falta:
+                    dia_item['status'] = 'Justificado'
+                    dia_item['is_justificado'] = True
+
             # Detecção de inconsistência básica
             dia_item['inconsistencia'] = detectar_inconsistencias(dia_item, incon_config)
+            
+            # Se foi justificado e a justificativa abona falta, limpamos a inconsistência visual
+            if dia_item.get('is_justificado') and dia_item['inconsistencia']:
+                 # Se for falta total ou banco negativo, e houver abono, limpamos a flag de erro
+                 dia_item['inconsistencia'] = None
             
             if apenas_incon and not dia_item['inconsistencia'] and dia_item['status'] == 'OK':
                 continue
