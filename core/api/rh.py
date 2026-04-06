@@ -2356,15 +2356,9 @@ def api_rh_ponto_diario_dados(request):
             if r.colaborador_id not in regs_map: regs_map[r.colaborador_id] = []
             regs_map[r.colaborador_id].append(r)
 
-        # Pegamos os históricos profissionais ativos para saber o horário
-        historicos = HistoricoProfissional.objects.filter(
-            data_inicio__lte=target_date
-        ).order_by('colaborador_id', '-data_inicio')
-        
-        hist_map = {}
-        for h in historicos:
-            if h.colaborador_id not in hist_map:
-                hist_map[h.colaborador_id] = h
+        # Pegamos a escala de quem possuir para o dia, senão cai no padrão
+        escalas = EscalaMensal.objects.filter(data=target_date, colaborador__in=colaboradores)
+        escalas_map = {e.colaborador_id: e.horario_previsto_id for e in escalas if e.horario_previsto_id}
 
         # Horários
         horarios_list = Horario.objects.all().prefetch_related('detalhes')
@@ -2373,8 +2367,8 @@ def api_rh_ponto_diario_dados(request):
         resultados = []
         for colab in colaboradores:
             # Lógica simplificada de apuração para 1 dia
-            hist = hist_map.get(colab.id)
-            horario = horarios_map.get(hist.horario_id) if hist else None
+            horario_id = escalas_map.get(colab.id, colab.horario_padrao_id)
+            horario = horarios_map.get(horario_id) if horario_id else None
             regs = regs_map.get(colab.id, [])
             
             # Aqui deveríamos chamar a mesma lógica de cálculo, mas por ser 1 dia 
