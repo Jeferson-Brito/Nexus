@@ -22,6 +22,15 @@
             </div>
             <div class="card-body p-4">
                     <input type="hidden" id="feriadoId">
+                    
+                    <div id="natHolidayInfo" class="alert alert-info py-2 px-3 small d-none mb-3 d-flex align-items-center">
+                        <i class="bi bi-info-circle-fill me-2 fs-5"></i> 
+                        <div>
+                            <strong>Gerenciado Pelo Sistema</strong><br>
+                            As datas e repetições de feriados nacionais são gerenciadas dinamicamente ano a ano. Sua edição se limita à personalização da abrangência (Empresas, Departamentos e Horários).
+                        </div>
+                    </div>
+
                     <div class="row g-3">
                         <div class="col-md-5">
                             <label class="form-label small fw-bold">Nome do Feriado *</label>
@@ -131,7 +140,8 @@
             style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
             <h5 class="fw-bold mb-0 text-white">Feriados</h5>
             <div class="d-flex gap-2">
-
+                <select id="anoFiltro" class="form-select form-select-sm shadow-none" style="width: auto; background:rgba(255,255,255,0.2); color:#fff; border:1.5px solid rgba(255,255,255,0.6); font-weight:600; cursor: pointer;" onchange="changeYearFilter()">
+                </select>
                 <button class="btn d-flex align-items-center gap-2" onclick="showTrocasList()"
                     style="background:rgba(255,255,255,0.2); color:#fff; border:1.5px solid rgba(255,255,255,0.6); font-weight:600;" title="Gerenciar Trocas de Feriado">
                     <i class="bi bi-arrow-left-right"></i> Trocas
@@ -379,6 +389,15 @@
             const data = await response.json();
             if (data.success) {
                 allFeriados = data.feriados;
+                const anoFiltro = document.getElementById('anoFiltro');
+                if (anoFiltro && anoFiltro.options.length === 0) {
+                    const baseYear = new Date().getFullYear();
+                    anoFiltro.innerHTML = `
+                        <option value="${baseYear - 1}">${baseYear - 1}</option>
+                        <option value="${baseYear}" selected>${baseYear}</option>
+                        <option value="${baseYear + 1}">${baseYear + 1}</option>
+                    `;
+                }
                 render();
             } else {
                 showError(data.error || 'Erro ao carregar feriados.');
@@ -441,11 +460,21 @@
         Array.from(select.options).forEach(opt => opt.selected = false);
     }
 
+    let currentYearFilter = new Date().getFullYear().toString();
+
+    function changeYearFilter() {
+        currentYearFilter = document.getElementById('anoFiltro').value;
+        currentPage = 1;
+        render();
+    }
+
     function render() {
         const q = document.getElementById('searchInput').value.toLowerCase();
-        const filtered = allFeriados.filter(f =>
-            (f.name || '').toLowerCase().includes(q)
-        );
+        const filtered = allFeriados.filter(f => {
+            const matchesQuery = (f.name || '').toLowerCase().includes(q);
+            const matchesYear = f.date && f.date.substring(0, 4) === currentYearFilter || (f.repeats_annually && f.is_national === false);
+            return matchesQuery && matchesYear;
+        });
 
         const pp = parseInt(document.getElementById('perPageSelect').value) || 10;
         const total = filtered.length;
@@ -544,6 +573,12 @@
             document.getElementById('feriadoDate').readOnly = isNat;
             document.getElementById('feriadoRepeats').disabled = isNat;
 
+            const natInfo = document.getElementById('natHolidayInfo');
+            if (natInfo) {
+                if (isNat) natInfo.classList.remove('d-none');
+                else natInfo.classList.add('d-none');
+            }
+
             // ManyToMany
             setMultiSelect('target_companies', f.target_companies);
             setMultiSelect('target_departments', f.target_departments);
@@ -561,6 +596,9 @@
             document.getElementById('feriadoName').readOnly = false;
             document.getElementById('feriadoDate').readOnly = false;
             document.getElementById('feriadoRepeats').disabled = false;
+
+            const natInfo = document.getElementById('natHolidayInfo');
+            if (natInfo) natInfo.classList.add('d-none');
 
             removeAll('target_companies');
             removeAll('target_departments');
