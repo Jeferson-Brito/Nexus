@@ -512,13 +512,16 @@
                     ${delBtn}
                 `;
 
+                const isRepete = f.is_national || f.repeats_annually;
+                const textRepete = f.is_national ? 'SIM (Autom.)' : (f.repeats_annually ? 'SIM' : 'NÃO');
+
                 return `
             <tr>
                 <td class="px-4 fw-semibold">${f.name} ${badgesOrigem}</td>
                 <td>${f.date_display}</td>
                 <td class="text-center">
-                    <span class="badge ${f.repeats_annually ? 'bg-success' : 'bg-secondary'}">
-                        ${f.repeats_annually ? 'Sim' : 'Não'}
+                    <span class="badge ${isRepete ? 'bg-success' : 'bg-secondary'}">
+                        ${textRepete}
                     </span>
                 </td>
                 <td class="text-end pe-4">
