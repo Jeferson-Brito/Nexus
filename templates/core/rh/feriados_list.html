@@ -730,10 +730,27 @@
         }).join('') || `<tr><td colspan="6" class="text-center py-4 text-muted">Nenhuma troca cadastrada.</td></tr>`;
     }
 
+    function updateBtnTrocaHorariosText() {
+        const checked = document.querySelectorAll('.chk-troca-horario:checked');
+        const total = document.querySelectorAll('.chk-troca-horario').length;
+        const btn = document.getElementById('btnTrocaHorarios');
+        
+        if (checked.length === 0) {
+            btn.textContent = 'Selecionar horários...';
+        } else if (checked.length === 1) {
+            btn.textContent = checked[0].nextElementSibling.textContent;
+        } else if (checked.length === total && total > 0) {
+            btn.textContent = `Todos os ${total} horários`;
+        } else {
+            btn.textContent = `${checked.length} horários selecionados`;
+        }
+    }
+
     function toggleAllTrocaHorarios(source) {
         document.querySelectorAll('.chk-troca-horario').forEach(chk => {
             chk.checked = source.checked;
         });
+        updateBtnTrocaHorariosText();
     }
 
     function showTrocaForm() {
@@ -753,11 +770,12 @@
                 document.getElementById('trocaHorariosContainer').innerHTML = res.horarios.map(h => `
                     <li>
                         <div class="form-check">
-                            <input class="form-check-input chk-troca-horario" type="checkbox" value="${h.id}" id="chkTrocaHorario_${h.id}">
+                            <input class="form-check-input chk-troca-horario" type="checkbox" value="${h.id}" id="chkTrocaHorario_${h.id}" onchange="updateBtnTrocaHorariosText()">
                             <label class="form-check-label text-dark" for="chkTrocaHorario_${h.id}">${h.nome}</label>
                         </div>
                     </li>`).join('');
                 document.getElementById('chkAllTrocaHorarios').checked = false;
+                updateBtnTrocaHorariosText();
             });
     }
 
