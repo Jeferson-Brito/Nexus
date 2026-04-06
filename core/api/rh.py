@@ -2724,7 +2724,7 @@ def api_rh_trocas_feriados(request):
         for t in trocas:
             hb_list = []
             for h in t.horarios_beneficiados.all():
-                hb_list.append({'id': h.id, 'nome': f"{h.nome} ({h.horario})"})
+                hb_list.append({'id': h.id, 'nome': h.nome})
             dados.append({
                 'id': t.id,
                 'empresa_id': t.empresa_id,
