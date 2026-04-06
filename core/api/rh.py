@@ -2378,7 +2378,7 @@ def api_rh_ponto_diario_dados(request):
             dia_item = {
                 'colaborador_id': colab.id,
                 'colaborador_nome': colab.nome_completo,
-                'cargo_nome': colab.cargo.nome if colab.cargo else '',
+                'cargo_nome': colab.cargo_atual,
                 'data_db': data_sel,
                 'status': 'OK' if regs else 'Inconsistência',
                 'ent1': regs[0].hora.strftime('%H:%M') if len(regs) > 0 else '',
