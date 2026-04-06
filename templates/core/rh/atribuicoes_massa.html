@@ -258,6 +258,29 @@
         </div>
     </div>
 
+    <div id="tpl_batidas">
+        <h6 class="fw-bold mb-4">Lançar Batidas de Ponto em Massa</h6>
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label class="filter-label">Data da Batida</label>
+                <input type="date" id="payload_batida_data" class="form-control form-select-custom">
+            </div>
+            <div class="col-md-3">
+                <label class="filter-label">Hora da Batida</label>
+                <input type="time" id="payload_batida_hora" class="form-control form-select-custom">
+            </div>
+            <div class="col-md-4">
+                <label class="filter-label">Tipo de Registro</label>
+                <select id="payload_batida_tipo" class="form-select form-select-custom">
+                    <option value="entrada">Entrada</option>
+                    <option value="saida_almoco">Saída Almoço</option>
+                    <option value="retorno_almoco">Retorno Almoço</option>
+                    <option value="saida">Saída Final</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
     <div id="tpl_grupos">
         <h6 class="fw-bold mb-4">Alteração de Grupos e Cargos</h6>
         <div class="row g-3">
@@ -466,7 +489,13 @@
     function prepareStep3() {
         const container = document.getElementById('step3_content');
         container.innerHTML = '';
-        const tplMap = { 'horario': 'tpl_horario', 'grupos_cargos': 'tpl_grupos', 'justificativa': 'tpl_justificativa', 'jornada': 'tpl_jornada' };
+        const tplMap = { 
+            'horario': 'tpl_horario', 
+            'grupos_cargos': 'tpl_grupos', 
+            'justificativa': 'tpl_justificativa', 
+            'jornada': 'tpl_jornada',
+            'batidas': 'tpl_batidas'
+        };
         const tplId = tplMap[selectedType];
         
         if (tplId) {
@@ -531,6 +560,10 @@
             payload.justificativa_id = document.getElementById('payload_justificativa').value;
             payload.data_inicio = document.getElementById('payload_data_inicio').value;
             payload.data_fim = document.getElementById('payload_data_fim').value;
+        } else if (selectedType === 'batidas') {
+            payload.data = document.getElementById('payload_batida_data').value;
+            payload.hora = document.getElementById('payload_batida_hora').value;
+            payload.tipo = document.getElementById('payload_batida_tipo').value;
         } else if (selectedType === 'jornada') payload.pinturas = paintedDays;
 
         const data = { tipo_atribuicao: selectedType, filters: filters, payload: payload };

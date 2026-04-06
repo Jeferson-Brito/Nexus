@@ -1393,6 +1393,25 @@ def api_execute_atribuicao_massa(request):
                         )
                     curr_date += timedelta(days=1)
 
+            elif tipo_atribuicao == 'batidas':
+                # Criação de Batidas de Ponto em massa
+                b_data = payload.get('data')
+                b_hora = payload.get('hora')
+                b_tipo = payload.get('tipo', 'entrada')
+                
+                if not all([b_data, b_hora, b_tipo]):
+                    return JsonResponse({'success': False, 'error': 'Dados incompletos para a batida.'}, status=400)
+                
+                for colab in colaboradores:
+                    RegistroPonto.objects.create(
+                        colaborador=colab,
+                        data=b_data,
+                        hora=b_hora,
+                        tipo=b_tipo,
+                        origem='admin',
+                        registrado_por=request.user
+                    )
+
         return JsonResponse({'success': True, 'message': f'Atribuição de "{tipo_atribuicao}" executada com sucesso para {colaboradores.count()} colaboradores.'})
     
     except Exception as ex:
