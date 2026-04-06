@@ -493,19 +493,22 @@
         table.innerHTML = html;
     }
 
+    function getSelectedValues(id) {
+        const sel = document.getElementById(id);
+        if (!sel) return [];
+        return Array.from(sel.selectedOptions).map(opt => opt.value);
+    }
+
     async function saveAssignment() {
         // Collect filtros
         const filter_colab = Array.from(document.querySelectorAll('.colab-checkbox:checked')).map(cb => cb.value);
         const filters = {
             colaborador_ids: filter_colab,
-            horario_id: null, // Removido conforme solicitado
             empresa_id: document.getElementById('filter_empresa').value,
-            department_id: document.getElementById('filter_depto').value, // Keeping existing single select for now
-            departamentos: getSelectedValues('filter_departments'),
+            department_id: document.getElementById('filter_depto').value,
             horarios: getSelectedValues('filter_horarios'),
             centros_custo_id: document.getElementById('filter_centro').value,
-            cargo: document.getElementById('filter_cargo').value, // Keeping existing single select for now
-            cargos: getSelectedValues('filter_cargos')
+            cargo: document.getElementById('filter_cargo').value
         };
 
         const payload = {};
