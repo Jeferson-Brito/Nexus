@@ -158,6 +158,9 @@ urlpatterns = [
     path('api/rh/feriados/', api_rh.api_feriados_list, name='api_feriados_list'),
     path('api/rh/feriados/save/', api_rh.api_save_feriado, name='api_save_feriado'),
     path('api/rh/feriados/<int:pk>/delete/', api_rh.api_delete_feriado, name='api_delete_feriado'),
+    path('api/rh/feriados/config/', api_rh.api_rh_configurar_feriados, name='api_rh_configurar_feriados'),
+    path('api/rh/feriados/trocas/', api_rh.api_rh_trocas_feriados, name='api_rh_trocas_feriados'),
+    path('api/rh/feriados/trocas/<int:pk>/delete/', api_rh.api_rh_delete_troca_feriado, name='api_delete_troca_feriado'),
     path('rh/onboarding/', views.under_development, {
         'page_name': 'Acompanhamento de Onboarding',
         'description': 'Checklist interativo para garantir que todos os novos colaboradores recebam equipamentos, acessos e treinamentos necessários.'

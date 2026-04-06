@@ -1644,23 +1644,38 @@ def api_rh_apuracao_dados(request):
         horarios_objs = Horario.objects.filter(id__in=horarios_ids)
         horarios_map = {h.id: h for h in horarios_objs}
 
+        considerar_feriados = colaborador.empresa.considerar_feriados_ponto if (colaborador.empresa and hasattr(colaborador.empresa, 'considerar_feriados_ponto')) else True
+        
         from core.utils.holidays_util import get_all_holidays
         all_feriados = get_all_holidays(start_date.year, end_date.year)
         datas_feriados_set = set()
-        for f_dict in all_feriados:
-            if not f_dict['apply_to_all']:
-                if (colaborador.empresa_id not in f_dict['target_companies'] and 
-                    (colaborador.department_id not in f_dict['target_departments'] if colaborador.department_id else True)):
-                    continue
-            d = f_dict['date']
-            if f_dict['repeats_annually']:
-                for y in range(start_date.year, end_date.year + 1):
-                    try:
-                        datas_feriados_set.add(date(y, d.month, d.day))
-                    except ValueError:
-                        datas_feriados_set.add(date(y, 2, 28))
-            else:
-                datas_feriados_set.add(d)
+        
+        from core.models import TrocaFeriado
+        trocas_por_original = {}
+        trocas_por_troca = {}
+
+        if considerar_feriados:
+            if colaborador.empresa:
+                trocas = TrocaFeriado.objects.filter(empresa=colaborador.empresa, data_feriado__year__gte=start_date.year)
+                for t in trocas:
+                    hb = list(t.horarios_beneficiados.values_list('id', flat=True))
+                    trocas_por_original[t.data_feriado] = {'troca': t, 'hb': hb}
+                    trocas_por_troca[t.data_troca] = {'troca': t, 'hb': hb}
+
+            for f_dict in all_feriados:
+                if not f_dict['apply_to_all']:
+                    if (colaborador.empresa_id not in f_dict['target_companies'] and 
+                        (colaborador.department_id not in f_dict['target_departments'] if colaborador.department_id else True)):
+                        continue
+                d = f_dict['date']
+                if f_dict['repeats_annually']:
+                    for y in range(start_date.year, end_date.year + 1):
+                        try:
+                            datas_feriados_set.add(date(y, d.month, d.day))
+                        except ValueError:
+                            datas_feriados_set.add(date(y, 2, 28))
+                else:
+                    datas_feriados_set.add(d)
 
         dias_semana_nome = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
         dados_apuracao = []
@@ -1807,8 +1822,37 @@ def api_rh_apuracao_dados(request):
                 _, n = split_night_shift(ws, we)
                 total_noturno_min += n
 
+            # Verifica se current_date é feriado considerando as trocas
+            is_feriado_hoje = False
+            
+            if considerar_feriados:
+                horario_aplicado_id = None
+                if horario_id:
+                    try:
+                        horario_aplicado_id = int(horario_id)
+                    except:
+                        pass
+                
+                # Se hoje é a data original de um feriado que foi trocado
+                if current_date in trocas_por_original:
+                    t_info = trocas_por_original[current_date]
+                    if horario_aplicado_id and horario_aplicado_id in t_info['hb']:
+                        # Feriado movido para outro dia -> hoje é dia normal
+                        is_feriado_hoje = False
+                    else:
+                        is_feriado_hoje = True
+                # Se hoje é a data de troca (o dia que virou feriado)
+                elif current_date in trocas_por_troca:
+                    t_info = trocas_por_troca[current_date]
+                    if horario_aplicado_id and horario_aplicado_id in t_info['hb']:
+                        is_feriado_hoje = True
+                    else:
+                        is_feriado_hoje = current_date in datas_feriados_set
+                else:
+                    is_feriado_hoje = current_date in datas_feriados_set
+
             # Horas previstas do dia
-            if current_date in datas_feriados_set:
+            if is_feriado_hoje:
                 minutos_previstos = 0
                 previsto = "Feriado"
                 dia_util = ""
@@ -1946,7 +1990,7 @@ def api_rh_apuracao_dados(request):
                 'dia_semana': dia_semana,
                 'is_weekend': current_date.weekday() >= 5,
                 
-                'previsto': previsto if minutos_previstos > 0 else "FOLGA",
+                'previsto': "Feriado" if is_feriado_hoje else (previsto if minutos_previstos > 0 else "FOLGA"),
                 'horario_id': horario_id,
                 'ent1': ent1, 'ent1_id': ent1_id,
                 'sai1': sai1, 'sai1_id': sai1_id,
@@ -2648,3 +2692,69 @@ def api_relatorio_inconsistencias_csv(request):
     except Exception as ex:
         logger.error(f"Erro fatal gerando CSV de inconsistências: {ex}")
         return HttpResponse(f"Erro ao gerar CSV: {str(ex)}", status=500)
+
+# ─────────────────────────────────────────────
+# CONFIGURAÇÃO E TROCA DE FERIADOS
+# ─────────────────────────────────────────────
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def api_rh_configurar_feriados(request):
+    if request.method == "GET":
+        empresas = Empresa.objects.all().values('id', 'nome', 'considerar_feriados_ponto')
+        return JsonResponse({'success': True, 'empresas': list(empresas)})
+    else:
+        data = json.loads(request.body)
+        empresa_id = data.get('empresa_id')
+        valor = data.get('considerar_feriados_ponto')
+        emp = get_object_or_404(Empresa, pk=empresa_id)
+        emp.considerar_feriados_ponto = valor
+        emp.save()
+        return JsonResponse({'success': True})
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def api_rh_trocas_feriados(request):
+    from core.models import TrocaFeriado
+    if request.method == "GET":
+        trocas = TrocaFeriado.objects.select_related('empresa').all()
+        dados = []
+        for t in trocas:
+            hb_list = []
+            for h in t.horarios_beneficiados.all():
+                hb_list.append({'id': h.id, 'nome': f"{h.nome} ({h.horario})"})
+            dados.append({
+                'id': t.id,
+                'empresa_id': t.empresa_id,
+                'empresa_nome': t.empresa.nome,
+                'descricao': t.descricao,
+                'data_feriado': t.data_feriado.strftime('%Y-%m-%d'),
+                'data_feriado_str': t.data_feriado.strftime('%d/%m/%Y'),
+                'data_troca': t.data_troca.strftime('%Y-%m-%d'),
+                'data_troca_str': t.data_troca.strftime('%d/%m/%Y'),
+                'horarios_beneficiados': hb_list,
+                'horarios_ids': [h['id'] for h in hb_list]
+            })
+        return JsonResponse({'success': True, 'trocas': dados})
+    else:
+        data = json.loads(request.body)
+        if data.get('id'):
+            t = get_object_or_404(TrocaFeriado, pk=data.get('id'))
+        else:
+            t = TrocaFeriado()
+        t.empresa_id = data.get('empresa_id')
+        t.data_feriado = data.get('data_feriado')
+        t.descricao = data.get('descricao')
+        t.data_troca = data.get('data_troca')
+        t.save()
+        if data.get('horarios_beneficiados'):
+            t.horarios_beneficiados.set(data.get('horarios_beneficiados'))
+        return JsonResponse({'success': True})
+
+@login_required
+@require_http_methods(["DELETE"])
+def api_rh_delete_troca_feriado(request, pk):
+    from core.models import TrocaFeriado
+    t = get_object_or_404(TrocaFeriado, pk=pk)
+    t.delete()
+    return JsonResponse({'success': True})

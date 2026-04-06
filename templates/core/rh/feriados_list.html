@@ -129,10 +129,20 @@
         <div class="card-header border-0 d-flex align-items-center justify-content-between py-3 px-4"
             style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
             <h5 class="fw-bold mb-0 text-white">Feriados</h5>
-            <button class="btn d-flex align-items-center gap-2" onclick="showForm()"
-                style="background:rgba(255,255,255,0.2); color:#fff; border:1.5px solid rgba(255,255,255,0.6); font-weight:600;">
-                <i class="bi bi-plus-lg"></i> Adicionar
-            </button>
+            <div class="d-flex gap-2">
+                <button class="btn d-flex align-items-center gap-2" onclick="showConfigModal()"
+                    style="background:rgba(255,255,255,0.2); color:#fff; border:1.5px solid rgba(255,255,255,0.6); font-weight:600;" title="Configurar Feriados">
+                    <i class="bi bi-gear"></i> Configurações
+                </button>
+                <button class="btn d-flex align-items-center gap-2" onclick="showTrocasList()"
+                    style="background:rgba(255,255,255,0.2); color:#fff; border:1.5px solid rgba(255,255,255,0.6); font-weight:600;" title="Gerenciar Trocas de Feriado">
+                    <i class="bi bi-arrow-left-right"></i> Trocas
+                </button>
+                <button class="btn d-flex align-items-center gap-2" onclick="showForm()"
+                    style="background:rgba(255,255,255,0.2); color:#fff; border:1.5px solid rgba(255,255,255,0.6); font-weight:600;">
+                    <i class="bi bi-plus-lg"></i> Adicionar
+                </button>
+            </div>
         </div>
 
         <!-- Toolbar -->
@@ -187,6 +197,81 @@
     </div>
 </div>
 
+<!-- Container: Trocas de Feriado -->
+<div id="trocaListContainer" class="card border-0 shadow-sm mb-4" style="border-radius: 12px; overflow: hidden; display: none;">
+    <div class="card-header border-0 d-flex align-items-center justify-content-between py-3 px-4"
+        style="background: linear-gradient(135deg, #0f172a 0%, #334155 100%);">
+        <h5 class="fw-bold mb-0 text-white"><i class="bi bi-arrow-left-right me-2"></i> Trocas de Feriados</h5>
+        <div class="d-flex gap-2">
+            <button class="btn d-flex align-items-center gap-2" onclick="hideTrocasList()"
+                style="background:rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.3);">
+                <i class="bi bi-arrow-left"></i> Voltar
+            </button>
+            <button class="btn btn-light d-flex align-items-center gap-2 fw-bold" onclick="showTrocaForm()">
+                <i class="bi bi-plus-lg"></i> Nova Troca
+            </button>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th class="px-4 py-3">Empresa</th>
+                    <th class="py-3">Feriado Original</th>
+                    <th class="py-3">Data Original</th>
+                    <th class="py-3">Trocado Para</th>
+                    <th class="py-3" style="max-width: 300px;">Horários Beneficiados</th>
+                    <th class="py-3 text-end pe-4">Ações</th>
+                </tr>
+            </thead>
+            <tbody id="trocaTbody"></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Form: Nova Troca -->
+<div id="trocaFormContainer" class="mb-4" style="display: none;">
+    <div class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
+        <div class="card-header border-0 py-3 px-4" style="background: linear-gradient(135deg, #0f172a 0%, #334155 100%);">
+            <h5 class="fw-bold mb-0 text-white">Nova Troca de Feriado</h5>
+        </div>
+        <div class="card-body p-4">
+            <input type="hidden" id="trocaId">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold">Empresa *</label>
+                    <select id="trocaEmpresa" class="form-select"></select>
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label small fw-bold">Descrição (Qual Feriado?) *</label>
+                    <input type="text" id="trocaDescricao" class="form-control" placeholder="Ex: Feriado de Tiradentes">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold">Data Original *</label>
+                    <input type="date" id="trocaDataFeriado" class="form-control">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold">Nova Data *</label>
+                    <input type="date" id="trocaDataTroca" class="form-control">
+                </div>
+            </div>
+            <div class="row g-3 mt-1">
+                <div class="col-md-12">
+                    <label class="form-label small fw-bold">Quais horários serão beneficiados?</label>
+                    <div class="small text-muted mb-2">Terão o feriado aplicado na Nova Data (e trabalharão normal na data Original). Selecione segurando Ctrl.</div>
+                    <select id="trocaHorarios" class="form-select" multiple style="height: 150px;"></select>
+                </div>
+            </div>
+            <div class="mt-4 pt-4 border-top d-flex gap-2 justify-content-end">
+                <button type="button" class="btn btn-light border px-4" onclick="hideTrocaForm()">Cancelar</button>
+                <button type="button" class="btn btn-primary px-5 shadow-sm" onclick="saveTroca()">
+                    <i class="bi bi-check-lg me-1"></i> Salvar Troca
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Modal Delete -->
 <div class="modal fade" id="modalDelete" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered modal-sm">
@@ -207,8 +292,44 @@
 <script>
     let allFeriados = [];
     let auxiliaryData = { empresas: [], departments: [], turnos: [] };
+    let configsEmpresas = [];
+    let allTrocas = [];
     let deleteId = null;
+    let deleteType = 'feriado'; // 'feriado' or 'troca'
     let currentPage = 1;
+
+    // Config Feriados Modal
+    const modalConfigFeriadosHTML = `
+    <div class="modal fade" id="modalConfigFeriados" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header border-bottom-0 pb-0">
+                    <h6 class="modal-title fw-bold"><i class="bi bi-gear text-primary me-2"></i> Configurar Feriados por Empresa</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body py-4">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Selecione a Empresa</label>
+                        <select id="configEmpresa" class="form-select" onchange="loadConfigStatus()"></select>
+                    </div>
+                    <div class="form-check form-switch mt-4">
+                        <input class="form-check-input" type="checkbox" role="switch" id="configAtivarFeriado" style="transform: scale(1.3); margin-right: 10px; cursor: pointer;">
+                        <label class="form-check-label fw-semibold" for="configAtivarFeriado" style="cursor: pointer;">
+                            Considerar feriados na Apuração de Ponto
+                            <span class="d-block small text-muted fw-normal mt-1">Se ativado, os analistas receberão a tratativa de Feriado no dia agendado. Se desativado, o feriado contará como dia normal de trabalho.</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer border-top-0 pt-0">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Fechar</button>
+                    <button type="button" class="btn btn-primary px-4" onclick="saveConfigFeriado()">Salvar</button>
+                </div>
+            </div>
+        </div>
+    </div>`;
+    document.body.insertAdjacentHTML('beforeend', modalConfigFeriadosHTML);
+
+
 
     document.addEventListener('DOMContentLoaded', () => {
         loadData();
@@ -469,13 +590,18 @@
 
     function openModalDelete(id, nome) {
         deleteId = id;
+        deleteType = 'feriado';
         document.getElementById('deleteFeriadoNome').textContent = nome;
         new bootstrap.Modal(document.getElementById('modalDelete')).show();
     }
 
     function confirmDelete() {
         if (!deleteId) return;
-        fetch(`/api/rh/feriados/${deleteId}/delete/`, {
+        const endpoint = deleteType === 'troca'
+            ? `/api/rh/feriados/trocas/${deleteId}/delete/`
+            : `/api/rh/feriados/${deleteId}/delete/`;
+            
+        fetch(endpoint, {
             method: 'DELETE',
             headers: { 'X-CSRFToken': getCsrf() }
         })
@@ -483,12 +609,143 @@
             .then(data => {
                 bootstrap.Modal.getInstance(document.getElementById('modalDelete')).hide();
                 if (data.success) {
-                    if (window.showToast) showToast('success', 'Feriado excluído!');
-                    loadData();
+                    if (window.showToast) showToast('success', 'Item excluído!');
+                    if (deleteType === 'troca') loadTrocas();
+                    else loadData();
                 } else {
                     alert(data.error || 'Erro ao excluir.');
                 }
             });
+    }
+
+    // --- Configurações de Feriados ---
+    function showConfigModal() {
+        fetch('/api/rh/feriados/config/')
+            .then(r => r.json())
+            .then(res => {
+                const sel = document.getElementById('configEmpresa');
+                sel.innerHTML = res.empresas.map(e => `<option value="${e.id}" data-ativo="${e.considerar_feriados_ponto}">${e.nome}</option>`).join('');
+                if(res.empresas.length > 0) {
+                    loadConfigStatus();
+                }
+                new bootstrap.Modal(document.getElementById('modalConfigFeriados')).show();
+            });
+    }
+
+    function loadConfigStatus() {
+        const sel = document.getElementById('configEmpresa');
+        const opt = sel.options[sel.selectedIndex];
+        if(opt) {
+            document.getElementById('configAtivarFeriado').checked = opt.getAttribute('data-ativo') === 'true';
+        }
+    }
+
+    function saveConfigFeriado() {
+        const empresaId = document.getElementById('configEmpresa').value;
+        const ativo = document.getElementById('configAtivarFeriado').checked;
+        fetch('/api/rh/feriados/config/', {
+            method: 'POST',
+            body: JSON.stringify({ empresa_id: empresaId, considerar_feriados_ponto: ativo }),
+            headers:{'Content-Type': 'application/json', 'X-CSRFToken': getCsrf()}
+        }).then(r => r.json()).then(res => {
+            if(res.success) {
+                bootstrap.Modal.getInstance(document.getElementById('modalConfigFeriados')).hide();
+                if(window.showToast) showToast('success', 'Configuração salva!');
+            }
+        });
+    }
+
+    // --- Trocas de Feriado ---
+    function showTrocasList() {
+        document.getElementById('feriadoListContainer').style.display = 'none';
+        document.getElementById('trocaListContainer').style.display = 'block';
+        document.getElementById('trocaFormContainer').style.display = 'none';
+        loadTrocas();
+    }
+
+    function hideTrocasList() {
+        document.getElementById('trocaListContainer').style.display = 'none';
+        document.getElementById('feriadoListContainer').style.display = 'block';
+        document.getElementById('trocaFormContainer').style.display = 'none';
+    }
+
+    function loadTrocas() {
+        fetch('/api/rh/feriados/trocas/')
+            .then(r => r.json())
+            .then(res => {
+                allTrocas = res.trocas;
+                renderTrocas();
+            });
+    }
+
+    function renderTrocas() {
+        const tbody = document.getElementById('trocaTbody');
+        tbody.innerHTML = allTrocas.map(t => {
+            const hbs = t.horarios_beneficiados.map(h => '• ' + h.nome).join('<br>');
+            return `
+            <tr>
+                <td class="fw-bold">${t.empresa_nome}</td>
+                <td class="text-muted"><i class="bi bi-calendar-event me-2 text-primary"></i>${t.descricao}</td>
+                <td><span class="badge bg-secondary">${t.data_feriado_str}</span></td>
+                <td><span class="badge bg-primary text-white"><i class="bi bi-arrow-right-short"></i>${t.data_troca_str}</span></td>
+                <td><small class="text-muted d-block" style="white-space: pre-wrap;">${hbs || 'Nenhum'}</small></td>
+                <td class="text-end">
+                    <button class="btn btn-sm btn-light border" onclick="confirmDeleteTroca(${t.id})" title="Excluir"><i class="bi bi-trash3 text-danger"></i></button>
+                </td>
+            </tr>
+            `;
+        }).join('') || `<tr><td colspan="6" class="text-center py-4 text-muted">Nenhuma troca cadastrada.</td></tr>`;
+    }
+
+    function showTrocaForm() {
+        document.getElementById('trocaFormContainer').style.display = 'block';
+        document.getElementById('trocaListContainer').style.display = 'none';
+        document.getElementById('trocaId').value = '';
+        document.getElementById('trocaDescricao').value = '';
+        document.getElementById('trocaDataFeriado').value = '';
+        document.getElementById('trocaDataTroca').value = '';
+        
+        document.getElementById('trocaEmpresa').innerHTML = auxiliaryData.empresas.map(e => `<option value="${e.id}">${e.nome || e.nome_fantasia}</option>`).join('');
+        
+        fetch('/api/rh/horarios/')
+            .then(r => r.json())
+            .then(res => {
+                document.getElementById('trocaHorarios').innerHTML = res.horarios.map(h => `<option value="${h.id}">${h.nome}</option>`).join('');
+            });
+    }
+
+    function hideTrocaForm() {
+        document.getElementById('trocaFormContainer').style.display = 'none';
+        document.getElementById('trocaListContainer').style.display = 'block';
+    }
+
+    function saveTroca() {
+        const payload = {
+            id: document.getElementById('trocaId').value || null,
+            empresa_id: document.getElementById('trocaEmpresa').value,
+            descricao: document.getElementById('trocaDescricao').value,
+            data_feriado: document.getElementById('trocaDataFeriado').value,
+            data_troca: document.getElementById('trocaDataTroca').value,
+            horarios_beneficiados: Array.from(document.getElementById('trocaHorarios').selectedOptions).map(o => o.value)
+        };
+        fetch('/api/rh/feriados/trocas/', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+            headers:{'Content-Type': 'application/json', 'X-CSRFToken': getCsrf()}
+        }).then(r => r.json()).then(res => {
+            if(res.success) {
+                hideTrocaForm();
+                loadTrocas();
+                if(window.showToast) showToast('success', 'Troca salva com sucesso');
+            }
+        });
+    }
+
+    function confirmDeleteTroca(id) {
+        deleteId = id;
+        deleteType = 'troca';
+        document.getElementById('deleteFeriadoNome').textContent = 'esta troca de feriado';
+        new bootstrap.Modal(document.getElementById('modalDelete')).show();
     }
 
     function showError(msg) {

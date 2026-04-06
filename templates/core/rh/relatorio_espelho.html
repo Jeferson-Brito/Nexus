@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Espelho de Ponto - Nexus{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --nexus-indigo: #4f46e5;
+        --nexus-bg: #f8fafc;
+        --nexus-border: #e2e8f0;
+    }
+
+    body { background-color: var(--nexus-bg); }
+
+    .report-card {
+        background: #fff;
+        border-radius: 12px;
+        border: 1px solid var(--nexus-border);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        margin-bottom: 24px;
+        overflow: hidden;
+    }
+
+    .report-header {
+        background: linear-gradient(135deg, var(--nexus-indigo) 0%, #3730a3 100%);
+        padding: 20px 24px;
+        color: white;
+    }
+
+    .filter-section {
+        padding: 24px;
+        background: white;
+        border-bottom: 1px solid var(--nexus-border);
+    }
+
+    .btn-premium {
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-search { background: var(--nexus-indigo); color: white; border: none; }
+    .btn-search:hover { background: #3730a3; transform: translateY(-1px); }
+
+    .table-espelho {
+        width: 100%;
+        font-size: 0.75rem;
+    }
+
+    .table-espelho thead th {
+        background: #f1f5f9;
+        color: #475569;
+        padding: 8px;
+        border: 1px solid var(--nexus-border);
+        text-align: center;
+    }
+
+    .table-espelho tbody td {
+        padding: 6px 8px;
+        border: 1px solid #f1f5f9;
+        text-align: center;
+    }
+
+    .day-off { background-color: #f8fafc; color: #94a3b8; }
+    .holiday { background-color: #fff1f2; color: #e11d48; }
+
+    @media print {
+        .no-print { display: none !important; }
+        .main-content { margin-left: 0 !important; padding: 0 !important; }
+        .report-card { border: none; box-shadow: none; }
+        .report-header { background: white !important; color: black !important; border-bottom: 2px solid black; }
+        .table-espelho th { background: #eee !important; color: black !important; border: 1pt solid black !important; }
+        .table-espelho td { border: 1pt solid black !important; }
+        body { background: white !important; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="report-card">
+        <div class="report-header">
+            <h4 class="mb-0 fw-bold"><i class="bi bi-file-earmark-spreadsheet me-2"></i>Espelho de Ponto Individual</h4>
+            <p class="opacity-75 small mb-0 mt-1">Conferência mensal de marcações e horas trabalhadas.</p>
+        </div>
+
+        <div class="filter-section no-print">
+            <form id="formEspelho" class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold text-muted">Mês / Ano</label>
+                    <input type="month" id="mes_referencia" class="form-control form-control-sm">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small fw-bold text-muted">Funcionário</label>
+                    <select id="sel_colab" class="form-select form-select-sm select2-premium">
+                        {% for c in colaboradores %}
+                        <option value="{{ c.id }}">{{ c.nome_completo }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button type="button" class="btn btn-premium btn-search w-100" onclick="gerarEspelho()">
+                        <i class="bi bi-eye"></i> Visualizar
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="px-4 py-3 bg-light no-print d-flex justify-content-end border-bottom">
+            <button class="btn btn-premium btn-light border shadow-sm" onclick="window.print()">
+                <i class="bi bi-printer"></i> Imprimir Espelho
+            </button>
+        </div>
+
+        <div class="p-4 position-relative" style="min-height: 500px;">
+            <div id="loader" class="position-absolute top-50 start-50 translate-middle d-none text-center">
+                <div class="spinner-border text-indigo" role="status"></div>
+                <p class="mt-2 text-muted fw-bold">Calculando espelho...</p>
+            </div>
+
+            <div id="espelhoContent">
+                <div class="text-center py-5 text-muted opacity-50">
+                    <i class="bi bi-file-earmark-person d-block fs-1 mb-2"></i>
+                    Selecione um funcionário e clique em "Visualizar"
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const now = new Date();
+    document.getElementById('mes_referencia').value = now.toISOString().slice(0, 7);
+});
+
+async function gerarEspelho() {
+    const colab_id = document.getElementById('sel_colab').value;
+    const mes_ref = document.getElementById('mes_referencia').value;
+    if(!colab_id) return;
+
+    const [year, month] = mes_ref.split('-');
+    const data_ini = `${year}-${month}-01`;
+    const data_fim = new Date(year, month, 0).toISOString().split('T')[0];
+
+    const loader = document.getElementById('loader');
+    const content = document.getElementById('espelhoContent');
+    loader.classList.remove('d-none');
+
+    try {
+        const resp = await fetch(`/api/rh/apuracao-dados/?colaborador_id=${colab_id}&data_inicio=${data_ini}&data_fim=${data_fim}`);
+        const data = await resp.json();
+        
+        if (data.success) {
+            renderEspelho(data, colab_id);
+        } else {
+            content.innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
+        }
+    } catch (e) {
+        content.innerHTML = `<div class="alert alert-danger">Falha na conexão com o servidor.</div>`;
+    } finally {
+        loader.classList.add('d-none');
+    }
+}
+
+function renderEspelho(data, colab_id) {
+    const content = document.getElementById('espelhoContent');
+    const colab = document.getElementById('sel_colab').options[document.getElementById('sel_colab').selectedIndex].text;
+    
+    let html = `
+        <div class="mb-4">
+            <h5 class="fw-bold text-center mb-1">${colab}</h5>
+            <p class="text-center small text-muted">Período de Referência: ${document.getElementById('mes_referencia').value}</p>
+        </div>
+        <table class="table-espelho">
+            <thead>
+                <tr>
+                    <th rowspan="2">Data</th>
+                    <th colspan="2">1ª Jornada</th>
+                    <th colspan="2">2ª Jornada</th>
+                    <th colspan="5">Totais Calculados</th>
+                </tr>
+                <tr>
+                    <th>Ent.</th><th>Sai.</th>
+                    <th>Ent.</th><th>Sai.</th>
+                    <th>Trab.</th><th>Ext.</th><th>Falt.</th><th>Atr.</th><th>Saldo BH</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${data.dias.map(d => `
+                    <tr class="${d.is_folga ? 'day-off' : ''} ${d.is_feriado ? 'holiday' : ''}">
+                        <td>${d.data.split('-').reverse().slice(0,2).join('/')} - ${d.nome_dia.slice(0,3)}</td>
+                        <td>${d.ent1 || '-'}</td><td>${d.sai1 || '-'}</td>
+                        <td>${d.ent2 || '-'}</td><td>${d.sai2 || '-'}</td>
+                        <td><strong>${d.horas_trabalhadas}</strong></td>
+                        <td class="${d.extra_total != '00:00' ? 'text-success fw-bold' : ''}">${d.extra_total}</td>
+                        <td class="${d.horas_falta != '00:00' ? 'text-danger' : ''}">${d.horas_falta}</td>
+                        <td class="${d.horas_atraso != '00:00' ? 'text-danger' : ''}">${d.horas_atraso}</td>
+                        <td class="fw-bold">${d.banco_acumulado || '-'}</td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
+    content.innerHTML = html;
+}
+</script>
+{% endblock %}

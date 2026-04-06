@@ -2107,6 +2107,7 @@ class Empresa(models.Model):
     logo = models.ImageField(upload_to='empresas_logos/', null=True, blank=True)
 
     # Metadados
+    considerar_feriados_ponto = models.BooleanField(default=True, verbose_name='Considerar Feriados no Ponto')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -2768,3 +2769,21 @@ class TipoInconsistencia(models.Model):
 
     def __str__(self):
         return self.nome
+
+class TrocaFeriado(models.Model):
+    """Armazena informações de trocas de feriados realizadas pelas empresas."""
+    empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE, related_name="trocas_feriados")
+    data_feriado = models.DateField(verbose_name="Data Original do Feriado")
+    descricao = models.CharField(max_length=200, verbose_name="Descrição do Feriado")
+    data_troca = models.DateField(verbose_name="Trocado para")
+    horarios_beneficiados = models.ManyToManyField(Horario, blank=True, verbose_name="Horários Beneficiados")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Troca de Feriado"
+        verbose_name_plural = "Trocas de Feriado"
+        ordering = ['-data_feriado']
+
+    def __str__(self):
+        return f"{self.empresa.nome} - {self.descricao} ({self.data_feriado.strftime('%d/%m/%Y')} -> {self.data_troca.strftime('%d/%m/%Y')})"
+
