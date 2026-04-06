@@ -1656,11 +1656,19 @@ def api_rh_apuracao_dados(request):
 
         if considerar_feriados:
             if colaborador.empresa:
-                trocas = TrocaFeriado.objects.filter(empresa=colaborador.empresa, data_feriado__year__gte=start_date.year)
+                trocas = TrocaFeriado.objects.filter(empresa=colaborador.empresa)
                 for t in trocas:
                     hb = list(t.horarios_beneficiados.values_list('id', flat=True))
-                    trocas_por_original[t.data_feriado] = {'troca': t, 'hb': hb}
-                    trocas_por_troca[t.data_troca] = {'troca': t, 'hb': hb}
+                    if getattr(t, 'repete_anualmente', False):
+                        for y in range(start_date.year, end_date.year + 1):
+                            try:
+                                trocas_por_original[date(y, t.data_feriado.month, t.data_feriado.day)] = {'troca': t, 'hb': hb}
+                                trocas_por_troca[date(y, t.data_troca.month, t.data_troca.day)] = {'troca': t, 'hb': hb}
+                            except ValueError:
+                                pass
+                    else:
+                        trocas_por_original[t.data_feriado] = {'troca': t, 'hb': hb}
+                        trocas_por_troca[t.data_troca] = {'troca': t, 'hb': hb}
 
             for f_dict in all_feriados:
                 if not f_dict['apply_to_all']:
@@ -2732,6 +2740,7 @@ def api_rh_trocas_feriados(request):
                 'data_feriado_str': t.data_feriado.strftime('%d/%m/%Y'),
                 'data_troca': t.data_troca.strftime('%Y-%m-%d'),
                 'data_troca_str': t.data_troca.strftime('%d/%m/%Y'),
+                'repete_anualmente': getattr(t, 'repete_anualmente', False),
                 'horarios_beneficiados': hb_list,
                 'horarios_ids': [h['id'] for h in hb_list]
             })
@@ -2746,6 +2755,7 @@ def api_rh_trocas_feriados(request):
         t.data_feriado = data.get('data_feriado')
         t.descricao = data.get('descricao')
         t.data_troca = data.get('data_troca')
+        t.repete_anualmente = data.get('repete_anualmente', False)
         t.save()
         if data.get('horarios_beneficiados'):
             t.horarios_beneficiados.set(data.get('horarios_beneficiados'))

@@ -130,10 +130,7 @@
             style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
             <h5 class="fw-bold mb-0 text-white">Feriados</h5>
             <div class="d-flex gap-2">
-                <button class="btn d-flex align-items-center gap-2" onclick="showConfigModal()"
-                    style="background:rgba(255,255,255,0.2); color:#fff; border:1.5px solid rgba(255,255,255,0.6); font-weight:600;" title="Configurar Feriados">
-                    <i class="bi bi-gear"></i> Configurações
-                </button>
+
                 <button class="btn d-flex align-items-center gap-2" onclick="showTrocasList()"
                     style="background:rgba(255,255,255,0.2); color:#fff; border:1.5px solid rgba(255,255,255,0.6); font-weight:600;" title="Gerenciar Trocas de Feriado">
                     <i class="bi bi-arrow-left-right"></i> Trocas
@@ -200,14 +197,19 @@
 <!-- Container: Trocas de Feriado -->
 <div id="trocaListContainer" class="card border-0 shadow-sm mb-4" style="border-radius: 12px; overflow: hidden; display: none;">
     <div class="card-header border-0 d-flex align-items-center justify-content-between py-3 px-4"
-        style="background: linear-gradient(135deg, #0f172a 0%, #334155 100%);">
+        style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
         <h5 class="fw-bold mb-0 text-white"><i class="bi bi-arrow-left-right me-2"></i> Trocas de Feriados</h5>
         <div class="d-flex gap-2">
+            <button class="btn d-flex align-items-center gap-2" onclick="showConfigModal()"
+                style="background:rgba(255,255,255,0.2); color:#fff; border:1.5px solid rgba(255,255,255,0.6); font-weight:600;" title="Configurar Feriados">
+                <i class="bi bi-gear"></i> Configurações
+            </button>
             <button class="btn d-flex align-items-center gap-2" onclick="hideTrocasList()"
-                style="background:rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.3);">
+                style="background:rgba(255,255,255,0.2); color:#fff; border:1.5px solid rgba(255,255,255,0.6); font-weight:600;">
                 <i class="bi bi-arrow-left"></i> Voltar
             </button>
-            <button class="btn btn-light d-flex align-items-center gap-2 fw-bold" onclick="showTrocaForm()">
+            <button class="btn d-flex align-items-center gap-2 fw-bold" onclick="showTrocaForm()"
+                style="background:rgba(255,255,255,1); color:#1d4ed8; border:1.5px solid #fff;">
                 <i class="bi bi-plus-lg"></i> Nova Troca
             </button>
         </div>
@@ -220,6 +222,7 @@
                     <th class="py-3">Feriado Original</th>
                     <th class="py-3">Data Original</th>
                     <th class="py-3">Trocado Para</th>
+                    <th class="py-3">Repete</th>
                     <th class="py-3" style="max-width: 300px;">Horários Beneficiados</th>
                     <th class="py-3 text-end pe-4">Ações</th>
                 </tr>
@@ -232,7 +235,7 @@
 <!-- Form: Nova Troca -->
 <div id="trocaFormContainer" class="mb-4" style="display: none;">
     <div class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
-        <div class="card-header border-0 py-3 px-4" style="background: linear-gradient(135deg, #0f172a 0%, #334155 100%);">
+        <div class="card-header border-0 py-3 px-4" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
             <h5 class="fw-bold mb-0 text-white">Nova Troca de Feriado</h5>
         </div>
         <div class="card-body p-4">
@@ -240,26 +243,41 @@
             <div class="row g-3">
                 <div class="col-md-3">
                     <label class="form-label small fw-bold">Empresa *</label>
-                    <select id="trocaEmpresa" class="form-select"></select>
+                    <select id="trocaEmpresa" class="form-select bg-light"></select>
                 </div>
                 <div class="col-md-5">
                     <label class="form-label small fw-bold">Descrição (Qual Feriado?) *</label>
-                    <input type="text" id="trocaDescricao" class="form-control" placeholder="Ex: Feriado de Tiradentes">
+                    <input type="text" id="trocaDescricao" class="form-control bg-light" placeholder="Ex: Feriado de Tiradentes">
                 </div>
                 <div class="col-md-2">
                     <label class="form-label small fw-bold">Data Original *</label>
-                    <input type="date" id="trocaDataFeriado" class="form-control">
+                    <input type="date" id="trocaDataFeriado" class="form-control bg-light">
                 </div>
                 <div class="col-md-2">
                     <label class="form-label small fw-bold">Nova Data *</label>
-                    <input type="date" id="trocaDataTroca" class="form-control">
+                    <input type="date" id="trocaDataTroca" class="form-control bg-light">
                 </div>
             </div>
-            <div class="row g-3 mt-1">
-                <div class="col-md-12">
-                    <label class="form-label small fw-bold">Quais horários serão beneficiados?</label>
-                    <div class="small text-muted mb-2">Terão o feriado aplicado na Nova Data (e trabalharão normal na data Original). Selecione segurando Ctrl.</div>
-                    <select id="trocaHorarios" class="form-select" multiple style="height: 150px;"></select>
+            <div class="row g-3 mt-3">
+                <div class="col-md-5 d-flex align-items-center">
+                    <div class="form-check form-switch ps-0 d-flex align-items-center gap-3 w-100 p-4 bg-light rounded border border-primary border-opacity-25" style="min-height: 80px;">
+                        <input class="form-check-input ms-0 mt-0 bg-primary border-primary" type="checkbox" id="trocaRepeteAnualmente" style="width: 3.5em; height: 1.8em; cursor: pointer;">
+                        <div>
+                            <label class="form-check-label fw-bold mb-1 d-block text-dark" for="trocaRepeteAnualmente" style="cursor: pointer; font-size: 1rem;">
+                                Repetir anualmente?
+                            </label>
+                            <small class="text-muted d-block" style="line-height: 1.2;">Essa troca valerá para os próximos anos</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-7">
+                    <div class="filter-box p-3 bg-light rounded shadow-sm border h-100">
+                        <label class="form-label small fw-bold mb-1 d-flex align-items-center gap-2">
+                            <i class="bi bi-clock text-primary"></i> Quais horários serão beneficiados?
+                        </label>
+                        <div class="small text-muted mb-2">Terão o feriado aplicado na Nova Data. Selecione segurando Ctrl.</div>
+                        <select id="trocaHorarios" class="form-select border-0 shadow-sm rounded" multiple style="height: 120px;"></select>
+                    </div>
                 </div>
             </div>
             <div class="mt-4 pt-4 border-top d-flex gap-2 justify-content-end">
@@ -684,13 +702,14 @@
             const hbs = t.horarios_beneficiados.map(h => '• ' + h.nome).join('<br>');
             return `
             <tr>
-                <td class="fw-bold">${t.empresa_nome}</td>
+                <td class="fw-bold px-4">${t.empresa_nome}</td>
                 <td class="text-muted"><i class="bi bi-calendar-event me-2 text-primary"></i>${t.descricao}</td>
-                <td><span class="badge bg-secondary">${t.data_feriado_str}</span></td>
-                <td><span class="badge bg-primary text-white"><i class="bi bi-arrow-right-short"></i>${t.data_troca_str}</span></td>
+                <td><span class="badge bg-secondary px-2 py-1">${t.data_feriado_str}</span></td>
+                <td><span class="badge bg-primary text-white border border-primary px-2 py-1"><i class="bi bi-arrow-right-short"></i>${t.data_troca_str}</span></td>
+                <td><span class="badge ${t.repete_anualmente ? 'bg-success' : 'bg-light text-dark border'} px-2 py-1">${t.repete_anualmente ? 'Sim' : 'Não'}</span></td>
                 <td><small class="text-muted d-block" style="white-space: pre-wrap;">${hbs || 'Nenhum'}</small></td>
-                <td class="text-end">
-                    <button class="btn btn-sm btn-light border" onclick="confirmDeleteTroca(${t.id})" title="Excluir"><i class="bi bi-trash3 text-danger"></i></button>
+                <td class="text-end pe-4">
+                    <button class="btn btn-sm btn-light border hover-elevate" onclick="confirmDeleteTroca(${t.id})" title="Excluir"><i class="bi bi-trash3 text-danger"></i></button>
                 </td>
             </tr>
             `;
@@ -704,6 +723,7 @@
         document.getElementById('trocaDescricao').value = '';
         document.getElementById('trocaDataFeriado').value = '';
         document.getElementById('trocaDataTroca').value = '';
+        document.getElementById('trocaRepeteAnualmente').checked = false;
         
         document.getElementById('trocaEmpresa').innerHTML = auxiliaryData.empresas.map(e => `<option value="${e.id}">${e.nome || e.nome_fantasia}</option>`).join('');
         
@@ -726,6 +746,7 @@
             descricao: document.getElementById('trocaDescricao').value,
             data_feriado: document.getElementById('trocaDataFeriado').value,
             data_troca: document.getElementById('trocaDataTroca').value,
+            repete_anualmente: document.getElementById('trocaRepeteAnualmente').checked,
             horarios_beneficiados: Array.from(document.getElementById('trocaHorarios').selectedOptions).map(o => o.value)
         };
         fetch('/api/rh/feriados/trocas/', {

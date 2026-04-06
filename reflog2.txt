@@ -1,0 +1,10 @@
+84f3d6f HEAD@{0}: reset: moving to 84f3d6f
+6526fb5 HEAD@{1}: commit: feat: Adiciona o botão de atalho para gestão de feriados e trocas na apuração de ponto
+84f3d6f HEAD@{2}: commit: feat: Implementa gestão de Troca de Feriados e Configuração Global de Feriados
+35d3c89 HEAD@{3}: commit: fix: corrigo TypeError ao ler nome_dia
+e8d216b HEAD@{4}: commit: fix: corrigir caminho do logo que causou erro 500
+de73a14 HEAD@{5}: commit: feat: implementar layout de impressao do cartao de ponto tipo Control iD para inconsistencias
+e54b65c HEAD@{6}: reset: moving to e54b65c
+6b33c1f HEAD@{7}: commit: fix: ajustar fidelidade visual do cartão de ponto para modelo Control iD e adicionar saldo acumulado
+3866fbb HEAD@{8}: commit: feat: implementar relatório de cartão de ponto PDF com layout Control iD e branding Nexus
+e54b65c HEAD@{9}: reset: moving to e54b65c

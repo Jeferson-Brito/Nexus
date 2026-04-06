@@ -2777,6 +2777,7 @@ class TrocaFeriado(models.Model):
     descricao = models.CharField(max_length=200, verbose_name="Descrição do Feriado")
     data_troca = models.DateField(verbose_name="Trocado para")
     horarios_beneficiados = models.ManyToManyField(Horario, blank=True, verbose_name="Horários Beneficiados")
+    repete_anualmente = models.BooleanField(default=False, verbose_name="Repete Troca Anualmente")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
