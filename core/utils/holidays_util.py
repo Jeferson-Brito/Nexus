@@ -36,7 +36,7 @@ def get_all_holidays(start_year, end_year):
     
     # 2. Calcular Feriados Dinâmicos (Naturais do Brasil - Federais) via biblioteca
     if start_year and end_year:
-        br_holidays = holidays.country_holidays('BR', years=range(start_year, end_year + 1))
+        br_holidays = holidays.country_holidays('BR', years=range(start_year, end_year + 1), language='pt_BR')
         
         for dt, name in br_holidays.items():
             if dt in db_dates or (dt.month, dt.day) in db_annual_days:

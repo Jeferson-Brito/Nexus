@@ -471,16 +471,16 @@
                     ? '<span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle ms-2">Nacional</span>'
                     : '<span class="badge bg-success bg-opacity-10 text-success border border-success-subtle ms-2">Local</span>';
                 
-                const acoes = f.is_national 
-                    ? '<span class="text-muted small italic">Sistema</span>'
-                    : `
-                    <button class="btn btn-sm btn-light border me-1" onclick="showForm('${f.id}')">
+                const delBtn = f.is_national
+                    ? `<button class="btn btn-sm btn-light border" disabled title="Feriado nacional padrão não pode ser excluído"><i class="bi bi-trash3 text-muted" style="opacity: 0.5;"></i></button>`
+                    : `<button class="btn btn-sm btn-light border hover-elevate" onclick="openModalDelete('${f.id}', '${f.name.replace(/'/g, "\\'")}')" title="Excluir"><i class="bi bi-trash3 text-danger"></i></button>`;
+
+                const acoes = `
+                    <button class="btn btn-sm btn-light border hover-elevate me-1" onclick="showForm('${f.id}')" title="Personalizar / Editar">
                         <i class="bi bi-pencil-square text-primary"></i>
                     </button>
-                    <button class="btn btn-sm btn-light border" onclick="openModalDelete('${f.id}', '${f.name.replace(/'/g, "\\'")}')">
-                        <i class="bi bi-trash3 text-danger"></i>
-                    </button>
-                    `;
+                    ${delBtn}
+                `;
 
                 return `
             <tr>
@@ -531,8 +531,8 @@
         if (id) {
             const f = allFeriados.find(x => x.id === id);
             if (!f) return;
-            document.getElementById('formTitle').textContent = 'Editar Feriado';
-            document.getElementById('feriadoId').value = f.id;
+            document.getElementById('formTitle').textContent = f.is_national ? 'Personalizar Feriado Nacional' : 'Editar Feriado';
+            document.getElementById('feriadoId').value = f.is_national ? '' : f.id;
             document.getElementById('feriadoName').value = f.name;
             document.getElementById('feriadoDate').value = f.date;
             document.getElementById('feriadoRepeats').checked = f.repeats_annually;
