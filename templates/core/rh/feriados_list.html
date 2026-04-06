@@ -274,8 +274,22 @@
                         <label class="form-label small fw-bold mb-1 d-flex align-items-center gap-2">
                             <i class="bi bi-clock text-primary"></i> Quais horários serão beneficiados?
                         </label>
-                        <div class="small text-muted mb-2">Terão o feriado aplicado na Nova Data. Selecione segurando Ctrl.</div>
-                        <select id="trocaHorarios" class="form-select border-0 shadow-sm rounded" multiple style="height: 120px;"></select>
+                        <div class="small text-muted mb-2">Terão o feriado aplicado na Nova Data.</div>
+                        <div class="dropdown">
+                            <button class="form-select text-start border-0 shadow-sm rounded w-100 bg-white" type="button" id="btnTrocaHorarios" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside" style="color: #495057;">
+                                Selecionar horários...
+                            </button>
+                            <ul class="dropdown-menu w-100 p-3 shadow border-0" aria-labelledby="btnTrocaHorarios" style="max-height: 250px; overflow-y: auto;">
+                                <li>
+                                    <div class="form-check pb-2 border-bottom mb-2">
+                                        <input class="form-check-input mb-1" type="checkbox" id="chkAllTrocaHorarios" onchange="toggleAllTrocaHorarios(this)">
+                                        <label class="form-check-label fw-bold small text-dark" for="chkAllTrocaHorarios">Todos os Horários</label>
+                                    </div>
+                                </li>
+                                <div id="trocaHorariosContainer">
+                                </div>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -716,6 +730,12 @@
         }).join('') || `<tr><td colspan="6" class="text-center py-4 text-muted">Nenhuma troca cadastrada.</td></tr>`;
     }
 
+    function toggleAllTrocaHorarios(source) {
+        document.querySelectorAll('.chk-troca-horario').forEach(chk => {
+            chk.checked = source.checked;
+        });
+    }
+
     function showTrocaForm() {
         document.getElementById('trocaFormContainer').style.display = 'block';
         document.getElementById('trocaListContainer').style.display = 'none';
@@ -730,7 +750,14 @@
         fetch('/api/rh/horarios/')
             .then(r => r.json())
             .then(res => {
-                document.getElementById('trocaHorarios').innerHTML = res.horarios.map(h => `<option value="${h.id}">${h.nome}</option>`).join('');
+                document.getElementById('trocaHorariosContainer').innerHTML = res.horarios.map(h => `
+                    <li>
+                        <div class="form-check">
+                            <input class="form-check-input chk-troca-horario" type="checkbox" value="${h.id}" id="chkTrocaHorario_${h.id}">
+                            <label class="form-check-label text-dark" for="chkTrocaHorario_${h.id}">${h.nome}</label>
+                        </div>
+                    </li>`).join('');
+                document.getElementById('chkAllTrocaHorarios').checked = false;
             });
     }
 
@@ -747,7 +774,7 @@
             data_feriado: document.getElementById('trocaDataFeriado').value,
             data_troca: document.getElementById('trocaDataTroca').value,
             repete_anualmente: document.getElementById('trocaRepeteAnualmente').checked,
-            horarios_beneficiados: Array.from(document.getElementById('trocaHorarios').selectedOptions).map(o => o.value)
+            horarios_beneficiados: Array.from(document.querySelectorAll('.chk-troca-horario:checked')).map(o => o.value)
         };
         fetch('/api/rh/feriados/trocas/', {
             method: 'POST',
