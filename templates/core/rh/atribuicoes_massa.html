@@ -341,7 +341,11 @@
             if (e.target.classList.contains('day-cell')) {
                 const cell = e.target;
                 const date = cell.dataset.date;
-                if (!selectedPaintTurno) return alert('Selecione um turno no pincel primeiro.');
+                if (!selectedPaintTurno) {
+                    if (window.showToast) showToast('warning', 'Selecione um turno no pincel primeiro.');
+                    else alert('Selecione um turno no pincel primeiro.');
+                    return;
+                }
                 
                 if (cell.classList.contains('painted')) {
                     cell.classList.remove('painted');
@@ -377,11 +381,13 @@
                 populateStep2();
             } else {
                 console.error("Erro na API de dados auxiliares:", data.error);
-                alert("Erro ao carregar dados para os filtros. Verifique o console.");
+                if (window.showToast) showToast('danger', "Erro ao carregar dados para os filtros.");
+                else alert("Erro ao carregar dados para os filtros.");
             }
         } catch(e) { 
             console.error('Erro de conexão ao carregar dados:', e); 
-            alert("Erro de conexão ao carregar dados. Verifique sua rede.");
+            if (window.showToast) showToast('danger', "Erro de conexão ao carregar dados.");
+            else alert("Erro de conexão ao carregar dados.");
         }
     }
 
@@ -422,7 +428,11 @@
     }
 
     function nextStep() {
-        if (currentStep === 1 && !selectedType) return alert('Selecione um tipo de atribuição.');
+        if (currentStep === 1 && !selectedType) {
+            if (window.showToast) showToast('warning', 'Selecione um tipo de atribuição.');
+            else alert('Selecione um tipo de atribuição.');
+            return;
+        }
         
         if (currentStep < 3) {
             currentStep++;
