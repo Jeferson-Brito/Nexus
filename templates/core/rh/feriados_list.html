@@ -535,9 +535,14 @@
             document.getElementById('formTitle').textContent = f.source === 'national' ? 'Personalizar Feriado Nacional' : 'Editar Feriado';
             document.getElementById('feriadoId').value = f.source === 'national' ? '' : f.id;
             document.getElementById('feriadoName').value = f.name;
-            document.getElementById('feriadoDate').value = f.date;
+            document.getElementById('feriadoDate').value = f.date_iso || f.date;
             document.getElementById('feriadoRepeats').checked = f.repeats_annually;
             document.getElementById('feriadoApplyAll').checked = f.apply_to_all;
+
+            const isNat = (f.source === 'national' || f.source === 'national_override');
+            document.getElementById('feriadoName').readOnly = isNat;
+            document.getElementById('feriadoDate').readOnly = isNat;
+            document.getElementById('feriadoRepeats').disabled = isNat;
 
             // ManyToMany
             setMultiSelect('target_companies', f.target_companies);
@@ -552,6 +557,10 @@
             document.getElementById('feriadoDate').value = '';
             document.getElementById('feriadoRepeats').checked = true;
             document.getElementById('feriadoApplyAll').checked = true;
+
+            document.getElementById('feriadoName').readOnly = false;
+            document.getElementById('feriadoDate').readOnly = false;
+            document.getElementById('feriadoRepeats').disabled = false;
 
             removeAll('target_companies');
             removeAll('target_departments');

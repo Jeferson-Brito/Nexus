@@ -10,67 +10,78 @@ def get_all_holidays(start_year, end_year):
     """
     # 1. Calcular Feriados Dinâmicos (Naturais do Brasil - Federais) via biblioteca
     br_holidays = {}
-    nat_dates = set()
-    nat_annual_days = set()
+    nat_names = set()
     
     if start_year and end_year:
         br_holidays = holidays.country_holidays('BR', years=range(start_year, end_year + 1), language='pt_BR')
-        nat_dates = set(br_holidays.keys())
-        nat_annual_days = {(dt.month, dt.day) for dt in nat_dates}
+        nat_names = set(br_holidays.values())
         
     # 2. Feriados do Banco (Locais e fixados manualmente)
     db_holidays = Holiday.objects.all().order_by('date')
     
     feriados_lista = []
+    db_overrides = {}
     
-    # Adicionar os do BD na lista resultante
     for f in db_holidays:
-        is_nat = False
-        if not f.repeats_annually and f.date in nat_dates:
-            is_nat = True
-        elif f.repeats_annually and (f.date.month, f.date.day) in nat_annual_days:
-            is_nat = True
+        if f.name in nat_names:
+            # É uma personalização (override) de um feriado nacional!
+            # Separamos para aplicar regras diretamente sobre as datas corretas (móveis)
+            db_overrides[f.name] = f
+        else:
+            # É puramente um feriado local
+            feriados_lista.append({
+                'source': 'db',
+                'id': str(f.id),
+                'name': f.name,
+                'date': f.date,
+                'date_iso': f.date.isoformat(),
+                'date_display': f.date.strftime('%d/%m/%Y') if not f.repeats_annually else f.date.strftime('%d/%m'),
+                'repeats_annually': f.repeats_annually,
+                'apply_to_all': f.apply_to_all,
+                'target_companies': list(f.target_companies.values_list('id', flat=True)) if not f.apply_to_all else [],
+                'target_departments': list(f.target_departments.values_list('id', flat=True)) if not f.apply_to_all else [],
+                'target_turnos': list(f.target_turnos.values_list('id', flat=True)) if not f.apply_to_all else [],
+                'is_national': False,
+                'can_delete': True,
+            })
             
-        feriados_lista.append({
-            'source': 'db',
-            'id': str(f.id),
-            'name': f.name,
-            'date': f.date,
-            'date_iso': f.date.isoformat(),
-            'date_display': f.date.strftime('%d/%m/%Y') if not f.repeats_annually else f.date.strftime('%d/%m'),
-            'repeats_annually': f.repeats_annually,
-            'apply_to_all': f.apply_to_all,
-            'target_companies': list(f.target_companies.values_list('id', flat=True)) if not f.apply_to_all else [],
-            'target_departments': list(f.target_departments.values_list('id', flat=True)) if not f.apply_to_all else [],
-            'target_turnos': list(f.target_turnos.values_list('id', flat=True)) if not f.apply_to_all else [],
-            'is_national': is_nat,
-            'can_delete': True,
-        })
-        
-    # Mapeamentos para evitar duplicacao com feriados nacionais ja criados manualmente
-    db_dates_set = {f['date'] for f in feriados_lista if not f['repeats_annually']}
-    db_annual_days_set = {(f['date'].month, f['date'].day) for f in feriados_lista if f['repeats_annually']}
-    
-    # 3. Adicionar Feriados Dinâmicos que não foram sobrepostos
+    # 3. Adicionar Feriados Dinâmicos aplicando os Overrides locais
     for dt, name in br_holidays.items():
-        if dt in db_dates_set or (dt.month, dt.day) in db_annual_days_set:
-            continue
-            
-        feriados_lista.append({
-            'source': 'national',
-            'id': f'NAT_{dt.isoformat()}',
-            'name': name,
-            'date': dt,
-            'date_iso': dt.isoformat(),
-            'date_display': dt.strftime('%d/%m/%Y'),
-            'repeats_annually': False,
-            'apply_to_all': True,
-            'target_companies': [],
-            'target_departments': [],
-            'target_turnos': [],
-            'is_national': True,
-            'can_delete': False,
-        })
+        custom_db = db_overrides.get(name)
+        
+        if custom_db:
+            # Overrides garantem as personalizações corporativas nas datas dinâmicas perfeitas (sem duplicar feriados móveis)
+            feriados_lista.append({
+                'source': 'national_override',
+                'id': str(custom_db.id),
+                'name': name,
+                'date': dt,
+                'date_iso': dt.isoformat(),
+                'date_display': dt.strftime('%d/%m/%Y'),
+                'repeats_annually': False,
+                'apply_to_all': custom_db.apply_to_all,
+                'target_companies': list(custom_db.target_companies.values_list('id', flat=True)) if not custom_db.apply_to_all else [],
+                'target_departments': list(custom_db.target_departments.values_list('id', flat=True)) if not custom_db.apply_to_all else [],
+                'target_turnos': list(custom_db.target_turnos.values_list('id', flat=True)) if not custom_db.apply_to_all else [],
+                'is_national': True,
+                'can_delete': True,
+            })
+        else:
+            feriados_lista.append({
+                'source': 'national',
+                'id': f'NAT_{dt.isoformat()}',
+                'name': name,
+                'date': dt,
+                'date_iso': dt.isoformat(),
+                'date_display': dt.strftime('%d/%m/%Y'),
+                'repeats_annually': False,
+                'apply_to_all': True,
+                'target_companies': [],
+                'target_departments': [],
+                'target_turnos': [],
+                'is_national': True,
+                'can_delete': False,
+            })
             
     # Ordenar tudo pela data
     feriados_lista.sort(key=lambda x: (x['date'].month, x['date'].day) if x['repeats_annually'] else (x['date'].year, x['date'].month, x['date'].day))
