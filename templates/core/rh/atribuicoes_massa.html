@@ -536,9 +536,18 @@
                 body: JSON.stringify(data)
             });
             const res = await resp.json();
-            if (res.success) { alert(res.message); window.location.reload(); }
-            else alert(res.error || 'Erro ao processar.');
-        } catch(e) { alert('Erro de conexão.'); } finally {
+            if (res.success) { 
+                if (window.showToast) showToast('success', res.message); 
+                else alert(res.message); 
+                setTimeout(() => window.location.reload(), 2500);
+            } else {
+                if (window.showToast) showToast('danger', res.error || 'Erro ao processar.');
+                else alert(res.error || 'Erro ao processar.');
+            }
+        } catch(e) { 
+            if (window.showToast) showToast('danger', 'Erro de conexão ou servidor.');
+            else alert('Erro de conexão.'); 
+        } finally {
             const btn = document.getElementById('btnSave');
             btn.disabled = false;
             btn.innerHTML = 'Salvar atribuição';
