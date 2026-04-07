@@ -1138,7 +1138,9 @@
 
     function renderTabelaApuracao(dias) {
         const apenasInconsistencias = document.getElementById('filtro_inconsistencias')?.checked;
-        const diasFiltrados = apenasInconsistencias ? dias.filter(d => d.status !== 'OK' || d.inconsistencia) : dias;
+        const diasFiltrados = apenasInconsistencias 
+            ? dias.filter(d => d.status !== 'OK' || d.inconsistencia || d.is_justificado) 
+            : dias;
 
         let thead = `
             <th class="py-3 text-start fw-semibold border-bottom-0" style="color: #6c757d;">Dia</th>
@@ -1198,7 +1200,20 @@
         diasFiltrados.forEach(dia => {
             const rowClass = dia.is_weekend ? 'style="background-color: #f7f8f9;"' : '';
             let statusIcon = '';
-            if (dia.inconsistencia) {
+            if (dia.is_justificado && dia.justificativa) {
+                const j = dia.justificativa;
+                const tipoBadge = {
+                    'dia_inteiro': 'bg-success',
+                    'abonar_horas': 'bg-primary',
+                    'periodo_especifico': 'bg-info text-dark',
+                    'relocar_extrafalta': 'bg-warning text-dark',
+                    'ajustar_horas': 'bg-secondary',
+                    'abonar_dsr': 'bg-teal text-dark',
+                }[j.tipo] || 'bg-success';
+                statusIcon = `<span class="badge ${tipoBadge} px-2 py-1" style="font-size: 0.7rem; cursor:default;" 
+                    data-bs-toggle="tooltip" 
+                    title="${j.nome} (${j.credito_min > 0 ? Math.floor(j.credito_min/60)+'h'+(j.credito_min%60 > 0 ? (j.credito_min%60)+'min' : '') : 'Justificado'} → Col. ${j.coluna_destino})">${j.abreviacao}</span>`;
+            } else if (dia.inconsistencia) {
                 statusIcon = `<i class="bi ${dia.inconsistencia.icone} fs-5 fw-bold" 
                                 style="color: ${dia.inconsistencia.cor};" 
                                 data-bs-toggle="tooltip" 
@@ -1206,8 +1221,10 @@
             } else {
                 statusIcon = dia.status === 'OK' ? 
                     '<i class="bi bi-check-circle fs-5 text-success" title="OK"></i>' : 
-                    '<i class="bi bi-x-circle fs-5 text-danger fw-bold" title="Inconsistencia"></i>';
+                    (dia.status === 'Justificado' ? '<i class="bi bi-shield-check fs-5 text-info" title="Justificado"></i>' :
+                    '<i class="bi bi-x-circle fs-5 text-danger fw-bold" title="Inconsistencia"></i>');
             }
+
             
             trHtml += `
                 <tr ${rowClass}>

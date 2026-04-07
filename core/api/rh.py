@@ -1713,6 +1713,35 @@ def api_rh_apuracao_dados(request):
         # Variáveis para Banco de Horas e DSR
         current_banco_acumulado = 0
         semanas_info = {} # {week_year: {"faltas": 0, "atrasos": 0}}
+
+        # ─────────────────────────────────────────────────────────────
+        #  PRÉ-CARGA: Justificativas lançadas no período
+        # ─────────────────────────────────────────────────────────────
+        lancamentos_just = LancamentoJustificativa.objects.filter(
+            colaborador=colaborador,
+            data_inicio__lte=end_date,
+            data_fim__gte=start_date,
+        ).select_related('justificativa')
+
+        # Mapa: date -> lista de LancamentoJustificativa que cobrem este dia
+        just_por_dia = {}
+        for lj in lancamentos_just:
+            d_iter = lj.data_inicio
+            while d_iter <= lj.data_fim:
+                if d_iter not in just_por_dia:
+                    just_por_dia[d_iter] = []
+                just_por_dia[d_iter].append(lj)
+                d_iter += timedelta(days=1)
+
+        # Semanas onde o DSR não deve ser descontado (abonar_dsr)
+        semanas_dsr_abonadas = set()
+        for lj in lancamentos_just:
+            if lj.justificativa.tipo == 'abonar_dsr':
+                d_iter = lj.data_inicio
+                while d_iter <= lj.data_fim:
+                    semanas_dsr_abonadas.add(d_iter.strftime('%Y-%U'))
+                    d_iter += timedelta(days=1)
+
         
         for i in range(delta.days + 1):
             current_date = start_date + timedelta(days=i)
@@ -1976,10 +2005,96 @@ def api_rh_apuracao_dados(request):
             
             # Falta e Atraso (Soma consolidada de dívida)
             falta_atraso_min = horas_atraso_min
-            
-            # Registrar para DSR da semana
-            if horas_falta_min > 0: semanas_info[week_id]["faltas"] += 1
+
+            # ─────────────────────────────────────────────────────────────
+            #  FASE 3.5: APLICAÇÃO DE JUSTIFICATIVAS
+            # ─────────────────────────────────────────────────────────────
+            abono_min = 0
+            is_justificado = False
+            justificativa_info = None
+
+            lancamentos_do_dia = just_por_dia.get(current_date, [])
+            for lj in lancamentos_do_dia:
+                j = lj.justificativa
+                debito_restante = falta_atraso_min  # quanto ainda está em débito
+
+                # ─── Calcular quantos minutos este lançamento "cobre" ───
+                credito_min = 0
+
+                if j.tipo == 'dia_inteiro':
+                    # Abona tudo que estava em débito no dia (falta ou atraso)
+                    credito_min = debito_restante
+
+                elif j.tipo == 'abonar_horas':
+                    # Abona um número fixo de horas informado no lançamento
+                    if lj.hora_inicio and lj.hora_fim:
+                        # hora_inicio usado como "quantidade": ex 08:00 -> 02:00 = 2h
+                        credito_min = max(0, time_to_min(lj.hora_fim) - time_to_min(lj.hora_inicio))
+                    else:
+                        # Fallback: abona o débito do dia por inteiro
+                        credito_min = debito_restante
+
+                elif j.tipo == 'periodo_especifico':
+                    # Abona apenas o período especificado (hora_inicio -> hora_fim)
+                    if lj.hora_inicio and lj.hora_fim:
+                        periodo_min = max(0, time_to_min(lj.hora_fim) - time_to_min(lj.hora_inicio))
+                        # Abate apenas o que o período cobre, limitado ao débito real
+                        credito_min = min(periodo_min, debito_restante)
+                    else:
+                        credito_min = debito_restante
+
+                elif j.tipo == 'ajustar_horas':
+                    # Ajusta diretamente o banco de horas (pode ser positivo/negativo)
+                    if lj.hora_inicio and lj.hora_fim:
+                        credito_min = time_to_min(lj.hora_fim) - time_to_min(lj.hora_inicio)
+                    else:
+                        credito_min = 0
+
+                elif j.tipo == 'relocar_extrafalta':
+                    # Move extra/falta: não altera o débito, mas marca como justificado
+                    credito_min = debito_restante
+
+                elif j.tipo == 'abonar_dsr':
+                    # Não altera o débito do dia, apenas marca semana para não descontar DSR
+                    credito_min = 0
+
+                # ─── Aplicar o crédito selon a coluna de destino ───
+                coluna = j.mostrar_em_coluna or 'apenas_justificar'
+                
+                if credito_min > 0 or j.tipo in ('dia_inteiro', 'relocar_extrafalta'):
+                    if credito_min > 0:
+                        # Reduz o débito do dia
+                        falta_atraso_min = max(0, falta_atraso_min - credito_min)
+                        horas_atraso_min = max(0, horas_atraso_min - credito_min)
+                        horas_falta_min = max(0, horas_falta_min - credito_min)
+
+                    if coluna == 'coluna_abono':
+                        abono_min += credito_min
+                    elif coluna == 'coluna_extra':
+                        extra_total_min = extra_total_min + credito_min if 'extra_total_min' in dir() else credito_min
+                    elif coluna == 'banco_horas':
+                        abono_min += credito_min  # Será somado ao banco_minutos abaixo
+                    # coluna 'apenas_justificar': apenas remove o erro visual
+
+                    is_justificado = True
+                    justificativa_info = {
+                        'nome': j.nome,
+                        'abreviacao': j.abreviacao,
+                        'tipo': j.tipo,
+                        'coluna_destino': coluna,
+                        'credito_min': credito_min,
+                    }
+                    
+                    # Se de dia inteiro E abonar_dia_falta, marcar dia como não faltoso
+                    if j.abonar_dia_falta and j.tipo in ('dia_inteiro', 'relocar_extrafalta'):
+                        dia_falta = 0
+                        dias_trabalhados = 1
+
+            # Registrar para DSR da semana (respeitando dsr_abonadas)
+            if horas_falta_min > 0 and week_id not in semanas_dsr_abonadas:
+                semanas_info[week_id]["faltas"] += 1
             semanas_info[week_id]["atrasos"] += horas_atraso_min
+
 
             # ─────────────────────────────────────────────────────────────
             #  FASE 4: EXTRAS E INTERJORNADA
@@ -2024,7 +2139,7 @@ def api_rh_apuracao_dados(request):
                 'ent2': ent2, 'ent2_id': ent2_id,
                 'sai2': sai2, 'sai2_id': sai2_id,
                 
-                'status': 'OK' if (len(regs) % 2 == 0 and not (minutos_previstos > 0 and len(regs) == 0)) else 'Inconsistência',
+                'status': 'Justificado' if is_justificado else ('OK' if (len(regs) % 2 == 0 and not (minutos_previstos > 0 and len(regs) == 0)) else 'Inconsistência'),
                 'is_compensado': detalhe.compensado if detalhe else False,
                 'is_almoco_livre': detalhe.almoco_livre if detalhe else False,
                 'is_folga': minutos_previstos == 0,
@@ -2068,12 +2183,18 @@ def api_rh_apuracao_dados(request):
                 'dsr_cons': "00:00",
                 'desconta_dsr': 0,
                 'dsr_deb': "00:00",
-                'banco_cred_deb': min_to_str(extra_total_min - falta_atraso_min),
+                # banco_minutos: extra - débito_restante + abono direcionado ao banco
+                'banco_cred_deb': min_to_str(extra_total_min - falta_atraso_min + abono_min),
                 'banco_saldo': "00:00",
-                'banco_minutos': extra_total_min - falta_atraso_min,
-                'abono': "00:00",
+                'banco_minutos': extra_total_min - falta_atraso_min + abono_min,
+                'abono': min_to_str(abono_min),
                 'ajuste': "00:00",
+
+                # Justificativa aplicada ao dia
+                'is_justificado': is_justificado,
+                'justificativa': justificativa_info,
             })
+
         
         # Segunda Passada: DSR e Saldo Acumulado
         banco_acumulado = 0
