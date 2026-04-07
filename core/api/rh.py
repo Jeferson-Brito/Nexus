@@ -2631,13 +2631,34 @@ def api_save_justificativa(request):
 @login_required
 @require_http_methods(["DELETE"])
 def api_delete_justificativa(request, pk):
-    from core.models import JustificativaPonto
+    from core.models import JustificativaPonto, LancamentoJustificativa
+    from django.db.models import ProtectedError
     try:
         j = get_object_or_404(JustificativaPonto, pk=pk)
+        
+        # Verificar se há lançamentos vinculados antes de tentar excluir
+        lancamentos_count = LancamentoJustificativa.objects.filter(justificativa=j).count()
+        if lancamentos_count > 0:
+            return JsonResponse({
+                'success': False,
+                'error': (
+                    f'Não é possível excluir "{j.nome}" pois ela está vinculada a '
+                    f'{lancamentos_count} lançamento{"s" if lancamentos_count > 1 else ""} de ponto. '
+                    f'Remova os lançamentos primeiro ou escolha outra justificativa para substituí-los.'
+                )
+            }, status=400)
+        
         j.delete()
         return JsonResponse({'success': True, 'message': 'Excluído com sucesso'})
+    
+    except ProtectedError:
+        return JsonResponse({
+            'success': False,
+            'error': f'Não é possível excluir esta justificativa pois ela está sendo usada em lançamentos de ponto existentes.'
+        }, status=400)
     except Exception as ex:
         return JsonResponse({'success': False, 'error': str(ex)}, status=500)
+
 
 
 # ─────────────────────────────────────────────

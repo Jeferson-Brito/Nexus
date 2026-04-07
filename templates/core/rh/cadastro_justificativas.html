@@ -486,11 +486,15 @@
                 await carregarLista();
                 Swal.fire({ icon: 'success', title: 'Excluído!', text: 'A justificativa foi removida.', timer: 2000, showConfirmButton: false });
             } else {
-                Swal.fire('Erro', d.error || 'Não foi possível excluir.', 'error');
+                // HTTP 400 = restrição esperada (lançamentos vinculados), 500 = erro técnico
+                const icon = r.status === 400 ? 'warning' : 'error';
+                const title = r.status === 400 ? 'Não é possível excluir' : 'Erro';
+                Swal.fire({ icon, title, text: d.error || 'Não foi possível excluir.' });
             }
         } catch (e) {
             Swal.fire('Erro', 'Falha ao excluir.', 'error');
         }
+
     }
 </script>
 {% endblock %}
