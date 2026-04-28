@@ -48,11 +48,10 @@ def escala_view(request):
     
     turnos = Turno.objects.filter(ativo=True).order_by('ordem', 'nome')
     
-    analistas_qs = AnalistaEscala.objects.filter(ativo=True).select_related('turno')
-    if not user.is_administrador() and user.department and user.department.name == 'RH':
-        analistas_qs = analistas_qs.filter(user__department__name='NRS Suporte')
-        
-    analistas = analistas_qs.order_by('turno__ordem', 'ordem', 'nome')
+    # Busca todos os analistas ativos — o modelo AnalistaEscala é exclusivo do NRS Suporte,
+    # portanto não há necessidade de filtrar por departamento. O filtro anterior por
+    # user__department quebraria quando o campo 'user' estivesse nulo.
+    analistas = AnalistaEscala.objects.filter(ativo=True).select_related('turno').order_by('turno__ordem', 'ordem', 'nome')
     
     turnos_data = [{
         'id': str(t.id),
@@ -72,11 +71,7 @@ def escala_view(request):
         'ordem': a.ordem
     } for a in analistas]
     
-    folgas_qs = FolgaManual.objects.select_related('analista')
-    if not user.is_administrador() and user.department and user.department.name == 'RH':
-        folgas_qs = folgas_qs.filter(analista__user__department__name='NRS Suporte')
-        
-    folgas = folgas_qs.all()
+    folgas = FolgaManual.objects.select_related('analista').all()
     folgas_data = {}
     for f in folgas:
         key = f"{f.analista.id}-{f.data.year}-{f.data.month}-{f.data.day}"
@@ -86,7 +81,9 @@ def escala_view(request):
             'motivo': f.motivo
         }
     
-    is_admin = (user.is_gestor() or user.is_administrador()) and (user.department.name != 'RH' if user.department else True)
+    # RH vê a escala em modo somente-leitura (sem botões de editar/adicionar analista/turno)
+    is_rh = user.department and user.department.name == 'RH'
+    is_admin = (user.is_gestor() or user.is_administrador()) and not is_rh
     can_export = is_admin or (user.department and user.department.name == 'RH')
     
     context = {

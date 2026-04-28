@@ -411,21 +411,7 @@
                 <i class="bi bi-calendar-event"></i>
                 <span class="link-text">Escala</span>
             </a>
-            <a href="{% url 'quadro' %}"
-                class="nav-link {% if request.resolver_match.url_name == 'quadro' %}active{% endif %}">
-                <i class="bi bi-grid-3x3"></i>
-                <span class="link-text">Quadro</span>
-            </a>
-            <a href="{% url 'calendario' %}"
-                class="nav-link {% if request.resolver_match.url_name == 'calendario' %}active{% endif %}">
-                <i class="bi bi-calendar3"></i>
-                <span class="link-text">Calendário</span>
-            </a>
-            <a href="{% url 'tasks_view' %}"
-                class="nav-link {% if request.resolver_match.url_name == 'tasks_view' %}active{% endif %}">
-                <i class="bi bi-list-check"></i>
-                <span class="link-text">Tarefas e Solicitações</span>
-            </a>
+
             <a href="#auditoriaLojasSubmenu"
                 class="nav-link dropdown-toggle-custom {% if 'verificacao_lojas' in request.resolver_match.url_name %}active{% endif %}"
                 data-bs-toggle="collapse"
