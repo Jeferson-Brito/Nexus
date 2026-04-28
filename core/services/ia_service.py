@@ -66,7 +66,7 @@ PERGUNTA DO ANALISTA:
 RESPOSTA:"""
 
         response = client.models.generate_content(
-            model='gemini-1.5-flash',
+            model='gemini-flash-latest',
             contents=prompt
         )
         return response.text.strip()
@@ -116,7 +116,7 @@ Valores possíveis para "sentimento":
 RESPONDA APENAS COM O JSON:"""
 
         response = client.models.generate_content(
-            model='gemini-1.5-flash',
+            model='gemini-flash-latest',
             contents=prompt
         )
         texto = response.text.strip()
