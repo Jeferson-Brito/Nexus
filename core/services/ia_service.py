@@ -1,6 +1,7 @@
 """
 Serviço de Inteligência Artificial — Nexus
-Integração com Google Gemini para chatbot da KB e classificação de reclamações.
+Integração com Google Gemini (SDK google-genai) para chatbot da KB
+e classificação automática de reclamações.
 """
 import json
 import logging
@@ -9,14 +10,13 @@ from django.conf import settings
 logger = logging.getLogger(__name__)
 
 
-def _get_model():
-    """Retorna o modelo Gemini configurado."""
-    import google.generativeai as genai
+def _get_client():
+    """Retorna o cliente Gemini configurado com o novo SDK google-genai."""
+    from google import genai
     api_key = getattr(settings, 'GEMINI_API_KEY', '')
     if not api_key:
         raise ValueError("GEMINI_API_KEY não configurada. Adicione ao .env e ao Render.")
-    genai.configure(api_key=api_key)
-    return genai.GenerativeModel('gemini-1.5-flash')
+    return genai.Client(api_key=api_key)
 
 
 def chatbot_kb(pergunta: str, artigos: list) -> str:
@@ -31,7 +31,7 @@ def chatbot_kb(pergunta: str, artigos: list) -> str:
         Texto da resposta gerada pela IA.
     """
     try:
-        model = _get_model()
+        client = _get_client()
 
         # Montar contexto com no máximo 25 artigos para não estourar tokens
         artigos_contexto = artigos[:25]
@@ -65,7 +65,10 @@ PERGUNTA DO ANALISTA:
 
 RESPOSTA:"""
 
-        response = model.generate_content(prompt)
+        response = client.models.generate_content(
+            model='gemini-2.0-flash',
+            contents=prompt
+        )
         return response.text.strip()
 
     except ValueError as e:
@@ -88,7 +91,7 @@ def classificar_reclamacao(descricao: str, tipo_reclamacao: str) -> dict:
         Dict com 'urgencia' e 'sentimento', ou valores padrão em caso de erro.
     """
     try:
-        model = _get_model()
+        client = _get_client()
 
         prompt = f"""Analise esta reclamação de cliente de uma rede de lavanderias e classifique-a.
 
@@ -112,7 +115,10 @@ Valores possíveis para "sentimento":
 
 RESPONDA APENAS COM O JSON:"""
 
-        response = model.generate_content(prompt)
+        response = client.models.generate_content(
+            model='gemini-2.0-flash',
+            contents=prompt
+        )
         texto = response.text.strip()
 
         # Limpar markdown se presente
@@ -142,5 +148,5 @@ RESPONDA APENAS COM O JSON:"""
         logger.error(f"[Nexus IA] Configuração inválida: {e}")
         return {'urgencia': 'media', 'sentimento': 'neutro', 'erro': 'api_key_missing'}
     except Exception as e:
-        logger.error(f"[Nexus IA] Erro na classificação: {e}")
+        logger.error(f"[Nexus IA] Erro na classificação: {type(e).__name__}: {e}")
         return {'urgencia': 'media', 'sentimento': 'neutro', 'erro': str(e)}
