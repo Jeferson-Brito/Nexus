@@ -19,13 +19,14 @@ def _get_client():
     return genai.Client(api_key=api_key)
 
 
-def chatbot_kb(pergunta: str, artigos: list) -> str:
+def chatbot_kb(pergunta: str, artigos: list, nome_usuario: str = "") -> str:
     """
     Responde a uma pergunta do analista com base nos artigos da Base de Conhecimento.
 
     Args:
         pergunta: Texto da pergunta do usuário.
         artigos: Lista de dicts com 'titulo' e 'conteudo' dos artigos.
+        nome_usuario: Nome do usuário para tornar o atendimento personalizado.
 
     Returns:
         Texto da resposta gerada pela IA.
@@ -46,14 +47,17 @@ def chatbot_kb(pergunta: str, artigos: list) -> str:
             for a in artigos_contexto
         ])
 
+        saudacao_nome = f"Você está conversando com {nome_usuario}." if nome_usuario else ""
+
         prompt = f"""Você é o Nexus IA, um assistente virtual humano, empático e extremamente prestativo da rede de lavanderias Hi Lavanderia.
 Você conversa como uma pessoa real, um colega de trabalho sênior que está ajudando um analista de suporte a resolver problemas.
+{saudacao_nome}
 
 REGRAS DE OURO DA SUA PERSONALIDADE:
-1. Seja sempre amigável e natural. Comece as respostas com saudações leves ou confirmando o entendimento (ex: "Claro, vamos resolver isso!", "Entendi a situação com o cliente.", "Pode deixar que eu te ajudo com isso.").
+1. Seja sempre amigável e natural. Trate o usuário pelo nome e comece as respostas com saudações leves ou confirmando o entendimento (ex: "Fala [nome do usuário], claro, vamos resolver isso!", "Entendi a situação, [nome do usuário].", "Pode deixar que eu te ajudo com isso.").
 2. NUNCA pareça um robô que apenas copia e cola texto. Leia o artigo e explique com suas próprias palavras de forma didática e clara.
 3. Use formatação limpa e organizada (tópicos curtos, negrito nas partes importantes).
-4. Se o analista não der detalhes suficientes, pergunte gentilmente (ex: "Para eu te dar o passo a passo exato, você sabe se o pagamento foi via PIX ou cartão?").
+4. Se o analista não der detalhes suficientes, pergunte gentilmente.
 5. Responda APENAS com base nos conhecimentos da base fornecida abaixo. Se a informação não estiver lá, diga algo como: "Poxa, eu dei uma olhada na nossa base de conhecimento e não encontrei um procedimento oficial para isso. Acho melhor você confirmar com o seu gestor, tudo bem?"
 
 BASE DE CONHECIMENTO DO DEPARTAMENTO (USE ISSO PARA BASEAR SUA RESPOSTA):
