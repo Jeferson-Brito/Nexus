@@ -15,6 +15,7 @@ from .api import auditoria as api_auditoria
 from .api import chat_inactivity as api_chat_inactivity
 from .api import rh as api_rh
 from .api import ponto as api_ponto
+from .api import ia as api_ia
 from . import views_ponto
 from .api.quadro import api_quadro_data, api_cartao_create, api_cartao_move, api_cartao_update, api_cartao_delete, api_cartao_details, api_comentario_add, api_anexo_add, api_anexo_delete, api_lista_create, api_lista_delete
 
@@ -376,5 +377,10 @@ urlpatterns = [
     path('api/ponto/banco-horas/<int:pk>/', api_ponto.banco_horas, name='api_ponto_banco_horas'),
     path('api/ponto/relatorio/', api_ponto.relatorio_mensal, name='api_ponto_relatorio_mensal'),
     path('api/ponto/exportar-excel/', api_ponto.exportar_excel, name='api_ponto_exportar_excel'),
+
+    # API Inteligência Artificial (Nexus IA)
+    path('api/ia/chatbot/', api_ia.api_chatbot_kb, name='api_ia_chatbot'),
+    path('api/ia/reclamacoes/<int:pk>/classificar/', api_ia.api_classificar_reclamacao, name='api_ia_classificar_reclamacao'),
+    path('api/ia/reclamacoes/classificar-lote/', api_ia.api_classificar_lote, name='api_ia_classificar_lote'),
 ]
 

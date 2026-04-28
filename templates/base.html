@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 {% load static %}
 <!-- Last update: 2026-02-27 20:25 -->
 {% load user_tags %}
@@ -1190,7 +1190,103 @@
 
 
 
-</body>
+{% if user.is_authenticated %}
+<!-- NEXUS IA — WIDGET CHATBOT FLUTUANTE -->
+<style>
+    #nexus-ia-fab{position:fixed;bottom:28px;right:28px;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 24px rgba(99,102,241,.5);z-index:9998;color:#fff;font-size:22px;transition:transform .25s cubic-bezier(.34,1.56,.64,1),box-shadow .25s;}
+    #nexus-ia-fab:hover{transform:scale(1.1) translateY(-2px);box-shadow:0 8px 32px rgba(99,102,241,.65);}
+    #nexus-ia-fab .fab-badge{position:absolute;top:-3px;right:-3px;width:16px;height:16px;background:#22c55e;border-radius:50%;border:2px solid #fff;animation:ia-pulse 2s infinite;}
+    @keyframes ia-pulse{0%,100%{transform:scale(1);opacity:1;}50%{transform:scale(1.3);opacity:.7;}}
+    #nexus-ia-panel{position:fixed;bottom:100px;right:28px;width:380px;max-height:560px;border-radius:20px;overflow:hidden;display:flex;flex-direction:column;background:rgba(15,15,25,.93);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(99,102,241,.3);box-shadow:0 20px 60px rgba(0,0,0,.5);z-index:9999;transform:translateY(24px) scale(.95);opacity:0;pointer-events:none;transition:transform .3s cubic-bezier(.34,1.56,.64,1),opacity .25s ease;}
+    #nexus-ia-panel.ia-open{transform:translateY(0) scale(1);opacity:1;pointer-events:all;}
+    @media(max-width:480px){#nexus-ia-panel{width:calc(100vw - 24px);right:12px;bottom:88px;}}
+    .ia-header{display:flex;align-items:center;gap:12px;padding:16px 18px;background:linear-gradient(135deg,rgba(99,102,241,.25),rgba(139,92,246,.15));border-bottom:1px solid rgba(255,255,255,.07);flex-shrink:0;}
+    .ia-avatar{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff;flex-shrink:0;}
+    .ia-header-info{flex:1;} .ia-header-title{color:#fff;font-size:14px;font-weight:700;margin:0;line-height:1.2;} .ia-header-sub{color:rgba(255,255,255,.45);font-size:11px;margin:0;}
+    .ia-status-dot{width:8px;height:8px;background:#22c55e;border-radius:50%;display:inline-block;margin-right:5px;animation:ia-pulse 2s infinite;}
+    .ia-close-btn{background:rgba(255,255,255,.08);border:none;color:rgba(255,255,255,.5);width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .2s,color .2s;font-size:14px;}
+    .ia-close-btn:hover{background:rgba(255,255,255,.15);color:#fff;}
+    .ia-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;scrollbar-width:thin;scrollbar-color:rgba(99,102,241,.4) transparent;}
+    .ia-messages::-webkit-scrollbar{width:4px;} .ia-messages::-webkit-scrollbar-thumb{background:rgba(99,102,241,.4);border-radius:4px;}
+    .ia-msg{display:flex;gap:10px;align-items:flex-end;animation:msg-in .3s ease;}
+    @keyframes msg-in{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+    .ia-msg.ia-msg-user{flex-direction:row-reverse;}
+    .ia-bubble{max-width:82%;padding:10px 14px;border-radius:16px;font-size:13.5px;line-height:1.55;word-break:break-word;}
+    .ia-msg-bot .ia-bubble{background:rgba(255,255,255,.07);color:rgba(255,255,255,.88);border-bottom-left-radius:4px;}
+    .ia-msg-user .ia-bubble{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border-bottom-right-radius:4px;}
+    .ia-msg-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;flex-shrink:0;}
+    .ia-typing .ia-bubble{display:flex;gap:5px;align-items:center;padding:12px 16px;background:rgba(255,255,255,.07);}
+    .ia-typing .dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.4);animation:typing-b 1.2s infinite;}
+    .ia-typing .dot:nth-child(2){animation-delay:.2s;} .ia-typing .dot:nth-child(3){animation-delay:.4s;}
+    @keyframes typing-b{0%,80%,100%{transform:translateY(0);opacity:.4;}40%{transform:translateY(-6px);opacity:1;}}
+    .ia-input-area{padding:12px 14px;border-top:1px solid rgba(255,255,255,.07);display:flex;gap:10px;align-items:flex-end;flex-shrink:0;}
+    #nexus-ia-input{flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;padding:10px 14px;font-size:13.5px;resize:none;outline:none;line-height:1.4;max-height:100px;min-height:40px;transition:border-color .2s;font-family:inherit;}
+    #nexus-ia-input::placeholder{color:rgba(255,255,255,.3);} #nexus-ia-input:focus{border-color:rgba(99,102,241,.6);}
+    .ia-send-btn{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border:none;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .2s,opacity .2s;font-size:15px;flex-shrink:0;}
+    .ia-send-btn:hover{transform:scale(1.08);} .ia-send-btn:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+    .ia-footer-hint{text-align:center;font-size:10.5px;color:rgba(255,255,255,.2);padding:0 14px 10px;flex-shrink:0;}
+</style>
+<button id="nexus-ia-fab" title="Assistente Nexus IA" onclick="toggleIAPanel()">
+    <i class="bi bi-stars"></i><span class="fab-badge"></span>
+</button>
+<div id="nexus-ia-panel" role="dialog" aria-label="Assistente Nexus IA">
+    <div class="ia-header">
+        <div class="ia-avatar"><i class="bi bi-stars"></i></div>
+        <div class="ia-header-info">
+            <p class="ia-header-title">Nexus IA</p>
+            <p class="ia-header-sub"><span class="ia-status-dot"></span>Assistente da Base de Conhecimento</p>
+        </div>
+        <button class="ia-close-btn" onclick="toggleIAPanel()"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="ia-messages" id="nexus-ia-messages">
+        <div class="ia-msg ia-msg-bot">
+            <div class="ia-msg-avatar"><i class="bi bi-stars"></i></div>
+            <div class="ia-bubble">Ola! Sou o <strong>Assistente Nexus IA</strong>.<br>Posso responder duvidas com base na Base de Conhecimento do seu departamento. Como posso ajudar?</div>
+        </div>
+    </div>
+    <div class="ia-input-area">
+        <textarea id="nexus-ia-input" placeholder="Digite sua pergunta..." rows="1" onkeydown="handleIAKey(event)" oninput="autoResizeIA(this)"></textarea>
+        <button class="ia-send-btn" id="nexus-ia-send" onclick="sendIAMessage()"><i class="bi bi-send-fill"></i></button>
+    </div>
+    <p class="ia-footer-hint">Respostas baseadas na Base de Conhecimento do Nexus</p>
+</div>
+<script>
+(function(){
+    var csrf=document.cookie.split(';').find(function(c){return c.trim().startsWith('csrftoken=');});
+    csrf=csrf?csrf.split('=')[1]:'';
+    window.toggleIAPanel=function(){var p=document.getElementById('nexus-ia-panel');var o=p.classList.toggle('ia-open');if(o)setTimeout(function(){document.getElementById('nexus-ia-input').focus();},300);};
+    window.handleIAKey=function(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendIAMessage();}};
+    window.autoResizeIA=function(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,100)+'px';};
+    window.sendIAMessage=async function(){
+        var input=document.getElementById('nexus-ia-input');var btn=document.getElementById('nexus-ia-send');
+        var q=input.value.trim();if(!q)return;
+        appendMsg('user',q);input.value='';input.style.height='auto';btn.disabled=true;
+        var tid=appendTyping();
+        try{
+            var r=await fetch('/api/ia/chatbot/',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':csrf},body:JSON.stringify({pergunta:q})});
+            var d=await r.json();removeTyping(tid);
+            appendMsg('bot',d.resposta||('erro: '+(d.erro||'Erro inesperado.')));
+        }catch(e){removeTyping(tid);appendMsg('bot','Nao foi possivel conectar ao assistente.');}
+        finally{btn.disabled=false;input.focus();}
+    };
+    function appendMsg(t,txt){
+        var c=document.getElementById('nexus-ia-messages');var d=document.createElement('div');d.className='ia-msg ia-msg-'+t;
+        var h=txt.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+        if(t==='bot'){d.innerHTML='<div class="ia-msg-avatar"><i class="bi bi-stars"></i></div><div class="ia-bubble">'+h+'</div>';}
+        else{d.innerHTML='<div class="ia-bubble">'+h+'</div><div class="ia-msg-avatar" style="background:rgba(255,255,255,.1)"><i class="bi bi-person-fill"></i></div>';}
+        c.appendChild(d);c.scrollTop=c.scrollHeight;
+    }
+    function appendTyping(){
+        var c=document.getElementById('nexus-ia-messages');var id='t'+Date.now();var d=document.createElement('div');
+        d.className='ia-msg ia-msg-bot ia-typing';d.id=id;
+        d.innerHTML='<div class="ia-msg-avatar"><i class="bi bi-stars"></i></div><div class="ia-bubble"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>';
+        c.appendChild(d);c.scrollTop=c.scrollHeight;return id;
+    }
+    function removeTyping(id){var e=document.getElementById(id);if(e)e.remove();}
+})();
+</script>
+{% endif %}
 
+</body>
 
 </html>

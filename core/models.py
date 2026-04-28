@@ -189,8 +189,26 @@ class Complaint(models.Model):
     volta_fazer_negocio = models.CharField(max_length=20, choices=VOLTA_FAZER_NEGOCIO_CHOICES, blank=True, null=True)
     feedback_text = models.TextField(blank=True)
     repeticoes_count = models.IntegerField(default=0)
+
+    # Classificação por Inteligência Artificial (Nexus IA)
+    ia_urgencia = models.CharField(
+        max_length=20,
+        choices=[('baixa', 'Baixa'), ('media', 'Média'), ('alta', 'Alta'), ('critica', 'Crítica')],
+        null=True, blank=True, verbose_name='Urgência (IA)'
+    )
+    ia_sentimento = models.CharField(
+        max_length=30,
+        choices=[
+            ('satisfeito', 'Satisfeito'), ('neutro', 'Neutro'),
+            ('frustrado', 'Frustrado'), ('muito_irritado', 'Muito Irritado')
+        ],
+        null=True, blank=True, verbose_name='Sentimento (IA)'
+    )
+    ia_classificado_em = models.DateTimeField(null=True, blank=True, verbose_name='Classificado por IA em')
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
     
     class Meta:
         indexes = [

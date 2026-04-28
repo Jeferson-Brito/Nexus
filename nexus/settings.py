@@ -334,3 +334,8 @@ LOGGING = {
 #         "BACKEND": "channels.layers.InMemoryChannelLayer"
 #     }
 # }
+
+# ==============================
+# INTELIGÊNCIA ARTIFICIAL
+# ==============================
+GEMINI_API_KEY = get_env("GEMINI_API_KEY", "")

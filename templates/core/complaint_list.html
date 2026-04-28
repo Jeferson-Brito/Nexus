@@ -17,6 +17,9 @@
             <a href="{% url 'import_complaints_xlsx' %}" class="btn btn-success me-2">
                 <i class="bi bi-upload"></i> Importar XLSX
             </a>
+            <button id="btn-classificar-ia" class="btn btn-outline-primary me-2" onclick="classificarLoteIA()" title="Classificar reclamações sem análise de IA">
+                <i class="bi bi-stars"></i> Classificar com IA
+            </button>
             {% endif %}
             <a href="{% url 'complaint_create' %}" class="btn btn-primary">
                 <i class="bi bi-plus-circle"></i> Nova Reclamação
@@ -230,6 +233,7 @@
                         <th>Loja</th>
                         <th>Status</th>
                         <th>Analista</th>
+                        <th>Nexus IA</th>
                         <th>Data</th>
                         <th>Ações</th>
                     </tr>
@@ -281,6 +285,33 @@
                                 <i class="bi bi-person"></i> {{ complaint.analista.username }}
                             {% else %}
                                 <span class="text-muted">Não atribuído</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if complaint.ia_urgencia %}
+                                {% if complaint.ia_urgencia == 'critica' %}
+                                <span class="badge" style="background:#dc2626;font-size:11px;"><i class="bi bi-exclamation-triangle-fill"></i> Crítica</span>
+                                {% elif complaint.ia_urgencia == 'alta' %}
+                                <span class="badge" style="background:#ea580c;font-size:11px;"><i class="bi bi-arrow-up-circle-fill"></i> Alta</span>
+                                {% elif complaint.ia_urgencia == 'media' %}
+                                <span class="badge" style="background:#ca8a04;font-size:11px;"><i class="bi bi-dash-circle-fill"></i> Média</span>
+                                {% else %}
+                                <span class="badge" style="background:#16a34a;font-size:11px;"><i class="bi bi-check-circle-fill"></i> Baixa</span>
+                                {% endif %}
+                                <br>
+                                {% if complaint.ia_sentimento == 'muito_irritado' %}
+                                <span class="badge bg-secondary mt-1" style="font-size:10px;">😤 Muito Irritado</span>
+                                {% elif complaint.ia_sentimento == 'frustrado' %}
+                                <span class="badge bg-secondary mt-1" style="font-size:10px;">😞 Frustrado</span>
+                                {% elif complaint.ia_sentimento == 'neutro' %}
+                                <span class="badge bg-secondary mt-1" style="font-size:10px;">😐 Neutro</span>
+                                {% elif complaint.ia_sentimento == 'satisfeito' %}
+                                <span class="badge bg-secondary mt-1" style="font-size:10px;">😊 Satisfeito</span>
+                                {% endif %}
+                            {% else %}
+                            <button class="btn btn-sm btn-outline-secondary py-0" style="font-size:11px;" onclick="classificarUm({{ complaint.pk }}, this)" title="Classificar com IA">
+                                <i class="bi bi-stars"></i>
+                            </button>
                             {% endif %}
                         </td>
                         <td>{{ complaint.created_at|date:"d/m/Y" }}</td>
@@ -588,5 +619,61 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+// ========== NEXUS IA — CLASSIFICAÇÃO ==========
+const IA_CSRF = document.cookie.split(';').find(c => c.trim().startsWith('csrftoken='))?.split('=')[1] || '';
+
+async function classificarLoteIA() {
+    const btn = document.getElementById('btn-classificar-ia');
+    if (!btn) return;
+    const orig = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Classificando...';
+    try {
+        const r = await fetch('/api/ia/reclamacoes/classificar-lote/', {
+            method: 'POST', headers: {'X-CSRFToken': IA_CSRF}
+        });
+        const d = await r.json();
+        if (d.classificadas !== undefined) {
+            showIAToast(`✅ ${d.classificadas} reclamação(ões) classificada(s) pela IA! Recarregue a página para ver os resultados.`, 'success');
+        } else {
+            showIAToast('⚠️ ' + (d.erro || 'Erro ao classificar.'), 'danger');
+        }
+    } catch(e) {
+        showIAToast('⚠️ Erro de conexão com o servidor.', 'danger');
+    } finally {
+        btn.disabled = false; btn.innerHTML = orig;
+    }
+}
+
+async function classificarUm(pk, btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i>';
+    try {
+        const r = await fetch(`/api/ia/reclamacoes/${pk}/classificar/`, {
+            method: 'POST', headers: {'X-CSRFToken': IA_CSRF}
+        });
+        const d = await r.json();
+        if (d.urgencia) {
+            showIAToast('✅ Classificado! Recarregue para ver os badges.', 'success');
+            btn.closest('td').innerHTML = '<span class="badge bg-secondary" style="font-size:11px">✓ Classificado</span>';
+        } else {
+            showIAToast('⚠️ ' + (d.erro || 'Erro ao classificar.'), 'danger');
+            btn.disabled = false; btn.innerHTML = '<i class="bi bi-stars"></i>';
+        }
+    } catch(e) {
+        showIAToast('⚠️ Erro de conexão.', 'danger');
+        btn.disabled = false; btn.innerHTML = '<i class="bi bi-stars"></i>';
+    }
+}
+
+function showIAToast(msg, type) {
+    const t = document.createElement('div');
+    t.className = `alert alert-${type} alert-dismissible position-fixed shadow`;
+    t.style.cssText = 'bottom:90px;right:24px;z-index:9999;min-width:280px;animation:msg-in .3s ease;';
+    t.innerHTML = `${msg}<button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>`;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 5000);
+}
 </script>
 {% endblock %}
