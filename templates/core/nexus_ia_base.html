@@ -159,11 +159,13 @@
             if (response.ok) {
                 renderizarTabelaIA(data.artigos);
             } else {
-                showToast('Erro ao carregar base', 'danger');
+                showToast(data.erro || 'Erro ao carregar base', 'danger');
+                renderizarTabelaIA([]);
             }
         } catch (error) {
             console.error('Erro:', error);
-            showToast('Erro de conexão', 'danger');
+            showToast('Erro de conexão ou servidor', 'danger');
+            renderizarTabelaIA([]);
         }
     }
 

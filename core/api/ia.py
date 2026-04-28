@@ -154,27 +154,35 @@ def api_ia_base_list(request):
     if not (request.user.is_gestor() or request.user.is_administrador()):
         return JsonResponse({'erro': 'Acesso negado.'}, status=403)
 
-    dept_id = request.GET.get('department_id')
-    
-    if request.user.is_administrador() and dept_id:
-        qs = NexusIABase.objects.filter(department_id=dept_id)
-    else:
-        qs = NexusIABase.objects.filter(department=request.user.department)
+    try:
+        dept_id = request.GET.get('department_id')
+        
+        if request.user.is_administrador():
+            if dept_id:
+                qs = NexusIABase.objects.filter(department_id=dept_id)
+            else:
+                qs = NexusIABase.objects.all()
+        else:
+            qs = NexusIABase.objects.filter(department=request.user.department)
 
-    qs = qs.order_by('-created_at')
-    
-    data = []
-    for a in qs:
-        data.append({
-            'id': a.id,
-            'titulo': a.titulo,
-            'conteudo': a.conteudo,
-            'department_id': a.department.id,
-            'department_name': a.department.name,
-            'created_at': a.created_at.strftime("%d/%m/%Y %H:%M")
-        })
+        qs = qs.select_related('department').order_by('-created_at')
+        
+        data = []
+        for a in qs:
+            data.append({
+                'id': a.id,
+                'titulo': a.titulo,
+                'conteudo': a.conteudo,
+                'department_id': a.department.id if a.department else None,
+                'department_name': a.department.name if a.department else 'N/A',
+                'created_at': a.created_at.strftime("%d/%m/%Y %H:%M")
+            })
 
-    return JsonResponse({'artigos': data})
+        return JsonResponse({'artigos': data})
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({'erro': str(e)}, status=500)
 
 
 @csrf_exempt
