@@ -16,7 +16,7 @@ def _get_model():
     if not api_key:
         raise ValueError("GEMINI_API_KEY não configurada. Adicione ao .env e ao Render.")
     genai.configure(api_key=api_key)
-    return genai.GenerativeModel('gemini-2.0-flash')
+    return genai.GenerativeModel('gemini-1.5-flash')
 
 
 def chatbot_kb(pergunta: str, artigos: list) -> str:
@@ -72,8 +72,8 @@ RESPOSTA:"""
         logger.error(f"[Nexus IA] Configuração inválida: {e}")
         return "⚠️ O assistente de IA não está configurado. Entre em contato com o administrador do sistema."
     except Exception as e:
-        logger.error(f"[Nexus IA] Erro no chatbot: {e}")
-        return "⚠️ Ocorreu um erro ao processar sua pergunta. Tente novamente em instantes."
+        logger.error(f"[Nexus IA] Erro no chatbot: {type(e).__name__}: {e}")
+        return f"⚠️ Ocorreu um erro ao processar sua pergunta ({type(e).__name__}). Tente novamente em instantes."
 
 
 def classificar_reclamacao(descricao: str, tipo_reclamacao: str) -> dict:
