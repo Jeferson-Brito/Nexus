@@ -1276,9 +1276,40 @@
     function appendMsg(t,txt){
         var c=document.getElementById('nexus-ia-messages');var d=document.createElement('div');d.className='ia-msg ia-msg-'+t;
         var h=txt.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
-        if(t==='bot'){d.innerHTML='<div class="ia-msg-avatar"><i class="bi bi-stars"></i></div><div class="ia-bubble">'+h+'</div>';}
-        else{d.innerHTML='<div class="ia-bubble">'+h+'</div><div class="ia-msg-avatar" style="background:rgba(255,255,255,.1)"><i class="bi bi-person-fill"></i></div>';}
-        c.appendChild(d);c.scrollTop=c.scrollHeight;
+        
+        if(t==='bot'){
+            d.innerHTML='<div class="ia-msg-avatar"><i class="bi bi-stars"></i></div><div class="ia-bubble"></div>';
+            c.appendChild(d);
+            var bubble = d.querySelector('.ia-bubble');
+            var i = 0; var isTag = false;
+            function typeWriter() {
+                if (i < h.length) {
+                    var char = h.charAt(i);
+                    if (char === '<') isTag = true;
+                    if (isTag) {
+                        var tagEnd = h.indexOf('>', i);
+                        if (tagEnd !== -1) {
+                            bubble.innerHTML = h.substring(0, tagEnd + 1);
+                            i = tagEnd + 1;
+                            isTag = false;
+                        } else {
+                            bubble.innerHTML = h.substring(0, i + 1);
+                            i++;
+                        }
+                    } else {
+                        bubble.innerHTML = h.substring(0, i + 1);
+                        i++;
+                    }
+                    c.scrollTop = c.scrollHeight;
+                    setTimeout(typeWriter, 12);
+                }
+            }
+            typeWriter();
+        } else {
+            d.innerHTML='<div class="ia-bubble">'+h+'</div><div class="ia-msg-avatar" style="background:rgba(255,255,255,.1)"><i class="bi bi-person-fill"></i></div>';
+            c.appendChild(d);
+            c.scrollTop=c.scrollHeight;
+        }
     }
     function appendTyping(){
         var c=document.getElementById('nexus-ia-messages');var id='t'+Date.now();var d=document.createElement('div');
