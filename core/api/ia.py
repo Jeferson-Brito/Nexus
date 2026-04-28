@@ -8,7 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
-from ..models import ArtigoBaseConhecimento, Complaint
+from ..models import ArtigoBaseConhecimento, Complaint, NexusIABase, Department
 from ..services.ia_service import chatbot_kb, classificar_reclamacao
 
 
@@ -30,15 +30,17 @@ def api_chatbot_kb(request):
         if len(pergunta) > 1000:
             return JsonResponse({'erro': 'Pergunta muito longa (máx. 1000 caracteres).'}, status=400)
 
-        # Buscar artigos do departamento do usuário (ou todos se admin)
+        # Buscar artigos na Base da IA exclusiva
         if request.user.is_administrador():
+            # Administrador tem contexto de todos os departamentos (ou do selecionado)
             selected_dept_id = request.session.get('selected_department_id')
             if selected_dept_id:
-                queryset = ArtigoBaseConhecimento.objects.filter(department_id=selected_dept_id)
+                queryset = NexusIABase.objects.filter(department_id=selected_dept_id)
             else:
-                queryset = ArtigoBaseConhecimento.objects.all()
+                queryset = NexusIABase.objects.all()
         else:
-            queryset = ArtigoBaseConhecimento.objects.filter(department=request.user.department)
+            # Demais usuários (analistas/gestores) só veem a base do próprio departamento
+            queryset = NexusIABase.objects.filter(department=request.user.department)
 
         artigos = [
             {'titulo': a.titulo, 'conteudo': a.conteudo}
@@ -101,10 +103,7 @@ def api_classificar_lote(request):
         return JsonResponse({'erro': 'Acesso negado.'}, status=403)
 
     try:
-        # Filtrar reclamações sem classificação IA
         qs = Complaint.objects.filter(ia_urgencia__isnull=True)
-
-        # Filtrar por departamento se não for admin
         if not request.user.is_administrador():
             qs = qs.filter(department=request.user.department)
 
@@ -130,10 +129,9 @@ def api_classificar_lote(request):
                 classificadas += 1
             else:
                 erros += 1
-                break  # Parar se a API key está faltando
+                break
 
         total_restante = Complaint.objects.filter(ia_urgencia__isnull=True).count()
-
         return JsonResponse({
             'status': 'ok',
             'classificadas': classificadas,
@@ -141,5 +139,133 @@ def api_classificar_lote(request):
             'restante': total_restante
         })
 
+    except Exception as e:
+        return JsonResponse({'erro': str(e)}, status=500)
+
+
+# -------------------------------------------------------------
+# APIs CRUD para a Base Nexus IA
+# -------------------------------------------------------------
+
+@login_required
+@require_http_methods(["GET"])
+def api_ia_base_list(request):
+    """Lista artigos da base Nexus IA."""
+    if not (request.user.is_gestor() or request.user.is_administrador()):
+        return JsonResponse({'erro': 'Acesso negado.'}, status=403)
+
+    dept_id = request.GET.get('department_id')
+    
+    if request.user.is_administrador() and dept_id:
+        qs = NexusIABase.objects.filter(department_id=dept_id)
+    else:
+        qs = NexusIABase.objects.filter(department=request.user.department)
+
+    qs = qs.order_by('-created_at')
+    
+    data = []
+    for a in qs:
+        data.append({
+            'id': a.id,
+            'titulo': a.titulo,
+            'conteudo': a.conteudo,
+            'department_id': a.department.id,
+            'department_name': a.department.name,
+            'created_at': a.created_at.strftime("%d/%m/%Y %H:%M")
+        })
+
+    return JsonResponse({'artigos': data})
+
+
+@csrf_exempt
+@login_required
+@require_http_methods(["POST"])
+def api_ia_base_create(request):
+    if not (request.user.is_gestor() or request.user.is_administrador()):
+        return JsonResponse({'erro': 'Acesso negado.'}, status=403)
+
+    try:
+        data = json.loads(request.body)
+        titulo = data.get('titulo', '').strip()
+        conteudo = data.get('conteudo', '').strip()
+        dept_id = data.get('department_id')
+
+        if not titulo or not conteudo:
+            return JsonResponse({'erro': 'Título e conteúdo são obrigatórios.'}, status=400)
+
+        # Determinar departamento
+        if request.user.is_administrador():
+            if not dept_id:
+                return JsonResponse({'erro': 'Selecione um departamento.'}, status=400)
+            department = Department.objects.get(pk=dept_id)
+        else:
+            department = request.user.department
+
+        artigo = NexusIABase.objects.create(
+            department=department,
+            titulo=titulo,
+            conteudo=conteudo
+        )
+
+        return JsonResponse({'status': 'ok', 'id': artigo.id})
+    except Department.DoesNotExist:
+        return JsonResponse({'erro': 'Departamento não encontrado.'}, status=404)
+    except Exception as e:
+        return JsonResponse({'erro': str(e)}, status=500)
+
+
+@csrf_exempt
+@login_required
+@require_http_methods(["POST"])
+def api_ia_base_update(request, pk):
+    if not (request.user.is_gestor() or request.user.is_administrador()):
+        return JsonResponse({'erro': 'Acesso negado.'}, status=403)
+
+    try:
+        artigo = NexusIABase.objects.get(pk=pk)
+        
+        # Validar permissão (gestor só edita do seu dept)
+        if not request.user.is_administrador() and artigo.department != request.user.department:
+            return JsonResponse({'erro': 'Você não tem permissão para editar este artigo.'}, status=403)
+
+        data = json.loads(request.body)
+        titulo = data.get('titulo', '').strip()
+        conteudo = data.get('conteudo', '').strip()
+        dept_id = data.get('department_id')
+
+        if not titulo or not conteudo:
+            return JsonResponse({'erro': 'Título e conteúdo são obrigatórios.'}, status=400)
+
+        artigo.titulo = titulo
+        artigo.conteudo = conteudo
+        
+        if request.user.is_administrador() and dept_id:
+            artigo.department_id = dept_id
+            
+        artigo.save()
+
+        return JsonResponse({'status': 'ok'})
+    except NexusIABase.DoesNotExist:
+        return JsonResponse({'erro': 'Artigo não encontrado.'}, status=404)
+    except Exception as e:
+        return JsonResponse({'erro': str(e)}, status=500)
+
+
+@csrf_exempt
+@login_required
+@require_http_methods(["POST"])
+def api_ia_base_delete(request, pk):
+    if not (request.user.is_gestor() or request.user.is_administrador()):
+        return JsonResponse({'erro': 'Acesso negado.'}, status=403)
+
+    try:
+        artigo = NexusIABase.objects.get(pk=pk)
+        if not request.user.is_administrador() and artigo.department != request.user.department:
+            return JsonResponse({'erro': 'Acesso negado.'}, status=403)
+            
+        artigo.delete()
+        return JsonResponse({'status': 'ok'})
+    except NexusIABase.DoesNotExist:
+        return JsonResponse({'erro': 'Artigo não encontrado.'}, status=404)
     except Exception as e:
         return JsonResponse({'erro': str(e)}, status=500)

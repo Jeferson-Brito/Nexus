@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 {% load static %}
 <!-- Last update: 2026-02-27 20:25 -->
 {% load user_tags %}
@@ -674,6 +674,10 @@
                     {% endif %}
                     <li><a class="dropdown-item" href="{% url 'settings' %}"><i class="bi bi-gear me-2"></i>
                             Configurações</a></li>
+                    {% if user.role == 'gestor' or user.role == 'administrador' %}
+                    <li><a class="dropdown-item" href="{% url 'nexus_ia_base' %}"><i class="bi bi-robot me-2"></i>
+                            Base Nexus IA</a></li>
+                    {% endif %}
                     <li>
                         <hr class="dropdown-divider">
                     </li>

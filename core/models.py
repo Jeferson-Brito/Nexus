@@ -2806,3 +2806,21 @@ class TrocaFeriado(models.Model):
     def __str__(self):
         return f"{self.empresa.nome} - {self.descricao} ({self.data_feriado.strftime('%d/%m/%Y')} -> {self.data_troca.strftime('%d/%m/%Y')})"
 
+
+class NexusIABase(models.Model):
+    """Base de Conhecimento específica para a IA do Nexus."""
+    department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name="ia_articles", verbose_name="Departamento")
+    titulo = models.CharField(max_length=200, verbose_name="Título")
+    conteudo = models.TextField(verbose_name="Conteúdo")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Artigo da Base Nexus IA"
+        verbose_name_plural = "Artigos da Base Nexus IA"
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"[{self.department.name}] {self.titulo}"
+
+

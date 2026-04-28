@@ -382,5 +382,13 @@ urlpatterns = [
     path('api/ia/chatbot/', api_ia.api_chatbot_kb, name='api_ia_chatbot'),
     path('api/ia/reclamacoes/<int:pk>/classificar/', api_ia.api_classificar_reclamacao, name='api_ia_classificar_reclamacao'),
     path('api/ia/reclamacoes/classificar-lote/', api_ia.api_classificar_lote, name='api_ia_classificar_lote'),
+    
+    # Base Nexus IA (Gerenciamento)
+    path('configuracoes/ia-base/', views.nexus_ia_base_view, name='nexus_ia_base'),
+    path('api/ia/base/', api_ia.api_ia_base_list, name='api_ia_base_list'),
+    path('api/ia/base/create/', api_ia.api_ia_base_create, name='api_ia_base_create'),
+    path('api/ia/base/<int:pk>/update/', api_ia.api_ia_base_update, name='api_ia_base_update'),
+    path('api/ia/base/<int:pk>/delete/', api_ia.api_ia_base_delete, name='api_ia_base_delete'),
 ]
+
 
