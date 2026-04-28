@@ -19,7 +19,7 @@ def _get_client():
     return genai.Client(api_key=api_key)
 
 
-def chatbot_kb(pergunta: str, artigos: list, nome_usuario: str = "") -> str:
+def chatbot_kb(pergunta: str, artigos: list, nome_usuario: str = "", historico: list = None) -> str:
     """
     Responde a uma pergunta do analista com base nos artigos da Base de Conhecimento.
 
@@ -27,12 +27,14 @@ def chatbot_kb(pergunta: str, artigos: list, nome_usuario: str = "") -> str:
         pergunta: Texto da pergunta do usuário.
         artigos: Lista de dicts com 'titulo' e 'conteudo' dos artigos.
         nome_usuario: Nome do usuário para tornar o atendimento personalizado.
+        historico: Lista de mensagens anteriores para contexto (ex: [{'role': 'user', 'content': '...'}])
 
     Returns:
         Texto da resposta gerada pela IA.
     """
     try:
         client = _get_client()
+        historico = historico or []
 
         # Montar contexto com no máximo 25 artigos para não estourar tokens
         artigos_contexto = artigos[:25]
@@ -48,6 +50,16 @@ def chatbot_kb(pergunta: str, artigos: list, nome_usuario: str = "") -> str:
         ])
 
         saudacao_nome = f"Você está conversando com {nome_usuario}." if nome_usuario else ""
+        
+        texto_historico = ""
+        regra_historico = ""
+        if historico:
+            regra_historico = "6. Como já existe um histórico de conversa, NÃO repita saudações ou apresentações iniciais. Responda diretamente à nova pergunta continuando o assunto."
+            texto_historico = "HISTÓRICO RECENTE DA CONVERSA:\n"
+            # Pega as últimas 10 mensagens para não pesar
+            for msg in historico[-10:]:
+                role_name = "Usuário" if msg.get('role') == 'user' else "Nexus IA"
+                texto_historico += f"[{role_name}]: {msg.get('content')}\n\n"
 
         prompt = f"""Você é o Nexus IA, um assistente virtual humano, empático e extremamente prestativo da rede de lavanderias Hi Lavanderia.
 Você conversa como uma pessoa real, um colega de trabalho sênior que está ajudando um analista de suporte a resolver problemas.
@@ -59,10 +71,12 @@ REGRAS DE OURO DA SUA PERSONALIDADE:
 3. Use formatação limpa e organizada (tópicos curtos, negrito nas partes importantes).
 4. Se o analista não der detalhes suficientes, pergunte gentilmente.
 5. Responda APENAS com base nos conhecimentos da base fornecida abaixo. Se a informação não estiver lá, diga algo como: "Poxa, eu dei uma olhada na nossa base de conhecimento e não encontrei um procedimento oficial para isso. Acho melhor você confirmar com o seu gestor, tudo bem?"
+{regra_historico}
 
 BASE DE CONHECIMENTO DO DEPARTAMENTO (USE ISSO PARA BASEAR SUA RESPOSTA):
 {contexto}
 
+{texto_historico}
 O ANALISTA PERGUNTOU/FALOU:
 {pergunta}
 

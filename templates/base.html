@@ -1261,16 +1261,31 @@
     window.toggleIAPanel=function(){var p=document.getElementById('nexus-ia-panel');var o=p.classList.toggle('ia-open');if(o)setTimeout(function(){document.getElementById('nexus-ia-input').focus();},300);};
     window.handleIAKey=function(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendIAMessage();}};
     window.autoResizeIA=function(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,100)+'px';};
+    window.chatHistory = [];
     window.sendIAMessage=async function(){
         var input=document.getElementById('nexus-ia-input');var btn=document.getElementById('nexus-ia-send');
         var q=input.value.trim();if(!q)return;
         appendMsg('user',q);input.value='';input.style.height='auto';btn.disabled=true;
         var tid=appendTyping();
+        
+        var currentHistory = window.chatHistory.slice(); // Cópia do histórico para enviar
+        window.chatHistory.push({role: 'user', content: q}); // Atualiza local
+        
         try{
-            var r=await fetch('/api/ia/chatbot/',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':csrf},body:JSON.stringify({pergunta:q})});
+            var r=await fetch('/api/ia/chatbot/',{
+                method:'POST',
+                headers:{'Content-Type':'application/json','X-CSRFToken':csrf},
+                body:JSON.stringify({pergunta:q, historico: currentHistory})
+            });
             var d=await r.json();removeTyping(tid);
-            appendMsg('bot',d.resposta||('erro: '+(d.erro||'Erro inesperado.')));
-        }catch(e){removeTyping(tid);appendMsg('bot','Nao foi possivel conectar ao assistente.');}
+            var resp = d.resposta || ('erro: '+(d.erro||'Erro inesperado.'));
+            appendMsg('bot', resp);
+            if(d.resposta) window.chatHistory.push({role: 'bot', content: d.resposta});
+        }catch(e){
+            removeTyping(tid);
+            appendMsg('bot','Nao foi possivel conectar ao assistente.');
+            window.chatHistory.pop(); // Remove a pergunta se deu erro de conexão
+        }
         finally{btn.disabled=false;input.focus();}
     };
     function appendMsg(t,txt){

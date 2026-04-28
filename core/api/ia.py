@@ -47,8 +47,10 @@ def api_chatbot_kb(request):
             for a in queryset.only('titulo', 'conteudo')
         ]
 
+        historico = data.get('historico', [])
+
         nome_usuario = request.user.first_name or request.user.username
-        resposta = chatbot_kb(pergunta, artigos, nome_usuario)
+        resposta = chatbot_kb(pergunta, artigos, nome_usuario, historico)
         return JsonResponse({'resposta': resposta})
 
     except json.JSONDecodeError:
