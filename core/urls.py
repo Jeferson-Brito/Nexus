@@ -22,7 +22,8 @@ from .api.quadro import api_quadro_data, api_cartao_create, api_cartao_move, api
 
 
 urlpatterns = [
-    path('', views.dashboard, name='dashboard'),
+    path('', views.home, name='home'),
+    path('dashboard/', views.dashboard, name='dashboard'),
     path('login/', views.login_view_custom, name='login'),
     path('logout/', views.logout_view, name='logout'),
     

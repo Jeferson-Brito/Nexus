@@ -10,25 +10,30 @@ from ..models import Complaint, User, Department, AuditLog
 @login_required
 def change_department(request, dept_id):
     if not request.user.is_administrador():
-        return redirect('dashboard')
+        return redirect('home')
     
     # dept_id == 0 (Global) removido conforme solicitação
     if dept_id == 0:
-        return redirect('dashboard')
+        return redirect('home')
 
     request.session['selected_department_id'] = dept_id
     dept = get_object_or_404(Department, id=dept_id)
     messages.success(request, f"Departamento alterado para: {dept.name}")
     
-    # Redirecionar para a página principal de cada departamento
-    if dept.name == 'NRS Suporte' or dept.name == 'RH' or dept.name == 'NRP':
-        return redirect('escala')
-    elif dept.name == 'CS Clientes':
-        return redirect('dashboard')
-    elif dept.name == 'Onboarding':
-        return redirect('onboarding_dev_1')
+    return redirect('home')
+
+@login_required
+def home(request):
+    # Identificar o departamento atual (da sessão para admins, do usuário para outros)
+    selected_dept_id = request.session.get('selected_department_id')
     
-    return redirect('dashboard')
+    current_dept = None
+    if request.user.is_administrador() and selected_dept_id:
+        current_dept = Department.objects.filter(id=selected_dept_id).first()
+    elif request.user.department:
+        current_dept = request.user.department
+        
+    return render(request, 'core/welcome.html', {'current_department': current_dept})
 
 @login_required
 def dashboard(request):
@@ -41,20 +46,7 @@ def dashboard(request):
     elif request.user.department:
         current_dept = request.user.department
 
-    # Redirecionamentos para departamentos com módulos próprios
-    if current_dept:
-        if current_dept.name in ['NRS Suporte', 'RH', 'NRP']:
-            return redirect('escala')
-        if current_dept.name == 'Onboarding':
-            return redirect('onboarding_dev_1')
-    
-    # Se não houver depto OU se o depto não for o 'CS Clientes' (único que usa o dashboard de RA atualmente)
-    # ou se for explicitamente um depto sem módulo, mostrar tela de Boas-vindas
-    active_dashboard_depts = ['CS Clientes', 'Reclame Aqui']
-    if not current_dept or (current_dept.name not in active_dashboard_depts):
-        return render(request, 'core/welcome.html', {'current_department': current_dept})
-
-    # Se chegou aqui, é CS Clientes ou Reclame Aqui -> Mostrar Dashboard de Reclamações
+    # Dashboard de Reclamações
     dept_id = current_dept.id if current_dept else 0
     cache_key = f'dashboard:stats:dept_{dept_id}'
     
