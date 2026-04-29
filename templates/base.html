@@ -631,21 +631,25 @@
                         <span class="visually-hidden">Novas notificações</span>
                     </span>
                 </button>
-                <ul class="dropdown-menu dropdown-menu-end shadow border-0 p-0"
+                <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 p-0"
                     aria-labelledby="notificationDropdownBtn"
-                    style="width: 320px; max-height: 400px; overflow-y: auto;">
-                    <li class="p-3 border-bottom bg-light d-flex justify-content-between align-items-center">
-                        <span class="fw-bold text-primary">Novidades do Sistema</span>
-                        <small class="text-muted" style="font-size: 0.75rem;">Nexus Updates</small>
+                    style="width: 360px; max-height: 480px; overflow-y: auto; border-radius: 16px !important;">
+                    <li class="px-4 py-3 border-bottom d-flex justify-content-between align-items-center"
+                        style="background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%); border-radius: 16px 16px 0 0;">
+                        <div>
+                            <span class="fw-bold text-white d-block" style="font-size:0.95rem;">🔔 Novidades do Sistema</span>
+                            <small class="text-white" style="opacity:0.7; font-size:0.72rem;">Nexus Updates</small>
+                        </div>
+                        <span class="badge" style="background:rgba(255,255,255,0.2); color:#fff; font-size:0.7rem; border-radius:999px;">v1.0</span>
                     </li>
                     <li id="notificationListContainer">
                         <div class="text-center py-4 text-muted">
-                            <div class="spinner-border spinner-border-sm mb-2" role="status"></div>
-                            <p class="mb-0 small">Carregando...</p>
+                            <div class="spinner-border spinner-border-sm mb-2" role="status" style="color:#6366f1;"></div>
+                            <p class="mb-0 small">Carregando novidades...</p>
                         </div>
                     </li>
-                    <li class="p-2 border-top text-center bg-light rounded-bottom">
-                        <small class="text-muted">Mantenha-se atualizado!</small>
+                    <li class="p-2 border-top text-center" style="background:#f8fafc; border-radius: 0 0 16px 16px;">
+                        <small class="text-muted" style="font-size:0.75rem;">✨ Mantenha-se sempre atualizado!</small>
                     </li>
                 </ul>
             </div>
@@ -1158,7 +1162,11 @@
                 });
             } else {
                 badge.style.display = 'none';
-                list.innerHTML = '<div class="text-center py-4 text-muted"><i class="bi bi-bell-slash fs-4 d-block mb-2"></i><small>Nenhuma nova notificação</small></div>';
+                list.innerHTML = `<div class="text-center py-5 text-muted">
+                    <div style="font-size:2rem; margin-bottom:0.5rem;">🎉</div>
+                    <p class="mb-1 fw-semibold" style="color:#374151; font-size:0.9rem;">Tudo em dia!</p>
+                    <small>Nenhuma novidade recente.<br>Volte em breve!</small>
+                </div>`;
             }
         }
 
