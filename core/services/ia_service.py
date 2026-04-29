@@ -105,7 +105,7 @@ SUA RESPOSTA HUMANA E PRESTATIVA:"""
             return "Senha alterada acionada."
 
         response = client.models.generate_content(
-            model='gemini-1.5-flash',
+            model='gemini-flash-latest',
             contents=prompt,
             config=types.GenerateContentConfig(
                 tools=[navegar_para_tela, alterar_senha_usuario]
@@ -146,10 +146,10 @@ SUA RESPOSTA HUMANA E PRESTATIVA:"""
 
     except ValueError as e:
         logger.error(f"[Nexus IA] Configuração inválida: {e}")
-        return "⚠️ O assistente de IA não está configurado. Entre em contato com o administrador do sistema."
+        return {"resposta": "⚠️ O assistente de IA não está configurado. Entre em contato com o administrador do sistema."}
     except Exception as e:
         logger.error(f"[Nexus IA] Erro no chatbot: {type(e).__name__}: {e}")
-        return f"⚠️ Ocorreu um erro ao processar sua pergunta ({type(e).__name__}). Tente novamente em instantes."
+        return {"resposta": f"⚠️ Ocorreu um erro ao processar sua pergunta ({type(e).__name__}). Tente novamente em instantes."}
 
 
 def classificar_reclamacao(descricao: str, tipo_reclamacao: str) -> dict:
