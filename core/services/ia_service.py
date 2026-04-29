@@ -88,25 +88,38 @@ O USUÁRIO PERGUNTOU/FALOU:
 
 SUA RESPOSTA:"""
 
-        def navegar_para_tela(nome_da_tela: str) -> str:
-            """
-            Uso OBRIGATÓRIO quando o usuário pedir para ir, abrir ou acessar uma tela/aba/página.
-            Chame esta função passando o nome_da_tela (ex: 'inicio', 'configuracoes_ia', 'inconsistencias').
-            """
-            pass
-
-        def alterar_senha_usuario(nova_senha: str) -> str:
-            """
-            Uso OBRIGATÓRIO quando o usuário pedir para alterar, mudar ou resetar sua senha.
-            Chame esta função passando a 'nova_senha' solicitada pelo usuário (mínimo 6 caracteres).
-            """
-            pass
+        tool_actions = types.Tool(
+            function_declarations=[
+                types.FunctionDeclaration(
+                    name='navegar_para_tela',
+                    description="Uso OBRIGATÓRIO quando o usuário pedir para ir, abrir ou acessar uma tela/aba/página. Ex: 'inicio', 'configuracoes_ia', 'inconsistencias'.",
+                    parameters=types.Schema(
+                        type=types.Type.OBJECT,
+                        properties={
+                            'nome_da_tela': types.Schema(type=types.Type.STRING, description="Nome da tela para a qual navegar.")
+                        },
+                        required=['nome_da_tela']
+                    )
+                ),
+                types.FunctionDeclaration(
+                    name='alterar_senha_usuario',
+                    description="Uso OBRIGATÓRIO quando o usuário pedir para alterar, mudar ou resetar sua senha.",
+                    parameters=types.Schema(
+                        type=types.Type.OBJECT,
+                        properties={
+                            'nova_senha': types.Schema(type=types.Type.STRING, description="A nova senha solicitada pelo usuário (mínimo 6 caracteres).")
+                        },
+                        required=['nova_senha']
+                    )
+                )
+            ]
+        )
 
         response = client.models.generate_content(
             model='gemini-2.5-flash',
             contents=prompt,
             config=types.GenerateContentConfig(
-                tools=[navegar_para_tela, alterar_senha_usuario]
+                tools=[tool_actions]
             )
         )
 
