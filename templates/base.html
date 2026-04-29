@@ -1211,7 +1211,8 @@
     @keyframes ia-pulse{0%,100%{transform:scale(1);opacity:1;}50%{transform:scale(1.3);opacity:.7;}}
     #nexus-ia-panel{position:fixed;bottom:100px;right:28px;width:380px;max-height:560px;border-radius:20px;overflow:hidden;display:flex;flex-direction:column;background:rgba(15,15,25,.93);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(99,102,241,.3);box-shadow:0 20px 60px rgba(0,0,0,.5);z-index:9999;transform:translateY(24px) scale(.95);opacity:0;pointer-events:none;transition:transform .3s cubic-bezier(.34,1.56,.64,1),opacity .25s ease;}
     #nexus-ia-panel.ia-open{transform:translateY(0) scale(1);opacity:1;pointer-events:all;}
-    @media(max-width:480px){#nexus-ia-panel{width:calc(100vw - 24px);right:12px;bottom:88px;}}
+    #nexus-ia-panel.ia-expanded{width:480px;height:70vh;max-height:800px;}
+    @media(max-width:480px){#nexus-ia-panel{width:calc(100vw - 24px);right:12px;bottom:88px;} #nexus-ia-panel.ia-expanded{width:calc(100vw - 24px);height:calc(100vh - 120px);}}
     .ia-header{display:flex;align-items:center;gap:12px;padding:16px 18px;background:linear-gradient(135deg,rgba(99,102,241,.25),rgba(139,92,246,.15));border-bottom:1px solid rgba(255,255,255,.07);flex-shrink:0;}
     .ia-avatar{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff;flex-shrink:0;}
     .ia-header-info{flex:1;} .ia-header-title{color:#fff;font-size:14px;font-weight:700;margin:0;line-height:1.2;} .ia-header-sub{color:rgba(255,255,255,.45);font-size:11px;margin:0;}
@@ -1248,7 +1249,10 @@
             <p class="ia-header-title">Nexus IA</p>
             <p class="ia-header-sub"><span class="ia-status-dot"></span>Assistente da Base de Conhecimento</p>
         </div>
-        <button class="ia-close-btn" onclick="toggleIAPanel()"><i class="bi bi-x-lg"></i></button>
+        <div style="display:flex;gap:4px;">
+            <button class="ia-close-btn" onclick="resizeIAPanel()" id="ia-resize-btn" title="Expandir/Reduzir"><i class="bi bi-arrows-angle-expand"></i></button>
+            <button class="ia-close-btn" onclick="toggleIAPanel()"><i class="bi bi-x-lg"></i></button>
+        </div>
     </div>
     <div class="ia-messages" id="nexus-ia-messages">
         <div class="ia-msg ia-msg-bot">
@@ -1267,6 +1271,18 @@
     var csrf=document.cookie.split(';').find(function(c){return c.trim().startsWith('csrftoken=');});
     csrf=csrf?csrf.split('=')[1]:'';
     window.toggleIAPanel=function(){var p=document.getElementById('nexus-ia-panel');var o=p.classList.toggle('ia-open');if(o)setTimeout(function(){document.getElementById('nexus-ia-input').focus();},300);};
+    window.resizeIAPanel=function(){
+        var p=document.getElementById('nexus-ia-panel');
+        var btn=document.getElementById('ia-resize-btn').querySelector('i');
+        p.classList.toggle('ia-expanded');
+        if(p.classList.contains('ia-expanded')){
+            btn.classList.remove('bi-arrows-angle-expand');
+            btn.classList.add('bi-arrows-angle-contract');
+        } else {
+            btn.classList.remove('bi-arrows-angle-contract');
+            btn.classList.add('bi-arrows-angle-expand');
+        }
+    };
     window.handleIAKey=function(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendIAMessage();}};
     window.autoResizeIA=function(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,100)+'px';};
     window.chatHistory = [];
