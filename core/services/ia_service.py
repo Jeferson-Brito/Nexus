@@ -105,7 +105,7 @@ SUA RESPOSTA HUMANA E PRESTATIVA:"""
             return "Senha alterada acionada."
 
         response = client.models.generate_content(
-            model='gemini-flash-latest',
+            model='gemini-2.5-flash',
             contents=prompt,
             config=types.GenerateContentConfig(
                 tools=[navegar_para_tela, alterar_senha_usuario]
