@@ -4,319 +4,495 @@
 {% block title %}Configurações - Nexus{% endblock %}
 
 {% block content %}
-<div class="page-header fade-in">
-    <div class="row align-items-center">
-        <div class="col-md-8">
-            <h1 class="page-title">
-                <i class="bi bi-gear-fill"></i> Configurações
-            </h1>
-            <p class="page-subtitle">Personalize sua experiência no sistema</p>
+<style>
+    /* Premium Styling para Configurações */
+    .settings-container {
+        width: 100%;
+        max-width: 100%;
+        margin: 0 auto;
+        padding: 0;
+        font-family: 'Inter', sans-serif;
+    }
+
+    /* Hero Settings */
+    .settings-hero {
+        background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+        border-radius: 24px;
+        padding: 3rem 2.5rem;
+        color: white;
+        margin-bottom: 2rem;
+        box-shadow: 0 20px 40px rgba(37, 99, 235, 0.15);
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .settings-hero::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+        border-radius: 50%;
+        pointer-events: none;
+    }
+    .settings-hero-title {
+        font-size: 2.2rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+        letter-spacing: -0.5px;
+    }
+    .settings-hero-subtitle {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin-bottom: 0;
+        font-weight: 400;
+    }
+
+    /* Cards premium */
+    .premium-card {
+        background: white;
+        border-radius: 20px;
+        border: 1px solid rgba(0,0,0,0.04);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+        padding: 2rem;
+        height: 100%;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    .premium-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.06);
+    }
+    .card-icon-wrapper {
+        width: 54px;
+        height: 54px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        margin-bottom: 1.5rem;
+        color: white;
+    }
+    .icon-blue { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+    .icon-purple { background: linear-gradient(135deg, #8b5cf6, #6d28d9); }
+    .icon-green { background: linear-gradient(135deg, #10b981, #059669); }
+    .icon-orange { background: linear-gradient(135deg, #f59e0b, #d97706); }
+    .icon-dark { background: linear-gradient(135deg, #475569, #1e293b); }
+
+    .premium-card-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 0.5rem;
+    }
+    .premium-card-subtitle {
+        font-size: 0.95rem;
+        color: #64748b;
+        margin-bottom: 2rem;
+    }
+
+    /* Toggles customizados */
+    .premium-switch {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1.2rem;
+        background: #f8fafc;
+        border-radius: 16px;
+        border: 1px solid #f1f5f9;
+        transition: all 0.2s;
+    }
+    .premium-switch:hover {
+        background: #f1f5f9;
+    }
+    .switch-label-area h6 {
+        margin: 0 0 0.2rem 0;
+        font-weight: 600;
+        color: #334155;
+    }
+    .switch-label-area p {
+        margin: 0;
+        font-size: 0.85rem;
+        color: #64748b;
+    }
+    .form-check-input.premium-toggle {
+        width: 3rem;
+        height: 1.5rem;
+        cursor: pointer;
+    }
+
+    /* Formulário Senha */
+    .premium-input-group label {
+        font-weight: 600;
+        color: #475569;
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+    }
+    .premium-input-group .form-control {
+        background: #f8fafc;
+        border: 2px solid transparent;
+        border-radius: 12px;
+        padding: 0.8rem 1rem;
+        transition: all 0.3s;
+    }
+    .premium-input-group .form-control:focus {
+        background: white;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+    }
+    .premium-input-group .input-group-text {
+        background: #f8fafc;
+        border: 2px solid transparent;
+        border-radius: 12px;
+        color: #64748b;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    .premium-btn {
+        background: linear-gradient(135deg, #3b82f6, #2563eb);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        padding: 0.8rem 1.5rem;
+        font-weight: 600;
+        transition: all 0.3s;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+    }
+    .premium-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(37, 99, 235, 0.25);
+    }
+
+    /* Export Cards */
+    .export-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 1rem;
+    }
+    .export-item {
+        background: #f8fafc;
+        border-radius: 16px;
+        padding: 1.2rem;
+        text-align: center;
+        border: 1px solid #f1f5f9;
+        transition: all 0.3s;
+    }
+    .export-item:hover {
+        background: white;
+        border-color: #e2e8f0;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.04);
+        transform: translateY(-3px);
+    }
+    .export-icon {
+        font-size: 24px;
+        color: #3b82f6;
+        margin-bottom: 0.5rem;
+    }
+    .export-item h6 {
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 0.8rem;
+        font-size: 0.95rem;
+    }
+    .export-actions {
+        display: flex;
+        gap: 6px;
+        justify-content: center;
+    }
+    .btn-badge {
+        font-size: 0.75rem;
+        padding: 0.3rem 0.6rem;
+        border-radius: 8px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+    .badge-csv { background: #e0f2fe; color: #0284c7; }
+    .badge-csv:hover { background: #bae6fd; color: #0369a1; }
+    .badge-xlsx { background: #dcfce7; color: #166534; }
+    .badge-xlsx:hover { background: #bbf7d0; color: #14532d; }
+
+    /* System Info Grid */
+    .sys-info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+    .sys-info-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        background: #f8fafc;
+        padding: 1rem;
+        border-radius: 14px;
+    }
+    .sys-info-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: #e0e7ff;
+        color: #4f46e5;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+    }
+    .sys-info-text p { margin: 0; font-size: 0.8rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+    .sys-info-text h6 { margin: 0; font-size: 1rem; color: #1e293b; font-weight: 700; }
+
+    /* Dark Mode Adjustments */
+    body.dark-theme .premium-card {
+        background: #1e293b;
+        border-color: #334155;
+    }
+    body.dark-theme .premium-card-title, body.dark-theme .switch-label-area h6, body.dark-theme .export-item h6, body.dark-theme .sys-info-text h6 {
+        color: #f8fafc;
+    }
+    body.dark-theme .premium-switch, body.dark-theme .premium-input-group .form-control, body.dark-theme .premium-input-group .input-group-text, body.dark-theme .export-item, body.dark-theme .sys-info-item {
+        background: #0f172a;
+        border-color: #1e293b;
+        color: #e2e8f0;
+    }
+    body.dark-theme .premium-input-group label {
+        color: #cbd5e1;
+    }
+    body.dark-theme .sys-info-icon {
+        background: rgba(79, 70, 229, 0.2);
+    }
+</style>
+
+<div class="settings-container">
+    
+    <!-- Hero Section -->
+    <div class="settings-hero">
+        <div>
+            <h1 class="settings-hero-title"><i class="bi bi-sliders me-2"></i>Configurações do Sistema</h1>
+            <p class="settings-hero-subtitle">Gerencie suas preferências, acessos e segurança da conta</p>
         </div>
-        <div class="col-md-4 text-md-end text-start mt-3 mt-md-0">
-            <a href="{% url 'dashboard' %}" class="btn btn-secondary">
-                <i class="bi bi-arrow-left"></i> Voltar
+        <div class="d-none d-md-block">
+            <a href="{% url 'home' %}" class="btn btn-light btn-lg rounded-pill fw-bold text-primary shadow-sm px-4">
+                <i class="bi bi-arrow-left me-2"></i>Voltar
             </a>
         </div>
     </div>
-</div>
 
-<div class="row justify-content-center">
-    <div class="col-lg-10 col-xl-9">
-        <!-- Tema -->
-        <div class="settings-card mb-4 fade-in" style="animation-delay: 0.1s">
-            <div class="settings-card-header">
-                <div class="settings-icon-wrapper">
+    <div class="row g-4">
+        <!-- Coluna Esquerda -->
+        <div class="col-lg-6">
+            
+            <!-- Aparência & Notificações (Mesclados para otimizar espaço) -->
+            <div class="premium-card mb-4">
+                <div class="card-icon-wrapper icon-blue">
                     <i class="bi bi-palette-fill"></i>
                 </div>
-                <div class="settings-header-content">
-                    <h5 class="settings-card-title">Aparência</h5>
-                    <p class="settings-card-subtitle">Personalize o visual do sistema</p>
-                </div>
-            </div>
-            <div class="settings-card-body">
-                <div class="setting-item-modern">
-                    <div class="setting-content">
-                        <div class="setting-icon-modern">
-                            <i class="bi bi-moon-stars-fill"></i>
+                <h3 class="premium-card-title">Preferências</h3>
+                <p class="premium-card-subtitle">Personalize a interface e alertas</p>
+                
+                <div class="d-flex flex-column gap-3">
+                    <div class="premium-switch">
+                        <div class="d-flex gap-3 align-items-center">
+                            <i class="bi bi-moon-stars-fill text-primary fs-4"></i>
+                            <div class="switch-label-area">
+                                <h6>Tema Escuro</h6>
+                                <p>Melhor visualização em ambientes escuros</p>
+                            </div>
                         </div>
-                        <div class="setting-text">
-                            <h6 class="setting-title-modern">Tema Escuro</h6>
-                            <p class="setting-description-modern">Alterne entre tema claro e escuro para melhorar sua
-                                experiência visual e reduzir o cansaço visual</p>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input premium-toggle shadow-none" type="checkbox" id="theme-toggle" onchange="toggleTheme()">
                         </div>
                     </div>
-                    <div class="setting-action">
-                        <label class="theme-toggle-modern">
-                            <input type="checkbox" id="theme-toggle" onchange="toggleTheme()">
-                            <span class="theme-slider-modern">
-                                <span class="theme-slider-icon">
-                                    <i class="bi bi-sun-fill theme-icon-light"></i>
-                                    <i class="bi bi-moon-fill theme-icon-dark"></i>
-                                </span>
-                            </span>
-                        </label>
+
+                    <div class="premium-switch">
+                        <div class="d-flex gap-3 align-items-center">
+                            <i class="bi bi-bell-fill text-primary fs-4"></i>
+                            <div class="switch-label-area">
+                                <h6>Notificações</h6>
+                                <p>Receba alertas sobre o Nexus</p>
+                            </div>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input premium-toggle shadow-none" type="checkbox" id="notifications-toggle" checked>
+                        </div>
                     </div>
                 </div>
             </div>
+
+            <!-- Informações do Sistema -->
+            <div class="premium-card">
+                <div class="card-icon-wrapper icon-dark">
+                    <i class="bi bi-info-circle-fill"></i>
+                </div>
+                <h3 class="premium-card-title">Sua Conta</h3>
+                <p class="premium-card-subtitle">Detalhes do perfil atual logado</p>
+                
+                <div class="sys-info-grid">
+                    <div class="sys-info-item">
+                        <div class="sys-info-icon"><i class="bi bi-person-fill"></i></div>
+                        <div class="sys-info-text">
+                            <p>Usuário</p>
+                            <h6>{{ user.get_full_name|default:user.username }}</h6>
+                        </div>
+                    </div>
+                    <div class="sys-info-item">
+                        <div class="sys-info-icon"><i class="bi bi-envelope-fill"></i></div>
+                        <div class="sys-info-text">
+                            <p>E-mail</p>
+                            <h6>{{ user.email }}</h6>
+                        </div>
+                    </div>
+                    <div class="sys-info-item">
+                        <div class="sys-info-icon"><i class="bi bi-person-badge-fill"></i></div>
+                        <div class="sys-info-text">
+                            <p>Perfil</p>
+                            <h6>{{ user.get_role_display }}</h6>
+                        </div>
+                    </div>
+                    <div class="sys-info-item">
+                        <div class="sys-info-icon"><i class="bi bi-tag-fill"></i></div>
+                        <div class="sys-info-text">
+                            <p>Versão Nexus</p>
+                            <h6>1.0.0</h6>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
-        <!-- Segurança - Alterar Senha -->
-        <div class="settings-card mb-4 fade-in" style="animation-delay: 0.15s">
-            <div class="settings-card-header">
-                <div class="settings-icon-wrapper">
+        <!-- Coluna Direita -->
+        <div class="col-lg-6">
+            
+            <!-- Segurança - Alterar Senha -->
+            <div class="premium-card mb-4">
+                <div class="card-icon-wrapper icon-purple">
                     <i class="bi bi-shield-lock-fill"></i>
                 </div>
-                <div class="settings-header-content">
-                    <h5 class="settings-card-title">Segurança</h5>
-                    <p class="settings-card-subtitle">Gerencie suas credenciais de acesso</p>
-                </div>
-            </div>
-            <div class="settings-card-body">
+                <h3 class="premium-card-title">Segurança</h3>
+                <p class="premium-card-subtitle">Mantenha sua conta protegida atualizando sua senha</p>
+                
                 <form method="post" action="{% url 'settings' %}">
                     {% csrf_token %}
                     <input type="hidden" name="change_password" value="true">
 
                     {% for field in password_form %}
-                    <div class="form-group mb-3">
-                        <label class="form-label small fw-bold text-muted">{{ field.label }}</label>
+                    <div class="form-group premium-input-group mb-3">
+                        <label>{{ field.label }}</label>
                         <div class="input-group">
                             {{ field }}
-                            <button class="btn btn-outline-secondary" type="button" onclick="togglePassword(this)"
-                                tabindex="-1">
+                            <span class="input-group-text border-start-0" onclick="togglePassword(this.previousElementSibling, this.querySelector('i'))">
                                 <i class="bi bi-eye"></i>
-                            </button>
+                            </span>
                         </div>
                         {% if field.help_text %}
-                        <div class="form-text small">{{ field.help_text }}</div>
+                        <div class="form-text small mt-1">{{ field.help_text }}</div>
                         {% endif %}
                         {% for error in field.errors %}
-                        <div class="text-danger small mt-1">{{ error }}</div>
+                        <div class="text-danger small mt-1 fw-bold"><i class="bi bi-exclamation-circle me-1"></i>{{ error }}</div>
                         {% endfor %}
                     </div>
                     {% endfor %}
-                    <script>
-                        document.querySelectorAll('input[type="password"]').forEach(input => {
-                            input.classList.add('form-control');
-                        });
-
-                        function togglePassword(btn) {
-                            const input = btn.previousElementSibling;
-                            const icon = btn.querySelector('i');
-                            if (input.type === 'password') {
-                                input.type = 'text';
-                                icon.classList.remove('bi-eye');
-                                icon.classList.add('bi-eye-slash');
-                            } else {
-                                input.type = 'password';
-                                icon.classList.remove('bi-eye-slash');
-                                icon.classList.add('bi-eye');
-                            }
-                        }
-                    </script>
-
-                    <div class="d-flex justify-content-end mt-4">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-check-lg"></i> Alterar Senha
-                        </button>
-                    </div>
+                    
+                    <button type="submit" class="premium-btn mt-4">
+                        <i class="bi bi-check2-circle fs-5"></i> Atualizar Senha
+                    </button>
                 </form>
             </div>
-        </div>
 
-        <!-- Notificações -->
-        <div class="settings-card mb-4 fade-in" style="animation-delay: 0.2s">
-            <div class="settings-card-header">
-                <div class="settings-icon-wrapper">
-                    <i class="bi bi-bell-fill"></i>
+            <!-- Exportação -->
+            <div class="premium-card">
+                <div class="card-icon-wrapper icon-green">
+                    <i class="bi bi-cloud-download-fill"></i>
                 </div>
-                <div class="settings-header-content">
-                    <h5 class="settings-card-title">Notificações</h5>
-                    <p class="settings-card-subtitle">Gerencie suas preferências de notificação</p>
-                </div>
-            </div>
-            <div class="settings-card-body">
-                <div class="setting-item-modern">
-                    <div class="setting-content">
-                        <div class="setting-icon-modern">
-                            <i class="bi bi-bell-fill"></i>
-                        </div>
-                        <div class="setting-text">
-                            <h6 class="setting-title-modern">Notificações do Sistema</h6>
-                            <p class="setting-description-modern">Receba notificações sobre ações importantes,
-                                atualizações e alertas do sistema</p>
-                        </div>
-                    </div>
-                    <div class="setting-action">
-                        <div class="form-check form-switch form-switch-modern">
-                            <input class="form-check-input" type="checkbox" id="notifications-toggle" checked>
-                            <label class="form-check-label" for="notifications-toggle"></label>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+                <h3 class="premium-card-title">Exportação de Dados</h3>
+                <p class="premium-card-subtitle">Baixe planilhas do sistema em instantes</p>
 
-        <!-- Exportação -->
-        <div class="settings-card mb-4 fade-in" style="animation-delay: 0.3s">
-            <div class="settings-card-header">
-                <div class="settings-icon-wrapper">
-                    <i class="bi bi-download"></i>
-                </div>
-                <div class="settings-header-content">
-                    <h5 class="settings-card-title">Exportação de Dados</h5>
-                    <p class="settings-card-subtitle">Exporte os dados do sistema para análise externa</p>
-                </div>
-            </div>
-            <div class="settings-card-body">
-                <div class="row g-4">
-                    <div class="col-md-6 col-lg-4">
-                        <div class="export-card-modern">
-                            <div class="export-icon-modern">
-                                <i class="bi bi-list-ul"></i>
-                            </div>
-                            <h6 class="export-title-modern">Reclamações</h6>
-                            <p class="export-description">Exporte todas as reclamações registradas</p>
-                            <div class="export-buttons-modern">
-                                <a href="{% url 'export_complaints_csv' %}" class="btn-export btn-export-csv">
-                                    <i class="bi bi-filetype-csv"></i>
-                                    <span>CSV</span>
-                                </a>
-                                <a href="{% url 'export_complaints_xlsx' %}" class="btn-export btn-export-xlsx">
-                                    <i class="bi bi-file-earmark-excel"></i>
-                                    <span>XLSX</span>
-                                </a>
-                            </div>
+                <div class="export-grid">
+                    <div class="export-item">
+                        <div class="export-icon"><i class="bi bi-list-ul"></i></div>
+                        <h6>Reclamações</h6>
+                        <div class="export-actions">
+                            <a href="{% url 'export_complaints_csv' %}" class="btn-badge badge-csv">CSV</a>
+                            <a href="{% url 'export_complaints_xlsx' %}" class="btn-badge badge-xlsx">XLSX</a>
                         </div>
                     </div>
-                    <div class="col-md-6 col-lg-4">
-                        <div class="export-card-modern">
-                            <div class="export-icon-modern">
-                                <i class="bi bi-shop"></i>
-                            </div>
-                            <h6 class="export-title-modern">Lojas</h6>
-                            <p class="export-description">Exporte dados das lojas</p>
-                            <div class="export-buttons-modern">
-                                <a href="{% url 'export_stores_csv' %}" class="btn-export btn-export-csv">
-                                    <i class="bi bi-filetype-csv"></i>
-                                    <span>CSV</span>
-                                </a>
-                                <a href="{% url 'export_stores_xlsx' %}" class="btn-export btn-export-xlsx">
-                                    <i class="bi bi-file-earmark-excel"></i>
-                                    <span>XLSX</span>
-                                </a>
-                            </div>
+                    <div class="export-item">
+                        <div class="export-icon"><i class="bi bi-shop"></i></div>
+                        <h6>Lojas</h6>
+                        <div class="export-actions">
+                            <a href="{% url 'export_stores_csv' %}" class="btn-badge badge-csv">CSV</a>
+                            <a href="{% url 'export_stores_xlsx' %}" class="btn-badge badge-xlsx">XLSX</a>
                         </div>
                     </div>
                     {% if user.is_gestor or user.is_administrador %}
-                    <div class="col-md-6 col-lg-4">
-                        <div class="export-card-modern">
-                            <div class="export-icon-modern">
-                                <i class="bi bi-people-fill"></i>
-                            </div>
-                            <h6 class="export-title-modern">Usuários</h6>
-                            <p class="export-description">Exporte dados dos usuários</p>
-                            <div class="export-buttons-modern">
-                                <a href="{% url 'export_users_csv' %}" class="btn-export btn-export-csv">
-                                    <i class="bi bi-filetype-csv"></i>
-                                    <span>CSV</span>
-                                </a>
-                                <a href="{% url 'export_users_xlsx' %}" class="btn-export btn-export-xlsx">
-                                    <i class="bi bi-file-earmark-excel"></i>
-                                    <span>XLSX</span>
-                                </a>
-                            </div>
+                    <div class="export-item">
+                        <div class="export-icon"><i class="bi bi-people-fill"></i></div>
+                        <h6>Usuários</h6>
+                        <div class="export-actions">
+                            <a href="{% url 'export_users_csv' %}" class="btn-badge badge-csv">CSV</a>
+                            <a href="{% url 'export_users_xlsx' %}" class="btn-badge badge-xlsx">XLSX</a>
                         </div>
                     </div>
                     {% endif %}
                 </div>
             </div>
-        </div>
 
-        <!-- Informações do Sistema -->
-        <div class="settings-card fade-in" style="animation-delay: 0.4s">
-            <div class="settings-card-header">
-                <div class="settings-icon-wrapper">
-                    <i class="bi bi-info-circle-fill"></i>
-                </div>
-                <div class="settings-header-content">
-                    <h5 class="settings-card-title">Informações do Sistema</h5>
-                    <p class="settings-card-subtitle">Detalhes sobre sua conta e o sistema</p>
-                </div>
-            </div>
-            <div class="settings-card-body">
-                <div class="info-grid-modern">
-                    <div class="info-item-modern">
-                        <div class="info-icon-modern">
-                            <i class="bi bi-tag-fill"></i>
-                        </div>
-                        <div class="info-content-modern">
-                            <div class="info-label-modern">Versão</div>
-                            <div class="info-value-modern">1.0.0</div>
-                        </div>
-                    </div>
-                    <div class="info-item-modern">
-                        <div class="info-icon-modern">
-                            <i class="bi bi-person-fill"></i>
-                        </div>
-                        <div class="info-content-modern">
-                            <div class="info-label-modern">Usuário</div>
-                            <div class="info-value-modern">{{ user.get_full_name|default:user.username }}</div>
-                        </div>
-                    </div>
-                    <div class="info-item-modern">
-                        <div class="info-icon-modern">
-                            <i class="bi bi-person-badge-fill"></i>
-                        </div>
-                        <div class="info-content-modern">
-                            <div class="info-label-modern">Perfil</div>
-                            <div class="info-value-modern">{{ user.get_role_display }}</div>
-                        </div>
-                    </div>
-                    <div class="info-item-modern">
-                        <div class="info-icon-modern">
-                            <i class="bi bi-envelope-fill"></i>
-                        </div>
-                        <div class="info-content-modern">
-                            <div class="info-label-modern">E-mail</div>
-                            <div class="info-value-modern">{{ user.email }}</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 </div>
+
 {% endblock %}
 
 {% block scripts %}
 <script>
-    // Carregar tema salvo
+    // Configura inputs do form
+    document.querySelectorAll('input[type="password"]').forEach(input => {
+        input.classList.add('form-control', 'border-end-0');
+    });
+
+    function togglePassword(input, icon) {
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.remove('bi-eye');
+            icon.classList.add('bi-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.remove('bi-eye-slash');
+            icon.classList.add('bi-eye');
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
+        // Tema LocalStorage Sync
         const savedTheme = localStorage.getItem('theme');
         if (savedTheme === 'dark') {
             document.body.classList.add('dark-theme');
-            document.getElementById('theme-toggle').checked = true;
+            const toggle = document.getElementById('theme-toggle');
+            if(toggle) toggle.checked = true;
         }
 
-        // Carregar preferência de notificações
+        // Notificações LocalStorage Sync
         const savedNotifications = localStorage.getItem('notifications');
-        if (savedNotifications !== null) {
-            document.getElementById('notifications-toggle').checked = savedNotifications === 'true';
+        const notifToggle = document.getElementById('notifications-toggle');
+        if (savedNotifications !== null && notifToggle) {
+            notifToggle.checked = savedNotifications === 'true';
         }
-
-        // Animações de entrada
-        const cards = document.querySelectorAll('.settings-card');
-        cards.forEach((card, index) => {
-            setTimeout(() => {
-                card.style.opacity = '0';
-                card.style.transform = 'translateY(20px)';
-                card.style.transition = 'all 0.5s ease';
-                setTimeout(() => {
-                    card.style.opacity = '1';
-                    card.style.transform = 'translateY(0)';
-                }, 50);
-            }, index * 100);
-        });
+        
+        if (notifToggle) {
+            notifToggle.addEventListener('change', function () {
+                localStorage.setItem('notifications', this.checked);
+                showToast(this.checked ? 'Notificações ativadas!' : 'Notificações desativadas!', 'info');
+            });
+        }
     });
 
     // Toggle de tema com animação
@@ -324,7 +500,6 @@
         const body = document.body;
         const toggle = document.getElementById('theme-toggle');
 
-        // Animação suave
         body.style.transition = 'background 0.3s ease, color 0.3s ease';
 
         if (toggle.checked) {
@@ -337,23 +512,7 @@
             showToast('Tema claro ativado!', 'success');
         }
 
-        setTimeout(() => {
-            body.style.transition = '';
-        }, 300);
+        setTimeout(() => { body.style.transition = ''; }, 300);
     }
-
-    // Salvar preferência de notificações
-    document.addEventListener('DOMContentLoaded', function () {
-        const notificationsToggle = document.getElementById('notifications-toggle');
-        if (notificationsToggle) {
-            notificationsToggle.addEventListener('change', function () {
-                localStorage.setItem('notifications', this.checked);
-                showToast(
-                    this.checked ? 'Notificações ativadas!' : 'Notificações desativadas!',
-                    'info'
-                );
-            });
-        }
-    });
 </script>
 {% endblock %}
