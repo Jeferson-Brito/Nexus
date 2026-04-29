@@ -63,22 +63,20 @@ def chatbot_kb(pergunta: str, artigos: list, user_context: dict = None, historic
         texto_historico = ""
         regra_historico = ""
         if historico:
-            regra_historico = "6. Como já existe um histórico de conversa, NÃO repita saudações ou apresentações iniciais. Responda diretamente à nova pergunta."
+            regra_historico = "6. NÃO repita saudações se já houver histórico. Responda direto."
             texto_historico = "HISTÓRICO RECENTE DA CONVERSA:\n"
             for msg in historico[-10:]:
                 role_name = "Usuário" if msg.get('role') == 'user' else "Nexus IA"
                 texto_historico += f"[{role_name}]: {msg.get('content')}\n\n"
 
-        prompt = f"""Você é o Nexus IA, um assistente virtual humano, empático e extremamente prestativo da rede de lavanderias Hi Lavanderia.
-Você conversa como uma pessoa real e é um assistente proativo.
+        prompt = f"""Você é o Nexus IA, um assistente virtual proativo e empático.
 {perfil_usuario}
 
-REGRAS DE OURO DA SUA PERSONALIDADE:
-1. Seja sempre amigável e natural. Trate o usuário pelo nome (se fornecido).
-2. NUNCA pareça um robô que apenas copia e cola texto. Leia o artigo e explique com suas próprias palavras.
-3. Use formatação limpa e organizada.
-4. Se o usuário pedir para você executar alguma ação no sistema (ex: mudar a senha, navegar para uma tela), USE AS FERRAMENTAS DISPONÍVEIS. Nunca diga como fazer se você mesmo puder executar a ferramenta para ele.
-5. Responda perguntas APENAS com base nos conhecimentos da base fornecida abaixo.
+REGRAS DE OURO:
+1. Trate o usuário pelo nome.
+2. Seja natural e direto.
+3. INSTRUÇÃO CRÍTICA SOBRE AÇÕES: Se o usuário pedir para alterar a senha ou navegar para uma tela, VOCÊ É OBRIGADO A CHAMAR A FUNÇÃO CORRESPONDENTE (`alterar_senha_usuario` ou `navegar_para_tela`). NUNCA responda dizendo "eu alterei" ou "eu naveguei" em texto. O sistema só funciona se você INVOCAR A FERRAMENTA/FUNÇÃO (Function Call).
+4. Responda perguntas APENAS com base nos conhecimentos da base fornecida abaixo.
 {regra_historico}
 
 BASE DE CONHECIMENTO DO DEPARTAMENTO:
@@ -88,21 +86,21 @@ BASE DE CONHECIMENTO DO DEPARTAMENTO:
 O USUÁRIO PERGUNTOU/FALOU:
 {pergunta}
 
-SUA RESPOSTA HUMANA E PRESTATIVA:"""
+SUA RESPOSTA:"""
 
         def navegar_para_tela(nome_da_tela: str) -> str:
             """
-            Navega o usuário para uma tela específica do sistema. 
-            Telas disponíveis: 'inicio' (dashboard principal), 'configuracoes_ia' (Base IA), 'inconsistencias'.
+            Uso OBRIGATÓRIO quando o usuário pedir para ir, abrir ou acessar uma tela/aba/página.
+            Chame esta função passando o nome_da_tela (ex: 'inicio', 'configuracoes_ia', 'inconsistencias').
             """
-            return f"Navegação para {nome_da_tela} acionada."
+            pass
 
         def alterar_senha_usuario(nova_senha: str) -> str:
             """
-            Altera a senha do usuário logado no sistema para a nova_senha fornecida.
-            A nova senha deve ter no mínimo 6 caracteres.
+            Uso OBRIGATÓRIO quando o usuário pedir para alterar, mudar ou resetar sua senha.
+            Chame esta função passando a 'nova_senha' solicitada pelo usuário (mínimo 6 caracteres).
             """
-            return "Senha alterada acionada."
+            pass
 
         response = client.models.generate_content(
             model='gemini-2.5-flash',
