@@ -1281,6 +1281,15 @@
             var resp = d.resposta || ('erro: '+(d.erro||'Erro inesperado.'));
             appendMsg('bot', resp);
             if(d.resposta) window.chatHistory.push({role: 'bot', content: d.resposta});
+            
+            // Executar ações de frontend da IA
+            if(d.action) {
+                if(d.action.type === 'navigate' && d.action.url) {
+                    setTimeout(() => {
+                        window.location.href = d.action.url;
+                    }, 2000); // 2 segundos para o usuário ler a mensagem antes de sair da tela
+                }
+            }
         }catch(e){
             removeTyping(tid);
             appendMsg('bot','Nao foi possivel conectar ao assistente.');

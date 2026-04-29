@@ -49,9 +49,28 @@ def api_chatbot_kb(request):
 
         historico = data.get('historico', [])
 
-        nome_usuario = request.user.first_name or request.user.username
-        resposta = chatbot_kb(pergunta, artigos, nome_usuario, historico)
-        return JsonResponse({'resposta': resposta})
+        user_context = {
+            'nome': request.user.first_name or request.user.username,
+            'email': request.user.email,
+            'cargo': request.user.role if hasattr(request.user, 'role') else '',
+            'departamento': request.user.department.name if hasattr(request.user, 'department') and request.user.department else 'Nenhum'
+        }
+
+        resultado_ia = chatbot_kb(pergunta, artigos, user_context, historico)
+        
+        # Executar ação local no servidor se necessário
+        if 'action' in resultado_ia:
+            action = resultado_ia['action']
+            if action['type'] == 'change_password':
+                nova_senha = action.get('nova_senha')
+                if nova_senha:
+                    request.user.set_password(nova_senha)
+                    request.user.save()
+                    # Manter o usuário logado após trocar a senha
+                    from django.contrib.auth import update_session_auth_hash
+                    update_session_auth_hash(request, request.user)
+
+        return JsonResponse(resultado_ia)
 
     except json.JSONDecodeError:
         return JsonResponse({'erro': 'Dados inválidos.'}, status=400)

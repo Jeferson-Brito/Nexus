@@ -19,74 +19,130 @@ def _get_client():
     return genai.Client(api_key=api_key)
 
 
-def chatbot_kb(pergunta: str, artigos: list, nome_usuario: str = "", historico: list = None) -> str:
+def chatbot_kb(pergunta: str, artigos: list, user_context: dict = None, historico: list = None) -> dict:
     """
-    Responde a uma pergunta do analista com base nos artigos da Base de Conhecimento.
+    Responde a uma pergunta do analista com base nos artigos da Base de Conhecimento,
+    ou executa ações baseadas nas intenções do usuário (Function Calling).
 
     Args:
         pergunta: Texto da pergunta do usuário.
         artigos: Lista de dicts com 'titulo' e 'conteudo' dos artigos.
-        nome_usuario: Nome do usuário para tornar o atendimento personalizado.
-        historico: Lista de mensagens anteriores para contexto (ex: [{'role': 'user', 'content': '...'}])
+        user_context: Dicionário contendo dados do usuário logado.
+        historico: Lista de mensagens anteriores para contexto.
 
     Returns:
-        Texto da resposta gerada pela IA.
+        Um dict com 'resposta' (texto) e opcionalmente 'action' (ação para o frontend).
     """
     try:
+        from google.genai import types
         client = _get_client()
         historico = historico or []
+        user_context = user_context or {}
 
         # Montar contexto com no máximo 25 artigos para não estourar tokens
         artigos_contexto = artigos[:25]
         if not artigos_contexto:
-            return (
-                "A base de conhecimento ainda não possui artigos cadastrados. "
-                "Peça ao seu gestor para adicionar conteúdo na seção Suporte."
-            )
+            return {
+                "resposta": "A base de conhecimento ainda não possui artigos cadastrados. Peça ao seu gestor para adicionar conteúdo na seção Suporte."
+            }
 
         contexto = "\n\n---\n\n".join([
             f"**{a.get('titulo', 'Sem título')}**\n{a.get('conteudo', '')}"
             for a in artigos_contexto
         ])
 
-        saudacao_nome = f"Você está conversando com {nome_usuario}." if nome_usuario else ""
-        
+        nome = user_context.get('nome', '')
+        email = user_context.get('email', '')
+        cargo = user_context.get('cargo', '')
+        departamento = user_context.get('departamento', '')
+
+        perfil_usuario = ""
+        if nome:
+            perfil_usuario = f"\nPERFIL DO USUÁRIO ATUAL:\n- Nome: {nome}\n- E-mail: {email}\n- Cargo: {cargo}\n- Departamento: {departamento}\n"
+
         texto_historico = ""
         regra_historico = ""
         if historico:
-            regra_historico = "6. Como já existe um histórico de conversa, NÃO repita saudações ou apresentações iniciais. Responda diretamente à nova pergunta continuando o assunto."
+            regra_historico = "6. Como já existe um histórico de conversa, NÃO repita saudações ou apresentações iniciais. Responda diretamente à nova pergunta."
             texto_historico = "HISTÓRICO RECENTE DA CONVERSA:\n"
-            # Pega as últimas 10 mensagens para não pesar
             for msg in historico[-10:]:
                 role_name = "Usuário" if msg.get('role') == 'user' else "Nexus IA"
                 texto_historico += f"[{role_name}]: {msg.get('content')}\n\n"
 
         prompt = f"""Você é o Nexus IA, um assistente virtual humano, empático e extremamente prestativo da rede de lavanderias Hi Lavanderia.
-Você conversa como uma pessoa real, um colega de trabalho sênior que está ajudando um analista de suporte a resolver problemas.
-{saudacao_nome}
+Você conversa como uma pessoa real e é um assistente proativo.
+{perfil_usuario}
 
 REGRAS DE OURO DA SUA PERSONALIDADE:
-1. Seja sempre amigável e natural. Trate o usuário pelo nome e comece as respostas com saudações leves ou confirmando o entendimento (ex: "Fala [nome do usuário], claro, vamos resolver isso!", "Entendi a situação, [nome do usuário].", "Pode deixar que eu te ajudo com isso.").
-2. NUNCA pareça um robô que apenas copia e cola texto. Leia o artigo e explique com suas próprias palavras de forma didática e clara.
-3. Use formatação limpa e organizada (tópicos curtos, negrito nas partes importantes).
-4. Se o analista não der detalhes suficientes, pergunte gentilmente.
-5. Responda APENAS com base nos conhecimentos da base fornecida abaixo. Se a informação não estiver lá, diga algo como: "Poxa, eu dei uma olhada na nossa base de conhecimento e não encontrei um procedimento oficial para isso. Acho melhor você confirmar com o seu gestor, tudo bem?"
+1. Seja sempre amigável e natural. Trate o usuário pelo nome (se fornecido).
+2. NUNCA pareça um robô que apenas copia e cola texto. Leia o artigo e explique com suas próprias palavras.
+3. Use formatação limpa e organizada.
+4. Se o usuário pedir para você executar alguma ação no sistema (ex: mudar a senha, navegar para uma tela), USE AS FERRAMENTAS DISPONÍVEIS. Nunca diga como fazer se você mesmo puder executar a ferramenta para ele.
+5. Responda perguntas APENAS com base nos conhecimentos da base fornecida abaixo.
 {regra_historico}
 
-BASE DE CONHECIMENTO DO DEPARTAMENTO (USE ISSO PARA BASEAR SUA RESPOSTA):
+BASE DE CONHECIMENTO DO DEPARTAMENTO:
 {contexto}
 
 {texto_historico}
-O ANALISTA PERGUNTOU/FALOU:
+O USUÁRIO PERGUNTOU/FALOU:
 {pergunta}
 
 SUA RESPOSTA HUMANA E PRESTATIVA:"""
 
+        def navegar_para_tela(nome_da_tela: str) -> str:
+            """
+            Navega o usuário para uma tela específica do sistema. 
+            Telas disponíveis: 'inicio' (dashboard principal), 'configuracoes_ia' (Base IA), 'inconsistencias'.
+            """
+            return f"Navegação para {nome_da_tela} acionada."
+
+        def alterar_senha_usuario(nova_senha: str) -> str:
+            """
+            Altera a senha do usuário logado no sistema para a nova_senha fornecida.
+            A nova senha deve ter no mínimo 6 caracteres.
+            """
+            return "Senha alterada acionada."
+
         response = client.models.generate_content(
-            model='gemini-flash-latest',
-            contents=prompt
+            model='gemini-1.5-flash',
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                tools=[navegar_para_tela, alterar_senha_usuario]
+            )
         )
-        return response.text.strip()
+
+        # Processar se a IA chamou alguma ferramenta
+        if response.function_calls:
+            fc = response.function_calls[0]
+            args = fc.args if isinstance(fc.args, dict) else dict(fc.args)
+
+            if fc.name == 'navegar_para_tela':
+                tela = args.get('nome_da_tela', '')
+                url = '/'
+                if 'ia' in tela.lower():
+                    url = '/configuracoes/ia-base/'
+                elif 'inconsistencia' in tela.lower():
+                    url = '/rh/inconsistencias/'
+                
+                return {
+                    "resposta": f"Claro, estou te redirecionando agora mesmo para lá!",
+                    "action": {"type": "navigate", "url": url}
+                }
+            elif fc.name == 'alterar_senha_usuario':
+                nova_senha = args.get('nova_senha', '')
+                if len(nova_senha) < 6:
+                    return {
+                        "resposta": "A senha precisa ter pelo menos 6 caracteres. Por favor, escolha outra."
+                    }
+                return {
+                    "resposta": "Prontinho! Sua senha foi alterada com sucesso no sistema.",
+                    "action": {"type": "change_password", "nova_senha": nova_senha}
+                }
+
+        return {
+            "resposta": response.text.strip()
+        }
 
     except ValueError as e:
         logger.error(f"[Nexus IA] Configuração inválida: {e}")
