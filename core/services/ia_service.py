@@ -120,13 +120,26 @@ SUA RESPOSTA:"""
             ]
         )
 
-        response = client.models.generate_content(
-            model='gemini-2.5-flash',
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                tools=[tool_actions]
+        try:
+            response = client.models.generate_content(
+                model='gemini-2.5-flash',
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    tools=[tool_actions]
+                )
             )
-        )
+        except Exception as e:
+            if "503" in str(e) or "UNAVAILABLE" in str(e):
+                logger.warning(f"[Nexus IA] Modelo gemini-2.5-flash sobrecarregado (503). Tentando fallback para gemini-1.5-flash...")
+                response = client.models.generate_content(
+                    model='gemini-1.5-flash',
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        tools=[tool_actions]
+                    )
+                )
+            else:
+                raise e
 
         # Processar se a IA chamou alguma ferramenta
         if response.function_calls:
