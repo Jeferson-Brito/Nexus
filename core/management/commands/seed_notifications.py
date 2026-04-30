@@ -1,15 +1,4 @@
-"""
-Script para popular o banco com as primeiras Notificações do Sistema (Novidades).
-Execute com: python manage.py shell < scripts/seed_system_notifications.py
-Ou: python manage.py runscript seed_system_notifications  (se usar django-extensions)
-"""
-
-import os
-import django
-
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'nexus.settings')
-django.setup()
-
+from django.core.management.base import BaseCommand
 from core.models import SystemNotification
 
 NOTIFICATIONS = [
@@ -132,29 +121,24 @@ NOTIFICATIONS = [
     },
 ]
 
+class Command(BaseCommand):
+    help = 'Seeds the database with system notifications'
 
-def run():
-    created = 0
-    skipped = 0
-    for data in NOTIFICATIONS:
-        obj, is_new = SystemNotification.objects.get_or_create(
-            title=data['title'],
-            defaults={
-                'category': data['category'],
-                'message': data['message'],
-                'details': data.get('details', ''),
-                'is_active': True,
-            }
-        )
-        if is_new:
-            created += 1
-            print(f"  ✅ Criada: {obj.title}")
-        else:
-            skipped += 1
-            print(f"  ⏭  Já existe: {obj.title}")
-
-    print(f"\nFinalizado: {created} criadas, {skipped} já existiam.")
-
-
-if __name__ == '__main__':
-    run()
+    def handle(self, *args, **options):
+        self.stdout.write('Seeding system notifications...')
+        created_count = 0
+        for data in NOTIFICATIONS:
+            _, created = SystemNotification.objects.get_or_create(
+                title=data['title'],
+                defaults={
+                    'category': data['category'],
+                    'message': data['message'],
+                    'details': data.get('details', ''),
+                    'is_active': True,
+                }
+            )
+            if created:
+                created_count += 1
+                self.stdout.write(self.style.SUCCESS(f'  ✓ Created: {data["title"]}'))
+        
+        self.stdout.write(self.style.SUCCESS(f'Successfully seeded {created_count} new notifications.'))

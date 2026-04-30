@@ -91,5 +91,13 @@ class Command(BaseCommand):
             self.stdout.write(self.style.ERROR(f'✗ Erro ao criar usuário: {e}'))
             return
         
+        # Seed de notificações do sistema
+        self.stdout.write(self.style.WARNING('\nPopulando notificações do sistema...'))
+        try:
+            call_command('seed_notifications')
+            self.stdout.write(self.style.SUCCESS('✓ Notificações do sistema atualizadas!'))
+        except Exception as e:
+            self.stdout.write(self.style.ERROR(f'✗ Erro ao popular notificações: {e}'))
+
         self.stdout.write(self.style.SUCCESS('\n✅ Sistema inicializado com sucesso!'))
 

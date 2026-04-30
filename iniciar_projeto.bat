@@ -48,6 +48,10 @@ if exist "requirements.txt" (
 )
 echo.
 
+echo [3.5/4] Atualizando notificações do sistema...
+python manage.py seed_notifications
+echo.
+
 echo [4/5] Iniciando servidor Django...
 echo ========================================
 echo   Servidor rodando em: http://127.0.0.1:8000
