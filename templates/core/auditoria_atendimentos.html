@@ -16,9 +16,9 @@
         <!-- Main Stats -->
         <div class="col-lg-8">
             <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden">
-                <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0 fw-bold"><i class="bi bi-graph-up-arrow text-primary me-2"></i>Desempenho Geral do Departamento</h5>
-                    <div class="badge bg-primary-subtle text-primary px-3 py-2 rounded-pill">Últimos 30 dias</div>
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold"><i class="bi bi-graph-up-arrow me-2"></i>Desempenho Geral</h5>
+                    <div class="badge bg-slate-100 text-slate-600 border px-3 py-2 rounded-pill">Últimos 30 dias</div>
                 </div>
                 <div class="card-body">
                     <div class="row mb-4">
@@ -964,10 +964,10 @@
                 <div class="tab-pane fade" id="ranking" role="tabpanel">
                     <div class="aa-card">
                         <div class="aa-card-header">
-                            <h5><i class="bi bi-trophy me-2"></i>Ranking de Analistas</h5>
+                            <h5><i class="bi bi-trophy me-2"></i>Ranking de Performance</h5>
                         </div>
                         <div class="aa-card-body" id="ranking-container">
-                            <div class="text-center py-4">
+                            <div class="text-center py-5">
                                 <div class="spinner-border text-primary" role="status">
                                     <span class="visually-hidden">Carregando ranking...</span>
                                 </div>
@@ -976,13 +976,14 @@
                     </div>
                 </div>
 
-                <!-- ABA 4: VISÃO POR ANALISTA -->
+                <!-- ABA 4: POR ANALISTA -->
                 <div class="tab-pane fade" id="analistas" role="tabpanel">
-                    <div class="row" id="analistas-container">
-                        <div class=" col-12 text-center py-4">
+                    <div class="row g-4" id="analistas-container">
+                        <div class="col-12 text-center py-5">
                             <div class="spinner-border text-primary" role="status">
                                 <span class="visually-hidden">Carregando analistas...</span>
                             </div>
+                            <p class="text-muted mt-2">Sincronizando dados...</p>
                         </div>
                     </div>
                 </div>

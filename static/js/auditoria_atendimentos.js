@@ -4,7 +4,6 @@
 
 function formatDate(dateString) {
     if (!dateString) return '';
-    // Assumes YYYY-MM-DD format
     const parts = dateString.split('-');
     if (parts.length === 3) {
         return `${parts[2]}/${parts[1]}/${parts[0]}`;
@@ -28,6 +27,33 @@ document.addEventListener('DOMContentLoaded', function () {
             geral: null
         }
     };
+
+    function loadAnalistas() {
+        return fetch('/api/auditoria/analistas/', { credentials: 'include' })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    state.analistas = data.analistas;
+                    // Popular select de filtros se existir
+                    const selectFiltro = document.getElementById('filtro_analista');
+                    if (selectFiltro) {
+                        selectFiltro.innerHTML = '<option value="">Todos os analistas</option>';
+                        data.analistas.forEach(a => {
+                            selectFiltro.innerHTML += `<option value="${a.id}">${a.nome_completo}</option>`;
+                        });
+                    }
+                    const selectCadastro = document.getElementById('analista_auditado');
+                    if (selectCadastro) {
+                        selectCadastro.innerHTML = '<option value="">Selecione...</option>';
+                        data.analistas.forEach(a => {
+                            selectCadastro.innerHTML += `<option value="${a.id}">${a.nome_completo}</option>`;
+                        });
+                    }
+                }
+                return data;
+            })
+            .catch(error => console.error('Erro ao carregar analistas:', error));
+    }
 
     // Inicialização
     init();
@@ -1230,22 +1256,34 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function loadAnalistasView() {
         const container = document.getElementById('analistas-container');
-        container.innerHTML = '<div class="col-12 text-center py-4"><div class="spinner-border text-primary"></div></div>';
+        container.innerHTML = '<div class="col-12 text-center py-5"><div class="spinner-border text-primary"></div><p class="text-muted mt-2">Carregando performance dos analistas...</p></div>';
 
-        // Carregar estatísticas de todos os analistas
-        Promise.all(
-            state.analistas.map(analista =>
-                fetch(`/api/auditoria/analista/${analista.id}/`)
-                    .then(r => r.json())
+        // Garantir que a lista de analistas existe
+        const getAnalistasPromise = state.analistas.length > 0 
+            ? Promise.resolve({ success: true, analistas: state.analistas }) 
+            : loadAnalistas();
+
+        getAnalistasPromise.then(() => {
+            if (state.analistas.length === 0) {
+                container.innerHTML = '<div class="col-12 text-center py-5"><i class="bi bi-people display-4 text-muted"></i><p class="text-muted mt-2">Nenhum analista disponível para auditoria.</p></div>';
+                return;
+            }
+
+            // Carregar estatísticas de todos os analistas em paralelo
+            Promise.all(
+                state.analistas.map(analista =>
+                    fetch(`/api/auditoria/analista/${analista.id}/`)
+                        .then(r => r.json())
+                )
             )
-        )
-            .then(results => {
-                renderAnalistasCards(results);
-            })
-            .catch(error => {
-                console.error('Erro:', error);
-                container.innerHTML = '<div class="col-12"><div class="alert alert-danger">Erro ao carregar dados dos analistas</div></div>';
-            });
+                .then(results => {
+                    renderAnalistasCards(results);
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                    container.innerHTML = '<div class="col-12"><div class="alert alert-danger">Erro ao carregar dados dos analistas</div></div>';
+                });
+        });
     }
 
     function renderAnalistasCards(results) {
@@ -1423,10 +1461,11 @@ document.addEventListener('DOMContentLoaded', function () {
                     label: 'Nota da Auditoria',
                     data: notas,
                     borderColor: '#4f46e5',
-                    backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                    backgroundColor: 'rgba(79, 70, 229, 0.05)',
                     fill: true,
                     tension: 0.4,
-                    pointRadius: 4,
+                    borderWidth: 2,
+                    pointRadius: 3,
                     pointBackgroundColor: '#4f46e5'
                 }]
             },
@@ -1435,7 +1474,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
                 scales: {
-                    y: { min: 0, max: 100, ticks: { stepSize: 20 } }
+                    y: { 
+                        min: 0, 
+                        max: 10, 
+                        ticks: { stepSize: 2 },
+                        grid: { color: '#f1f5f9' }
+                    },
+                    x: { grid: { display: false } }
                 }
             }
         });
@@ -1451,14 +1496,22 @@ document.addEventListener('DOMContentLoaded', function () {
                     data: [90, 85, 95, 75, 100, 80, 85], 
                     backgroundColor: 'rgba(79, 70, 229, 0.2)',
                     borderColor: '#4f46e5',
-                    pointBackgroundColor: '#4f46e5'
+                    pointBackgroundColor: '#4f46e5',
+                    borderWidth: 2
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
                 scales: {
-                    r: { min: 0, max: 100, ticks: { display: false } }
+                    r: { 
+                        min: 0, 
+                        max: 100, 
+                        ticks: { display: false },
+                        grid: { color: '#e2e8f0' },
+                        angleLines: { color: '#e2e8f0' }
+                    }
                 }
             }
         });
