@@ -252,7 +252,7 @@ document.addEventListener('DOMContentLoaded', function () {
         })
             .then(response => response.json())
             .then(data => {
-                if (data.success) {
+                if (data.success && data.configuracao) {
                     state.config = data.configuracao;
                     const input = document.getElementById('percentual_minimo');
                     if (input) {
@@ -1116,35 +1116,59 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         let html = '';
-
-        ranking.forEach(item => {
-            const rankClass = item.posicao <= 3 ? `top-${item.posicao}` : '';
-            const badgeClass = item.posicao <= 3 ? `top-${item.posicao}` : '';
-
-            html += `
-                <div class="ranking-item ${rankClass}">
-                    <div class="row align-items-center">
-                        <div class="col-auto">
-                            <div class="posicao-badge ${badgeClass}">${item.posicao}º</div>
-                        </div>
-                        <div class="col">
-                            <h5 class="mb-1">${item.analista_nome}</h5>
-                            <p class="text-muted mb-0">
-                                ${item.total_auditorias} auditorias realizadas
-                            </p>
-                        </div>
-                        <div class="col-auto text-center">
-                            <h6 class="mb-1 text-muted">Nota Média</h6>
-                            <h3 class="mb-0 text-primary fw-bold">${item.nota_media.toFixed(1)}</h3>
-                        </div>
-                        <div class="col-auto text-center">
-                            <h6 class="mb-1 text-muted">Pontuação Média</h6>
-                            <h4 class="mb-0">${item.pontuacao_media.toFixed(1)}/9</h4>
+        
+        // Pódio para o Top 3
+        const top3 = ranking.slice(0, 3);
+        if (top3.length > 0) {
+            html += '<div class="podium-steps">';
+            
+            // Reordenar para exibir visualmente como Segundo, Primeiro, Terceiro
+            const displayOrder = [];
+            if (top3[1]) displayOrder.push({ ...top3[1], podiumClass: 'second', icon: '🥈' });
+            if (top3[0]) displayOrder.push({ ...top3[0], podiumClass: 'first', icon: '🏆' });
+            if (top3[2]) displayOrder.push({ ...top3[2], podiumClass: 'third', icon: '🥉' });
+            
+            displayOrder.forEach(item => {
+                html += `
+                    <div class="podium-step ${item.podiumClass}">
+                        <div class="step-platform">
+                            <div class="step-badge">${item.icon}</div>
+                            <div class="step-name">${item.analista_nome}</div>
+                            <div class="step-value">${item.nota_media.toFixed(1)}</div>
                         </div>
                     </div>
-                </div>
-            `;
-        });
+                `;
+            });
+            html += '</div>';
+        }
+
+        // Restante do ranking
+        const rest = ranking.slice(3);
+        if (rest.length > 0) {
+            html += '<div class="mt-4"><h6 class="text-muted text-uppercase mb-3 ps-2" style="font-size: 0.8rem; letter-spacing: 1px;">Outros Analistas</h6>';
+            rest.forEach(item => {
+                html += `
+                    <div class="ranking-item">
+                        <div class="row align-items-center w-100 m-0">
+                            <div class="col-auto ps-0">
+                                <div class="posicao-badge">${item.posicao}º</div>
+                            </div>
+                            <div class="col">
+                                <h6 class="mb-1 fw-bold">${item.analista_nome}</h6>
+                                <p class="text-muted mb-0" style="font-size: 0.8rem;">
+                                    ${item.total_auditorias} auditorias
+                                </p>
+                            </div>
+                            <div class="col-auto text-end">
+                                <h6 class="mb-1 text-muted" style="font-size: 0.75rem;">Nota Média</h6>
+                                <h5 class="mb-0 text-primary fw-bold">${item.nota_media.toFixed(1)}</h5>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+        }
 
         container.innerHTML = html;
     }
@@ -1175,6 +1199,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function renderAnalistasCards(results) {
         const container = document.getElementById('analistas-container');
+        
+        if (!results || results.length === 0) {
+            container.innerHTML = '<div class="col-12"><div class="empty-state py-5 text-center"><i class="bi bi-people display-1 text-muted"></i><p class="mt-3 text-muted">Nenhum analista encontrado ou erro ao carregar.</p></div></div>';
+            return;
+        }
+
         let html = '';
 
         results.forEach(data => {
