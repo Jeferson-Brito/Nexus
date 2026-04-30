@@ -249,26 +249,29 @@ def user_edit(request, pk):
 
 @login_required
 def user_delete(request, pk):
-    """Excluir usuário - apenas para gestores e administradores"""
+    """Excluir usuário - apenas para gestores e administradores (requer POST)"""
     if not (request.user.is_gestor() or request.user.is_administrador()):
         messages.error(request, 'Você não tem permissão para excluir usuários.')
         return redirect('user_list')
-    
+
+    # Exige confirmação via POST (enviado pelo SweetAlert2 no frontend)
+    if request.method != 'POST':
+        return redirect('user_list')
+
     user_to_delete = get_object_or_404(User, pk=pk)
-    
+
     if request.user.is_gestor():
         if user_to_delete.department != request.user.department or user_to_delete.role != 'analista':
             messages.error(request, 'Você não tem permissão para excluir este usuário.')
             return redirect('user_list')
-            
-    username = user_to_delete.username
-    
+
     if user_to_delete.id == request.user.id:
         messages.error(request, 'Você não pode excluir sua própria conta.')
         return redirect('user_list')
-        
+
+    username = user_to_delete.username
     user_to_delete.delete()
-    
+
     AuditLog.objects.create(
         usuario=request.user,
         action='delete',
@@ -276,6 +279,6 @@ def user_delete(request, pk):
         target_id=pk,
         detalhes_json={'username': username}
     )
-    
+
     messages.success(request, f'Usuário {username} excluído!')
     return redirect('user_list')

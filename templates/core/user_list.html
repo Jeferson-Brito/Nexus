@@ -274,7 +274,11 @@
                                 <li><a class="dropdown-item py-2" href="{% url 'user_edit' user_obj.pk %}"><i class="bi bi-pencil me-2 text-secondary"></i> Editar</a></li>
                                 {% if user_obj != user %}
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item py-2 text-danger" href="{% url 'user_delete' user_obj.pk %}"><i class="bi bi-trash me-2"></i> Excluir</a></li>
+                                <li>
+                                  <button type="button" class="dropdown-item py-2 text-danger"
+                                    onclick="confirmDelete('{% url 'user_delete' user_obj.pk %}', '{{ user_obj.get_full_name|default:user_obj.username|escapejs }}')"
+                                  ><i class="bi bi-trash me-2"></i> Excluir</button>
+                                </li>
                                 {% endif %}
                             </ul>
                         </div>
@@ -342,4 +346,38 @@
     {% endif %}
 
 </div>
+
+<!-- Hidden form used by the delete confirmation -->
+<form id="deleteUserForm" method="post" style="display:none;">
+  {% csrf_token %}
+</form>
+
+<script>
+function confirmDelete(deleteUrl, userName) {
+  Swal.fire({
+    title: 'Excluir usuário?',
+    html: 'Você está prestes a excluir <strong>' + userName + '</strong>.<br>Esta ação <strong>não pode ser desfeita</strong>.',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: '<i class="bi bi-trash"></i> Sim, excluir',
+    cancelButtonText: 'Cancelar',
+    confirmButtonColor: '#ef4444',
+    cancelButtonColor: '#6b7280',
+    reverseButtons: true,
+    focusCancel: true,
+    customClass: {
+      popup: 'rounded-4 shadow',
+      confirmButton: 'btn btn-danger rounded-pill px-4',
+      cancelButton: 'btn btn-secondary rounded-pill px-4'
+    },
+    buttonsStyling: false
+  }).then(function(result) {
+    if (result.isConfirmed) {
+      var form = document.getElementById('deleteUserForm');
+      form.action = deleteUrl;
+      form.submit();
+    }
+  });
+}
+</script>
 {% endblock %}
