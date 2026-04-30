@@ -60,26 +60,44 @@
         
         <!-- IA Auditor Insight -->
         <div class="col-lg-4">
-            <div class="card border-0 shadow-sm rounded-4 h-100" style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);">
-                <div class="card-body text-white p-4">
-                    <div class="d-flex align-items-center mb-3">
-                        <div class="rounded-circle bg-white bg-opacity-20 p-2 me-3">
-                            <i class="bi bi-stars fs-4"></i>
+            <div class="card border-0 shadow-sm rounded-4 h-100 position-relative overflow-hidden" style="background: #f8fafc; border: 1px solid #e2e8f0 !important;">
+                <!-- Decorative background element -->
+                <div class="position-absolute top-0 end-0 p-3" style="opacity: 0.05;">
+                    <i class="bi bi-robot" style="font-size: 8rem; transform: rotate(15deg);"></i>
+                </div>
+                
+                <div class="card-body p-4 position-relative">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-3 bg-primary bg-opacity-10 p-2 me-3">
+                                <i class="bi bi-stars text-primary fs-5"></i>
+                            </div>
+                            <h5 class="mb-0 fw-bold text-dark">Nexus IA Auditor</h5>
                         </div>
-                        <h5 class="mb-0 fw-bold">Nexus IA Auditor</h5>
+                        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-2 py-1 small">
+                            <span class="spinner-grow spinner-grow-sm me-1" style="width: 8px; height: 8px;"></span> Live
+                        </span>
                     </div>
-                    <div id="ia-auditor-summary" class="mb-4 small" style="opacity: 0.9; line-height: 1.6;">
-                        <p>Analisando dados do departamento...</p>
-                        <div class="spinner-border spinner-border-sm text-light" role="status"></div>
+                    
+                    <div id="ia-auditor-summary" class="mb-4 text-secondary" style="font-size: 0.9rem; line-height: 1.6;">
+                        <p>Analisando tendências do departamento...</p>
+                        <div class="progress" style="height: 4px;">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%"></div>
+                        </div>
                     </div>
+                    
                     <div class="mt-auto">
-                        <h6 class="text-uppercase fw-bold" style="font-size: 0.7rem; letter-spacing: 1px; opacity: 0.8;">Foco da Semana:</h6>
-                        <div class="d-flex align-items-center gap-2 mt-2">
-                            <i class="bi bi-lightning-fill text-warning"></i>
-                            <span class="small fw-semibold">Melhorar tempo de primeira resposta</span>
+                        <div class="p-3 rounded-3 bg-white border border-light shadow-sm mb-3">
+                            <h6 class="text-uppercase fw-bold text-muted mb-2" style="font-size: 0.65rem; letter-spacing: 1px;">Insights de Foco</h6>
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-lightning-charge-fill text-warning"></i>
+                                <span class="small fw-semibold text-dark">Priorizar retornos no setor de Vendas</span>
+                            </div>
                         </div>
+                        <button class="btn btn-indigo w-100 rounded-3 fw-bold py-2 shadow-sm" style="background: #4f46e5; color: white;">
+                            <i class="bi bi-file-earmark-bar-graph me-2"></i>Ver Relatório Completo
+                        </button>
                     </div>
-                    <button class="btn btn-light btn-sm w-100 mt-4 rounded-pill fw-bold" style="color: #4f46e5;">Ver Relatório Completo</button>
                 </div>
             </div>
         </div>

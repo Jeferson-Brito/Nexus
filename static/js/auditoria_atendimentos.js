@@ -1708,20 +1708,26 @@ document.addEventListener('DOMContentLoaded', function () {
         const summaryEl = document.getElementById('ia-auditor-summary');
         
         // Simulação de insight inteligente baseado nos dados reais
-        const topAnalyst = data.top_3[0] ? data.top_3[0].nome : 'nenhum';
-        const alertPerc = data.total_auditorias > 0 ? (data.total_alerts / data.total_auditorias * 100).toFixed(0) : 0;
+        const topAnalyst = (data.top_3 && data.top_3[0]) ? data.top_3[0].nome : '—';
         
-        let insight = `Este mês tivemos <strong>${data.total_auditorias}</strong> auditorias com nota média de <strong>${data.nota_media_geral}</strong>. `;
+        // Correção do cálculo para evitar NaN
+        const total = data.total_auditorias || 0;
+        const alertas = data.total_alertas || 0;
+        const alertPerc = total > 0 ? ((alertas / total) * 100).toFixed(0) : 0;
+        
+        let insight = `Este mês identificamos <strong>${total}</strong> auditorias com nota média de <strong>${data.nota_media_geral.toFixed(1)}</strong>. `;
         
         if (alertPerc > 20) {
-            insight += `Alerta: <strong>${alertPerc}%</strong> das avaliações geraram alertas críticos. Recomendamos reforçar o treinamento de postura. `;
+            insight += `Observamos um volume de <strong>${alertPerc}%</strong> de alertas. Recomendamos foco em conformidade de processos. `;
         } else {
-            insight += `Excelente! O índice de alertas está baixo (<strong>${alertPerc}%</strong>). `;
+            insight += `Alta performance: índice de alertas em <strong>${alertPerc}%</strong>. `;
         }
         
-        insight += `Destaque para <strong>${topAnalyst}</strong> com a melhor performance do período.`;
+        if (topAnalyst !== '—') {
+            insight += `Destaque positivo para <strong>${topAnalyst}</strong>.`;
+        }
         
-        summaryEl.innerHTML = `<p>${insight}</p>`;
+        summaryEl.innerHTML = `<p class="mb-0">${insight}</p>`;
     }
 
     function initAnalystView() {
