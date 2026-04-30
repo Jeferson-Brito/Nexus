@@ -1,138 +1,420 @@
 <!DOCTYPE html>
+{% load static %}
 <html lang="pt-BR">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Login - Nexus{% endblock %}</title>
+    <title>Login - Nexus</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Favicon -->
-    {% load static %}
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}">
-    <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <link rel="stylesheet" href="{% static 'css/style.css' %}?v=12.0">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            background: #0f172a;
+            overflow: hidden;
+        }
+
+        /* ── Left Panel ── */
+        .login-left {
+            flex: 1;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem;
+            background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 40%, #7c3aed 100%);
+            overflow: hidden;
+        }
+
+        /* Animated blobs */
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: .35;
+            animation: blobFloat 8s ease-in-out infinite;
+        }
+        .blob-1 { width: 500px; height: 500px; background: #3b82f6; top: -150px; left: -150px; animation-delay: 0s; }
+        .blob-2 { width: 400px; height: 400px; background: #8b5cf6; bottom: -100px; right: -100px; animation-delay: -3s; }
+        .blob-3 { width: 300px; height: 300px; background: #06b6d4; top: 40%; left: 30%; animation-delay: -6s; }
+
+        @keyframes blobFloat {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33%       { transform: translate(30px, -30px) scale(1.05); }
+            66%       { transform: translate(-20px, 20px) scale(.95); }
+        }
+
+        /* Grid dots */
+        .login-left::before {
+            content: '';
+            position: absolute; inset: 0;
+            background-image: radial-gradient(circle, rgba(255,255,255,.12) 1px, transparent 1px);
+            background-size: 32px 32px;
+        }
+
+        .login-left-content { position: relative; z-index: 1; text-align: center; max-width: 440px; }
+
+        .left-logo {
+            width: 80px; height: 80px;
+            background: rgba(255,255,255,.15);
+            backdrop-filter: blur(12px);
+            border: 1.5px solid rgba(255,255,255,.25);
+            border-radius: 22px;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 1.5rem;
+        }
+        .left-logo img { width: 52px; }
+
+        .left-title {
+            font-size: 2.2rem; font-weight: 800;
+            color: #fff; line-height: 1.15; margin-bottom: .75rem;
+        }
+        .left-title span { color: #93c5fd; }
+
+        .left-sub {
+            color: rgba(255,255,255,.65);
+            font-size: .95rem; line-height: 1.6; margin-bottom: 2.5rem;
+        }
+
+        /* Feature pills */
+        .feature-pills { display: flex; flex-direction: column; gap: .75rem; }
+        .feature-pill {
+            display: flex; align-items: center; gap: .875rem;
+            background: rgba(255,255,255,.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,.15);
+            border-radius: 12px; padding: .75rem 1.1rem;
+            color: #fff; font-size: .875rem; font-weight: 500;
+            text-align: left;
+            animation: fadeInLeft .5s ease both;
+        }
+        .feature-pill:nth-child(2) { animation-delay: .1s; }
+        .feature-pill:nth-child(3) { animation-delay: .2s; }
+        .feature-pill-icon {
+            width: 36px; height: 36px; border-radius: 9px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem;
+        }
+        .fp-blue   { background: rgba(59,130,246,.4); }
+        .fp-violet { background: rgba(139,92,246,.4); }
+        .fp-cyan   { background: rgba(6,182,212,.4); }
+
+        @keyframes fadeInLeft {
+            from { opacity: 0; transform: translateX(-16px); }
+            to   { opacity: 1; transform: none; }
+        }
+
+        /* ── Right Panel ── */
+        .login-right {
+            width: 480px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f8fafc;
+            padding: 2.5rem 2rem;
+            position: relative;
+        }
+
+        .login-form-wrap { width: 100%; max-width: 380px; }
+
+        /* Mobile logo (shown only on small screens) */
+        .mobile-logo {
+            display: none;
+            text-align: center; margin-bottom: 2rem;
+        }
+        .mobile-logo img { height: 56px; }
+
+        .form-eyebrow {
+            font-size: .75rem; font-weight: 700;
+            letter-spacing: .08em; text-transform: uppercase;
+            color: #2563eb; margin-bottom: .5rem;
+        }
+        .form-heading {
+            font-size: 1.75rem; font-weight: 800;
+            color: #0f172a; margin-bottom: .35rem;
+        }
+        .form-sub {
+            font-size: .875rem; color: #64748b; margin-bottom: 2rem;
+        }
+
+        /* Input groups */
+        .field-wrap { margin-bottom: 1.25rem; }
+        .field-label {
+            display: block; font-size: .8rem; font-weight: 600;
+            color: #374151; margin-bottom: .4rem;
+        }
+        .field-input-wrap { position: relative; }
+        .field-icon {
+            position: absolute; left: .9rem; top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8; font-size: 1rem; pointer-events: none;
+            transition: color .2s;
+        }
+        .field-input {
+            width: 100%; padding: .75rem .9rem .75rem 2.6rem;
+            border: 1.5px solid #e2e8f0; border-radius: 12px;
+            font-size: .9rem; font-family: 'Inter', sans-serif;
+            color: #1e293b; background: #fff;
+            outline: none; transition: border-color .2s, box-shadow .2s;
+        }
+        .field-input:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 4px rgba(37,99,235,.1);
+        }
+        .field-input:focus + .field-icon-right,
+        .field-input-wrap:focus-within .field-icon { color: #2563eb; }
+
+        .field-icon-right {
+            position: absolute; right: .9rem; top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8; cursor: pointer; background: none;
+            border: none; font-size: 1rem; transition: color .2s;
+        }
+        .field-icon-right:hover { color: #2563eb; }
+
+        /* Submit button */
+        .btn-login {
+            width: 100%; padding: .85rem;
+            background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+            color: #fff; font-size: .95rem; font-weight: 700;
+            border: none; border-radius: 12px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: .5rem;
+            transition: opacity .2s, transform .15s, box-shadow .2s;
+            box-shadow: 0 4px 20px rgba(37,99,235,.35);
+            font-family: 'Inter', sans-serif;
+            letter-spacing: .01em;
+            margin-top: .5rem;
+        }
+        .btn-login:hover {
+            opacity: .92; transform: translateY(-1px);
+            box-shadow: 0 8px 28px rgba(37,99,235,.45);
+        }
+        .btn-login:active { transform: translateY(0); }
+        .btn-login i { font-size: 1rem; transition: transform .2s; }
+        .btn-login:hover i { transform: translateX(4px); }
+
+        /* Footer note */
+        .login-note {
+            display: flex; align-items: center; gap: .5rem;
+            margin-top: 1.5rem; color: #94a3b8; font-size: .8rem;
+            justify-content: center; text-align: center;
+        }
+        .login-note i { color: #cbd5e1; font-size: .85rem; }
+
+        /* Divider */
+        .form-divider {
+            display: flex; align-items: center; gap: .75rem;
+            margin: 1.5rem 0; color: #cbd5e1; font-size: .75rem;
+        }
+        .form-divider::before, .form-divider::after {
+            content: ''; flex: 1; height: 1px; background: #e2e8f0;
+        }
+
+        /* Badge strip */
+        .badge-strip {
+            display: flex; gap: .5rem; flex-wrap: wrap;
+            justify-content: center; margin-top: 1.75rem;
+        }
+        .badge-pill {
+            display: inline-flex; align-items: center; gap: .35rem;
+            background: #f1f5f9; border: 1px solid #e2e8f0;
+            border-radius: 999px; padding: .25rem .7rem;
+            font-size: .72rem; font-weight: 500; color: #64748b;
+        }
+        .badge-pill i { font-size: .75rem; color: #2563eb; }
+
+        /* Fade-up animation */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: none; }
+        }
+        .fade-up { animation: fadeInUp .5s ease both; }
+        .fade-up-2 { animation: fadeInUp .5s .1s ease both; }
+        .fade-up-3 { animation: fadeInUp .5s .2s ease both; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            body { flex-direction: column; overflow: auto; }
+            .login-left { display: none; }
+            .login-right {
+                width: 100%; min-height: 100vh;
+                padding: 2rem 1.25rem;
+                background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 40%, #7c3aed 100%);
+            }
+            .mobile-logo { display: block; }
+            .form-eyebrow { color: #93c5fd; }
+            .form-heading { color: #fff; }
+            .form-sub { color: rgba(255,255,255,.65); }
+            .field-label { color: rgba(255,255,255,.85); }
+            .field-input { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.2); color: #fff; }
+            .field-input::placeholder { color: rgba(255,255,255,.4); }
+            .field-input:focus { border-color: rgba(255,255,255,.6); box-shadow: 0 0 0 4px rgba(255,255,255,.1); }
+            .field-icon { color: rgba(255,255,255,.5); }
+            .login-note { color: rgba(255,255,255,.45); }
+            .badge-strip { display: none; }
+        }
+    </style>
 </head>
+<body>
 
-<body class="login-page">
-    <div class="login-container">
-        <div class="login-background">
-            <div class="login-shapes">
-                <div class="shape shape-1"></div>
-                <div class="shape shape-2"></div>
-                <div class="shape shape-3"></div>
+    <!-- LEFT PANEL -->
+    <div class="login-left">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+
+        <div class="login-left-content">
+            <div class="left-logo">
+                <img src="{% static 'img/logo_nexus.png' %}" alt="Nexus"
+                     onerror="this.style.display='none'; this.parentElement.innerHTML='<span style=\'color:#fff;font-size:1.5rem;font-weight:800;\'>N</span>'">
             </div>
-        </div>
 
-        <div class="login-wrapper">
-            <div class="login-card">
-                <div class="login-header mb-4 text-center">
-                    <img src="{% static 'img/logo_grs.png' %}" alt="GRS Logo" class="img-fluid mb-2"
-                        style="max-height: 250px;">
+            <h1 class="left-title">
+                Bem-vindo ao<br><span>Nexus</span>
+            </h1>
+            <p class="left-sub">
+                Plataforma centralizada de gestão de equipes,<br>
+                auditorias e indicadores de desempenho.
+            </p>
+
+            <div class="feature-pills">
+                <div class="feature-pill">
+                    <div class="feature-pill-icon fp-blue">
+                        <i class="bi bi-speedometer2"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight:600;">Dashboard em tempo real</div>
+                        <div style="opacity:.65;font-size:.8rem;">Métricas e KPIs atualizados</div>
+                    </div>
                 </div>
-
-                <form method="post" class="login-form">
-                    {% csrf_token %}
-                    <div class="form-group">
-                        <label for="email" class="form-label">
-                            <i class="bi bi-envelope-fill"></i> E-mail
-                        </label>
-                        <input type="email" class="form-control form-control-lg" id="email" name="email"
-                            placeholder="Digite seu e-mail" required autofocus>
+                <div class="feature-pill">
+                    <div class="feature-pill-icon fp-violet">
+                        <i class="bi bi-shield-check"></i>
                     </div>
-
-                    <div class="form-group">
-                        <label for="password" class="form-label">
-                            <i class="bi bi-lock-fill"></i> Senha
-                        </label>
-                        <div class="password-input-wrapper">
-                            <input type="password" class="form-control form-control-lg" id="password" name="password"
-                                placeholder="Digite sua senha" required>
-                            <button type="button" class="btn-toggle-password" onclick="togglePassword('password')">
-                                <i class="bi bi-eye" id="password-icon"></i>
-                            </button>
-                        </div>
+                    <div>
+                        <div style="font-weight:600;">Auditoria de Atendimentos</div>
+                        <div style="opacity:.65;font-size:.8rem;">Controle de qualidade completo</div>
                     </div>
-
-                    <button type="submit" class="btn-login">
-                        <span class="btn-text">Entrar</span>
-                        <i class="bi bi-arrow-right"></i>
-                    </button>
-                </form>
-
-                <div class="login-footer">
-                    <p class="login-help">
-                        <i class="bi bi-info-circle"></i>
-                        Precisa de ajuda? Entre em contato com o administrador.
-                    </p>
+                </div>
+                <div class="feature-pill">
+                    <div class="feature-pill-icon fp-cyan">
+                        <i class="bi bi-robot"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight:600;">Nexus IA integrado</div>
+                        <div style="opacity:.65;font-size:.8rem;">Assistente inteligente nativo</div>
+                    </div>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- SweetAlert2 se encarrega do container -->
+    <!-- RIGHT PANEL -->
+    <div class="login-right">
+        <div class="login-form-wrap">
 
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-        <script>
-            // Sistema de Toast Notifications (Premium SweetAlert2)
-            const Toast = Swal.mixin({
-                toast: true,
-                position: 'bottom-end',
-                showConfirmButton: false,
-                timer: 3000,
-                timerProgressBar: true,
-                didOpen: (toast) => {
-                    toast.addEventListener('mouseenter', Swal.stopTimer)
-                    toast.addEventListener('mouseleave', Swal.resumeTimer)
-                }
-            });
+            <!-- Mobile-only logo -->
+            <div class="mobile-logo">
+                <img src="{% static 'img/logo_nexus_horizontal.png' %}" alt="Nexus"
+                     onerror="this.outerHTML='<h2 style=\'color:#fff;font-weight:800;\'>Nexus</h2>'">
+            </div>
 
-            function showToast(message, type = 'info') {
-                const typeMap = {
-                    'success': 'success',
-                    'error': 'error',
-                    'danger': 'error',
-                    'warning': 'warning',
-                    'info': 'info',
-                    'debug': 'info'
-                };
+            <div class="fade-up">
+                <div class="form-eyebrow">Plataforma Nexus</div>
+                <h2 class="form-heading">Entrar na sua conta</h2>
+                <p class="form-sub">Insira suas credenciais para acessar o sistema.</p>
+            </div>
 
-                Toast.fire({
-                    icon: typeMap[type] || 'info',
-                    title: message
-                });
+            <form method="post" class="fade-up-2">
+                {% csrf_token %}
+
+                <div class="field-wrap">
+                    <label for="email" class="field-label">E-mail</label>
+                    <div class="field-input-wrap">
+                        <i class="bi bi-envelope field-icon"></i>
+                        <input type="email" class="field-input" id="email" name="email"
+                               placeholder="seu@email.com" required autofocus autocomplete="email">
+                    </div>
+                </div>
+
+                <div class="field-wrap">
+                    <label for="password" class="field-label">Senha</label>
+                    <div class="field-input-wrap">
+                        <i class="bi bi-lock field-icon"></i>
+                        <input type="password" class="field-input" id="password" name="password"
+                               placeholder="••••••••" required autocomplete="current-password"
+                               style="padding-right: 2.8rem;">
+                        <button type="button" class="field-icon-right" onclick="togglePassword()" id="toggleBtn">
+                            <i class="bi bi-eye" id="toggleIcon"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-login">
+                    Entrar no sistema <i class="bi bi-arrow-right"></i>
+                </button>
+            </form>
+
+            <div class="form-divider fade-up-3">acesso seguro</div>
+
+            <div class="login-note fade-up-3">
+                <i class="bi bi-info-circle"></i>
+                Precisa de acesso? Entre em contato com o administrador.
+            </div>
+
+            <div class="badge-strip fade-up-3">
+                <span class="badge-pill"><i class="bi bi-shield-lock-fill"></i> Conexão segura</span>
+                <span class="badge-pill"><i class="bi bi-building"></i> Uso interno</span>
+                <span class="badge-pill"><i class="bi bi-clock"></i> Sessão protegida</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function togglePassword() {
+            const input = document.getElementById('password');
+            const icon  = document.getElementById('toggleIcon');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.replace('bi-eye', 'bi-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.replace('bi-eye-slash', 'bi-eye');
             }
+        }
 
-            function togglePassword(inputId) {
-                const input = document.getElementById(inputId);
-                const icon = document.getElementById(inputId + '-icon');
+        const Toast = Swal.mixin({
+            toast: true, position: 'bottom-end',
+            showConfirmButton: false, timer: 3500, timerProgressBar: true,
+        });
 
-                if (input.type === 'password') {
-                    input.type = 'text';
-                    icon.classList.remove('bi-eye');
-                    icon.classList.add('bi-eye-slash');
-                } else {
-                    input.type = 'password';
-                    icon.classList.remove('bi-eye-slash');
-                    icon.classList.add('bi-eye');
-                }
-            }
+        function showToast(message, type = 'info') {
+            const map = { success:'success', error:'error', danger:'error', warning:'warning', info:'info', debug:'info' };
+            Toast.fire({ icon: map[type] || 'info', title: message });
+        }
 
-            // Processar mensagens do Django
-            document.addEventListener('DOMContentLoaded', function () {
-                {% if messages %}
-                {% for message in messages %}
-                showToast('{{ message|escapejs }}', '{{ message.tags }}');
-                {% endfor %}
-                {% endif %}
-                {% if form.errors %}
-                showToast('E-mail ou senha incorretos. Tente novamente.', 'error');
-                {% endif %}
-            });
-        </script>
+        document.addEventListener('DOMContentLoaded', function () {
+            {% if messages %}
+            {% for message in messages %}
+            showToast('{{ message|escapejs }}', '{{ message.tags }}');
+            {% endfor %}
+            {% endif %}
+            {% if form.errors %}
+            showToast('E-mail ou senha incorretos. Tente novamente.', 'error');
+            {% endif %}
+        });
+    </script>
 </body>
-
 </html>
