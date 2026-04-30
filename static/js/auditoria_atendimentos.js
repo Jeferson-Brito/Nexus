@@ -24,7 +24,8 @@ document.addEventListener('DOMContentLoaded', function () {
         currentAnalystId: null,
         charts: {
             evolucao: null,
-            radar: null
+            radar: null,
+            geral: null
         }
     };
 
@@ -42,6 +43,8 @@ document.addEventListener('DOMContentLoaded', function () {
         // Verificar se estamos na visão de analista
         if (document.querySelector('.card-dashboard')) {
             initAnalystView();
+        } else if (document.getElementById('chartEvolucaoGeral')) {
+            loadExecutiveDashboard();
         }
     }
 
@@ -1631,6 +1634,95 @@ document.addEventListener('DOMContentLoaded', function () {
     // ========================================
     // VISÃO DO ANALISTA (NOVO)
     // ========================================
+
+    function loadExecutiveDashboard() {
+        fetch('/api/auditoria/dashboard/', { credentials: 'include' })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Atualizar KPIs
+                    document.getElementById('dash-nota-media').textContent = data.nota_media_geral.toFixed(1);
+                    document.getElementById('dash-total-audits').textContent = data.total_auditorias;
+                    document.getElementById('dash-total-alerts').textContent = data.total_alertas;
+                    
+                    const qualidade = data.total_auditorias > 0 
+                        ? (((data.distribuicao.excelente + data.distribuicao.bom) / data.total_auditorias) * 100).toFixed(0) 
+                        : 0;
+                    document.getElementById('dash-qualidade').textContent = qualidade + '%';
+
+                    // Renderizar Gráfico Geral
+                    renderGlobalChart(data.evolucao_diaria);
+                    
+                    // IA Insight (Mockup ou Chamada Real)
+                    generateIASummary(data);
+                }
+            })
+            .catch(error => console.error('Erro ao carregar dashboard executivo:', error));
+    }
+
+    function renderGlobalChart(evolucao) {
+        const ctx = document.getElementById('chartEvolucaoGeral').getContext('2d');
+        
+        if (state.charts.geral) state.charts.geral.destroy();
+        
+        const labels = evolucao.map(d => formatDate(d.data));
+        const dataPoints = evolucao.map(d => d.nota);
+
+        state.charts.geral = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Nota Média do Departamento',
+                    data: dataPoints,
+                    borderColor: '#4f46e5',
+                    backgroundColor: 'rgba(79, 70, 229, 0.05)',
+                    borderWidth: 3,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#4f46e5',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        min: 0,
+                        max: 10,
+                        grid: { display: true, color: 'rgba(0,0,0,0.05)' }
+                    },
+                    x: {
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    }
+
+    function generateIASummary(data) {
+        const summaryEl = document.getElementById('ia-auditor-summary');
+        
+        // Simulação de insight inteligente baseado nos dados reais
+        const topAnalyst = data.top_3[0] ? data.top_3[0].nome : 'nenhum';
+        const alertPerc = data.total_auditorias > 0 ? (data.total_alerts / data.total_auditorias * 100).toFixed(0) : 0;
+        
+        let insight = `Este mês tivemos <strong>${data.total_auditorias}</strong> auditorias com nota média de <strong>${data.nota_media_geral}</strong>. `;
+        
+        if (alertPerc > 20) {
+            insight += `Alerta: <strong>${alertPerc}%</strong> das avaliações geraram alertas críticos. Recomendamos reforçar o treinamento de postura. `;
+        } else {
+            insight += `Excelente! O índice de alertas está baixo (<strong>${alertPerc}%</strong>). `;
+        }
+        
+        insight += `Destaque para <strong>${topAnalyst}</strong> com a melhor performance do período.`;
+        
+        summaryEl.innerHTML = `<p>${insight}</p>`;
+    }
 
     function initAnalystView() {
         // Carregar stats para os cards

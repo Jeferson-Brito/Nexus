@@ -840,6 +840,18 @@ def api_dashboard_auditoria(request):
             nota_media=Avg('nota')
         ).order_by('-nota_media')[:3]
         
+        # Evolução (últimos 30 dias)
+        dias_evolucao = []
+        for i in range(30):
+            dia = data_inicio + timedelta(days=i)
+            if dia > data_fim: break
+            
+            media_dia = auditorias.filter(data_atendimento=dia).aggregate(Avg('nota'))['nota__avg']
+            dias_evolucao.append({
+                'data': dia.isoformat(),
+                'nota': round(float(media_dia), 2) if media_dia else None
+            })
+
         return JsonResponse({
             'success': True,
             'periodo': {
@@ -850,6 +862,7 @@ def api_dashboard_auditoria(request):
             'nota_media_geral': round(float(nota_media_geral), 2),
             'distribuicao': distribuicao,
             'total_alertas': auditorias.filter(requer_acao=True).count(),
+            'evolucao_diaria': dias_evolucao,
             'analistas_com_alertas': [{'id': str(a['analista_auditado__id']), 'username': a['analista_auditado__username']} for a in analistas_com_alertas],
             'top_3': [
                 {

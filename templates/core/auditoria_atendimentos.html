@@ -10,15 +10,83 @@
 {% block content %}
 <div class="aa-page">
 
-  <!-- Header -->
-  <div class="aa-header fade-in">
-    <div>
-      <h1><i class="bi bi-clipboard-check"></i> {{ title }}</h1>
-      <p>Sistema de avaliação de qualidade de atendimentos</p>
+  <!-- Executive Dashboard -->
+  <div class="aa-executive-dashboard fade-in mb-4">
+    <div class="row g-3">
+        <!-- Main Stats -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden">
+                <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold"><i class="bi bi-graph-up-arrow text-primary me-2"></i>Desempenho Geral do Departamento</h5>
+                    <div class="badge bg-primary-subtle text-primary px-3 py-2 rounded-pill">Últimos 30 dias</div>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-3 border-end">
+                            <div class="text-center">
+                                <small class="text-muted text-uppercase fw-semibold" style="font-size: 0.65rem;">Nota Média</small>
+                                <h2 class="mb-0 fw-bold text-primary" id="dash-nota-media">0.0</h2>
+                                <div class="text-success small"><i class="bi bi-caret-up-fill"></i> +2.4%</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 border-end">
+                            <div class="text-center">
+                                <small class="text-muted text-uppercase fw-semibold" style="font-size: 0.65rem;">Total Auditorias</small>
+                                <h2 class="mb-0 fw-bold" id="dash-total-audits">0</h2>
+                                <small class="text-muted">No período</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 border-end">
+                            <div class="text-center">
+                                <small class="text-muted text-uppercase fw-semibold" style="font-size: 0.65rem;">Alertas Críticos</small>
+                                <h2 class="mb-0 fw-bold text-danger" id="dash-total-alerts">0</h2>
+                                <small class="text-muted">Ações pendentes</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <small class="text-muted text-uppercase fw-semibold" style="font-size: 0.65rem;">Qualidade</small>
+                                <h2 class="mb-0 fw-bold text-success" id="dash-qualidade">0%</h2>
+                                <small class="text-muted">Aprovação</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="height: 250px;">
+                        <canvas id="chartEvolucaoGeral"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- IA Auditor Insight -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 h-100" style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);">
+                <div class="card-body text-white p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="rounded-circle bg-white bg-opacity-20 p-2 me-3">
+                            <i class="bi bi-stars fs-4"></i>
+                        </div>
+                        <h5 class="mb-0 fw-bold">Nexus IA Auditor</h5>
+                    </div>
+                    <div id="ia-auditor-summary" class="mb-4 small" style="opacity: 0.9; line-height: 1.6;">
+                        <p>Analisando dados do departamento...</p>
+                        <div class="spinner-border spinner-border-sm text-light" role="status"></div>
+                    </div>
+                    <div class="mt-auto">
+                        <h6 class="text-uppercase fw-bold" style="font-size: 0.7rem; letter-spacing: 1px; opacity: 0.8;">Foco da Semana:</h6>
+                        <div class="d-flex align-items-center gap-2 mt-2">
+                            <i class="bi bi-lightning-fill text-warning"></i>
+                            <span class="small fw-semibold">Melhorar tempo de primeira resposta</span>
+                        </div>
+                    </div>
+                    <button class="btn btn-light btn-sm w-100 mt-4 rounded-pill fw-bold" style="color: #4f46e5;">Ver Relatório Completo</button>
+                </div>
+            </div>
+        </div>
     </div>
   </div>
 
-  <!-- KPI strip (populated by JS after data loads) -->
+  <!-- KPI strip (Old simplified version, can be kept for fallback or removed) -->
   <div class="aa-kpis" id="aa-kpi-strip" style="display:none;">
     <div class="aa-kpi">
       <div class="aa-kpi-icon blue"><i class="bi bi-clipboard-check"></i></div>
