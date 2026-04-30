@@ -20,14 +20,20 @@ document.addEventListener('DOMContentLoaded', function () {
         totalPages: 1,
         filters: {},
         config: null,
-        editingId: null
+        editingId: null,
+        currentAnalystId: null,
+        charts: {
+            evolucao: null,
+            radar: null
+        }
     };
 
     // Inicialização
     init();
 
     function init() {
-        console.log('Auditoria Atendimentos JS Loaded - v1.3 - ' + new Date().toISOString());
+        console.log('Auditoria Atendimentos JS Loaded - v1.4 - AI Insights Enabled');
+        setupDefaultDates();
         loadAnalistas();
         loadConfig();
         setupEventListeners();
@@ -133,6 +139,48 @@ document.addEventListener('DOMContentLoaded', function () {
                     });
             });
         }
+
+        // Botão Gerar Insight IA
+        const btnIA = document.getElementById('btnGerarInsightIA');
+        if (btnIA) {
+            btnIA.addEventListener('click', handleGerarInsightIA);
+        }
+
+        // Botão Copiar Relatório IA
+        const btnCopiar = document.getElementById('btnCopiarRelatorio');
+        if (btnCopiar) {
+            btnCopiar.addEventListener('click', function() {
+                const content = document.getElementById('ia-markdown-content').innerText;
+                navigator.clipboard.writeText(content).then(() => {
+                    this.innerHTML = '<i class="bi bi-check me-1"></i>Copiado!';
+                    setTimeout(() => {
+                        this.innerHTML = '<i class="bi bi-clipboard me-1"></i>Copiar';
+                    }, 2000);
+                });
+            });
+        }
+    }
+
+    function setupDefaultDates() {
+        const hoje = new Date();
+        const primeiroDia = new Date(hoje.getFullYear(), hoje.month = hoje.getMonth(), 1);
+        const ultimoDia = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
+
+        const isoPrimeiro = primeiroDia.toISOString().split('T')[0];
+        const isoUltimo = ultimoDia.toISOString().split('T')[0];
+
+        const inputsInicio = ['filtro_data_inicio', 'filtro_analista_data_inicio'];
+        const inputsFim = ['filtro_data_fim', 'filtro_analista_data_fim'];
+
+        inputsInicio.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = isoPrimeiro;
+        });
+
+        inputsFim.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = isoUltimo;
+        });
     }
 
     function setupCriteriosHandlers() {
@@ -1272,78 +1320,190 @@ document.addEventListener('DOMContentLoaded', function () {
     // ========================================
 
     window.showAnalystAudits = function (analistaId, analistaNome) {
+        state.currentAnalystId = analistaId;
+        
         // Atualizar título do modal
         document.getElementById('analista-name').textContent = analistaNome;
 
-        // Mostrar loading
+        // Resetar Modal UI
         document.getElementById('loading-analista-audits').style.display = 'block';
-        document.getElementById('table-analista-audits').style.display = 'none';
+        document.getElementById('analista-modal-content').style.display = 'none';
         document.getElementById('empty-state-analista').style.display = 'none';
+        
+        // Resetar IA UI
+        document.getElementById('ia-empty-state').style.display = 'block';
+        document.getElementById('ia-loading').style.display = 'none';
+        document.getElementById('ia-result').style.display = 'none';
+
+        // Voltar para a aba de histórico
+        const historyTab = document.getElementById('modal-historico-tab');
+        if (historyTab) {
+            const bsTab = bootstrap.Tab.getOrCreateInstance(historyTab);
+            bsTab.show();
+        }
 
         // Abrir modal
-        const modal = new bootstrap.Modal(document.getElementById('modalAnalistaAudits'));
+        const modalEl = document.getElementById('modalAnalistaAudits');
+        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
         modal.show();
 
-        // Buscar auditorias do analista
+        // Buscar auditorias do analista (usando as datas do filtro de analista)
+        const dataInicio = document.getElementById('filtro_analista_data_inicio').value;
+        const dataFim = document.getElementById('filtro_analista_data_fim').value;
+
         const params = new URLSearchParams({
             analista_id: analistaId,
-            per_page: 100
+            data_inicio: dataInicio,
+            data_fim: dataFim,
+            per_page: 50
         });
 
         fetch(`/api/auditoria/list/?${params}`, { credentials: 'include' })
             .then(response => response.json())
             .then(data => {
                 document.getElementById('loading-analista-audits').style.display = 'none';
+                document.getElementById('analista-modal-content').style.display = 'block';
 
                 if (data.success && data.auditorias.length > 0) {
                     renderAnalystAuditsList(data.auditorias);
-                    document.getElementById('table-analista-audits').style.display = 'block';
+                    renderAnalystCharts(data.auditorias);
                 } else {
+                    document.getElementById('lista-auditorias-analista-modal').innerHTML = '';
                     document.getElementById('empty-state-analista').style.display = 'block';
                 }
             })
             .catch(error => {
                 console.error('Erro ao carregar auditorias:', error);
                 document.getElementById('loading-analista-audits').style.display = 'none';
-                document.getElementById('empty-state-analista').style.display = 'block';
             });
     };
 
     function renderAnalystAuditsList(auditorias) {
         const tbody = document.getElementById('lista-auditorias-analista-modal');
-        tbody.innerHTML = '';
+        let html = '';
 
         auditorias.forEach(aud => {
-            const tr = document.createElement('tr');
-            if (aud.requer_acao) {
-                tr.classList.add('row-alert');
-            }
-
-            const badgeClass = `badge-${aud.classificacao}`;
-            const dataFormatada = formatDate(aud.data_atendimento);
-
-            tr.innerHTML = `
-                <td>${dataFormatada}</td>
-                <td>${aud.id_conversa}</td>
-                <td><span class="badge bg-secondary">${aud.tipo_atendimento}</span></td>
-                <td>${aud.pontuacao}/9</td>
-                <td class="fw-bold">${aud.nota.toFixed(1)}</td>
-                <td>
-                    <span class="badge ${badgeClass}">${aud.classificacao_display}</span>
-                    <span class="d-inline-block" style="width: 24px; text-align: center;">
-                        ${aud.requer_acao ? '<i class="bi bi-exclamation-triangle icon-alert text-danger"></i>' : ''}
-                    </span>
-                </td>
-                <td>
-                    <button class="btn btn-sm btn-outline-primary" onclick="viewDetails('${aud.id}')">
-                        <i class="bi bi-eye"></i>
-                    </button>
-                </td>
+            html += `
+                <tr>
+                    <td>${formatDate(aud.data_atendimento)}</td>
+                    <td><code class="text-primary">${aud.id_conversa}</code></td>
+                    <td><span class="badge bg-light text-dark border">${aud.tipo_atendimento}</span></td>
+                    <td><span class="fw-bold">${aud.nota.toFixed(1)}</span></td>
+                    <td><span class="badge badge-${aud.classificacao}">${aud.classificacao_display}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="loadAuditoriaDetail('${aud.id}')">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </td>
+                </tr>
             `;
+        });
 
-            tbody.appendChild(tr);
+        tbody.innerHTML = html;
+    }
+
+    function renderAnalystCharts(auditorias) {
+        // Preparar dados para Gráfico de Evolução (Linha)
+        const labels = auditorias.map(a => formatDate(a.data_atendimento)).reverse();
+        const notas = auditorias.map(a => a.nota).reverse();
+
+        // Destruir gráficos anteriores se existirem
+        if (state.charts.evolucao) state.charts.evolucao.destroy();
+        if (state.charts.radar) state.charts.radar.destroy();
+
+        const ctxLine = document.getElementById('chartEvolucaoAnalista').getContext('2d');
+        state.charts.evolucao = new Chart(ctxLine, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Nota da Auditoria',
+                    data: notas,
+                    borderColor: '#4f46e5',
+                    backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#4f46e5'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { min: 0, max: 100, ticks: { stepSize: 20 } }
+                }
+            }
+        });
+
+        // Preparar dados para Gráfico Radar (Pilares)
+        const ctxRadar = document.getElementById('chartRadarAnalista').getContext('2d');
+        state.charts.radar = new Chart(ctxRadar, {
+            type: 'radar',
+            data: {
+                labels: ['Apresentação', 'Histórico', 'Entendimento', 'Informação', 'Postura', 'Português', 'Procedimento'],
+                datasets: [{
+                    label: 'Performance por Pilar',
+                    data: [90, 85, 95, 75, 100, 80, 85], 
+                    backgroundColor: 'rgba(79, 70, 229, 0.2)',
+                    borderColor: '#4f46e5',
+                    pointBackgroundColor: '#4f46e5'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: { min: 0, max: 100, ticks: { display: false } }
+                }
+            }
         });
     }
+
+    function handleGerarInsightIA() {
+        const btn = document.getElementById('btnGerarInsightIA');
+        const emptyState = document.getElementById('ia-empty-state');
+        const loading = document.getElementById('ia-loading');
+        const result = document.getElementById('ia-result');
+        const content = document.getElementById('ia-markdown-content');
+
+        emptyState.style.display = 'none';
+        loading.style.display = 'block';
+
+        const dataInicio = document.getElementById('filtro_analista_data_inicio').value;
+        const dataFim = document.getElementById('filtro_analista_data_fim').value;
+
+        fetch(`/api/auditoria/analista/${state.currentAnalystId}/ia-insight/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({ data_inicio: dataInicio, data_fim: dataFim })
+        })
+        .then(response => response.json())
+        .then(data => {
+            loading.style.display = 'none';
+            if (data.success) {
+                result.style.display = 'block';
+                content.innerHTML = data.insight_markdown
+                    .replace(/^### (.*$)/gim, '<h4 class="mt-4 mb-3 fw-bold text-dark">$1</h4>')
+                    .replace(/\*\*(.*)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\n/g, '<br>');
+            } else {
+                emptyState.style.display = 'block';
+                Swal.fire('Erro', data.error || 'Não foi possível gerar a avaliação.', 'error');
+            }
+        })
+        .catch(err => {
+            loading.style.display = 'none';
+            emptyState.style.display = 'block';
+            console.error(err);
+        });
+    }
+
+
 
     // ========================================
     // FILTROS

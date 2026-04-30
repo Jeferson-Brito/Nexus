@@ -398,3 +398,67 @@
     #criterios-container { grid-template-columns: 1fr; }
     #auditoriaTabs .nav-link { padding: .5rem .7rem; font-size:.8rem; }
 }
+
+/* Estilos para Insights de IA e Gráficos */
+.ia-pulse-container {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 80px;
+    height: 80px;
+    background: rgba(79, 70, 229, 0.1);
+    border-radius: 50%;
+    position: relative;
+    animation: iaPulse 2s infinite;
+}
+
+@keyframes iaPulse {
+    0% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.4); }
+    70% { box-shadow: 0 0 0 20px rgba(79, 70, 229, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0); }
+}
+
+.ia-markdown-body {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #374151;
+    padding: 1rem;
+    background: #fff;
+    border-radius: 1rem;
+}
+
+.ia-markdown-body h4 {
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 0.5rem;
+    color: #111827;
+    font-weight: bold;
+    margin-top: 1.5rem;
+}
+
+.ia-markdown-body strong {
+    color: #4f46e5;
+}
+
+/* Ajustes no Modal para Gráficos */
+#analista-modal-content .nav-pills .nav-link {
+    border-radius: 0.5rem;
+    font-weight: 600;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+}
+
+#analista-modal-content .nav-pills .nav-link.active {
+    background-color: #0d6efd;
+    color: white;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+canvas {
+    max-width: 100% !important;
+}
+
+@media (max-width: 768px) {
+    .modal-xl {
+        margin: 0.5rem;
+    }
+}

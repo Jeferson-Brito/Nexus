@@ -252,3 +252,72 @@ RESPONDA APENAS COM O JSON:"""
     except Exception as e:
         logger.error(f"[Nexus IA] Erro na classificação: {type(e).__name__}: {e}")
         return {'urgencia': 'media', 'sentimento': 'neutro', 'erro': str(e)}
+
+
+def gerar_avaliacao_auditoria(analista_nome: str, historico_auditorias: list, metricas: dict) -> dict:
+    """
+    Avalia o histórico de auditorias de um analista e gera um feedback humanizado.
+    """
+    try:
+        client = _get_client()
+
+        resumo_falhas = ""
+        for crit, contagem in metricas.get('criterios_analise', {}).items():
+            if contagem['falhas'] > 0:
+                taxa = (contagem['falhas'] / (contagem['ok'] + contagem['falhas'])) * 100
+                resumo_falhas += f"- {crit.replace('_', ' ').title()}: {contagem['falhas']} falhas ({taxa:.1f}% de erro)\n"
+
+        if not resumo_falhas:
+            resumo_falhas = "- Nenhuma falha registrada no período! Desempenho impecável.\n"
+
+        detalhes_historico = ""
+        for aud in historico_auditorias[:5]: # Mostrar apenas as 5 mais recentes pro prompt
+            falhas = ", ".join(aud.get('falhas_registradas', []))
+            if not falhas: falhas = "Nenhuma falha"
+            detalhes_historico += f"Data: {aud['data'][:10]} | Nota: {aud['nota']} | Classificação: {aud['classificacao']} | Observações: {falhas}\n"
+
+        prompt = f"""Você é o Nexus IA, atuando como um Mentor de Qualidade e Desempenho Senior.
+Sua tarefa é analisar os dados de auditoria recentes do analista '{analista_nome}' e gerar um relatório de feedback estruturado para o Gestor repassar ao Analista no One-on-One.
+
+DADOS DA ANÁLISE:
+- Total de Auditorias no Período: {metricas.get('total_avaliado')}
+- Nota Média: {metricas.get('nota_media_periodo')}/100
+
+PRINCIPAIS PONTOS DE ATENÇÃO (Falhas por critério):
+{resumo_falhas}
+
+AMOSTRA DAS ÚLTIMAS AUDITORIAS (Máx 5):
+{detalhes_historico}
+
+REGRAS DE RESPOSTA (Muito Importante):
+- Retorne APENAS um texto formatado em Markdown. Sem conversinha extra antes ou depois.
+- Use tom construtivo, focado em desenvolvimento, não punitivo.
+- A estrutura OBRIGATÓRIA do seu retorno deve ser:
+
+### 🌟 Visão Geral
+(Um pequeno parágrafo sobre a nota média e o volume avaliado)
+
+### ✅ Pontos Fortes
+(Liste 2 a 3 pontos positivos, como por exemplo os critérios que ele não erra ou teve poucas falhas)
+
+### 🎯 Áreas de Melhoria e Riscos
+(Foque especificamente nas falhas reportadas. Se houver falhas de português, destaque. Se houver falhas de procedimento, destaque. Seja específico).
+
+### 🚀 Plano de Ação Prático
+(Dê 3 passos práticos para o analista melhorar na próxima semana com base nos erros dele).
+
+Formate com emojis e bold para deixar o relatório com cara de dashboard premium."""
+
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=prompt
+        )
+
+        return {"resposta": response.text.strip()}
+
+    except ValueError as e:
+        logger.error(f"[Nexus IA] Configuração inválida: {e}")
+        return {"resposta": "⚠️ A integração com a IA não está configurada."}
+    except Exception as e:
+        logger.error(f"[Nexus IA] Erro ao gerar avaliação: {type(e).__name__}: {e}")
+        return {"resposta": "⚠️ Ocorreu um erro ao processar a avaliação com a IA."}

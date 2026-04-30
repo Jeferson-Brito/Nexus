@@ -1,4 +1,4 @@
-﻿from django.http import JsonResponse
+from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods, require_GET, require_POST
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
@@ -201,7 +201,13 @@ def api_auditoria_list(request):
             queryset = queryset.filter(analista_auditado=request.user)
 
         
-        # Filtros
+        # Filtros e Data Padrão (Mês Atual)
+        import calendar
+        hoje = timezone.now().date()
+        primeiro_dia_mes = hoje.replace(day=1)
+        ultimo_dia = calendar.monthrange(hoje.year, hoje.month)[1]
+        ultimo_dia_mes = hoje.replace(day=ultimo_dia)
+        
         analista_id = request.GET.get('analista_id')
         if analista_id:
             queryset = queryset.filter(analista_auditado_id=analista_id)
@@ -209,10 +215,14 @@ def api_auditoria_list(request):
         data_inicio = request.GET.get('data_inicio')
         if data_inicio:
             queryset = queryset.filter(data_atendimento__gte=data_inicio)
+        else:
+            queryset = queryset.filter(data_atendimento__gte=primeiro_dia_mes)
         
         data_fim = request.GET.get('data_fim')
         if data_fim:
             queryset = queryset.filter(data_atendimento__lte=data_fim)
+        else:
+            queryset = queryset.filter(data_atendimento__lte=ultimo_dia_mes)
         
         tipo = request.GET.get('tipo')
         if tipo:
@@ -503,7 +513,13 @@ def api_ranking_analistas(request):
         if not department:
              department = Department.objects.filter(id=1).first() or Department.objects.first()
         
-        # Período opcional
+        # Filtros e Data Padrão (Mês Atual)
+        import calendar
+        hoje = timezone.now().date()
+        primeiro_dia_mes = hoje.replace(day=1)
+        ultimo_dia = calendar.monthrange(hoje.year, hoje.month)[1]
+        ultimo_dia_mes = hoje.replace(day=ultimo_dia)
+        
         data_inicio = request.GET.get('data_inicio')
         data_fim = request.GET.get('data_fim')
         
@@ -511,8 +527,13 @@ def api_ranking_analistas(request):
         
         if data_inicio:
             queryset = queryset.filter(data_atendimento__gte=data_inicio)
+        else:
+            queryset = queryset.filter(data_atendimento__gte=primeiro_dia_mes)
+            
         if data_fim:
             queryset = queryset.filter(data_atendimento__lte=data_fim)
+        else:
+            queryset = queryset.filter(data_atendimento__lte=ultimo_dia_mes)
         
         # Agrupar por analista e calcular médias
         ranking = queryset.values(
@@ -649,6 +670,110 @@ def api_estatisticas_analista(request, analista_id):
         return JsonResponse({'error': 'Analista não encontrado'}, status=404)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
+
+@gestor_or_admin_required
+@require_POST
+def api_ia_insight_analista(request, analista_id):
+    """Gera um relatório de feedback com IA para um analista específico baseado em seu histórico recente"""
+    from ..services.ia_service import gerar_avaliacao_auditoria
+    try:
+        department = request.session.get('current_department_obj') or request.user.department
+        if isinstance(department, dict):
+            department = Department.objects.get(id=department['id'])
+            
+        if not department:
+             department = Department.objects.filter(id=1).first() or Department.objects.first()
+        
+        analista = User.objects.get(id=analista_id)
+        
+        # Obter as 15 auditorias mais recentes (ou de um período selecionado)
+        data = json.loads(request.body) if request.body else {}
+        
+        # Filtro de data opcional
+        data_inicio = data.get('data_inicio')
+        data_fim = data.get('data_fim')
+        
+        auditorias_qs = AuditoriaAtendimento.objects.filter(
+            department=department,
+            analista_auditado=analista
+        )
+        
+        if data_inicio:
+            auditorias_qs = auditorias_qs.filter(data_atendimento__gte=data_inicio)
+        if data_fim:
+            auditorias_qs = auditorias_qs.filter(data_atendimento__lte=data_fim)
+            
+        auditorias = auditorias_qs.order_by('-created_at')[:15]
+        
+        if not auditorias.exists():
+            return JsonResponse({'error': 'Nenhuma auditoria encontrada para este analista neste período. Impossível gerar avaliação.'}, status=400)
+            
+        # Preparar dados para IA
+        historico_auditorias = []
+        criterios_contagem = {
+            'apresentou_corretamente': {'ok': 0, 'falhas': 0},
+            'analisou_historico': {'ok': 0, 'falhas': 0},
+            'entendeu_solicitacao': {'ok': 0, 'falhas': 0},
+            'informacao_clara': {'ok': 0, 'falhas': 0},
+            'acordo_espera': {'ok': 0, 'falhas': 0},
+            'atendimento_respeitoso': {'ok': 0, 'falhas': 0},
+            'portugues_correto': {'ok': 0, 'falhas': 0},
+            'finalizacao_correta': {'ok': 0, 'falhas': 0},
+            'procedimento_correto': {'ok': 0, 'falhas': 0},
+        }
+        
+        notas = []
+        for aud in auditorias:
+            notas.append(float(aud.nota))
+            aud_data = {
+                'data': aud.data_atendimento.isoformat(),
+                'nota': float(aud.nota),
+                'classificacao': aud.get_classificacao_display(),
+                'tipo_atendimento': aud.get_tipo_atendimento_display(),
+                'falhas_registradas': []
+            }
+            
+            # Checar os critérios
+            campos_criterios = list(criterios_contagem.keys())
+            
+            for campo in campos_criterios:
+                passou = getattr(aud, campo)
+                if passou:
+                    criterios_contagem[campo]['ok'] += 1
+                else:
+                    criterios_contagem[campo]['falhas'] += 1
+                    # Encontrar a descrição do erro
+                    campo_erro = 'erro_' + campo.replace('_correto', '').replace('_correta', '').replace('entendeu_', '').replace('analisou_', '').replace('apresentou_', 'apresentacao')
+                    if campo == 'acordo_espera': campo_erro = 'erro_acordo_espera'
+                    if campo == 'atendimento_respeitoso': campo_erro = 'erro_respeito'
+                    
+                    detalhe_erro = getattr(aud, campo_erro, 'Sem descrição')
+                    aud_data['falhas_registradas'].append(f"{campo.replace('_', ' ').title()}: {detalhe_erro}")
+            
+            historico_auditorias.append(aud_data)
+            
+        metricas = {
+            'total_avaliado': len(notas),
+            'nota_media_periodo': round(sum(notas) / len(notas), 2) if notas else 0,
+            'criterios_analise': criterios_contagem
+        }
+        
+        analista_nome = analista.get_full_name() or analista.username
+        
+        # Chamar o serviço do Gemini
+        resultado_ia = gerar_avaliacao_auditoria(analista_nome, historico_auditorias, metricas)
+        
+        return JsonResponse({
+            'success': True,
+            'insight_markdown': resultado_ia.get('resposta', ''),
+            'metricas': metricas
+        })
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({'error': f'Erro ao processar IA: {str(e)}'}, status=500)
 
 
 @gestor_admin_or_analyst_required
