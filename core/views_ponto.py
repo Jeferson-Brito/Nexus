@@ -44,6 +44,8 @@ def ponto_kiosk(request):
         }
     
     context = {
+        'is_tablet': is_tablet,
+        'is_staff': is_staff,
         'personal_punch': can_web_punch and not is_tablet and not is_staff,
         'colaborador_data': colaborador_data
     }
