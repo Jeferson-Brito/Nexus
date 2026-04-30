@@ -8,13 +8,39 @@
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
-    <div class="row mb-4">
-        <div class="col-12">
-            <h1 class="h3 mb-0"><i class="bi bi-clipboard-check me-2"></i>{{ title }}</h1>
-            <p class="text-muted">Sistema de avaliação de qualidade de atendimentos</p>
-        </div>
+<div class="aa-page">
+
+  <!-- Header -->
+  <div class="aa-header fade-in">
+    <div>
+      <h1><i class="bi bi-clipboard-check"></i> {{ title }}</h1>
+      <p>Sistema de avaliação de qualidade de atendimentos</p>
     </div>
+  </div>
+
+  <!-- KPI strip (populated by JS after data loads) -->
+  <div class="aa-kpis" id="aa-kpi-strip" style="display:none;">
+    <div class="aa-kpi">
+      <div class="aa-kpi-icon blue"><i class="bi bi-clipboard-check"></i></div>
+      <div><div class="aa-kpi-value" id="kpi-total">—</div><div class="aa-kpi-label">Total de Auditorias</div></div>
+    </div>
+    <div class="aa-kpi">
+      <div class="aa-kpi-icon green"><i class="bi bi-emoji-smile"></i></div>
+      <div><div class="aa-kpi-value" id="kpi-excelente">—</div><div class="aa-kpi-label">Excelente</div></div>
+    </div>
+    <div class="aa-kpi">
+      <div class="aa-kpi-icon cyan"><i class="bi bi-hand-thumbs-up"></i></div>
+      <div><div class="aa-kpi-value" id="kpi-bom">—</div><div class="aa-kpi-label">Bom</div></div>
+    </div>
+    <div class="aa-kpi">
+      <div class="aa-kpi-icon amber"><i class="bi bi-exclamation-circle"></i></div>
+      <div><div class="aa-kpi-value" id="kpi-regular">—</div><div class="aa-kpi-label">Regular</div></div>
+    </div>
+    <div class="aa-kpi">
+      <div class="aa-kpi-icon red"><i class="bi bi-x-circle"></i></div>
+      <div><div class="aa-kpi-value" id="kpi-insatisfatorio">—</div><div class="aa-kpi-label">Insatisfatório</div></div>
+    </div>
+  </div>
 
     <!-- Visão Exclusiva do Analista -->
     {% if is_analista and not is_gestor and not is_admin %}
@@ -128,36 +154,31 @@
 
             {% else %}
             <!-- Tabs de Navegação (Visão Gestor/Admin) -->
-            <ul class="nav nav-tabs mb-4" id="auditoriaTabs" role="tablist">
+            <ul class="nav" id="auditoriaTabs" role="tablist">
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="cadastrar-tab" data-bs-toggle="tab" data-bs-target="#cadastrar"
-                        type="button" role="tab">
-                        <i class="bi bi-plus-circle me-2"></i>Cadastrar Auditoria
+                    <button class="nav-link active" id="cadastrar-tab" data-bs-toggle="tab" data-bs-target="#cadastrar" type="button" role="tab">
+                        <i class="bi bi-plus-circle"></i> Cadastrar
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="lista-tab" data-bs-toggle="tab" data-bs-target="#lista" type="button"
-                        role="tab">
-                        <i class="bi bi-list-ul me-2"></i>Auditorias Realizadas
+                    <button class="nav-link" id="lista-tab" data-bs-toggle="tab" data-bs-target="#lista" type="button" role="tab">
+                        <i class="bi bi-list-ul"></i> Realizadas
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="ranking-tab" data-bs-toggle="tab" data-bs-target="#ranking"
-                        type="button" role="tab">
-                        <i class="bi bi-trophy me-2"></i>Ranking de Analistas
+                    <button class="nav-link" id="ranking-tab" data-bs-toggle="tab" data-bs-target="#ranking" type="button" role="tab">
+                        <i class="bi bi-trophy"></i> Ranking
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="analistas-tab" data-bs-toggle="tab" data-bs-target="#analistas"
-                        type="button" role="tab">
-                        <i class="bi bi-people me-2"></i>Visão por Analista
+                    <button class="nav-link" id="analistas-tab" data-bs-toggle="tab" data-bs-target="#analistas" type="button" role="tab">
+                        <i class="bi bi-people"></i> Por Analista
                     </button>
                 </li>
                 {% if is_admin %}
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="config-tab" data-bs-toggle="tab" data-bs-target="#config" type="button"
-                        role="tab">
-                        <i class="bi bi-gear me-2"></i>Configurações
+                    <button class="nav-link" id="config-tab" data-bs-toggle="tab" data-bs-target="#config" type="button" role="tab">
+                        <i class="bi bi-gear"></i> Configurações
                     </button>
                 </li>
                 {% endif %}
@@ -168,11 +189,11 @@
 
                 <!-- ABA 1: CADASTRAR AUDITORIA -->
                 <div class="tab-pane fade show active" id="cadastrar" role="tabpanel">
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-primary text-white">
-                            <h5 class="mb-0"><i class="bi bi-plus-circle me-2"></i>Nova Auditoria de Atendimento</h5>
+                    <div class="aa-card">
+                        <div class="aa-card-header">
+                            <h5><i class="bi bi-plus-circle me-2"></i>Nova Auditoria de Atendimento</h5>
                         </div>
-                        <div class="card-body">
+                        <div class="aa-card-body">
                             <form id="formAuditoria">
                                 {% csrf_token %}
 
@@ -758,17 +779,12 @@
 
                 <!-- ABA 2: AUDITORIAS REALIZADAS -->
                 <div class="tab-pane fade" id="lista" role="tabpanel">
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-primary text-white">
-                            <div class="row align-items-center">
-                                <div class="col-md-6">
-                                    <h5 class="mb-0"><i class="bi bi-list-ul me-2"></i>Auditorias Realizadas</h5>
-                                </div>
-                                <div class="col-md-6 text-end">
-                                    <button class="btn btn-sm btn-outline-light" id="btnFiltros">
-                                        <i class="bi bi-filter me-1"></i>Filtros
-                                    </button>
-                                </div>
+                    <div class="aa-card">
+                        <div class="aa-card-header">
+                            <h5><i class="bi bi-list-ul me-2"></i>Auditorias Realizadas</h5>
+                            <button class="btn btn-sm btn-outline-light" id="btnFiltros">
+                                <i class="bi bi-filter me-1"></i>Filtros
+                            </button>
                             </div>
 
                             <!-- Painel de Filtros (recolhível) -->
@@ -818,10 +834,10 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="card-body p-0">
+                        <div class="aa-card-body-p0">
                             <div class="table-responsive">
-                                <table class="table table-hover mb-0">
-                                    <thead class="table-light">
+                                <table class="aa-table">
+                                    <thead>
                                         <tr>
                                             <th>Data</th>
                                             <th>ID Conversa</th>
@@ -855,11 +871,11 @@
 
                 <!-- ABA 3: RANKING DE ANALISTAS -->
                 <div class="tab-pane fade" id="ranking" role="tabpanel">
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-warning text-dark">
-                            <h5 class="mb-0"><i class="bi bi-trophy me-2"></i>Ranking de Analistas</h5>
+                    <div class="aa-card">
+                        <div class="aa-card-header">
+                            <h5><i class="bi bi-trophy me-2"></i>Ranking de Analistas</h5>
                         </div>
-                        <div class="card-body" id="ranking-container">
+                        <div class="aa-card-body" id="ranking-container">
                             <div class="text-center py-4">
                                 <div class="spinner-border text-primary" role="status">
                                     <span class="visually-hidden">Carregando ranking...</span>
@@ -883,11 +899,11 @@
                 <!-- ABA 5: CONFIGURAÇÕES (Admin Only) -->
                 {% if is_admin %}
                 <div class="tab-pane fade" id="config" role="tabpanel">
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-secondary text-white">
-                            <h5 class="mb-0"><i class="bi bi-gear me-2"></i>Configurações do Sistema</h5>
+                    <div class="aa-card">
+                        <div class="aa-card-header">
+                            <h5><i class="bi bi-gear me-2"></i>Configurações do Sistema</h5>
                         </div>
-                        <div class="card-body">
+                        <div class="aa-card-body">
                             <form id="formConfig">
                                 <div class="row">
                                     <div class="col-md-6">
@@ -977,4 +993,26 @@
 
         {% block scripts %}
         <script src="{% static 'js/auditoria_atendimentos.js' %}"></script>
+        <script>
+        // Populate KPI strip once audit data is available
+        (function() {
+            function updateKPIs() {
+                var rows = document.querySelectorAll('#lista-auditorias tr[data-classificacao]');
+                if (!rows.length) { setTimeout(updateKPIs, 1500); return; }
+                var counts = { total: 0, excelente: 0, bom: 0, regular: 0, insatisfatorio: 0 };
+                rows.forEach(function(r) {
+                    counts.total++;
+                    var c = r.dataset.classificacao;
+                    if (counts[c] !== undefined) counts[c]++;
+                });
+                document.getElementById('kpi-total').textContent = counts.total;
+                document.getElementById('kpi-excelente').textContent = counts.excelente;
+                document.getElementById('kpi-bom').textContent = counts.bom;
+                document.getElementById('kpi-regular').textContent = counts.regular;
+                document.getElementById('kpi-insatisfatorio').textContent = counts.insatisfatorio;
+                document.getElementById('aa-kpi-strip').style.display = '';
+            }
+            document.addEventListener('DOMContentLoaded', function() { setTimeout(updateKPIs, 2000); });
+        })();
+        </script>
         {% endblock %}
