@@ -829,6 +829,34 @@ def api_dashboard_auditoria(request):
             'analista_auditado__id',
             'analista_auditado__username'
         ).distinct()
+
+        # Estatísticas de falhas por critério
+        criterios_labels = {
+            'apresentou_corretamente': 'Apresentação',
+            'analisou_historico': 'Histórico',
+            'entendeu_solicitacao': 'Entendimento',
+            'informacao_clara': 'Informação',
+            'acordo_espera': 'Acordo de Espera',
+            'atendimento_respeitoso': 'Respeito',
+            'portugues_correto': 'Português',
+            'finalizacao_correta': 'Finalização',
+            'procedimento_correto': 'Procedimento'
+        }
+        
+        falhas_por_criterio = []
+        if total > 0:
+            for field, label in criterios_labels.items():
+                count = auditorias.filter(**{field: False}).count()
+                if count > 0:
+                    falhas_por_criterio.append({
+                        'campo': field,
+                        'label': label,
+                        'total': count,
+                        'perc': round((count / total) * 100, 1)
+                    })
+            # Ordenar pelos mais falhos
+            falhas_por_criterio = sorted(falhas_por_criterio, key=lambda x: x['total'], reverse=True)
+
         
         # Top 3 analistas
         top_3 = auditorias.values(
@@ -863,6 +891,7 @@ def api_dashboard_auditoria(request):
             'distribuicao': distribuicao,
             'total_alertas': auditorias.filter(requer_acao=True).count(),
             'evolucao_diaria': dias_evolucao,
+            'falhas_por_criterio': falhas_por_criterio,
             'analistas_com_alertas': [{'id': str(a['analista_auditado__id']), 'username': a['analista_auditado__username']} for a in analistas_com_alertas],
             'top_3': [
                 {

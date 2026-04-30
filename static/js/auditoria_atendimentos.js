@@ -1728,6 +1728,31 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         
         summaryEl.innerHTML = `<p class="mb-0">${insight}</p>`;
+
+        // Gerar Insight de Foco Dinâmico
+        const focusEl = document.querySelector('#ia-auditor-summary + div .small.fw-semibold.text-dark');
+        if (focusEl && data.falhas_por_criterio && data.falhas_por_criterio.length > 0) {
+            const principalFalha = data.falhas_por_criterio[0];
+            let acao = '';
+            
+            // Mapear falhas para ações recomendadas
+            const acoes = {
+                'apresentou_corretamente': 'Reforçar script de abertura e saudação',
+                'analisou_historico': 'Treinar equipe na leitura do histórico de chamados',
+                'entendeu_solicitacao': 'Melhorar técnicas de escuta ativa e interpretação',
+                'informacao_clara': 'Trabalhar clareza e objetividade nas respostas',
+                'acordo_espera': 'Revisar regras de tempo de espera e SLA',
+                'atendimento_respeitoso': 'Feedback urgente sobre cordialidade e postura',
+                'portugues_correto': 'Oferecer reciclagem de escrita e gramática',
+                'finalizacao_correta': 'Padronizar processo de encerramento de tickets',
+                'procedimento_correto': 'Revisar fluxos técnicos e manuais de procedimento'
+            };
+            
+            acao = acoes[principalFalha.campo] || `Focar em melhoria no pilar de ${principalFalha.label}`;
+            focusEl.textContent = acao;
+        } else if (focusEl) {
+            focusEl.textContent = "Manter o padrão de excelência atual";
+        }
     }
 
     function initAnalystView() {
