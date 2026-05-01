@@ -13,13 +13,28 @@
     <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
+        :root {
+            --aa-indigo: #4f46e5;
+            --aa-indigo-hover: #4338ca;
+            --aa-slate-50: #f8fafc;
+            --aa-slate-100: #f1f5f9;
+            --aa-slate-200: #e2e8f0;
+            --aa-slate-300: #cbd5e1;
+            --aa-slate-400: #94a3b8;
+            --aa-slate-500: #64748b;
+            --aa-slate-600: #475569;
+            --aa-slate-700: #334155;
+            --aa-slate-800: #1e293b;
+            --aa-slate-900: #0f172a;
+        }
+
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             font-family: 'Inter', sans-serif;
             min-height: 100vh;
             display: flex;
-            background: #0f172a;
+            background: var(--aa-slate-900);
             overflow: hidden;
         }
 
@@ -32,238 +47,199 @@
             align-items: center;
             justify-content: center;
             padding: 3rem;
-            background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 40%, #7c3aed 100%);
+            background: var(--aa-slate-900);
             overflow: hidden;
         }
 
-        /* Animated blobs */
-        .blob {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(80px);
-            opacity: .35;
-            animation: blobFloat 8s ease-in-out infinite;
-        }
-        .blob-1 { width: 500px; height: 500px; background: #3b82f6; top: -150px; left: -150px; animation-delay: 0s; }
-        .blob-2 { width: 400px; height: 400px; background: #8b5cf6; bottom: -100px; right: -100px; animation-delay: -3s; }
-        .blob-3 { width: 300px; height: 300px; background: #06b6d4; top: 40%; left: 30%; animation-delay: -6s; }
-
-        @keyframes blobFloat {
-            0%, 100% { transform: translate(0, 0) scale(1); }
-            33%       { transform: translate(30px, -30px) scale(1.05); }
-            66%       { transform: translate(-20px, 20px) scale(.95); }
-        }
-
-        /* Grid dots */
+        /* Subtle Grid Pattern */
         .login-left::before {
             content: '';
             position: absolute; inset: 0;
-            background-image: radial-gradient(circle, rgba(255,255,255,.12) 1px, transparent 1px);
-            background-size: 32px 32px;
+            background-image: radial-gradient(var(--aa-slate-800) 1px, transparent 1px);
+            background-size: 40px 40px;
+            opacity: 0.8;
+        }
+
+        /* Gradient Glow */
+        .glow {
+            position: absolute;
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(79, 70, 229, 0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            filter: blur(60px);
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 0;
         }
 
         .login-left-content { position: relative; z-index: 1; text-align: center; max-width: 440px; }
 
         .left-logo {
-            width: 150px; height: 150px;
-            background: rgba(255,255,255,.18);
-            backdrop-filter: blur(16px);
-            border: 2px solid rgba(255,255,255,.35);
-            border-radius: 32px;
+            width: 140px; height: 140px;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 28px;
             display: flex; align-items: center; justify-content: center;
-            margin: 0 auto 1.75rem;
-            box-shadow: 0 8px 32px rgba(0,0,0,.2);
+            margin: 0 auto 2rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
         }
-        .left-logo img { width: 120px; height: auto; }
+        .left-logo img { width: 100px; height: auto; }
 
         .left-title {
-            font-size: 2.2rem; font-weight: 800;
-            color: #fff; line-height: 1.15; margin-bottom: .75rem;
+            font-size: 2.25rem; font-weight: 800;
+            color: #fff; line-height: 1.2; margin-bottom: 1rem;
+            letter-spacing: -0.02em;
         }
-        .left-title span { color: #93c5fd; }
+        .left-title span { color: var(--aa-indigo); }
 
         .left-sub {
-            color: rgba(255,255,255,.65);
-            font-size: .95rem; line-height: 1.6; margin-bottom: 2.5rem;
+            color: var(--aa-slate-400);
+            font-size: 1rem; line-height: 1.6; margin-bottom: 3rem;
         }
 
-        /* Feature pills */
-        .feature-pills { display: flex; flex-direction: column; gap: .75rem; }
-        .feature-pill {
-            display: flex; align-items: center; gap: .875rem;
-            background: rgba(255,255,255,.1);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,.15);
-            border-radius: 12px; padding: .75rem 1.1rem;
-            color: #fff; font-size: .875rem; font-weight: 500;
+        /* Feature List */
+        .feature-list { display: flex; flex-direction: column; gap: 1rem; }
+        .feature-item {
+            display: flex; align-items: center; gap: 1rem;
+            color: var(--aa-slate-300); font-size: 0.9rem;
             text-align: left;
-            animation: fadeInLeft .5s ease both;
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
         }
-        .feature-pill:nth-child(2) { animation-delay: .1s; }
-        .feature-pill:nth-child(3) { animation-delay: .2s; }
-        .feature-pill-icon {
-            width: 36px; height: 36px; border-radius: 9px; flex-shrink: 0;
+        .feature-item:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(255, 255, 255, 0.1);
+            transform: translateX(5px);
+        }
+        .feature-icon {
+            width: 32px; height: 32px; border-radius: 8px;
             display: flex; align-items: center; justify-content: center;
+            background: rgba(79, 70, 229, 0.1);
+            color: var(--aa-indigo);
             font-size: 1rem;
-        }
-        .fp-blue   { background: rgba(59,130,246,.4); }
-        .fp-violet { background: rgba(139,92,246,.4); }
-        .fp-cyan   { background: rgba(6,182,212,.4); }
-
-        @keyframes fadeInLeft {
-            from { opacity: 0; transform: translateX(-16px); }
-            to   { opacity: 1; transform: none; }
         }
 
         /* ── Right Panel ── */
         .login-right {
-            width: 480px;
+            width: 520px;
             flex-shrink: 0;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: #f8fafc;
-            padding: 2.5rem 2rem;
+            background: var(--aa-slate-50);
+            padding: 2.5rem;
             position: relative;
+            box-shadow: -10px 0 50px rgba(0,0,0,0.2);
+            z-index: 2;
         }
 
-        .login-form-wrap { width: 100%; max-width: 380px; }
+        .login-form-wrap { width: 100%; max-width: 360px; }
 
-        /* Mobile logo (shown only on small screens) */
         .mobile-logo {
             display: none;
-            text-align: center; margin-bottom: 2rem;
+            text-align: center; margin-bottom: 2.5rem;
         }
-        .mobile-logo img { height: 56px; }
+        .mobile-logo img { height: 48px; }
 
         .form-eyebrow {
-            font-size: .75rem; font-weight: 700;
-            letter-spacing: .08em; text-transform: uppercase;
-            color: #2563eb; margin-bottom: .5rem;
+            font-size: 0.75rem; font-weight: 700;
+            letter-spacing: 0.1em; text-transform: uppercase;
+            color: var(--aa-indigo); margin-bottom: 0.75rem;
         }
         .form-heading {
-            font-size: 1.75rem; font-weight: 800;
-            color: #0f172a; margin-bottom: .35rem;
+            font-size: 1.875rem; font-weight: 800;
+            color: var(--aa-slate-900); margin-bottom: 0.5rem;
+            letter-spacing: -0.01em;
         }
         .form-sub {
-            font-size: .875rem; color: #64748b; margin-bottom: 2rem;
+            font-size: 0.95rem; color: var(--aa-slate-500); margin-bottom: 2.5rem;
         }
 
-        /* Input groups */
-        .field-wrap { margin-bottom: 1.25rem; }
+        /* Input Styles */
+        .field-wrap { margin-bottom: 1.5rem; }
         .field-label {
-            display: block; font-size: .8rem; font-weight: 600;
-            color: #374151; margin-bottom: .4rem;
+            display: block; font-size: 0.875rem; font-weight: 600;
+            color: var(--aa-slate-700); margin-bottom: 0.5rem;
         }
         .field-input-wrap { position: relative; }
-        .field-icon {
-            position: absolute; left: .9rem; top: 50%;
-            transform: translateY(-50%);
-            color: #94a3b8; font-size: 1rem; pointer-events: none;
-            transition: color .2s;
-        }
         .field-input {
-            width: 100%; padding: .75rem .9rem .75rem 2.6rem;
-            border: 1.5px solid #e2e8f0; border-radius: 12px;
-            font-size: .9rem; font-family: 'Inter', sans-serif;
-            color: #1e293b; background: #fff;
-            outline: none; transition: border-color .2s, box-shadow .2s;
+            width: 100%; padding: 0.75rem 1rem;
+            border: 1px solid var(--aa-slate-200); border-radius: 10px;
+            font-size: 0.95rem; font-family: 'Inter', sans-serif;
+            color: var(--aa-slate-900); background: #fff;
+            outline: none; transition: all 0.2s ease;
+            box-shadow: var(--aa-shadow-sm);
         }
         .field-input:focus {
-            border-color: #2563eb;
-            box-shadow: 0 0 0 4px rgba(37,99,235,.1);
+            border-color: var(--aa-indigo);
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
         }
-        .field-input:focus + .field-icon-right,
-        .field-input-wrap:focus-within .field-icon { color: #2563eb; }
+        .field-input::placeholder { color: var(--aa-slate-400); }
 
         .field-icon-right {
-            position: absolute; right: .9rem; top: 50%;
+            position: absolute; right: 0.75rem; top: 50%;
             transform: translateY(-50%);
-            color: #94a3b8; cursor: pointer; background: none;
-            border: none; font-size: 1rem; transition: color .2s;
+            color: var(--aa-slate-400); cursor: pointer; background: none;
+            border: none; font-size: 1.1rem; transition: color 0.2s;
         }
-        .field-icon-right:hover { color: #2563eb; }
+        .field-icon-right:hover { color: var(--aa-indigo); }
 
         /* Submit button */
         .btn-login {
-            width: 100%; padding: .85rem;
-            background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
-            color: #fff; font-size: .95rem; font-weight: 700;
-            border: none; border-radius: 12px; cursor: pointer;
-            display: flex; align-items: center; justify-content: center; gap: .5rem;
-            transition: opacity .2s, transform .15s, box-shadow .2s;
-            box-shadow: 0 4px 20px rgba(37,99,235,.35);
-            font-family: 'Inter', sans-serif;
-            letter-spacing: .01em;
-            margin-top: .5rem;
+            width: 100%; padding: 0.875rem;
+            background-color: var(--aa-indigo);
+            color: #fff; font-size: 1rem; font-weight: 700;
+            border: none; border-radius: 10px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+            margin-top: 1rem;
         }
         .btn-login:hover {
-            opacity: .92; transform: translateY(-1px);
-            box-shadow: 0 8px 28px rgba(37,99,235,.45);
+            background-color: var(--aa-indigo-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(79, 70, 229, 0.35);
         }
         .btn-login:active { transform: translateY(0); }
-        .btn-login i { font-size: 1rem; transition: transform .2s; }
-        .btn-login:hover i { transform: translateX(4px); }
 
-        /* Footer note */
+        /* Footer Info */
+        .login-footer {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--aa-slate-200);
+            text-align: center;
+        }
         .login-note {
-            display: flex; align-items: center; gap: .5rem;
-            margin-top: 1.5rem; color: #94a3b8; font-size: .8rem;
-            justify-content: center; text-align: center;
-        }
-        .login-note i { color: #cbd5e1; font-size: .85rem; }
-
-        /* Divider */
-        .form-divider {
-            display: flex; align-items: center; gap: .75rem;
-            margin: 1.5rem 0; color: #cbd5e1; font-size: .75rem;
-        }
-        .form-divider::before, .form-divider::after {
-            content: ''; flex: 1; height: 1px; background: #e2e8f0;
-        }
-
-        /* Badge strip */
-        .badge-strip {
-            display: flex; gap: .5rem; flex-wrap: wrap;
-            justify-content: center; margin-top: 1.75rem;
+            color: var(--aa-slate-500); font-size: 0.8rem;
+            margin-bottom: 1rem;
         }
         .badge-pill {
-            display: inline-flex; align-items: center; gap: .35rem;
-            background: #f1f5f9; border: 1px solid #e2e8f0;
-            border-radius: 999px; padding: .25rem .7rem;
-            font-size: .72rem; font-weight: 500; color: #64748b;
+            display: inline-flex; align-items: center; gap: 0.35rem;
+            background: #fff; border: 1px solid var(--aa-slate-200);
+            border-radius: 999px; padding: 0.3rem 0.75rem;
+            font-size: 0.75rem; font-weight: 600; color: var(--aa-slate-600);
         }
-        .badge-pill i { font-size: .75rem; color: #2563eb; }
 
-        /* Fade-up animation */
+        /* Animations */
         @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(16px); }
+            from { opacity: 0; transform: translateY(20px); }
             to   { opacity: 1; transform: none; }
         }
-        .fade-up { animation: fadeInUp .5s ease both; }
-        .fade-up-2 { animation: fadeInUp .5s .1s ease both; }
-        .fade-up-3 { animation: fadeInUp .5s .2s ease both; }
+        .fade-up { animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
+        .fade-up-1 { animation-delay: 0.1s; }
+        .fade-up-2 { animation-delay: 0.2s; }
+        .fade-up-3 { animation-delay: 0.3s; }
 
         /* Responsive */
-        @media (max-width: 768px) {
-            body { flex-direction: column; overflow: auto; }
+        @media (max-width: 992px) {
+            .login-right { width: 100%; box-shadow: none; }
             .login-left { display: none; }
-            .login-right {
-                width: 100%; min-height: 100vh;
-                padding: 2rem 1.25rem;
-                background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 40%, #7c3aed 100%);
-            }
+            body { background: var(--aa-slate-50); }
             .mobile-logo { display: block; }
-            .form-eyebrow { color: #93c5fd; }
-            .form-heading { color: #fff; }
-            .form-sub { color: rgba(255,255,255,.65); }
-            .field-label { color: rgba(255,255,255,.85); }
-            .field-input { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.2); color: #fff; }
-            .field-input::placeholder { color: rgba(255,255,255,.4); }
-            .field-input:focus { border-color: rgba(255,255,255,.6); box-shadow: 0 0 0 4px rgba(255,255,255,.1); }
-            .field-icon { color: rgba(255,255,255,.5); }
-            .login-note { color: rgba(255,255,255,.45); }
-            .badge-strip { display: none; }
         }
     </style>
 </head>
@@ -271,50 +247,31 @@
 
     <!-- LEFT PANEL -->
     <div class="login-left">
-        <div class="blob blob-1"></div>
-        <div class="blob blob-2"></div>
-        <div class="blob blob-3"></div>
-
+        <div class="glow"></div>
         <div class="login-left-content">
-            <div class="left-logo">
+            <div class="left-logo fade-up">
                 <img src="{% static 'img/logo_transparente.png' %}" alt="Nexus">
             </div>
 
-            <h1 class="left-title">
-                Bem-vindo ao<br><span>Nexus</span>
+            <h1 class="left-title fade-up fade-up-1">
+                Evolua a gestão do seu<br><span>atendimento.</span>
             </h1>
-            <p class="left-sub">
-                Plataforma centralizada de gestão de equipes,<br>
-                auditorias e indicadores de desempenho.
+            <p class="left-sub fade-up fade-up-2">
+                A plataforma completa para monitoramento de qualidade e insights estratégicos.
             </p>
 
-            <div class="feature-pills">
-                <div class="feature-pill">
-                    <div class="feature-pill-icon fp-blue">
-                        <i class="bi bi-speedometer2"></i>
-                    </div>
-                    <div>
-                        <div style="font-weight:600;">Dashboard em tempo real</div>
-                        <div style="opacity:.65;font-size:.8rem;">Métricas e KPIs atualizados</div>
-                    </div>
+            <div class="feature-list fade-up fade-up-3">
+                <div class="feature-item">
+                    <div class="feature-icon"><i class="bi bi-cpu"></i></div>
+                    <span>Auditorias automatizadas e inteligentes</span>
                 </div>
-                <div class="feature-pill">
-                    <div class="feature-pill-icon fp-violet">
-                        <i class="bi bi-shield-check"></i>
-                    </div>
-                    <div>
-                        <div style="font-weight:600;">Auditoria de Atendimentos</div>
-                        <div style="opacity:.65;font-size:.8rem;">Controle de qualidade completo</div>
-                    </div>
+                <div class="feature-item">
+                    <div class="feature-icon"><i class="bi bi-bar-chart"></i></div>
+                    <span>Dashboards de performance em tempo real</span>
                 </div>
-                <div class="feature-pill">
-                    <div class="feature-pill-icon fp-cyan">
-                        <i class="bi bi-robot"></i>
-                    </div>
-                    <div>
-                        <div style="font-weight:600;">Nexus IA integrado</div>
-                        <div style="opacity:.65;font-size:.8rem;">Assistente inteligente nativo</div>
-                    </div>
+                <div class="feature-item">
+                    <div class="feature-icon"><i class="bi bi-shield-check"></i></div>
+                    <span>Controle de conformidade e alertas</span>
                 </div>
             </div>
         </div>
@@ -324,35 +281,32 @@
     <div class="login-right">
         <div class="login-form-wrap">
 
-            <div class="mobile-logo">
+            <div class="mobile-logo fade-up">
                 <img src="{% static 'img/logo_nexus_horizontal.png' %}" alt="Nexus">
             </div>
 
             <div class="fade-up">
-                <div class="form-eyebrow">Plataforma Nexus</div>
-                <h2 class="form-heading">Entrar na sua conta</h2>
-                <p class="form-sub">Insira suas credenciais para acessar o sistema.</p>
+                <div class="form-eyebrow">Acesso Restrito</div>
+                <h2 class="form-heading">Bem-vindo de volta</h2>
+                <p class="form-sub">Acesse sua conta para continuar.</p>
             </div>
 
-            <form method="post" class="fade-up-2">
+            <form method="post" class="fade-up fade-up-1">
                 {% csrf_token %}
 
                 <div class="field-wrap">
-                    <label for="email" class="field-label">E-mail</label>
+                    <label for="email" class="field-label">Endereço de E-mail</label>
                     <div class="field-input-wrap">
-                        <i class="bi bi-envelope field-icon"></i>
                         <input type="email" class="field-input" id="email" name="email"
-                               placeholder="seu@email.com" required autofocus autocomplete="email">
+                               placeholder="nome@exemplo.com" required autofocus autocomplete="email">
                     </div>
                 </div>
 
                 <div class="field-wrap">
-                    <label for="password" class="field-label">Senha</label>
+                    <label for="password" class="field-label">Sua Senha</label>
                     <div class="field-input-wrap">
-                        <i class="bi bi-lock field-icon"></i>
                         <input type="password" class="field-input" id="password" name="password"
-                               placeholder="••••••••" required autocomplete="current-password"
-                               style="padding-right: 2.8rem;">
+                               placeholder="••••••••" required autocomplete="current-password">
                         <button type="button" class="field-icon-right" onclick="togglePassword()" id="toggleBtn">
                             <i class="bi bi-eye" id="toggleIcon"></i>
                         </button>
@@ -360,21 +314,17 @@
                 </div>
 
                 <button type="submit" class="btn-login">
-                    Entrar no sistema <i class="bi bi-arrow-right"></i>
+                    Entrar no Nexus <i class="bi bi-arrow-right ms-2"></i>
                 </button>
             </form>
 
-            <div class="form-divider fade-up-3">acesso seguro</div>
-
-            <div class="login-note fade-up-3">
-                <i class="bi bi-info-circle"></i>
-                Precisa de acesso? Entre em contato com o administrador.
-            </div>
-
-            <div class="badge-strip fade-up-3">
-                <span class="badge-pill"><i class="bi bi-shield-lock-fill"></i> Conexão segura</span>
-                <span class="badge-pill"><i class="bi bi-building"></i> Uso interno</span>
-                <span class="badge-pill"><i class="bi bi-clock"></i> Sessão protegida</span>
+            <div class="login-footer fade-up fade-up-2">
+                <div class="login-note">
+                    Ambiente seguro e monitorado.
+                </div>
+                <div class="badge-pill">
+                    <i class="bi bi-lock-fill text-indigo"></i> Proteção de Dados SSL
+                </div>
             </div>
         </div>
     </div>
