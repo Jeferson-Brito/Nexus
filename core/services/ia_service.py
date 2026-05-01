@@ -73,16 +73,21 @@ def chatbot_kb(pergunta: str, artigos: list, user_context: dict = None, historic
 {perfil_usuario}
 
 REGRAS DE OURO DA COMUNICAÇÃO:
-1. Trate o usuário pelo nome e mantenha um tom caloroso, amigável e natural. Não seja frio ou robótico.
-2. INSTRUÇÃO CRÍTICA SOBRE AÇÕES: Se o usuário pedir para alterar a senha ou navegar para uma tela, VOCÊ É OBRIGADO A CHAMAR A FUNÇÃO CORRESPONDENTE (`alterar_senha_usuario` ou `navegar_para_tela`). NUNCA responda dizendo "eu alterei" ou "eu naveguei" em texto. O sistema só funciona se você INVOCAR A FERRAMENTA/FUNÇÃO (Function Call) correspondente.
-3. Responda perguntas APENAS com base nos conhecimentos da base fornecida abaixo.
+1. Trate o usuário pelo nome e mantenha um tom caloroso, amigável e natural.
+2. INSTRUÇÃO CRÍTICA SOBRE AÇÕES: Se o usuário pedir para navegar ou alterar dados, VOCÊ É OBRIGADO A CHAMAR A FUNÇÃO CORRESPONDENTE. NUNCA responda dizendo "eu fiz" em texto se não invocou a ferramenta.
+3. Você pode:
+   - Navegar para qualquer tela (Início, Auditoria, Kanban, Escala, Ponto, Reclamações, IA).
+   - Alterar dados do próprio perfil (nome, sobrenome).
+   - Alterar dados de reclamações (status, urgência) se souber o ID.
+   - Alterar dados de tarefas (concluir, mudar prioridade) se souber o ID.
+   - Alterar senha.
+4. Responda perguntas APENAS com base nos conhecimentos da base fornecida abaixo.
 {regra_historico}
 
-REGRAS DE FORMATAÇÃO VISUAL (MUITO IMPORTANTE):
-- Use listas com bullets ("•" ou "-") para organizar opções, tópicos ou passos. NUNCA use asteriscos ("*").
-- Evite blocos de texto massivos, use parágrafos curtos e diretos.
-- NUNCA repita "Olá", "Bom dia", ou outras saudações se já estivermos no meio de uma conversa. Vá direto ao ponto.
-- Sempre que fizer sentido, termine sua resposta de forma acolhedora (ex: "Tem mais alguma coisa que eu possa fazer por você?").
+REGRAS DE FORMATAÇÃO VISUAL:
+- Use listas com bullets ("•" ou "-"). NUNCA use asteriscos ("*").
+- Use parágrafos curtos.
+- Vá direto ao ponto.
 
 BASE DE CONHECIMENTO DO DEPARTAMENTO:
 {contexto}
@@ -97,22 +102,35 @@ SUA RESPOSTA:"""
             function_declarations=[
                 types.FunctionDeclaration(
                     name='navegar_para_tela',
-                    description="Uso OBRIGATÓRIO quando o usuário pedir para ir, abrir ou acessar uma tela/aba/página. Ex: 'inicio', 'configuracoes_ia', 'inconsistencias'.",
+                    description="Redireciona o usuário para uma tela específica do sistema.",
                     parameters=types.Schema(
                         type=types.Type.OBJECT,
                         properties={
-                            'nome_da_tela': types.Schema(type=types.Type.STRING, description="Nome da tela para a qual navegar.")
+                            'destino': types.Schema(type=types.Type.STRING, description="Nome da tela: 'inicio', 'auditoria', 'kanban', 'escala', 'ponto', 'inconsistencias', 'reclamacoes', 'configuracoes_ia', 'refunds'.")
                         },
-                        required=['nome_da_tela']
+                        required=['destino']
+                    )
+                ),
+                types.FunctionDeclaration(
+                    name='alterar_dados_sistema',
+                    description="Altera dados de entidades no banco de dados (Usuário, Reclamação, Tarefa, etc).",
+                    parameters=types.Schema(
+                        type=types.Type.OBJECT,
+                        properties={
+                            'entidade': types.Schema(type=types.Type.STRING, description="Tipo da entidade: 'usuario', 'reclamacao', 'tarefa', 'evento'."),
+                            'id': types.Schema(type=types.Type.STRING, description="ID da entidade (opcional para 'usuario' se for o próprio)."),
+                            'campos': types.Schema(type=types.Type.STRING, description="Objeto JSON com campos e valores a alterar. Ex: '{\"first_name\": \"João\", \"status\": \"resolvido\"}'")
+                        },
+                        required=['entidade', 'campos']
                     )
                 ),
                 types.FunctionDeclaration(
                     name='alterar_senha_usuario',
-                    description="Uso OBRIGATÓRIO quando o usuário pedir para alterar, mudar ou resetar sua senha.",
+                    description="Altera a senha do usuário logado.",
                     parameters=types.Schema(
                         type=types.Type.OBJECT,
                         properties={
-                            'nova_senha': types.Schema(type=types.Type.STRING, description="A nova senha solicitada pelo usuário (mínimo 6 caracteres).")
+                            'nova_senha': types.Schema(type=types.Type.STRING, description="A nova senha (mínimo 6 caracteres).")
                         },
                         required=['nova_senha']
                     )
@@ -147,17 +165,42 @@ SUA RESPOSTA:"""
             args = fc.args if isinstance(fc.args, dict) else dict(fc.args)
 
             if fc.name == 'navegar_para_tela':
-                tela = args.get('nome_da_tela', '')
-                url = '/'
-                if 'ia' in tela.lower():
-                    url = '/configuracoes/ia-base/'
-                elif 'inconsistencia' in tela.lower():
-                    url = '/rh/inconsistencias/'
-                
+                destino = args.get('destino', '').lower()
+                mapping = {
+                    'inicio': '/',
+                    'dashboard': '/',
+                    'auditoria': '/auditoria/atendimentos/',
+                    'kanban': '/kanban/',
+                    'tarefas': '/kanban/',
+                    'escala': '/rh/escala/',
+                    'ponto': '/rh/ponto/',
+                    'inconsistencias': '/rh/inconsistencias/',
+                    'reclamacoes': '/reclamacoes/',
+                    'reclamacoes_lista': '/reclamacoes/',
+                    'configuracoes_ia': '/configuracoes/ia-base/',
+                    'ia': '/configuracoes/ia-base/',
+                    'refunds': '/rh/refunds/',
+                    'estornos': '/rh/refunds/'
+                }
+                url = mapping.get(destino, '/')
                 return {
-                    "resposta": f"Claro, estou te redirecionando agora mesmo para lá!",
+                    "resposta": f"Sem problemas! Estou te levando para a tela de {destino} agora mesmo.",
                     "action": {"type": "navigate", "url": url}
                 }
+            elif fc.name == 'alterar_dados_sistema':
+                try:
+                    campos_dict = json.loads(args.get('campos', '{}'))
+                    return {
+                        "resposta": f"Entendido. Vou processar a alteração de {args.get('entidade')} agora.",
+                        "action": {
+                            "type": "update_data",
+                            "entidade": args.get('entidade'),
+                            "id": args.get('id'),
+                            "campos": campos_dict
+                        }
+                    }
+                except:
+                    return {"resposta": "Houve um erro ao processar os dados da alteração. Poderia repetir?"}
             elif fc.name == 'alterar_senha_usuario':
                 nova_senha = args.get('nova_senha', '')
                 if len(nova_senha) < 6:

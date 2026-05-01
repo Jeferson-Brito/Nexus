@@ -1311,7 +1311,19 @@
                 if(d.action.type === 'navigate' && d.action.url) {
                     setTimeout(() => {
                         window.location.href = d.action.url;
-                    }, 2000); // 2 segundos para o usuário ler a mensagem antes de sair da tela
+                    }, 2000);
+                } else if(d.action.type === 'update_data') {
+                    // Feedback visual de sucesso para alteração de dados
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Ação Realizada',
+                        text: d.resposta,
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 4000,
+                        timerProgressBar: true
+                    });
                 }
             }
         }catch(e){

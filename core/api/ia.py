@@ -66,9 +66,54 @@ def api_chatbot_kb(request):
                 if nova_senha:
                     request.user.set_password(nova_senha)
                     request.user.save()
-                    # Manter o usuário logado após trocar a senha
                     from django.contrib.auth import update_session_auth_hash
                     update_session_auth_hash(request, request.user)
+            
+            elif action['type'] == 'update_data':
+                entidade = action.get('entidade')
+                obj_id = action.get('id')
+                campos = action.get('campos', {})
+                
+                try:
+                    if entidade == 'usuario':
+                        # Se não passar ID, altera o próprio
+                        user = request.user
+                        if obj_id and request.user.is_administrador():
+                            from ..models import User
+                            user = User.objects.get(pk=obj_id)
+                        
+                        # Impedir alteração de role por não-admin
+                        if not request.user.is_administrador():
+                            campos.pop('role', None)
+                            campos.pop('is_staff', None)
+                            campos.pop('is_superuser', None)
+
+                        for k, v in campos.items():
+                            if hasattr(user, k):
+                                setattr(user, k, v)
+                        user.save()
+
+                    elif entidade == 'reclamacao' and obj_id:
+                        from ..models import Complaint
+                        reclamacao = Complaint.objects.get(pk=obj_id)
+                        # Validar se o usuário pode editar (pertence ao depto ou é admin)
+                        if request.user.is_administrador() or reclamacao.department == request.user.department:
+                            for k, v in campos.items():
+                                if hasattr(reclamacao, k):
+                                    setattr(reclamacao, k, v)
+                            reclamacao.save()
+                    
+                    elif entidade == 'tarefa' and obj_id:
+                        from ..models import Task
+                        tarefa = Task.objects.get(pk=obj_id)
+                        if request.user.is_administrador() or tarefa.assigned_to == request.user or tarefa.created_by == request.user:
+                            for k, v in campos.items():
+                                if hasattr(tarefa, k):
+                                    setattr(tarefa, k, v)
+                            tarefa.save()
+
+                except Exception as e:
+                    resultado_ia['resposta'] = f"Consegui processar o pedido, mas houve um erro técnico ao salvar: {str(e)}"
 
         return JsonResponse(resultado_ia)
 
