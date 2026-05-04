@@ -90,9 +90,10 @@
 }
 
 .tab-content, .tab-pane, .aa-card, .aa-card-body { 
-    min-height: auto !important; 
+    min-height: 0 !important; 
     height: auto !important;
     flex: none !important;
+    display: block !important;
 }
 .aa-card {
     background: #fff; border-radius: 16px;
