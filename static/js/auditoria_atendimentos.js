@@ -1471,17 +1471,23 @@ document.addEventListener('DOMContentLoaded', function () {
         let html = '';
 
         auditorias.forEach(aud => {
+            const badgeClass = `badge-${aud.classificacao}`;
             html += `
-                <tr>
+                <tr onclick="loadAuditoriaDetail('${aud.id}', event)" style="cursor:pointer">
                     <td>${formatDate(aud.data_atendimento)}</td>
                     <td><code class="text-primary">${aud.id_conversa}</code></td>
                     <td><span class="badge bg-light text-dark border">${aud.tipo_atendimento}</span></td>
                     <td><span class="fw-bold">${aud.nota.toFixed(1)}</span></td>
-                    <td><span class="badge badge-${aud.classificacao}">${aud.classificacao_display}</span></td>
+                    <td><span class="badge ${badgeClass}">${aud.classificacao_display}</span></td>
                     <td>
-                        <button class="btn btn-sm btn-outline-primary" onclick="loadAuditoriaDetail('${aud.id}')">
+                        <button class="btn btn-sm btn-outline-primary">
                             <i class="bi bi-eye"></i>
                         </button>
+                    </td>
+                </tr>
+                <tr id="modal-details-${aud.id}" class="details-row" style="display:none">
+                    <td colspan="6" class="p-0 border-0">
+                        <div class="details-container p-3 bg-light border-bottom shadow-inner"></div>
                     </td>
                 </tr>
             `;
@@ -1489,6 +1495,51 @@ document.addEventListener('DOMContentLoaded', function () {
 
         tbody.innerHTML = html;
     }
+
+    window.loadAuditoriaDetail = function (id, event) {
+        if (event) event.stopPropagation();
+        
+        const detailsRow = document.getElementById(`modal-details-${id}`);
+        if (!detailsRow) return;
+
+        const mainRow = detailsRow.previousElementSibling;
+        const icon = mainRow ? mainRow.querySelector('i.bi-eye, i.bi-eye-slash') : null;
+
+        const isHidden = detailsRow.style.display === 'none';
+
+        if (isHidden) {
+            detailsRow.style.display = 'table-row';
+            if (icon) {
+                icon.classList.remove('bi-eye');
+                icon.classList.add('bi-eye-slash');
+            }
+            
+            const container = detailsRow.querySelector('.details-container');
+            if (container.children.length === 0) {
+                container.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary"></div></div>';
+
+                fetch(`/api/auditoria/${id}/`, { credentials: 'include' })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            renderDetailsContent(data.auditoria, container, id);
+                        } else {
+                            container.innerHTML = '<div class="alert alert-danger m-3">Erro ao carregar detalhes.</div>';
+                        }
+                    })
+                    .catch(error => {
+                        console.error(error);
+                        container.innerHTML = '<div class="alert alert-danger m-3">Erro de conexão.</div>';
+                    });
+            }
+        } else {
+            detailsRow.style.display = 'none';
+            if (icon) {
+                icon.classList.remove('bi-eye-slash');
+                icon.classList.add('bi-eye');
+            }
+        }
+    };
 
     function renderAnalystCharts(auditorias) {
         // Preparar dados para Gráfico de Evolução (Linha)
