@@ -27,6 +27,10 @@ def _get_headers():
     api_key = getattr(settings, 'CONTACTCENTER_API_KEY', '')
     if not api_key:
         raise ValueError("CONTACTCENTER_API_KEY não configurada. Adicione ao .env.")
+    
+    # Remove espaços em branco ou quebras de linha acidentais
+    api_key = api_key.strip()
+    
     return {
         'X-Api-Key': api_key,
         'Content-Type': 'application/json',
