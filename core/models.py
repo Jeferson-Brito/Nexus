@@ -1775,6 +1775,49 @@ class ConfiguracaoAuditoria(models.Model):
         return f"Config Auditoria - {self.department.name} (Mínimo: {self.percentual_minimo_aceitavel}%)"
 
 
+class BaseAuditoria(models.Model):
+    """Base de Conhecimento para a IA de Auditoria de Atendimentos.
+    Contém regras, procedimentos e exemplos por critério que a IA usa para auditar chats.
+    """
+    CATEGORIA_CHOICES = [
+        ('apresentacao', 'Critério 1 — Apresentação'),
+        ('historico', 'Critério 2 — Análise de Histórico'),
+        ('entendimento', 'Critério 3 — Entendimento da Solicitação'),
+        ('informacao', 'Critério 4 — Clareza da Informação'),
+        ('acordo_espera', 'Critério 5 — Acordo de Espera'),
+        ('respeito', 'Critério 6 — Respeito'),
+        ('portugues', 'Critério 7 — Língua Portuguesa'),
+        ('finalizacao', 'Critério 8 — Finalização do Atendimento'),
+        ('procedimento', 'Critério 9 — Procedimento Correto'),
+        ('geral', 'Regras Gerais de Atendimento'),
+    ]
+
+    department = models.ForeignKey(
+        Department,
+        on_delete=models.CASCADE,
+        related_name='base_auditoria_ia'
+    )
+    titulo = models.CharField(max_length=200, verbose_name='Título')
+    conteudo = models.TextField(verbose_name='Conteúdo')
+    categoria = models.CharField(
+        max_length=30,
+        choices=CATEGORIA_CHOICES,
+        default='geral',
+        verbose_name='Categoria / Critério'
+    )
+    ativo = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['categoria', 'titulo']
+        verbose_name = 'Base de Auditoria IA'
+        verbose_name_plural = 'Base de Auditoria IA'
+
+    def __str__(self):
+        return f"[{self.get_categoria_display()}] {self.titulo}"
+
+
 class AuditoriaAtendimento(models.Model):
     """Registro de auditoria de atendimento de analista"""
     TIPO_ATENDIMENTO_CHOICES = [
@@ -1952,6 +1995,18 @@ class AuditoriaAtendimento(models.Model):
         verbose_name="Data do Ciente"
     )
     
+    # Rastreamento de origem da auditoria
+    gerado_por_ia = models.BooleanField(
+        default=False,
+        verbose_name='Gerado por IA',
+        help_text='Indica se esta auditoria foi gerada automaticamente pelo Nexus IA Auditor'
+    )
+    observacao_ia = models.TextField(
+        blank=True,
+        verbose_name='Justificativas da IA',
+        help_text='JSON com justificativas da IA para cada critério avaliado'
+    )
+
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

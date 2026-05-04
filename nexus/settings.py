@@ -339,3 +339,9 @@ LOGGING = {
 # INTELIGÊNCIA ARTIFICIAL
 # ==============================
 GEMINI_API_KEY = get_env("GEMINI_API_KEY", "")
+
+# ==============================
+# CONTACT CENTER (BITRIX ANALYTICS API)
+# ==============================
+CONTACTCENTER_API_URL = get_env("CONTACTCENTER_API_URL", "https://contactcenter.ikli.com.br")
+CONTACTCENTER_API_KEY = get_env("CONTACTCENTER_API_KEY", "")

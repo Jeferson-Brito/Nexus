@@ -275,6 +275,7 @@ def api_auditoria_list(request):
                 'created_at': aud.created_at.isoformat(),
                 'ciente_analista': aud.ciente_analista if has_new_columns else False,
                 'data_ciente': aud.data_ciente.isoformat() if has_new_columns and aud.data_ciente else None,
+                'gerado_por_ia': getattr(aud, 'gerado_por_ia', False),
                 'can_edit': request.user.is_gestor() or request.user.is_administrador(),
                 'can_delete': request.user.is_gestor() or request.user.is_administrador(),
             })

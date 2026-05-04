@@ -16,6 +16,7 @@ from .api import chat_inactivity as api_chat_inactivity
 from .api import rh as api_rh
 from .api import ponto as api_ponto
 from .api import ia as api_ia
+from .api import base_auditoria as api_base_auditoria
 from . import views_ponto
 from .api.quadro import api_quadro_data, api_cartao_create, api_cartao_move, api_cartao_update, api_cartao_delete, api_cartao_details, api_comentario_add, api_anexo_add, api_anexo_delete, api_lista_create, api_lista_delete
 
@@ -192,7 +193,13 @@ urlpatterns = [
     path('api/kb/articles/create/', api_kb.api_kb_article_create, name='api_kb_article_create'),
     path('api/kb/articles/<int:pk>/', api_kb.api_kb_article_detail, name='api_kb_article_detail'),
     path('api/kb/tools/', api_kb.api_kb_tools_list, name='api_kb_tools_list'),
-    
+
+    # API Base de Auditoria IA
+    path('api/base-auditoria/', api_base_auditoria.api_base_auditoria_list, name='api_base_auditoria_list'),
+    path('api/base-auditoria/criar/', api_base_auditoria.api_base_auditoria_create, name='api_base_auditoria_create'),
+    path('api/base-auditoria/<int:pk>/', api_base_auditoria.api_base_auditoria_detail, name='api_base_auditoria_detail'),
+    path('api/base-auditoria/categorias/', api_base_auditoria.api_base_auditoria_categorias, name='api_base_auditoria_categorias'),
+
     # API Desempenho
     path('api/desempenho/kpis/', api_desempenho.api_kpis_list, name='api_kpis_list'),
     path('api/desempenho/kpis/save/', api_desempenho.api_kpi_save, name='api_kpi_save'),

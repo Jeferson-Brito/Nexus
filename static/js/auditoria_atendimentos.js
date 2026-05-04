@@ -638,7 +638,6 @@ document.addEventListener('DOMContentLoaded', function () {
             const badgeClass = `badge-${aud.classificacao}`;
             const dataFormatada = formatDate(aud.data_atendimento);
 
-            tr.innerHTML = `
                 <td>${dataFormatada}</td>
                 <td>${aud.id_conversa}</td>
                 <td><span class="badge bg-secondary">${aud.tipo_atendimento}</span></td>
@@ -647,6 +646,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 <td class="fw-bold">${aud.nota.toFixed(1)}</td>
                 <td>
                     <span class="badge ${badgeClass}">${aud.classificacao_display}</span>
+                    ${aud.gerado_por_ia ? `<span class="badge ms-1" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);font-size:0.65rem;" title="Auditoria gerada automaticamente pelo Nexus IA Auditor"><i class="bi bi-robot me-1"></i>IA</span>` : ''}
                     ${aud.requer_acao ? `
                         <i class="bi bi-exclamation-triangle icon-alert ms-2" title="Requer Ação"></i>
                         ${aud.feedback_data
