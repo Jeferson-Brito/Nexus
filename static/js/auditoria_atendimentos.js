@@ -111,11 +111,6 @@ document.addEventListener('DOMContentLoaded', function () {
             btnAplicarFiltros.addEventListener('click', applyFilters);
         }
 
-        // Form de configurações
-        const formConfig = document.getElementById('formConfig');
-        if (formConfig) {
-            formConfig.addEventListener('submit', handleSubmitConfig);
-        }
 
         // Tabs - carregar dados ao trocar
         const tabs = document.querySelectorAll('#auditoriaTabs button[data-bs-toggle="tab"]');
@@ -347,10 +342,6 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(data => {
                 if (data.success && data.configuracao) {
                     state.config = data.configuracao;
-                    const input = document.getElementById('percentual_minimo');
-                    if (input) {
-                        input.value = data.configuracao.percentual_minimo_aceitavel;
-                    }
                 }
             })
             .catch(error => console.error('Erro ao carregar config:', error));
@@ -1590,7 +1581,7 @@ document.addEventListener('DOMContentLoaded', function () {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                'X-CSRFToken': getCookie('csrftoken')
             },
             body: JSON.stringify({ data_inicio: dataInicio, data_fim: dataFim })
         })

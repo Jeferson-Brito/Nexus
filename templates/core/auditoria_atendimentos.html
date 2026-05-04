@@ -268,13 +268,6 @@
                         <i class="bi bi-people"></i> Por Analista
                     </button>
                 </li>
-                {% if is_admin or is_gestor %}
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="config-tab" data-bs-toggle="tab" data-bs-target="#config" type="button" role="tab">
-                        <i class="bi bi-gear"></i> Configurações
-                    </button>
-                </li>
-                {% endif %}
             </ul>
 
             <!-- Conteúdo das Tabs -->
@@ -989,42 +982,7 @@
                     </div>
                 </div>
 
-                <!-- ABA 5: CONFIGURAÇÕES (Admin e Gestor) -->
-                {% if is_admin or is_gestor %}
-                <div class="tab-pane fade" id="config" role="tabpanel">
-                    <div class="aa-card">
-                        <div class="aa-card-header">
-                            <h5><i class="bi bi-gear me-2"></i>Configurações do Sistema</h5>
-                        </div>
-                        <div class="aa-card-body">
-                            <form id="formConfig">
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <label for="percentual_minimo" class="form-label">
-                                            Percentual Mínimo Aceitável <span class="text-danger">*</span>
-                                        </label>
-                                        <div class="input-group">
-                                            <input type="number" class="form-control" id="percentual_minimo"
-                                                name="percentual_minimo" min="0" max="100" step="0.01" value="77.78"
-                                                required>
-                                            <span class="input-group-text">%</span>
-                                        </div>
-                                        <small class="text-muted">
-                                            Auditorias com nota abaixo deste percentual serão marcadas com alerta.
-                                            <br><strong>Padrão:</strong> 77.78% (equivalente a 7/9 critérios)
-                                        </small>
-                                    </div>
-                                </div>
-                                <div class="mt-4">
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="bi bi-save me-1"></i>Salvar Configurações
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-                {% endif %}
+{% endif %}
             </div>
             {% endif %}
         </div>

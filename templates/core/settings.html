@@ -367,6 +367,31 @@
                 </div>
             </div>
 
+            <!-- Parâmetros de Auditoria (Apenas Gestores/Admins) -->
+            {% if user.is_gestor or user.is_administrador %}
+            <div class="premium-card mt-4">
+                <div class="card-icon-wrapper icon-orange">
+                    <i class="bi bi-gear-fill"></i>
+                </div>
+                <h3 class="premium-card-title">Parâmetros de Auditoria</h3>
+                <p class="premium-card-subtitle">Configure as regras globais de avaliação</p>
+                
+                <form id="form-audit-config">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted text-uppercase">Percentual Mínimo Aceitável (%)</label>
+                        <div class="input-group premium-input-group">
+                            <input type="number" step="0.1" class="form-control" id="percentual_minimo" required placeholder="Ex: 85">
+                            <span class="input-group-text">%</span>
+                        </div>
+                        <div class="form-text small">Notas abaixo deste percentual serão classificadas automaticamente como "Insatisfatórias".</div>
+                    </div>
+                    <button type="submit" class="premium-btn">
+                        <i class="bi bi-save me-2"></i>Salvar Parâmetros
+                    </button>
+                </form>
+            </div>
+            {% endif %}
+
         </div>
 
         <!-- Coluna Direita -->
@@ -513,6 +538,62 @@
         }
 
         setTimeout(() => { body.style.transition = ''; }, 300);
+    }
+
+    // Auditoria Config Logic
+    document.addEventListener('DOMContentLoaded', function() {
+        const auditForm = document.getElementById('form-audit-config');
+        if (auditForm) {
+            // Load current config
+            fetch('/api/auditoria/config/', { credentials: 'include' })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success && data.configuracao) {
+                        document.getElementById('percentual_minimo').value = data.configuracao.percentual_minimo_aceitavel;
+                    }
+                });
+
+            // Save config
+            auditForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const valor = document.getElementById('percentual_minimo').value;
+                
+                fetch('/api/auditoria/config/update/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({ percentual_minimo: valor })
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        showToast('Parâmetros de auditoria salvos!', 'success');
+                    } else {
+                        showToast(data.error || 'Erro ao salvar', 'error');
+                    }
+                })
+                .catch(err => showToast('Erro de conexão', 'error'));
+            });
+        }
+    });
+
+    // Helper for Toast (assuming it exists in base.html or similar)
+    function showToast(message, type = 'info') {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                text: message,
+                icon: type,
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true
+            });
+        } else {
+            alert(message);
+        }
     }
 </script>
 {% endblock %}
