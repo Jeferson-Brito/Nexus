@@ -69,7 +69,7 @@
 /* ── Tabs ── */
 #auditoriaTabs {
     display: flex; gap: .35rem; flex-wrap: wrap;
-    border: none; margin-bottom: 1.5rem;
+    border: none; margin-bottom: 0.75rem;
     background: #f1f5f9; border-radius: 12px;
     padding: .35rem;
 }
