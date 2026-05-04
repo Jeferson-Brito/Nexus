@@ -20,8 +20,9 @@
 }
 
 /* ── Page wrapper ── */
-.aa-page { width: 100%; padding: 1.25rem 1.25rem 1rem; min-height: auto !important; flex: none !important; }
-.tab-pane > .row, .tab-pane > .aa-card { margin-top: 0.5rem !important; }
+.aa-page { width: 100%; padding: 0 1.25rem 1rem; min-height: auto !important; flex: none !important; }
+.tab-pane > .row, .tab-pane > .aa-card { margin-top: 0 !important; }
+.tab-content { margin-top: 0 !important; padding-top: 0 !important; }
 
 /* ── Page Header ── */
 .aa-header {
@@ -90,10 +91,9 @@
 }
 
 .tab-content, .tab-pane, .aa-card, .aa-card-body { 
-    min-height: 0 !important; 
+    min-height: auto !important; 
     height: auto !important;
     flex: none !important;
-    display: block !important;
 }
 .aa-card {
     background: #fff; border-radius: 16px;
