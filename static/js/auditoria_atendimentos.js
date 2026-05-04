@@ -2273,15 +2273,15 @@ window.loadAuditoriasIA = function(page = 1) {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                renderAuditoriasIATable(data.data);
-                renderPaginacaoIA(data.pagination);
+                renderAuditoriasIATable(data.auditorias);
+                renderPaginacaoIA(data);
             } else {
                 tbody.innerHTML = `<tr><td colspan="8" class="text-center text-danger py-4">Erro: ${data.error}</td></tr>`;
             }
         })
         .catch(error => {
             console.error('Erro:', error);
-            tbody.innerHTML = `<tr><td colspan="8" class="text-center text-danger py-4">Erro de comunicação com o servidor.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="8" class="text-center text-danger py-4">Erro de processamento interno.</td></tr>`;
         });
 };
 
@@ -2289,7 +2289,7 @@ function renderAuditoriasIATable(auditorias) {
     const tbody = document.getElementById('lista-auditorias-ia');
     tbody.innerHTML = '';
 
-    if (auditorias.length === 0) {
+    if (!auditorias || auditorias.length === 0) {
         tbody.innerHTML = `
             <tr>
                 <td colspan="8" class="text-center py-5 text-muted">
@@ -2325,28 +2325,28 @@ function renderAuditoriasIATable(auditorias) {
     });
 }
 
-function renderPaginacaoIA(pagination) {
+function renderPaginacaoIA(data) {
     const container = document.getElementById('paginacao-ia');
     if (!container) return;
 
-    if (pagination.total_pages <= 1) {
+    if (!data.total_pages || data.total_pages <= 1) {
         container.innerHTML = '';
         return;
     }
 
     let html = `
-        <span class="text-muted small">Mostrando página ${pagination.current_page} de ${pagination.total_pages}</span>
+        <span class="text-muted small">Mostrando página ${data.page} de ${data.total_pages}</span>
         <ul class="pagination pagination-sm mb-0">
     `;
 
-    if (pagination.has_previous) {
-        html += `<li class="page-item"><button class="page-link" onclick="window.loadAuditoriasIA(${pagination.current_page - 1})">Anterior</button></li>`;
+    if (data.page > 1) {
+        html += `<li class="page-item"><button class="page-link" onclick="window.loadAuditoriasIA(${data.page - 1})">Anterior</button></li>`;
     } else {
         html += `<li class="page-item disabled"><span class="page-link">Anterior</span></li>`;
     }
 
-    if (pagination.has_next) {
-        html += `<li class="page-item"><button class="page-link" onclick="window.loadAuditoriasIA(${pagination.current_page + 1})">Próxima</button></li>`;
+    if (data.page < data.total_pages) {
+        html += `<li class="page-item"><button class="page-link" onclick="window.loadAuditoriasIA(${data.page + 1})">Próxima</button></li>`;
     } else {
         html += `<li class="page-item disabled"><span class="page-link">Próxima</span></li>`;
     }
