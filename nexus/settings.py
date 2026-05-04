@@ -130,22 +130,12 @@ if _db_url:
             ssl_require=True,
         )
     }
-    # Forçar engine do cockroach se for uma URL do cockroach, mas dj_database_url costuma lidar bem
-    if "cockroach" in _db_url:
-        DATABASES["default"]["ENGINE"] = "django_cockroachdb"
 else:
+    # Fallback local seguro (SQLite) caso a URL não esteja no .env
     DATABASES = {
         "default": {
-            "ENGINE": "django_cockroachdb",
-            "NAME": get_env("DB_NAME", "defaultdb"),
-            "USER": get_env("DB_USER", "jeferson"),
-            "PASSWORD": get_env("DB_PASSWORD", ""),
-            "HOST": get_env("DB_HOST", "ageing-phantom-12866.jxf.gcp-southamerica-east1.cockroachlabs.cloud"),
-            "PORT": get_env("DB_PORT", "26257"),
-            "CONN_MAX_AGE": 300,  # 5 minutos — reduz overhead de conexão com CockroachDB
-            "OPTIONS": {
-                "sslmode": "require",
-            },
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
         }
     }
 

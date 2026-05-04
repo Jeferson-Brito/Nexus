@@ -12,13 +12,3 @@ services:
 
       - key: ALLOWED_HOSTS
         value: "nexus-deploy.onrender.com,nexus-l8jg.onrender.com,.onrender.com"
-      - key: DB_NAME
-        value: "defaultdb"
-      - key: DB_USER
-        value: "jeferson"
-      - key: DB_PASSWORD
-        sync: false
-      - key: DB_HOST
-        value: "ageing-phantom-12866.jxf.gcp-southamerica-east1.cockroachlabs.cloud"
-      - key: DB_PORT
-        value: "26257"
