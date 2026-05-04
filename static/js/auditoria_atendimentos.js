@@ -28,38 +28,11 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
 
-    function loadAnalistas() {
-        return fetch('/api/auditoria/analistas/', { credentials: 'include' })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    state.analistas = data.analistas;
-                    // Popular select de filtros se existir
-                    const selectFiltro = document.getElementById('filtro_analista');
-                    if (selectFiltro) {
-                        selectFiltro.innerHTML = '<option value="">Todos os analistas</option>';
-                        data.analistas.forEach(a => {
-                            selectFiltro.innerHTML += `<option value="${a.id}">${a.nome_completo}</option>`;
-                        });
-                    }
-                    const selectCadastro = document.getElementById('analista_auditado');
-                    if (selectCadastro) {
-                        selectCadastro.innerHTML = '<option value="">Selecione...</option>';
-                        data.analistas.forEach(a => {
-                            selectCadastro.innerHTML += `<option value="${a.id}">${a.nome_completo}</option>`;
-                        });
-                    }
-                }
-                return data;
-            })
-            .catch(error => console.error('Erro ao carregar analistas:', error));
-    }
-
     // Inicialização
     init();
 
     function init() {
-        console.log('Auditoria Atendimentos JS Loaded - v1.4 - AI Insights Enabled');
+        console.log('Auditoria Atendimentos JS Loaded - v1.5 - Bugs Fixed');
         setupDefaultDates();
         loadAnalistas();
         loadConfig();
@@ -71,6 +44,12 @@ document.addEventListener('DOMContentLoaded', function () {
             initAnalystView();
         } else if (document.getElementById('chartEvolucaoGeral')) {
             loadExecutiveDashboard();
+        }
+
+        // Carregar auditorias na aba ativa ao iniciar (se for a aba lista)
+        const listaTabPane = document.getElementById('lista');
+        if (listaTabPane && listaTabPane.classList.contains('active')) {
+            loadAuditorias(1);
         }
     }
 
@@ -147,6 +126,21 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         });
 
+        // Botão de filtro do modal de analista
+        const btnFiltrarModal = document.getElementById('btnFiltrarModalAnalista');
+        if (btnFiltrarModal) {
+            btnFiltrarModal.addEventListener('click', () => {
+                if (state.currentAnalystId) {
+                    // Sincronizar com os inputs ocultos para compatibilidade
+                    const modalInicio = document.getElementById('modal-data-inicio');
+                    const modalFim = document.getElementById('modal-data-fim');
+                    if (modalInicio) document.getElementById('filtro_analista_data_inicio').value = modalInicio.value;
+                    if (modalFim) document.getElementById('filtro_analista_data_fim').value = modalFim.value;
+                    loadModalAnalystAudits(state.currentAnalystId);
+                }
+            });
+        }
+
         // Verificação de ID de Conversa Duplicado
         const inputIdConversa = document.getElementById('id_conversa');
         if (inputIdConversa) {
@@ -192,7 +186,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function setupDefaultDates() {
         const hoje = new Date();
-        const primeiroDia = new Date(hoje.getFullYear(), hoje.month = hoje.getMonth(), 1);
+        const primeiroDia = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
         const ultimoDia = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
 
         const isoPrimeiro = primeiroDia.toISOString().split('T')[0];
@@ -269,11 +263,32 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // ========================================
+    // NAVEGAÇÃO ENTRE ABAS
+    // ========================================
+
+    function handleTabChange(target) {
+        switch (target) {
+            case '#lista':
+                loadAuditorias(1);
+                break;
+            case '#ranking':
+                loadRanking();
+                break;
+            case '#analistas':
+                loadAnalistasView();
+                break;
+            case '#config':
+                loadConfig();
+                break;
+        }
+    }
+
+    // ========================================
     // CARREGAR DADOS INICIAIS
     // ========================================
 
     function loadAnalistas() {
-        fetch('/api/auditoria/analistas/', {
+        return fetch('/api/auditoria/analistas/', {
             credentials: 'include'
         })
             .then(response => {
@@ -289,6 +304,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 } else {
                     console.error('API retornou success=false:', data);
                 }
+                return data;
             })
             .catch(error => {
                 console.error('Erro ao carregar analistas:', error);
@@ -1301,49 +1317,59 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const stats = data;
             const alertClass = stats.tem_alertas ? 'has-alert' : '';
+            
+            // Gerar iniciais do nome
+            const nomePartes = stats.analista.nome_completo.trim().split(' ');
+            const iniciais = nomePartes.length >= 2 
+                ? (nomePartes[0][0] + nomePartes[nomePartes.length - 1][0]).toUpperCase()
+                : nomePartes[0].substring(0, 2).toUpperCase();
+
+            // Classe de cor da nota
+            const nota = stats.nota_media;
+            let notaClass = 'nota-bom';
+            if (nota >= 9.5) notaClass = 'nota-excelente';
+            else if (nota >= 7) notaClass = 'nota-bom';
+            else if (nota >= 5) notaClass = 'nota-regular';
+            else if (nota > 0) notaClass = 'nota-insatisf';
 
             html += `
                 <div class="col-md-6 col-lg-4 mb-3">
                     <div class="analista-card ${alertClass}" onclick="showAnalystAudits('${stats.analista.id}', '${stats.analista.nome_completo.replace(/'/g, "\\'")}')">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <h5 class="mb-0">${stats.analista.nome_completo}</h5>
-                            ${stats.tem_alertas ? '<span class="badge-alert"><i class="bi bi-exclamation-triangle"></i> Alerta</span>' : ''}
+                        <div class="analista-card-header">
+                            <div class="analista-card-avatar">${iniciais}</div>
+                            <div class="flex-grow-1 min-width-0">
+                                <p class="analista-card-name">${stats.analista.nome_completo}</p>
+                                ${stats.tem_alertas ? '<small class="text-danger fw-semibold"><i class="bi bi-exclamation-triangle me-1"></i>Alerta</small>' : '<small class="text-success fw-semibold"><i class="bi bi-check-circle me-1"></i>Sem alertas</small>'}
+                            </div>
+                            <i class="bi bi-chevron-right text-muted"></i>
                         </div>
-                        
-                        <div class="row mt-3">
-                            <div class="col-6 col-md-4">
-                                <div class="stat-item">
-                                    <div class="stat-value">${stats.total_auditorias}</div>
-                                    <div class="stat-label">Auditorias</div>
+                        <div class="analista-card-body">
+                            <div class="analista-card-stats">
+                                <div class="analista-stat-box">
+                                    <span class="stat-num">${stats.total_auditorias}</span>
+                                    <span class="stat-lbl">Auditorias</span>
+                                </div>
+                                <div class="analista-stat-box">
+                                    <span class="stat-num ${stats.total_auditorias > 0 ? notaClass : ''}">${stats.total_auditorias > 0 ? stats.nota_media.toFixed(1) : '—'}</span>
+                                    <span class="stat-lbl">Nota Média</span>
+                                </div>
+                                <div class="analista-stat-box">
+                                    <span class="stat-num" style="font-size:1rem;">${stats.ultima_auditoria ? formatDate(stats.ultima_auditoria.data.split('T')[0]).substring(0, 5) : '—'}</span>
+                                    <span class="stat-lbl">Última</span>
                                 </div>
                             </div>
-                            <div class="col-6 col-md-4">
-                                <div class="stat-item">
-                                    <div class="stat-value">${stats.nota_media.toFixed(1)}</div>
-                                    <div class="stat-label">Nota Média</div>
-                                </div>
-                            </div>
-                            <div class="col-12 col-md-4 mt-2 mt-md-0">
-                                ${stats.ultima_auditoria ? `
-                                    <div class="stat-item">
-                                        <div class="stat-value" style="font-size: 1rem;">${formatDate(stats.ultima_auditoria.data.split('T')[0]).substring(0, 5)}</div>
-                                        <div class="stat-label">Última Auditoria</div>
+                            ${stats.total_auditorias > 0 ? `
+                                <div class="analista-dist-bar">
+                                    <div class="dist-label">Distribuição</div>
+                                    <div class="analista-dist-pills">
+                                        ${stats.distribuicao.excelente > 0 ? `<span class="pill excelente"><i class="bi bi-star-fill"></i>${stats.distribuicao.excelente} Excelente</span>` : ''}
+                                        ${stats.distribuicao.bom > 0 ? `<span class="pill bom"><i class="bi bi-hand-thumbs-up-fill"></i>${stats.distribuicao.bom} Bom</span>` : ''}
+                                        ${stats.distribuicao.regular > 0 ? `<span class="pill regular"><i class="bi bi-exclamation-circle"></i>${stats.distribuicao.regular} Regular</span>` : ''}
+                                        ${stats.distribuicao.insatisfatorio > 0 ? `<span class="pill insatisf"><i class="bi bi-x-circle"></i>${stats.distribuicao.insatisfatorio} Insatisf.</span>` : ''}
                                     </div>
-                                ` : '<div class="stat-item"><div class="stat-label">Sem auditorias</div></div>'}
-                            </div>
-                        </div>
-                        
-                        ${stats.total_auditorias > 0 ? `
-                            <div class="mt-3">
-                                <h6 class="mb-2" style="font-size: 0.875rem;">Distribuição:</h6>
-                                <div class="row g-1">
-                                    <div class="col-6"><span class="badge badge-excelente w-100">Excelente: ${stats.distribuicao.excelente}</span></div>
-                                    <div class="col-6"><span class="badge badge-bom w-100">Bom: ${stats.distribuicao.bom}</span></div>
-                                    <div class="col-6"><span class="badge badge-regular w-100">Regular: ${stats.distribuicao.regular}</span></div>
-                                    <div class="col-6"><span class="badge badge-insatisfatorio w-100">Insatisf.: ${stats.distribuicao.insatisfatorio}</span></div>
                                 </div>
-                            </div>
-                        ` : ''}
+                            ` : '<p class="text-muted text-center mt-2 mb-0 small"><i class="bi bi-inbox me-1"></i>Sem auditorias no período</p>'}
+                        </div>
                     </div>
                 </div>
             `;
@@ -1365,6 +1391,22 @@ document.addEventListener('DOMContentLoaded', function () {
         
         // Atualizar título do modal
         document.getElementById('analista-name').textContent = analistaNome;
+
+        // Inicializar datas do modal com o mês atual
+        const hoje = new Date();
+        const primeiroDia = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+        const ultimoDia = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
+        const modalDataInicio = document.getElementById('modal-data-inicio');
+        const modalDataFim = document.getElementById('modal-data-fim');
+        if (modalDataInicio && !modalDataInicio.value) {
+            modalDataInicio.value = primeiroDia.toISOString().split('T')[0];
+        }
+        if (modalDataFim && !modalDataFim.value) {
+            modalDataFim.value = ultimoDia.toISOString().split('T')[0];
+        }
+        // Sincronizar com inputs ocultos
+        if (modalDataInicio) document.getElementById('filtro_analista_data_inicio').value = modalDataInicio.value;
+        if (modalDataFim) document.getElementById('filtro_analista_data_fim').value = modalDataFim.value;
 
         // Resetar Modal UI
         document.getElementById('loading-analista-audits').style.display = 'block';
@@ -1388,16 +1430,27 @@ document.addEventListener('DOMContentLoaded', function () {
         const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
         modal.show();
 
-        // Buscar auditorias do analista (usando as datas do filtro de analista)
-        const dataInicio = document.getElementById('filtro_analista_data_inicio').value;
-        const dataFim = document.getElementById('filtro_analista_data_fim').value;
+        // Buscar auditorias do analista
+        loadModalAnalystAudits(analistaId);
+    };
+
+    // Função separada para carregar auditorias do modal (pode ser reutilizada ao filtrar)
+    function loadModalAnalystAudits(analistaId) {
+        document.getElementById('loading-analista-audits').style.display = 'block';
+        document.getElementById('analista-modal-content').style.display = 'none';
+        document.getElementById('empty-state-analista').style.display = 'none';
+
+        const dataInicio = document.getElementById('modal-data-inicio')?.value 
+            || document.getElementById('filtro_analista_data_inicio')?.value || '';
+        const dataFim = document.getElementById('modal-data-fim')?.value 
+            || document.getElementById('filtro_analista_data_fim')?.value || '';
 
         const params = new URLSearchParams({
             analista_id: analistaId,
-            data_inicio: dataInicio,
-            data_fim: dataFim,
             per_page: 50
         });
+        if (dataInicio) params.append('data_inicio', dataInicio);
+        if (dataFim) params.append('data_fim', dataFim);
 
         fetch(`/api/auditoria/list/?${params}`, { credentials: 'include' })
             .then(response => response.json())
@@ -1416,8 +1469,11 @@ document.addEventListener('DOMContentLoaded', function () {
             .catch(error => {
                 console.error('Erro ao carregar auditorias:', error);
                 document.getElementById('loading-analista-audits').style.display = 'none';
+                document.getElementById('analista-modal-content').style.display = 'block';
+                document.getElementById('lista-auditorias-analista-modal').innerHTML = 
+                    '<tr><td colspan="6" class="text-center text-danger py-4"><i class="bi bi-exclamation-triangle me-2"></i>Erro ao carregar auditorias.</td></tr>';
             });
-    };
+    }
 
     function renderAnalystAuditsList(auditorias) {
         const tbody = document.getElementById('lista-auditorias-analista-modal');

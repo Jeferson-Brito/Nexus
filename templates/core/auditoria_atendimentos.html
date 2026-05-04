@@ -10,7 +10,8 @@
 {% block content %}
 <div class="aa-page">
 
-  <!-- Executive Dashboard -->
+  <!-- Executive Dashboard (apenas para gestores e admins) -->
+  {% if not is_analista or is_gestor or is_admin %}
   <div class="aa-executive-dashboard fade-in mb-4">
     <div class="row g-3">
         <!-- Main Stats -->
@@ -108,6 +109,7 @@
         </div>
     </div>
   </div>
+  {% endif %}
 
   <!-- KPI strip (Old simplified version, can be kept for fallback or removed) -->
   <div class="aa-kpis" id="aa-kpi-strip" style="display:none;">
@@ -266,7 +268,7 @@
                         <i class="bi bi-people"></i> Por Analista
                     </button>
                 </li>
-                {% if is_admin %}
+                {% if is_admin or is_gestor %}
                 <li class="nav-item" role="presentation">
                     <button class="nav-link" id="config-tab" data-bs-toggle="tab" data-bs-target="#config" type="button" role="tab">
                         <i class="bi bi-gear"></i> Configurações
@@ -987,8 +989,8 @@
                     </div>
                 </div>
 
-                <!-- ABA 5: CONFIGURAÇÕES (Admin Only) -->
-                {% if is_admin %}
+                <!-- ABA 5: CONFIGURAÇÕES (Admin e Gestor) -->
+                {% if is_admin or is_gestor %}
                 <div class="tab-pane fade" id="config" role="tabpanel">
                     <div class="aa-card">
                         <div class="aa-card-header">
@@ -1031,21 +1033,42 @@
         <!-- Modal de Detalhes da Auditoria (REMOVIDO - Substituído por Accordion) -->
         <!-- <div class="modal fade" id="modalDetalhes" ... /> -->
 
+        <!-- Inputs ocultos para datas do filtro de analista (usado pelo modal de gestor/admin) -->
+        {% if not is_analista or is_gestor or is_admin %}
+        <div style="display:none">
+            <input type="date" id="filtro_analista_data_inicio" name="filtro_analista_data_inicio">
+            <input type="date" id="filtro_analista_data_fim" name="filtro_analista_data_fim">
+        </div>
+        {% endif %}
+
         <!-- Modal de Auditorias do Analista -->
         <div class="modal fade" id="modalAnalistaAudits" tabindex="-1">
             <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
                 <div class="modal-content">
-                    <div class="modal-header bg-primary text-white">
-                        <h5 class="modal-title">
-                            <i class="bi bi-person-badge me-2"></i>Auditorias de <span id="analista-name"></span>
-                        </h5>
+                    <div class="modal-header text-white" style="background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);">
+                        <div class="d-flex align-items-center gap-3 flex-grow-1">
+                            <i class="bi bi-person-badge fs-4"></i>
+                            <div>
+                                <h5 class="modal-title mb-0">Auditorias de <span id="analista-name"></span></h5>
+                                <small class="opacity-75" id="modal-periodo-label">Período do mês atual</small>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center gap-2 me-2">
+                            <input type="date" id="modal-data-inicio" class="form-control form-control-sm" style="width:140px; border-radius:8px;">
+                            <span class="text-white opacity-75">até</span>
+                            <input type="date" id="modal-data-fim" class="form-control form-control-sm" style="width:140px; border-radius:8px;">
+                            <button class="btn btn-sm btn-light rounded-3" id="btnFiltrarModalAnalista">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body p-0">
-                        <div id="loading-analista-audits" class="text-center py-4">
-                            <div class="spinner-border text-primary" role="status">
+                        <div id="loading-analista-audits" class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status" style="width:3rem;height:3rem;">
                                 <span class="visually-hidden">Carregando...</span>
                             </div>
+                            <p class="text-muted mt-3">Carregando auditorias...</p>
                         </div>
 
                         <!-- Sub-abas dentro do modal -->
