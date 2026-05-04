@@ -1,0 +1,513 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Base de Auditoria IA | Nexus{% endblock %}
+
+{% block content %}
+<style>
+    /* ── Layout ── */
+    .baia-page { width:100%; padding:1.5rem 1.5rem 2rem; font-family:'Inter',sans-serif; }
+
+    /* ── Hero ── */
+    .baia-hero {
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 60%, #a855f7 100%);
+        border-radius: 20px;
+        padding: 2.4rem 2.5rem;
+        color: #fff;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 0 16px 40px rgba(79,70,229,0.25);
+    }
+    .baia-hero::before {
+        content:'';
+        position:absolute; top:-60%; right:-8%;
+        width:380px; height:380px;
+        background: radial-gradient(circle, rgba(255,255,255,0.12) 0%, transparent 70%);
+        border-radius: 50%;
+        pointer-events: none;
+    }
+    .baia-hero-title { font-size:2rem; font-weight:800; margin-bottom:.35rem; letter-spacing:-0.5px; }
+    .baia-hero-sub { font-size:1rem; opacity:.88; margin:0; }
+    .baia-hero-icon { font-size:4.5rem; opacity:.22; position:absolute; right:2.5rem; top:50%; transform:translateY(-50%); }
+
+    /* ── Stats Bar ── */
+    .baia-stats { display:flex; gap:1rem; margin-bottom:1.8rem; flex-wrap:wrap; }
+    .baia-stat {
+        background:#fff; border-radius:16px;
+        padding:1.1rem 1.5rem;
+        display:flex; align-items:center; gap:.9rem;
+        flex:1; min-width:150px;
+        border:1px solid rgba(0,0,0,.04);
+        box-shadow:0 4px 16px rgba(0,0,0,.04);
+    }
+    .baia-stat-icon {
+        width:42px; height:42px; border-radius:12px;
+        display:flex; align-items:center; justify-content:center;
+        font-size:1.2rem; color:#fff;
+    }
+    .baia-stat-num { font-size:1.6rem; font-weight:800; line-height:1; color:#1e293b; }
+    .baia-stat-lbl { font-size:.72rem; color:#94a3b8; font-weight:500; text-transform:uppercase; letter-spacing:.5px; }
+
+    /* ── Filtros ── */
+    .baia-filters {
+        background:#fff; border-radius:16px;
+        padding:1.2rem 1.5rem;
+        margin-bottom:1.5rem;
+        border:1px solid rgba(0,0,0,.05);
+        box-shadow:0 4px 16px rgba(0,0,0,.04);
+        display:flex; gap:1rem; flex-wrap:wrap; align-items:center;
+    }
+    .baia-filters .form-control, .baia-filters .form-select {
+        border-radius:10px; border-color:#e2e8f0;
+        font-size:.88rem;
+    }
+    .baia-filters .form-control:focus, .baia-filters .form-select:focus {
+        border-color:#6366f1; box-shadow:0 0 0 3px rgba(99,102,241,.12);
+    }
+
+    /* ── Artigos Grid ── */
+    .baia-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(330px, 1fr)); gap:1.2rem; }
+
+    .baia-card {
+        background:#fff; border-radius:18px;
+        border:1px solid rgba(0,0,0,.05);
+        box-shadow:0 4px 18px rgba(0,0,0,.05);
+        overflow:hidden;
+        transition: transform .25s ease, box-shadow .25s ease;
+        display:flex; flex-direction:column;
+    }
+    .baia-card:hover { transform:translateY(-4px); box-shadow:0 12px 32px rgba(0,0,0,.09); }
+
+    .baia-card-header {
+        padding:1.1rem 1.3rem .8rem;
+        display:flex; justify-content:space-between; align-items:flex-start;
+        gap:.5rem;
+    }
+    .baia-categoria-badge {
+        font-size:.67rem; font-weight:700; padding:.28rem .7rem;
+        border-radius:20px; text-transform:uppercase; letter-spacing:.4px;
+        white-space:nowrap;
+    }
+    .baia-card-title {
+        font-size:.95rem; font-weight:700;
+        color:#1e293b; line-height:1.35;
+        margin:0 1.3rem .6rem;
+    }
+    .baia-card-preview {
+        font-size:.8rem; color:#64748b; line-height:1.55;
+        margin:0 1.3rem .9rem;
+        flex:1;
+        display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;
+    }
+    .baia-card-footer {
+        border-top:1px solid #f1f5f9;
+        padding:.75rem 1.3rem;
+        display:flex; justify-content:space-between; align-items:center;
+    }
+    .baia-card-date { font-size:.72rem; color:#94a3b8; }
+    .baia-card-actions { display:flex; gap:.4rem; }
+    .baia-card-actions .btn { padding:.3rem .55rem; font-size:.78rem; border-radius:8px; }
+
+    /* ── Empty State ── */
+    .baia-empty {
+        text-align:center; padding:4rem 2rem;
+        background:#fff; border-radius:18px;
+        border:1px dashed #e2e8f0;
+    }
+    .baia-empty i { font-size:3.5rem; color:#cbd5e1; margin-bottom:1rem; display:block; }
+
+    /* ── Modal ── */
+    .baia-modal .modal-content { border-radius:20px; border:0; box-shadow:0 25px 60px rgba(0,0,0,.15); }
+    .baia-modal .modal-header { border-bottom:1px solid #f1f5f9; padding:1.5rem 2rem 1rem; }
+    .baia-modal .modal-body { padding:1.5rem 2rem; }
+    .baia-modal .modal-footer { border-top:1px solid #f1f5f9; padding:1rem 2rem 1.5rem; }
+    .baia-modal textarea { min-height:180px; font-size:.88rem; line-height:1.65; }
+    .baia-modal .form-label { font-weight:600; font-size:.85rem; color:#475569; margin-bottom:.4rem; }
+    .baia-modal .form-control, .baia-modal .form-select {
+        border-radius:10px; border-color:#e2e8f0; font-size:.88rem;
+    }
+    .baia-modal .form-control:focus, .baia-modal .form-select:focus {
+        border-color:#6366f1; box-shadow:0 0 0 3px rgba(99,102,241,.12);
+    }
+
+    /* ── Btn IA ── */
+    .btn-ia {
+        background: linear-gradient(135deg,#4f46e5,#7c3aed);
+        color:#fff; border:0; border-radius:12px;
+        padding:.65rem 1.4rem; font-weight:700; font-size:.9rem;
+        transition: transform .2s, box-shadow .2s;
+    }
+    .btn-ia:hover { transform:translateY(-2px); box-shadow:0 8px 20px rgba(79,70,229,.3); color:#fff; }
+
+    /* ── Loading ── */
+    .baia-loading { text-align:center; padding:3rem; }
+    .baia-loading .spinner-border { width:2.5rem; height:2.5rem; color:#6366f1; }
+
+    /* Cores por categoria */
+    .cat-geral       { background:#f1f5f9; color:#64748b; }
+    .cat-apresentacao{ background:#fef3c7; color:#d97706; }
+    .cat-historico   { background:#d1fae5; color:#059669; }
+    .cat-entendimento{ background:#dbeafe; color:#2563eb; }
+    .cat-informacao  { background:#ede9fe; color:#7c3aed; }
+    .cat-acordo_espera{ background:#fce7f3; color:#be185d; }
+    .cat-respeito    { background:#dcfce7; color:#16a34a; }
+    .cat-portugues   { background:#fff7ed; color:#ea580c; }
+    .cat-finalizacao { background:#e0f2fe; color:#0284c7; }
+    .cat-procedimento{ background:#fef9c3; color:#ca8a04; }
+</style>
+
+<div class="baia-page">
+
+    <!-- Hero -->
+    <div class="baia-hero">
+        <div style="position:relative;z-index:1;">
+            <div class="d-flex align-items-center gap-3 mb-2">
+                <div style="width:48px;height:48px;background:rgba(255,255,255,.2);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;">🤖</div>
+                <div>
+                    <h1 class="baia-hero-title mb-0">Base de Auditoria IA</h1>
+                    <p class="baia-hero-sub">Conhecimento que alimenta a IA Auditora de Atendimentos</p>
+                </div>
+            </div>
+        </div>
+        <button class="btn-ia d-none d-md-flex align-items-center gap-2" onclick="abrirModalNovo()">
+            <i class="bi bi-plus-lg"></i> Novo Artigo
+        </button>
+        <i class="bi bi-robot baia-hero-icon"></i>
+    </div>
+
+    <!-- Stats Bar -->
+    <div class="baia-stats" id="baiaStats">
+        <div class="baia-stat">
+            <div class="baia-stat-icon" style="background:linear-gradient(135deg,#4f46e5,#7c3aed)"><i class="bi bi-journal-text"></i></div>
+            <div>
+                <div class="baia-stat-num" id="statTotal">—</div>
+                <div class="baia-stat-lbl">Total de artigos</div>
+            </div>
+        </div>
+        <div class="baia-stat">
+            <div class="baia-stat-icon" style="background:linear-gradient(135deg,#0ea5e9,#2563eb)"><i class="bi bi-list-check"></i></div>
+            <div>
+                <div class="baia-stat-num" id="statCriterios">—</div>
+                <div class="baia-stat-lbl">Critérios cobertos</div>
+            </div>
+        </div>
+        <div class="baia-stat">
+            <div class="baia-stat-icon" style="background:linear-gradient(135deg,#10b981,#059669)"><i class="bi bi-shield-check"></i></div>
+            <div>
+                <div class="baia-stat-num" id="statCobertos">—</div>
+                <div class="baia-stat-lbl">Regras gerais</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="baia-filters">
+        <div class="flex-grow-1" style="min-width:200px;">
+            <input type="text" id="baiaBusca" class="form-control" placeholder="🔍  Buscar artigo por título ou conteúdo..." oninput="filtrarLocal()">
+        </div>
+        <div style="min-width:200px;">
+            <select class="form-select" id="baiaFiltroCategoria" onchange="filtrarLocal()">
+                <option value="">Todas as categorias</option>
+            </select>
+        </div>
+        <button class="btn btn-ia" onclick="abrirModalNovo()">
+            <i class="bi bi-plus-lg me-1"></i> Novo Artigo
+        </button>
+    </div>
+
+    <!-- Grid de Artigos -->
+    <div id="baiaGrid">
+        <div class="baia-loading"><div class="spinner-border" role="status"></div><p class="text-muted mt-3 mb-0">Carregando base de auditoria...</p></div>
+    </div>
+</div>
+
+<!-- Modal: Criar / Editar Artigo -->
+<div class="modal fade baia-modal" id="modalArtigo" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title fw-bold mb-0" id="modalArtigoTitulo">Novo Artigo</h5>
+                    <p class="text-muted mb-0" style="font-size:.8rem;">Este conteúdo será usado pela IA para auditar atendimentos</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="artigoId">
+                <div class="row g-3">
+                    <div class="col-md-8">
+                        <label class="form-label">Título do Artigo</label>
+                        <input type="text" class="form-control" id="artigoTituloInput" placeholder="Ex: Como deve ser a apresentação inicial do analista">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Categoria / Critério</label>
+                        <select class="form-select" id="artigoCategoriaSelect">
+                            <option value="geral">Regras Gerais</option>
+                            <option value="apresentacao">Critério 1 — Apresentação</option>
+                            <option value="historico">Critério 2 — Análise de Histórico</option>
+                            <option value="entendimento">Critério 3 — Entendimento</option>
+                            <option value="informacao">Critério 4 — Clareza da Informação</option>
+                            <option value="acordo_espera">Critério 5 — Acordo de Espera</option>
+                            <option value="respeito">Critério 6 — Respeito</option>
+                            <option value="portugues">Critério 7 — Português</option>
+                            <option value="finalizacao">Critério 8 — Finalização</option>
+                            <option value="procedimento">Critério 9 — Procedimento</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Conteúdo da Regra / Procedimento</label>
+                        <textarea class="form-control" id="artigoConteudoInput" placeholder="Descreva com detalhes como o analista deve se comportar neste critério. Quanto mais específico, mais precisa será a auditoria da IA.
+
+Exemplo para Critério 1 (Apresentação):
+- O analista DEVE se apresentar pelo nome no início do atendimento
+- A saudação padrão é: 'Olá! Sou [nome], analista do NRS Suporte. Como posso te ajudar?'
+- É considerado erro: iniciar sem saudação, não informar o nome, ou usar apenas 'Oi'"></textarea>
+                        <div class="form-text"><i class="bi bi-lightbulb text-warning me-1"></i>Dica: seja específico e cite exemplos de erros comuns. Isso aumenta muito a precisão da IA.</div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn-ia" onclick="salvarArtigo()">
+                    <i class="bi bi-floppy me-2"></i>Salvar na Base
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Confirmar Exclusão -->
+<div class="modal fade baia-modal" id="modalExcluir" tabindex="-1">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content text-center">
+            <div class="modal-body p-4">
+                <div style="width:60px;height:60px;border-radius:50%;background:#fef2f2;display:flex;align-items:center;justify-content:center;margin:0 auto 1.2rem;">
+                    <i class="bi bi-trash3 text-danger fs-4"></i>
+                </div>
+                <h5 class="fw-bold mb-2">Excluir artigo?</h5>
+                <p class="text-muted small mb-4">A IA Auditora não terá mais acesso a esta regra. Esta ação não pode ser desfeita.</p>
+                <input type="hidden" id="excluirId">
+                <div class="d-flex gap-2 justify-content-center">
+                    <button class="btn btn-light px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button class="btn btn-danger px-4" onclick="confirmarExcluir()"><i class="bi bi-trash me-1"></i>Excluir</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const CSRF = '{{ csrf_token }}';
+    const API_LIST     = '/api/base-auditoria/';
+    const API_CRIAR    = '/api/base-auditoria/criar/';
+    const API_DETALHE  = (id) => `/api/base-auditoria/${id}/`;
+
+    let todosArtigos = [];
+
+    // Mapeamento de categoria para classe CSS
+    const CAT_CSS = {
+        geral: 'cat-geral', apresentacao: 'cat-apresentacao',
+        historico: 'cat-historico', entendimento: 'cat-entendimento',
+        informacao: 'cat-informacao', acordo_espera: 'cat-acordo_espera',
+        respeito: 'cat-respeito', portugues: 'cat-portugues',
+        finalizacao: 'cat-finalizacao', procedimento: 'cat-procedimento',
+    };
+
+    // ── Init ──────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', () => {
+        carregarArtigos();
+    });
+
+    // ── Carregar da API ───────────────────────────────────
+    async function carregarArtigos() {
+        try {
+            const res = await fetch(API_LIST);
+            const data = await res.json();
+            if (res.ok) {
+                todosArtigos = data.artigos || [];
+                preencherFiltroCategoria();
+                atualizarStats();
+                renderizarGrid(todosArtigos);
+            } else {
+                mostrarErro(data.error || 'Erro ao carregar artigos');
+            }
+        } catch (e) {
+            mostrarErro('Falha de conexão com o servidor');
+        }
+    }
+
+    // ── Filtro local (sem nova requisição) ────────────────
+    function filtrarLocal() {
+        const busca = document.getElementById('baiaBusca').value.toLowerCase();
+        const cat   = document.getElementById('baiaFiltroCategoria').value;
+        const filtrados = todosArtigos.filter(a => {
+            const matchBusca = !busca || a.titulo.toLowerCase().includes(busca) || a.conteudo.toLowerCase().includes(busca);
+            const matchCat   = !cat || a.categoria === cat;
+            return matchBusca && matchCat;
+        });
+        renderizarGrid(filtrados);
+    }
+
+    // ── Preencher select de categorias ───────────────────
+    function preencherFiltroCategoria() {
+        const sel = document.getElementById('baiaFiltroCategoria');
+        const existentes = [...new Set(todosArtigos.map(a => a.categoria))];
+        const cats = todosArtigos.reduce((acc, a) => {
+            acc[a.categoria] = a.categoria_display; return acc;
+        }, {});
+        existentes.forEach(cat => {
+            const opt = document.createElement('option');
+            opt.value = cat; opt.textContent = cats[cat];
+            sel.appendChild(opt);
+        });
+    }
+
+    // ── Stats ─────────────────────────────────────────────
+    function atualizarStats() {
+        document.getElementById('statTotal').textContent = todosArtigos.length;
+        const criterios = new Set(todosArtigos.filter(a => a.categoria !== 'geral').map(a => a.categoria));
+        document.getElementById('statCriterios').textContent = criterios.size + '/9';
+        document.getElementById('statCobertos').textContent = todosArtigos.filter(a => a.categoria === 'geral').length;
+    }
+
+    // ── Renderizar Grid ───────────────────────────────────
+    function renderizarGrid(artigos) {
+        const el = document.getElementById('baiaGrid');
+
+        if (!artigos.length) {
+            el.innerHTML = `
+                <div class="baia-empty">
+                    <i class="bi bi-journal-x"></i>
+                    <h5 class="fw-bold mb-2">Nenhum artigo encontrado</h5>
+                    <p class="text-muted mb-3">Adicione regras e procedimentos para que a IA possa auditar os atendimentos com precisão.</p>
+                    <button class="btn-ia" onclick="abrirModalNovo()"><i class="bi bi-plus-lg me-2"></i>Criar Primeiro Artigo</button>
+                </div>`;
+            return;
+        }
+
+        el.innerHTML = `<div class="baia-grid">${artigos.map(a => cardHtml(a)).join('')}</div>`;
+    }
+
+    function cardHtml(a) {
+        const cssClass = CAT_CSS[a.categoria] || 'cat-geral';
+        const preview = a.conteudo.length > 140 ? a.conteudo.substring(0, 140) + '…' : a.conteudo;
+        const dataFmt = new Date(a.created_at).toLocaleDateString('pt-BR');
+        return `
+        <div class="baia-card" id="card-${a.id}">
+            <div class="baia-card-header">
+                <span class="baia-categoria-badge ${cssClass}">${a.categoria_display}</span>
+            </div>
+            <p class="baia-card-title">${escapeHtml(a.titulo)}</p>
+            <p class="baia-card-preview">${escapeHtml(preview)}</p>
+            <div class="baia-card-footer">
+                <span class="baia-card-date"><i class="bi bi-calendar3 me-1"></i>${dataFmt}</span>
+                <div class="baia-card-actions">
+                    <button class="btn btn-sm btn-outline-primary" onclick='editarArtigo(${JSON.stringify(a)})' title="Editar">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="excluirArtigo(${a.id})" title="Excluir">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    function escapeHtml(t) {
+        return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+    }
+
+    // ── Modal: Novo ───────────────────────────────────────
+    function abrirModalNovo() {
+        document.getElementById('artigoId').value = '';
+        document.getElementById('artigoTituloInput').value = '';
+        document.getElementById('artigoConteudoInput').value = '';
+        document.getElementById('artigoCategoriaSelect').value = 'geral';
+        document.getElementById('modalArtigoTitulo').textContent = 'Novo Artigo';
+        new bootstrap.Modal(document.getElementById('modalArtigo')).show();
+    }
+
+    // ── Modal: Editar ─────────────────────────────────────
+    function editarArtigo(a) {
+        document.getElementById('artigoId').value = a.id;
+        document.getElementById('artigoTituloInput').value = a.titulo;
+        document.getElementById('artigoConteudoInput').value = a.conteudo;
+        document.getElementById('artigoCategoriaSelect').value = a.categoria;
+        document.getElementById('modalArtigoTitulo').textContent = 'Editar Artigo';
+        new bootstrap.Modal(document.getElementById('modalArtigo')).show();
+    }
+
+    // ── Salvar (criar ou editar) ──────────────────────────
+    async function salvarArtigo() {
+        const id      = document.getElementById('artigoId').value;
+        const titulo  = document.getElementById('artigoTituloInput').value.trim();
+        const conteudo= document.getElementById('artigoConteudoInput').value.trim();
+        const catEl   = document.getElementById('artigoCategoriaSelect');
+        const categoria = catEl ? catEl.value : 'geral';
+
+        if (!titulo || !conteudo) {
+            showToast('Preencha título e conteúdo antes de salvar.', 'warning'); return;
+        }
+
+        const url    = id ? API_DETALHE(id) : API_CRIAR;
+        const method = id ? 'PUT' : 'POST';
+
+        try {
+            const res = await fetch(url, {
+                method,
+                headers: { 'Content-Type':'application/json', 'X-CSRFToken': CSRF },
+                body: JSON.stringify({ titulo, conteudo, categoria })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                bootstrap.Modal.getInstance(document.getElementById('modalArtigo')).hide();
+                showToast(id ? 'Artigo atualizado!' : 'Artigo criado com sucesso!', 'success');
+                carregarArtigos();
+            } else {
+                showToast(data.error || 'Erro ao salvar.', 'danger');
+            }
+        } catch(e) { showToast('Erro de conexão.', 'danger'); }
+    }
+
+    // ── Excluir ───────────────────────────────────────────
+    function excluirArtigo(id) {
+        document.getElementById('excluirId').value = id;
+        new bootstrap.Modal(document.getElementById('modalExcluir')).show();
+    }
+
+    async function confirmarExcluir() {
+        const id = document.getElementById('excluirId').value;
+        try {
+            const res = await fetch(API_DETALHE(id), {
+                method: 'DELETE',
+                headers: { 'X-CSRFToken': CSRF }
+            });
+            if (res.ok) {
+                bootstrap.Modal.getInstance(document.getElementById('modalExcluir')).hide();
+                showToast('Artigo removido da base.', 'success');
+                carregarArtigos();
+            } else {
+                showToast('Erro ao excluir.', 'danger');
+            }
+        } catch(e) { showToast('Erro de conexão.', 'danger'); }
+    }
+
+    function mostrarErro(msg) {
+        document.getElementById('baiaGrid').innerHTML = `
+            <div class="baia-empty">
+                <i class="bi bi-exclamation-circle text-danger"></i>
+                <h5 class="fw-bold mb-2">Erro ao carregar</h5>
+                <p class="text-muted">${msg}</p>
+                <button class="btn btn-outline-primary" onclick="carregarArtigos()">Tentar novamente</button>
+            </div>`;
+    }
+</script>
+
+{% endblock %}

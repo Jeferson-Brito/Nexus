@@ -398,6 +398,9 @@ urlpatterns = [
     path('api/ia/base/create/', api_ia.api_ia_base_create, name='api_ia_base_create'),
     path('api/ia/base/<int:pk>/update/', api_ia.api_ia_base_update, name='api_ia_base_update'),
     path('api/ia/base/<int:pk>/delete/', api_ia.api_ia_base_delete, name='api_ia_base_delete'),
+
+    # Base de Auditoria IA
+    path('configuracoes/base-auditoria-ia/', views.base_auditoria_ia_view, name='base_auditoria_ia'),
 ]
 
 
