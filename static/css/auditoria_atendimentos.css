@@ -20,7 +20,7 @@
 }
 
 /* ── Page wrapper ── */
-.aa-page { width: 100%; padding: 1.75rem 1.25rem; }
+.aa-page { width: 100%; padding: 1.25rem 1.25rem 1rem; min-height: auto !important; }
 
 /* ── Page Header ── */
 .aa-header {
@@ -89,11 +89,12 @@
 }
 
 /* ── Section Card ── */
+.tab-content { min-height: auto !important; }
 .aa-card {
     background: #fff; border-radius: 16px;
     border: 1.5px solid #e2e8f0;
     box-shadow: 0 1px 4px rgba(0,0,0,.04);
-    overflow: hidden; margin-bottom: 1.5rem;
+    overflow: hidden; margin-bottom: 1rem;
 }
 .aa-card-header {
     background: var(--aa-grad);
