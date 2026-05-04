@@ -266,6 +266,9 @@ document.addEventListener('DOMContentLoaded', function () {
             case '#lista':
                 loadAuditorias(1);
                 break;
+            case '#lista-ia':
+                window.loadAuditoriasIA(1);
+                break;
             case '#ranking':
                 loadRanking();
                 break;
@@ -1752,6 +1755,9 @@ document.addEventListener('DOMContentLoaded', function () {
             case '#lista':
                 loadAuditorias(1);
                 break;
+            case '#lista-ia':
+                window.loadAuditoriasIA(1);
+                break;
             case '#ranking':
                 loadRanking();
                 break;
@@ -2245,3 +2251,106 @@ window.preencherAuditoriaIA = async function() {
         btn.disabled = false;
     }
 };
+
+// ========================================
+// CARREGAR AUDITORIAS IA (TEMPO REAL)
+// ========================================
+window.loadAuditoriasIA = function(page = 1) {
+    const tbody = document.getElementById('lista-auditorias-ia');
+    if (!tbody) return;
+
+    tbody.innerHTML = `
+        <tr>
+            <td colspan="8" class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Carregando...</span>
+                </div>
+            </td>
+        </tr>
+    `;
+
+    fetch(`/api/auditoria/list/?gerado_por_ia=true&page=${page}&per_page=20`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                renderAuditoriasIATable(data.data);
+                renderPaginacaoIA(data.pagination);
+            } else {
+                tbody.innerHTML = `<tr><td colspan="8" class="text-center text-danger py-4">Erro: ${data.error}</td></tr>`;
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            tbody.innerHTML = `<tr><td colspan="8" class="text-center text-danger py-4">Erro de comunicação com o servidor.</td></tr>`;
+        });
+};
+
+function renderAuditoriasIATable(auditorias) {
+    const tbody = document.getElementById('lista-auditorias-ia');
+    tbody.innerHTML = '';
+
+    if (auditorias.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8" class="text-center py-5 text-muted">
+                    <i class="bi bi-robot fs-1 d-block mb-3" style="opacity: 0.5;"></i>
+                    <p class="mb-0">A IA ainda não realizou nenhuma auditoria automática.</p>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    auditorias.forEach(aud => {
+        const tr = document.createElement('tr');
+        
+        const badgeClass = \`badge-\${aud.classificacao}\`;
+        const dataFormatada = typeof formatDate === 'function' ? formatDate(aud.data_atendimento) : aud.data_atendimento;
+
+        tr.innerHTML = \`
+            <td>\${dataFormatada}</td>
+            <td>\${aud.id_conversa}</td>
+            <td><span class="badge bg-secondary">\${aud.tipo_atendimento}</span></td>
+            <td>\${aud.analista_auditado.nome_completo || aud.analista_auditado.username}</td>
+            <td>\${aud.pontuacao}/9</td>
+            <td class="fw-bold text-primary">\${Number(aud.nota).toFixed(1)}</td>
+            <td>
+                <span class="badge \${badgeClass}">\${aud.classificacao_display || aud.classificacao.toUpperCase()}</span>
+            </td>
+            <td>
+                <span class="badge" style="background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; padding: 5px 10px; font-weight: normal;"><i class="bi bi-robot me-1"></i>Automático</span>
+            </td>
+        \`;
+        tbody.appendChild(tr);
+    });
+}
+
+function renderPaginacaoIA(pagination) {
+    const container = document.getElementById('paginacao-ia');
+    if (!container) return;
+
+    if (pagination.total_pages <= 1) {
+        container.innerHTML = '';
+        return;
+    }
+
+    let html = \`
+        <span class="text-muted small">Mostrando página \${pagination.current_page} de \${pagination.total_pages}</span>
+        <ul class="pagination pagination-sm mb-0">
+    \`;
+
+    if (pagination.has_previous) {
+        html += \`<li class="page-item"><button class="page-link" onclick="window.loadAuditoriasIA(\${pagination.current_page - 1})">Anterior</button></li>\`;
+    } else {
+        html += \`<li class="page-item disabled"><span class="page-link">Anterior</span></li>\`;
+    }
+
+    if (pagination.has_next) {
+        html += \`<li class="page-item"><button class="page-link" onclick="window.loadAuditoriasIA(\${pagination.current_page + 1})">Próxima</button></li>\`;
+    } else {
+        html += \`<li class="page-item disabled"><span class="page-link">Próxima</span></li>\`;
+    }
+
+    html += \`</ul>\`;
+    container.innerHTML = html;
+}

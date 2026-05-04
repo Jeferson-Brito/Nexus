@@ -237,6 +237,12 @@ def api_auditoria_list(request):
         apenas_alertas = request.GET.get('apenas_alertas')
         if apenas_alertas == 'true':
             queryset = queryset.filter(requer_acao=True)
+            
+        gerado_por_ia = request.GET.get('gerado_por_ia')
+        if gerado_por_ia == 'true':
+            queryset = queryset.filter(gerado_por_ia=True)
+        elif gerado_por_ia == 'false':
+            queryset = queryset.filter(gerado_por_ia=False)
         
         # Ordenar por data de criação da auditoria (mais recentes primeiro)
         queryset = queryset.order_by('-created_at')
