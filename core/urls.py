@@ -181,6 +181,7 @@ urlpatterns = [
     path('api/escala/folgas/', api_escala.api_folgas_list, name='api_folgas_list'),
     path('api/escala/folgas/save/', api_escala.api_folga_save, name='api_folga_save'),
     path('api/escala/folgas/<int:pk>/delete/', api_escala.api_folga_delete, name='api_folga_delete'),
+    path('api/escala/auditoria-ia/', api_escala.api_auditar_escala_ia, name='api_auditar_escala_ia'),
     
     # API Calendário
     path('api/eventos/users/', api_eventos.api_eventos_users_list, name='api_eventos_users_list'),

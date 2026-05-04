@@ -755,6 +755,11 @@
                 <i class="fa-solid fa-download"></i> Exportar
             </button>
             {% endif %}
+
+            <button class="btn-escala" onclick="auditarEscalaIA()" style="background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white;">
+                <i class="fa-solid fa-robot"></i> Auditar com IA
+            </button>
+            {% endif %}
         </div>
     </div>
 
@@ -1046,6 +1051,32 @@
                     </tbody>
                 </table>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Auditoria IA -->
+<div class="modal-escala" id="aiAuditModal">
+    <div class="modal-content-escala large">
+        <div class="modal-header-escala" style="background: linear-gradient(180deg, #e0e7ff 0%, #f5f3ff 100%);">
+            <button class="modal-close" onclick="closeAiAuditModal()">&times;</button>
+            <div class="modal-icon" style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);">
+                <i class="fa-solid fa-robot"></i>
+            </div>
+            <h2>Auditoria Inteligente Nexus</h2>
+            <p>Análise de conformidade e sugestões da IA</p>
+        </div>
+        <div class="modal-body-escala" style="background: white;">
+            <div id="aiAuditLoading" class="text-center py-5">
+                <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;"></div>
+                <p class="mt-3 text-muted">Aguarde, a IA está analisando sua escala...</p>
+            </div>
+            <div id="aiAuditContent" class="markdown-body" style="display: none; padding: 20px; font-size: 0.95rem; line-height: 1.6;">
+                <!-- Preenchido via JS -->
+            </div>
+        </div>
+        <div class="modal-footer-escala">
+            <button class="btn-escala primary" onclick="closeAiAuditModal()">Entendido</button>
         </div>
     </div>
 </div>
@@ -2200,6 +2231,108 @@
         } finally {
             document.getElementById('pdfLoadingOverlay')?.remove();
         }
+    }
+    // ========================================
+    // AUDITORIA IA
+    // ========================================
+    function openAiAuditModal() {
+        document.getElementById('aiAuditModal').classList.add('show');
+        document.getElementById('aiAuditLoading').style.display = 'block';
+        document.getElementById('aiAuditContent').style.display = 'none';
+    }
+
+    function closeAiAuditModal() {
+        document.getElementById('aiAuditModal').classList.remove('show');
+    }
+
+    async function auditarEscalaIA() {
+        const inputVal = document.getElementById('mesInput').value;
+        if (!inputVal) {
+            alert('Selecione um mês e gere a escala primeiro.');
+            return;
+        }
+
+        const [ano, mesNum] = inputVal.split('-').map(Number);
+        const monthIndex = mesNum - 1;
+        const totalDays = new Date(ano, monthIndex + 1, 0).getDate();
+
+        // Gerar um resumo compacto da escala para enviar à IA
+        const resumoEscala = {
+            mes: inputVal,
+            analistas: []
+        };
+
+        analistas.forEach(analista => {
+            const turnoAnalista = turnos.find(t => t.nome === analista.turno);
+            const dadosAnalista = {
+                nome: analista.nome,
+                turno: analista.turno,
+                horario: turnoAnalista ? turnoAnalista.horario : '',
+                dias: []
+            };
+
+            for (let dia = 1; dia <= totalDays; dia++) {
+                const cellData = getCellData(analista, turnoAnalista, ano, monthIndex, dia);
+                const data = new Date(ano, monthIndex, dia);
+                const diaSemana = data.toLocaleDateString('pt-BR', { weekday: 'short' });
+                
+                dadosAnalista.dias.push({
+                    d: dia,
+                    s: diaSemana,
+                    t: cellData.class // 'trabalho', 'folga', 'ferias', etc
+                });
+            }
+            resumoEscala.analistas.push(dadosAnalista);
+        });
+
+        openAiAuditModal();
+
+        try {
+            const response = await fetch('/api/escala/auditoria-ia/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({ escala_summary: resumoEscala })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Converter Markdown simples para HTML (ou usar biblioteca se disponível)
+                // Aqui vamos usar um parser simples de MD para o relatório
+                const formattedHtml = parseMarkdown(data.analise);
+                document.getElementById('aiAuditContent').innerHTML = formattedHtml;
+                document.getElementById('aiAuditLoading').style.display = 'none';
+                document.getElementById('aiAuditContent').style.display = 'block';
+            } else {
+                alert('Erro na auditoria: ' + data.error);
+                closeAiAuditModal();
+            }
+        } catch (error) {
+            console.error('Erro:', error);
+            alert('Erro ao conectar com a IA.');
+            closeAiAuditModal();
+        }
+    }
+
+    // Parser simples de Markdown para o relatório da IA
+    function parseMarkdown(text) {
+        if (!text) return '';
+        let html = text
+            .replace(/^### (.*$)/gim, '<h3 style="color: #1e3a8a; border-bottom: 2px solid #e0e7ff; padding-bottom: 8px; margin-top: 24px; margin-bottom: 16px;">$1</h3>')
+            .replace(/^## (.*$)/gim, '<h2 style="color: #1e3a8a; margin-top: 30px;">$1</h2>')
+            .replace(/^# (.*$)/gim, '<h1 style="color: #1e3a8a;">$1</h1>')
+            .replace(/^\> (.*$)/gim, '<blockquote style="border-left: 4px solid #4f46e5; background: #f5f3ff; padding: 10px 15px; margin: 15px 0;">$1</blockquote>')
+            .replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>')
+            .replace(/\*(.*)\*/gim, '<em>$1</em>')
+            .replace(/\n/gim, '<br/>');
+            
+        // Melhora na visualização de listas
+        html = html.replace(/^\- (.*$)/gim, '<li style="margin-bottom: 5px; list-style-type: none;">• $1</li>');
+        
+        return html;
     }
 </script>
 {% endblock %}

@@ -406,3 +406,44 @@ RESPONDA APENAS COM O JSON:"""
     except Exception as e:
         logger.error(f"[Nexus IA Auditor] Erro: {type(e).__name__}: {e}")
         return {'sucesso': False, 'erro': str(e)}
+
+def auditar_escala_ia(escala_data: dict, regras_empresa: str = "") -> dict:
+    """
+    Audita uma escala mensal de trabalho usando IA.
+    Identifica furos na escala, excesso de dias seguidos e descumprimento de regras.
+    """
+    try:
+        client = _get_client()
+        
+        prompt = f"""Você é um Especialista em Gestão de Escalas e Leis Trabalhistas (CLT).
+Sua tarefa é analisar a escala mensal de trabalho fornecida abaixo e identificar problemas, riscos jurídicos e pontos de melhoria.
+
+DADOS DA ESCALA:
+{json.dumps(escala_data, indent=2)}
+
+REGRAS ADICIONAIS DA EMPRESA:
+{regras_empresa if regras_empresa else "Nenhuma regra específica fornecida além da CLT padrão."}
+
+CRITÉRIOS DE ANÁLISE:
+1. Folgas: Verifique se todos os colaboradores têm ao menos uma folga semanal.
+2. Domingos: Verifique se há colaboradores sem nenhum domingo de folga no mês (Obrigatório ao menos 1 por mês).
+3. Continuidade: Identifique se alguém está trabalhando mais de 6 dias seguidos sem folga.
+4. Cobertura: Observe se algum turno ficou com poucos analistas em dias críticos.
+5. Equidade: Verifique se a distribuição de folgas está equilibrada entre o time.
+
+REGRAS DE RESPOSTA:
+- Retorne um relatório em Markdown estruturado.
+- Use emojis para facilitar a leitura.
+- Seção 1: 🚩 Problemas Críticos (Ações imediatas).
+- Seção 2: ⚠️ Avisos e Riscos (Pode dar problema futuro).
+- Seção 3: 💡 Sugestões de Otimização.
+- Se houver nomes de pessoas com problemas, liste-os claramente.
+
+SUA ANÁLISE:"""
+
+        response = client.models.generate_content(model='gemini-2.0-flash', contents=prompt)
+        return {"resposta": response.text.strip()}
+
+    except Exception as e:
+        logger.error(f"[Nexus IA] Erro ao auditar escala: {type(e).__name__}: {e}")
+        return {"resposta": "⚠️ Ocorreu um erro ao processar a auditoria da escala com a IA."}

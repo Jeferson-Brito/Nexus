@@ -1,4 +1,4 @@
-﻿from django.http import JsonResponse
+from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
@@ -299,3 +299,23 @@ def api_analistas_reorder(request):
         return JsonResponse({'success': True})
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
+
+@login_required
+@require_http_methods(["POST"])
+@check_nrs_permission
+def api_auditar_escala_ia(request):
+    """Realiza a auditoria da escala usando IA"""
+    try:
+        data = json.loads(request.body)
+        escala_summary = data.get('escala_summary', {})
+        
+        from ..services.ia_service import auditar_escala_ia
+        
+        resultado = auditar_escala_ia(escala_summary)
+        
+        return JsonResponse({
+            'success': True,
+            'analise': resultado.get('resposta', '')
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
