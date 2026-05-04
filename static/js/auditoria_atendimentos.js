@@ -1546,10 +1546,10 @@ document.addEventListener('DOMContentLoaded', function () {
         state.charts.radar = new Chart(ctxRadar, {
             type: 'radar',
             data: {
-                labels: ['Apresentação', 'Histórico', 'Entendimento', 'Informação', 'Postura', 'Português', 'Procedimento'],
+                labels: ['Apresentação', 'Histórico', 'Entendimento', 'Informação', 'Acordo Espera', 'Respeito', 'Português', 'Finalização', 'Procedimento'],
                 datasets: [{
                     label: 'Performance por Pilar',
-                    data: [90, 85, 95, 75, 100, 80, 85], 
+                    data: [100, 100, 100, 100, 100, 100, 100, 100, 100], // Mock data, ideally calculated from audits
                     backgroundColor: 'rgba(79, 70, 229, 0.2)',
                     borderColor: '#4f46e5',
                     pointBackgroundColor: '#4f46e5',
@@ -1564,7 +1564,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     r: { 
                         min: 0, 
                         max: 100, 
-                        ticks: { display: false },
+                        ticks: { display: false, stepSize: 20 },
                         grid: { color: '#e2e8f0' },
                         angleLines: { color: '#e2e8f0' }
                     }
@@ -1583,8 +1583,8 @@ document.addEventListener('DOMContentLoaded', function () {
         emptyState.style.display = 'none';
         loading.style.display = 'block';
 
-        const dataInicio = document.getElementById('filtro_analista_data_inicio').value;
-        const dataFim = document.getElementById('filtro_analista_data_fim').value;
+        const dataInicio = document.getElementById('modal-data-inicio')?.value || document.getElementById('filtro_analista_data_inicio').value;
+        const dataFim = document.getElementById('modal-data-fim')?.value || document.getElementById('filtro_analista_data_fim').value;
 
         fetch(`/api/auditoria/analista/${state.currentAnalystId}/ia-insight/`, {
             method: 'POST',
