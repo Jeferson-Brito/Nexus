@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 import json
 
 from ..models import AuditoriaAtendimento, ConfiguracaoAuditoria, User, Department, BaseAuditoria
-from core.services.bitrix_service import get_mensagens_sessao, formatar_transcript
+from core.services.bitrix_service import get_mensagens_sessao, formatar_transcript, get_sessoes_dia_anterior, encontrar_analista_nexus
 from core.services.ia_service import auditar_chat_automatico
 
 
@@ -1161,3 +1161,116 @@ def api_preencher_ia(request):
         import traceback
         traceback.print_exc()
         return JsonResponse({'error': str(e)}, status=500)
+
+@csrf_exempt
+@login_required
+@require_http_methods(["POST"])
+def api_forcar_ia(request):
+    """
+    Endpoint para buscar sessões recentes no Bitrix e forçar a auditoria pela IA.
+    Para evitar timeout, processa apenas 'quantidade' conversas por vez.
+    """
+    if not (request.user.is_gestor() or request.user.is_administrador()):
+        return JsonResponse({'error': 'Acesso negado'}, status=403)
+
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        data = {}
+
+    quantidade = int(data.get('quantidade', 3))
+
+    # 1. Buscar sessões recentes (ontem e hoje)
+    sessoes_ontem = get_sessoes_dia_anterior(limit=50)
+    hoje = timezone.now().date()
+    sessoes_hoje = get_sessoes_dia_anterior(data=hoje, limit=50)
+    todas_sessoes = sessoes_ontem + sessoes_hoje
+
+    if not todas_sessoes:
+        return JsonResponse({'success': True, 'processadas': 0, 'message': 'Nenhuma sessão encontrada nas filas auditáveis.'})
+
+    # 2. Filtrar sessões que já foram auditadas
+    ids_auditados = set(AuditoriaAtendimento.objects.values_list('id_conversa', flat=True))
+    sessoes_pendentes = [s for s in todas_sessoes if str(s.get('id', '')) not in ids_auditados]
+
+    if not sessoes_pendentes:
+        return JsonResponse({'success': True, 'processadas': 0, 'message': 'Todas as sessões recentes já foram auditadas.'})
+
+    # 3. Limitar a quantidade para não estourar o timeout
+    sessoes_para_processar = sessoes_pendentes[:quantidade]
+
+    # 4. Processar cada sessão
+    processadas = 0
+    erros = 0
+    for sessao in sessoes_para_processar:
+        id_conversa = str(sessao.get('id', ''))
+        tipo_atendimento = sessao.get('_tipo_atendimento', 'cliente')
+        email_analista = sessao.get('author_email') or sessao.get('operator_email') or ''
+        analista_nome = sessao.get('author_name') or sessao.get('operator_name') or 'Desconhecido'
+
+        # Busca o analista real no banco se existir
+        analista_auditado = encontrar_analista_nexus(email_analista)
+        
+        # Buscar as mensagens
+        mensagens = get_mensagens_sessao(id_conversa)
+        if not mensagens:
+            erros += 1
+            continue
+            
+        transcript = formatar_transcript(mensagens)
+        if transcript == "[Sem mensagens registradas]" or transcript == "[Sem mensagens de texto]":
+            erros += 1
+            continue
+
+        # Carregar Base de Conhecimento
+        department = request.user.department
+        if not department:
+            department = Department.objects.first()
+        base_auditoria_qs = BaseAuditoria.objects.filter(department=department, ativo=True)
+        base_auditoria = []
+        for artigo in base_auditoria_qs:
+            base_auditoria.append({
+                'categoria': artigo.categoria,
+                'titulo': artigo.titulo,
+                'conteudo': artigo.conteudo
+            })
+
+        # Chamar a IA
+        try:
+            resultado_ia = auditar_chat_automatico(transcript, tipo_atendimento, base_auditoria, analista_nome)
+            if not resultado_ia.get('sucesso', True):
+                erros += 1
+                continue
+            
+            # Formatar a data (fallback para timezone.now() se falhar)
+            try:
+                data_atendimento = timezone.datetime.fromisoformat(sessao.get('started_at', '').replace('Z', '+00:00'))
+            except:
+                data_atendimento = timezone.now()
+            
+            # Criar a auditoria no banco
+            AuditoriaAtendimento.objects.create(
+                data_atendimento=data_atendimento.date(),
+                id_conversa=id_conversa,
+                tipo_atendimento=tipo_atendimento,
+                analista_auditado=analista_auditado, # Pode ser None
+                auditor=request.user, # O bot/gestor que forçou
+                pontuacao=int(resultado_ia.get('pontuacao', 0)),
+                nota=float(resultado_ia.get('nota', 0)),
+                classificacao=resultado_ia.get('classificacao', 'neutro'),
+                requer_acao=resultado_ia.get('requer_acao', False),
+                gerado_por_ia=True,
+                dados_ia=resultado_ia
+            )
+            processadas += 1
+            
+        except Exception as e:
+            erros += 1
+            print(f"Erro ao processar sessão {id_conversa}: {str(e)}")
+            
+    return JsonResponse({
+        'success': True,
+        'processadas': processadas,
+        'erros': erros,
+        'pendentes_restantes': len(sessoes_pendentes) - processadas
+    })

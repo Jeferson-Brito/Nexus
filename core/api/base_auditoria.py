@@ -23,7 +23,13 @@ def api_base_auditoria_list(request):
         return JsonResponse({'error': 'Acesso negado.'}, status=403)
 
     department = request.user.department
-    queryset = BaseAuditoria.objects.filter(department=department, ativo=True)
+    if not department:
+        department = Department.objects.first()
+
+    if department:
+        queryset = BaseAuditoria.objects.filter(department=department, ativo=True)
+    else:
+        queryset = BaseAuditoria.objects.none()
 
     categoria = request.GET.get('categoria')
     search = request.GET.get('search', '').strip()
@@ -59,7 +65,10 @@ def api_base_auditoria_create(request):
         data = json.loads(request.body)
         department = request.user.department
         if not department:
-            return JsonResponse({'error': 'Usuário sem departamento.'}, status=400)
+            # Tentar pegar o primeiro departamento do banco (útil para admins globais)
+            department = Department.objects.first()
+            if not department:
+                return JsonResponse({'error': 'Nenhum departamento cadastrado no sistema.'}, status=400)
 
         artigo = BaseAuditoria.objects.create(
             titulo=data.get('titulo', '').strip(),
@@ -91,7 +100,11 @@ def api_base_auditoria_detail(request, pk):
     if not _gestor_ou_admin(request.user):
         return JsonResponse({'error': 'Acesso negado.'}, status=403)
 
-    artigo = get_object_or_404(BaseAuditoria, pk=pk, department=request.user.department)
+    department = request.user.department
+    if not department:
+        department = Department.objects.first()
+
+    artigo = get_object_or_404(BaseAuditoria, pk=pk, department=department)
 
     if request.method == "GET":
         return JsonResponse({

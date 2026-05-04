@@ -305,6 +305,7 @@ urlpatterns = [
     # API Auditoria de Atendimentos
     path('api/auditoria/create/', api_auditoria.api_auditoria_create, name='api_auditoria_create'),
     path('api/auditoria/preencher-ia/', api_auditoria.api_preencher_ia, name='api_preencher_ia'),
+    path('api/auditoria/forcar-ia/', api_auditoria.api_forcar_ia, name='api_forcar_ia'),
     path('api/auditoria/list/', api_auditoria.api_auditoria_list, name='api_auditoria_list'),
     path('api/auditoria/<int:pk>/', api_auditoria.api_auditoria_detail, name='api_auditoria_detail'),
     path('api/auditoria/<int:pk>/update/', api_auditoria.api_auditoria_update, name='api_auditoria_update'),

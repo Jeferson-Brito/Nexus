@@ -2354,3 +2354,71 @@ function renderPaginacaoIA(data) {
     html += `</ul>`;
     container.innerHTML = html;
 }
+
+window.forcarAuditoriasIA = async function() {
+    const btn = document.getElementById('btn-forcar-ia');
+    const originalText = btn.innerHTML;
+    
+    // Mostrar loading
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Processando...';
+    btn.disabled = true;
+
+    Swal.fire({
+        title: 'Gerando Auditorias',
+        text: 'A IA está analisando as conversas mais recentes. Isso pode levar de 30 a 60 segundos...',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
+    try {
+        const response = await fetch('/api/auditoria/forcar-ia/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ quantidade: 3 })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            if (data.processadas > 0) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Auditorias Geradas!',
+                    html: `<b>${data.processadas}</b> novas auditorias foram realizadas pela IA com sucesso.<br><br><small class="text-muted">Conversas pendentes na fila: ${data.pendentes_restantes}</small>`,
+                    confirmButtonText: 'OK'
+                }).then(() => {
+                    window.loadAuditoriasIA(1);
+                });
+            } else {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Fila Vazia',
+                    text: data.message || 'Não há novas sessões para serem auditadas no momento.',
+                    confirmButtonText: 'OK'
+                });
+            }
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Erro',
+                text: data.error || 'Ocorreu um erro ao processar as auditorias.',
+            });
+        }
+    } catch (error) {
+        console.error('Erro no processamento em lote:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Erro de Conexão',
+            text: 'O servidor demorou muito para responder ou a conexão falhou.',
+        });
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+};
