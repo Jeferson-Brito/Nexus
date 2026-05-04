@@ -7,7 +7,9 @@ from django.utils import timezone
 from datetime import datetime, timedelta
 import json
 
-from ..models import AuditoriaAtendimento, ConfiguracaoAuditoria, User, Department
+from ..models import AuditoriaAtendimento, ConfiguracaoAuditoria, User, Department, BaseAuditoria
+from core.services.bitrix_service import get_mensagens_sessao, formatar_transcript
+from core.services.ia_service import auditar_chat_automatico
 
 
 # ========================================
@@ -1097,4 +1099,59 @@ def api_registrar_ciente(request, pk):
     except AuditoriaAtendimento.DoesNotExist:
         return JsonResponse({'error': 'Auditoria não encontrada'}, status=404)
     except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+@gestor_or_admin_required
+@require_POST
+def api_preencher_ia(request):
+    """
+    Busca o transcript de um chat no Bitrix e aciona o Nexus IA Auditor para 
+    preencher os critérios de auditoria automaticamente.
+    """
+    try:
+        data = json.loads(request.body)
+        id_conversa = data.get('id_conversa')
+        tipo_atendimento = data.get('tipo_atendimento', 'cliente')
+        analista_id = data.get('analista_id')
+
+        if not id_conversa:
+            return JsonResponse({'error': 'ID da conversa é obrigatório.'}, status=400)
+
+        # 1. Buscar mensagens do chat no Bitrix
+        mensagens = get_mensagens_sessao(id_conversa)
+        if not mensagens:
+            return JsonResponse({'error': 'Nenhuma mensagem encontrada para este ID no Bitrix.'}, status=404)
+
+        transcript = formatar_transcript(mensagens)
+        
+        # 2. Obter nome do analista
+        analista_nome = "Analista"
+        if analista_id:
+            try:
+                analista = User.objects.get(id=analista_id)
+                analista_nome = analista.get_full_name() or analista.username
+            except User.DoesNotExist:
+                pass
+
+        # 3. Carregar a Base de Auditoria
+        base_auditoria_objs = BaseAuditoria.objects.all()
+        base_auditoria = [
+            {'titulo': a.titulo, 'conteudo': a.conteudo, 'categoria': a.categoria}
+            for a in base_auditoria_objs
+        ]
+
+        # 4. Acionar a IA
+        resultado_ia = auditar_chat_automatico(transcript, tipo_atendimento, base_auditoria, analista_nome)
+
+        if not resultado_ia.get('sucesso', True) and 'erro' in resultado_ia:
+            return JsonResponse({'error': f"Erro na IA: {resultado_ia.get('erro')}"}, status=500)
+
+        return JsonResponse({
+            'success': True,
+            'ia_data': resultado_ia
+        })
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
         return JsonResponse({'error': str(e)}, status=500)

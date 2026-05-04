@@ -638,6 +638,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const badgeClass = `badge-${aud.classificacao}`;
             const dataFormatada = formatDate(aud.data_atendimento);
 
+            tr.innerHTML = `
                 <td>${dataFormatada}</td>
                 <td>${aud.id_conversa}</td>
                 <td><span class="badge bg-secondary">${aud.tipo_atendimento}</span></td>
@@ -2134,4 +2135,113 @@ window.darCiente = function (id) {
                 });
         }
     });
+};
+
+// ========================================
+// FUNÇÃO PARA PREENCHIMENTO AUTOMÁTICO IA
+// ========================================
+window.preencherAuditoriaIA = async function() {
+    const idConversa = document.getElementById('id_conversa').value.trim();
+    const tipoAtendimento = document.getElementById('tipo_atendimento').value;
+    const analistaId = document.getElementById('analista_auditado_id').value;
+
+    if (!idConversa) {
+        Swal.fire('Atenção', 'Por favor, preencha o campo "ID Conversa" primeiro.', 'warning');
+        document.getElementById('id_conversa').focus();
+        return;
+    }
+
+    if (!tipoAtendimento) {
+        Swal.fire('Atenção', 'Por favor, selecione o "Tipo" de atendimento (Cliente ou Franqueado).', 'warning');
+        document.getElementById('tipo_atendimento').focus();
+        return;
+    }
+
+    const btn = document.getElementById('btnPreencherIA');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> IA...';
+    btn.disabled = true;
+
+    try {
+        const response = await fetch('/api/auditoria/preencher-ia/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({
+                id_conversa: idConversa,
+                tipo_atendimento: tipoAtendimento,
+                analista_id: analistaId
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            const result = data.ia_data;
+            
+            // Atualiza os switches e campos de texto
+            const updateField = (idSwitch, erroFieldId, status, errorMessage) => {
+                const switchEl = document.getElementById(idSwitch);
+                if (switchEl) {
+                    if (switchEl.checked !== status) {
+                        switchEl.click(); // Dispara eventos visuais
+                    }
+                    if (!status && errorMessage) {
+                        const errorTextArea = document.getElementById(erroFieldId);
+                        if (errorTextArea) {
+                            errorTextArea.value = errorMessage;
+                        }
+                    } else if (status) {
+                        const errorTextArea = document.getElementById(erroFieldId);
+                        if (errorTextArea) {
+                            errorTextArea.value = "";
+                        }
+                    }
+                }
+            };
+
+            updateField('apresentou_corretamente', 'erro_apresentacao', result.apresentou_corretamente, result.erro_apresentacao);
+            updateField('analisou_historico', 'erro_historico', result.analisou_historico, result.erro_historico);
+            updateField('entendeu_solicitacao', 'erro_entendimento', result.entendeu_solicitacao, result.erro_entendimento);
+            updateField('informacao_clara', 'erro_informacao', result.informacao_clara, result.erro_informacao);
+            updateField('acordo_espera', 'erro_acordo_espera', result.acordo_espera, result.erro_acordo_espera);
+            updateField('atendimento_respeitoso', 'erro_respeito', result.atendimento_respeitoso, result.erro_respeito);
+            updateField('portugues_correto', 'erro_portugues', result.portugues_correto, result.erro_portugues);
+            // No backend é finalizacao_correta e procedimento_correto, vamos testar os IDs do front
+            updateField('finalizou_corretamente', 'erro_finalizacao', result.finalizacao_correta, result.erro_finalizacao);
+            updateField('procedimento_correto', 'erro_procedimento', result.procedimento_correto, result.erro_procedimento);
+
+            // Marca o hidden flag que isso foi gerado por IA
+            let iaInput = document.getElementById('gerado_por_ia');
+            if (!iaInput) {
+                iaInput = document.createElement('input');
+                iaInput.type = 'hidden';
+                iaInput.id = 'gerado_por_ia';
+                iaInput.name = 'gerado_por_ia';
+                iaInput.value = 'true';
+                document.getElementById('formAuditoria').appendChild(iaInput);
+            } else {
+                iaInput.value = 'true';
+            }
+
+            Swal.fire({
+                title: 'Sucesso!',
+                text: 'Auditoria preenchida com sucesso pela IA! Revise os campos e clique em Salvar.',
+                icon: 'success',
+                timer: 3000,
+                showConfirmButton: false
+            });
+
+        } else {
+            Swal.fire('Erro', data.error || "Erro ao preencher com IA.", 'error');
+        }
+    } catch (err) {
+        console.error(err);
+        Swal.fire('Erro', 'Ocorreu um erro de comunicação com o servidor.', 'error');
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
 };

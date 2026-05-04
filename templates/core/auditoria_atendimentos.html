@@ -293,15 +293,20 @@
                                         <input type="date" class="form-control" id="data_atendimento"
                                             name="data_atendimento" required>
                                     </div>
-                                    <div class="col-md-2">
+                                    <div class="col-md-3">
                                         <label for="id_conversa" class="form-label fw-semibold">
                                             <i class="bi bi-hash text-primary me-2"></i>ID Conversa <span
                                                 class="text-danger">*</span>
                                         </label>
-                                        <input type="text" class="form-control" id="id_conversa" name="id_conversa"
-                                            placeholder="Ex: #12345" required>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="id_conversa" name="id_conversa"
+                                                placeholder="Ex: 12345" required>
+                                            <button class="btn btn-ia-preencher" type="button" id="btnPreencherIA" onclick="preencherAuditoriaIA()" title="Preencher automaticamente com a IA" style="background: linear-gradient(135deg, #6366f1, #a855f7); color: white; border: none; border-top-right-radius: 8px; border-bottom-right-radius: 8px; font-weight: bold; font-size: 0.85rem; padding: 0 12px; z-index: 0;">
+                                                <i class="bi bi-robot me-1"></i> IA
+                                            </button>
+                                        </div>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <label for="link_conversa" class="form-label fw-semibold">
                                             <i class="bi bi-link-45deg text-primary me-2"></i>Link da Conversa
                                             (Bitrix24)
