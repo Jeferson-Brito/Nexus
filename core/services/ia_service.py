@@ -262,7 +262,7 @@ REGRAS DE RESPOSTA:
 - Tom construtivo, focado em desenvolvimento.
 - Estrutura obrigatória: ### 🌟 Visão Geral / ### ✅ Pontos Fortes / ### 🎯 Áreas de Melhoria e Riscos / ### 🚀 Plano de Ação Prático"""
 
-        response = client.models.generate_content(model='gemini-2.5-flash', contents=prompt)
+        response = client.models.generate_content(model='gemini-1.5-flash', contents=prompt)
         return {"resposta": response.text.strip()}
 
     except ValueError as e:
@@ -359,10 +359,10 @@ REGRAS: true = atendeu, false = não atendeu. Campos erro_X: vazio se true, 1-2 
 RESPONDA APENAS COM O JSON:"""
 
         try:
-            response = client.models.generate_content(model='gemini-2.5-flash', contents=prompt)
+            response = client.models.generate_content(model='gemini-1.5-flash', contents=prompt)
         except Exception as e:
             if "503" in str(e) or "UNAVAILABLE" in str(e):
-                logger.warning("[Nexus IA Auditor] Fallback para gemini-1.5-flash")
+                logger.warning("[Nexus IA Auditor] Fallback secundário")
                 response = client.models.generate_content(model='gemini-1.5-flash', contents=prompt)
             else:
                 raise e
@@ -441,9 +441,11 @@ REGRAS DE RESPOSTA:
 
 SUA ANÁLISE:"""
 
-        response = client.models.generate_content(model='gemini-2.0-flash', contents=prompt)
+        response = client.models.generate_content(model='gemini-1.5-flash', contents=prompt)
         return {"resposta": response.text.strip()}
 
     except Exception as e:
+        if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
+            return {"resposta": "⚠️ O limite de uso gratuito da IA foi atingido. Por favor, **aguarde cerca de 30 a 60 segundos** e tente novamente."}
         logger.error(f"[Nexus IA] Erro ao auditar escala: {type(e).__name__}: {e}")
         return {"resposta": "⚠️ Ocorreu um erro ao processar a auditoria da escala com a IA."}
