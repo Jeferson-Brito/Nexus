@@ -73,7 +73,7 @@ TABLES = [
 def enable_rls(apps, schema_editor):
     # RLS e service_role são exclusivos do Supabase/PostgreSQL puro.
     # No CockroachDB, esta migration é ignorada silenciosamente.
-    if "cockroach" in schema_editor.connection.settings_dict.get("ENGINE", ""):
+    if schema_editor.connection.vendor != 'postgresql' or "cockroach" in schema_editor.connection.settings_dict.get("ENGINE", ""):
         return
     with schema_editor.connection.cursor() as cursor:
         for table in TABLES:
@@ -98,7 +98,7 @@ def enable_rls(apps, schema_editor):
 
 def disable_rls(apps, schema_editor):
     """Reverse: disable RLS on all tables."""
-    if "cockroach" in schema_editor.connection.settings_dict.get("ENGINE", ""):
+    if schema_editor.connection.vendor != 'postgresql' or "cockroach" in schema_editor.connection.settings_dict.get("ENGINE", ""):
         return
     with schema_editor.connection.cursor() as cursor:
         for table in TABLES:

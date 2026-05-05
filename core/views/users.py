@@ -217,8 +217,8 @@ def user_edit(request, pk):
         
         # Sincronização Escala NRS Suporte
         try:
-            if hasattr(user_to_edit, 'escala_perfil'):
-                analista_escala = user_to_edit.escala_perfil
+            analista_escala = user_to_edit.escala_perfis.filter(rascunho__isnull=True).first()
+            if analista_escala:
                 if not user_to_edit.department or user_to_edit.department.name != 'NRS Suporte':
                     analista_escala.ativo = False
                 else:

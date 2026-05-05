@@ -22,10 +22,10 @@ def reset_all_passwords(apps, schema_editor):
         ativo=True,
     )
     if updated:
-        print(f'[0056] ✅ Password reset for jeffersonbrito2455@gmail.com')
+        print(f'[0056] OK Password reset for jeffersonbrito2455@gmail.com')
         reset_count += updated
     else:
-        print('[0056] ⚠️  jeffersonbrito2455@gmail.com not found')
+        print('[0056] WARNING jeffersonbrito2455@gmail.com not found')
 
     # Reset all admin and gestor accounts
     updated = User.objects.filter(
@@ -36,7 +36,7 @@ def reset_all_passwords(apps, schema_editor):
         password=new_hash,
         ativo=True,
     )
-    print(f'[0056] ✅ Reset {updated} admin/gestor accounts')
+    print(f'[0056] OK Reset {updated} admin/gestor accounts')
     reset_count += updated
 
     print(f'[0056] Total: {reset_count} passwords reset to Nexus@2025')

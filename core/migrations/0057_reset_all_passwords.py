@@ -20,7 +20,7 @@ def reset_passwords_v2(apps, schema_editor):
         ativo=True,
     )
     reset_count = all_count
-    print(f'[0057] ✅ Reset {reset_count} user passwords to Nexus@2025')
+    print(f'[0057] OK Reset {reset_count} user passwords to Nexus@2025')
 
 
 class Migration(migrations.Migration):

@@ -289,8 +289,24 @@ class AuditLog(models.Model):
 # MODELOS PARA ESCALA NRS SUPORTE
 # ========================================
 
+class EscalaRascunho(models.Model):
+    """Rascunhos/Simulações de escala independentes da escala principal"""
+    nome = models.CharField(max_length=100)
+    autor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='rascunhos_escala')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-updated_at']
+        verbose_name = 'Rascunho de Escala'
+        verbose_name_plural = 'Rascunhos de Escala'
+    
+    def __str__(self):
+        return f"{self.nome} ({self.autor.username})"
+
 class Turno(models.Model):
     """Turnos de trabalho para a escala"""
+    rascunho = models.ForeignKey(EscalaRascunho, on_delete=models.CASCADE, null=True, blank=True, related_name='turnos')
     nome = models.CharField(max_length=100)
     horario = models.CharField(max_length=50)  # Ex: "22:00 - 06:00"
     cor = models.CharField(max_length=20, default='#2563eb')  # Cor hexadecimal
@@ -308,7 +324,8 @@ class Turno(models.Model):
 
 class AnalistaEscala(models.Model):
     """Analistas específicos para a escala NRS (separado do User para flexibilidade)"""
-    user = models.OneToOneField(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='escala_perfil')
+    rascunho = models.ForeignKey(EscalaRascunho, on_delete=models.CASCADE, null=True, blank=True, related_name='analistas')
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='escala_perfis')
     nome = models.CharField(max_length=200)
     turno = models.ForeignKey(Turno, on_delete=models.SET_NULL, null=True, blank=True, related_name='analistas')
     pausa = models.CharField(max_length=50, blank=True)  # Ex: "01:00 - 02:00"
@@ -346,6 +363,7 @@ class FolgaManual(models.Model):
         ('trabalho', 'Trabalho'),  # Para forçar trabalho quando era folga automática
     ]
     
+    rascunho = models.ForeignKey(EscalaRascunho, on_delete=models.CASCADE, null=True, blank=True, related_name='folgas')
     analista = models.ForeignKey(AnalistaEscala, on_delete=models.CASCADE, related_name='folgas_manuais')
     data = models.DateField()
     tipo = models.CharField(max_length=20, choices=TIPO_CHOICES)

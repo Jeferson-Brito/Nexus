@@ -6,7 +6,8 @@ from django.shortcuts import get_object_or_404
 import json
 from datetime import datetime
 
-from ..models import Turno, AnalistaEscala, FolgaManual
+from ..models import Turno, AnalistaEscala, FolgaManual, EscalaRascunho
+from django.contrib.auth import authenticate
 
 
 from functools import wraps
@@ -36,7 +37,12 @@ def check_nrs_permission(view_func):
 @check_nrs_permission
 def api_turnos_list(request):
     """Lista todos os turnos"""
-    turnos = Turno.objects.filter(ativo=True).order_by('ordem', 'nome')
+    rascunho_id = request.GET.get('rascunho_id')
+    if rascunho_id:
+        turnos = Turno.objects.filter(ativo=True, rascunho_id=rascunho_id).order_by('ordem', 'nome')
+    else:
+        turnos = Turno.objects.filter(ativo=True, rascunho__isnull=True).order_by('ordem', 'nome')
+        
     data = [{
         'id': str(t.id),
         'nome': t.nome,
@@ -54,11 +60,15 @@ def api_turno_create(request):
     """Cria um novo turno"""
     try:
         data = json.loads(request.body)
+        rascunho_id = data.get('rascunho_id')
+        rascunho = EscalaRascunho.objects.get(id=rascunho_id) if rascunho_id else None
+        
         turno = Turno.objects.create(
             nome=data.get('nome', ''),
             horario=data.get('horario', ''),
             cor=data.get('cor', '#2563eb'),
-            ordem=data.get('ordem', 0)
+            ordem=data.get('ordem', 0),
+            rascunho=rascunho
         )
         return JsonResponse({
             'id': str(turno.id),
@@ -106,7 +116,11 @@ def api_turno_detail(request, pk):
 @check_nrs_permission
 def api_analistas_list(request):
     """Lista todos os analistas da escala"""
-    queryset = AnalistaEscala.objects.filter(ativo=True).select_related('turno')
+    rascunho_id = request.GET.get('rascunho_id')
+    if rascunho_id:
+        queryset = AnalistaEscala.objects.filter(ativo=True, rascunho_id=rascunho_id).select_related('turno')
+    else:
+        queryset = AnalistaEscala.objects.filter(ativo=True, rascunho__isnull=True).select_related('turno')
     
     # Se for RH, filtrar apenas analistas que PERTENCEM ao NRS Suporte
     if not request.user.is_administrador() and request.user.department and request.user.department.name == 'RH':
@@ -132,6 +146,9 @@ def api_analista_create(request):
     """Cria um novo analista"""
     try:
         data = json.loads(request.body)
+        rascunho_id = data.get('rascunho_id')
+        rascunho = EscalaRascunho.objects.get(id=rascunho_id) if rascunho_id else None
+        
         turno = None
         if data.get('turno_id'):
             turno = Turno.objects.filter(id=data['turno_id']).first()
@@ -147,7 +164,8 @@ def api_analista_create(request):
             turno=turno,
             pausa=data.get('pausa', ''),
             data_primeira_folga=data_folga,
-            ordem=data.get('ordem', 0)
+            ordem=data.get('ordem', 0),
+            rascunho=rascunho
         )
         return JsonResponse({
             'id': str(analista.id),
@@ -207,7 +225,11 @@ def api_analista_detail(request, pk):
 @check_nrs_permission
 def api_folgas_list(request):
     """Lista todas as folgas manuais"""
-    queryset = FolgaManual.objects.select_related('analista')
+    rascunho_id = request.GET.get('rascunho_id')
+    if rascunho_id:
+        queryset = FolgaManual.objects.filter(rascunho_id=rascunho_id).select_related('analista')
+    else:
+        queryset = FolgaManual.objects.filter(rascunho__isnull=True).select_related('analista')
     
     # Se for RH, filtrar apenas folgas de analistas que PERTENCEM ao NRS Suporte
     if not request.user.is_administrador() and request.user.department and request.user.department.name == 'RH':
@@ -235,6 +257,8 @@ def api_folga_save(request):
     try:
         data = json.loads(request.body)
         analista = get_object_or_404(AnalistaEscala, pk=data['analista_id'])
+        rascunho_id = data.get('rascunho_id')
+        rascunho = EscalaRascunho.objects.get(id=rascunho_id) if rascunho_id else None
         
         data_folga = datetime(
             int(data['ano']),
@@ -242,14 +266,22 @@ def api_folga_save(request):
             int(data['dia'])
         ).date()
         
-        folga, created = FolgaManual.objects.update_or_create(
-            analista=analista,
-            data=data_folga,
-            defaults={
-                'tipo': data.get('tipo', 'folga'),
-                'motivo': data.get('motivo', '')
-            }
-        )
+        # Filtramos por rascunho também
+        folga = FolgaManual.objects.filter(analista=analista, data=data_folga, rascunho=rascunho).first()
+        if folga:
+            folga.tipo = data.get('tipo', 'folga')
+            folga.motivo = data.get('motivo', '')
+            folga.save()
+            created = False
+        else:
+            folga = FolgaManual.objects.create(
+                analista=analista,
+                data=data_folga,
+                rascunho=rascunho,
+                tipo=data.get('tipo', 'folga'),
+                motivo=data.get('motivo', '')
+            )
+            created = True
         
         return JsonResponse({
             'id': str(folga.id),
@@ -319,3 +351,127 @@ def api_auditar_escala_ia(request):
         })
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+# ========================================
+# API VIEWS PARA RASCUNHOS DE ESCALA
+# ========================================
+
+@login_required
+@check_nrs_permission
+def api_rascunhos_list(request):
+    """Lista os rascunhos do usuário/sistema"""
+    rascunhos = EscalaRascunho.objects.all().order_by('-updated_at')
+    data = [{
+        'id': r.id,
+        'nome': r.nome,
+        'autor': r.autor.get_full_name() or r.autor.username,
+        'data_atualizacao': r.updated_at.strftime('%d/%m/%Y %H:%M')
+    } for r in rascunhos]
+    return JsonResponse(data, safe=False)
+
+@login_required
+@require_http_methods(["POST"])
+@check_nrs_permission
+def api_rascunho_create(request):
+    """Cria um novo rascunho copiando a escala principal"""
+    try:
+        if EscalaRascunho.objects.count() >= 3:
+            return JsonResponse({'error': 'Limite de 3 rascunhos atingido. Exclua um rascunho para criar outro.'}, status=400)
+            
+        data = json.loads(request.body)
+        nome = data.get('nome', f'Rascunho {datetime.now().strftime("%d/%m %H:%M")}')
+        
+        rascunho = EscalaRascunho.objects.create(
+            nome=nome,
+            autor=request.user
+        )
+        
+        # Copiar Turnos
+        turnos_ativos = Turno.objects.filter(ativo=True, rascunho__isnull=True)
+        turno_map = {}
+        for t in turnos_ativos:
+            novo_t = Turno.objects.create(
+                rascunho=rascunho,
+                nome=t.nome,
+                horario=t.horario,
+                cor=t.cor,
+                ordem=t.ordem,
+                ativo=t.ativo
+            )
+            turno_map[t.id] = novo_t
+
+        # Copiar Analistas
+        analistas_ativos = AnalistaEscala.objects.filter(ativo=True, rascunho__isnull=True)
+        analista_map = {}
+        for a in analistas_ativos:
+            novo_turno = turno_map.get(a.turno_id) if a.turno_id else None
+            novo_a = AnalistaEscala.objects.create(
+                rascunho=rascunho,
+                user=a.user,
+                nome=a.nome,
+                turno=novo_turno,
+                pausa=a.pausa,
+                data_primeira_folga=a.data_primeira_folga,
+                ordem=a.ordem,
+                ativo=a.ativo
+            )
+            analista_map[a.id] = novo_a
+
+        # Copiar Folgas
+        folgas_ativas = FolgaManual.objects.filter(rascunho__isnull=True)
+        for f in folgas_ativas:
+            if f.analista_id in analista_map:
+                FolgaManual.objects.create(
+                    rascunho=rascunho,
+                    analista=analista_map[f.analista_id],
+                    data=f.data,
+                    tipo=f.tipo,
+                    motivo=f.motivo
+                )
+                
+        return JsonResponse({'success': True, 'id': rascunho.id, 'nome': rascunho.nome})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+@login_required
+@require_http_methods(["DELETE"])
+@check_nrs_permission
+def api_rascunho_delete(request, pk):
+    """Exclui um rascunho"""
+    rascunho = get_object_or_404(EscalaRascunho, pk=pk)
+    rascunho.delete()
+    return JsonResponse({'success': True})
+
+@login_required
+@require_http_methods(["POST"])
+@check_nrs_permission
+def api_rascunho_publish(request, pk):
+    """Substitui a escala principal pelo rascunho, exigindo senha de admin"""
+    try:
+        data = json.loads(request.body)
+        password = data.get('password')
+        
+        if not request.user.is_administrador():
+            return JsonResponse({'error': 'Apenas administradores podem substituir a escala principal.'}, status=403)
+            
+        if not request.user.check_password(password):
+            return JsonResponse({'error': 'Senha incorreta.'}, status=403)
+            
+        rascunho = get_object_or_404(EscalaRascunho, pk=pk)
+        
+        # Excluir escala principal atual
+        Turno.objects.filter(rascunho__isnull=True).delete()
+        AnalistaEscala.objects.filter(rascunho__isnull=True).delete()
+        FolgaManual.objects.filter(rascunho__isnull=True).delete()
+        
+        # Promover rascunho para principal
+        Turno.objects.filter(rascunho=rascunho).update(rascunho=None)
+        AnalistaEscala.objects.filter(rascunho=rascunho).update(rascunho=None)
+        FolgaManual.objects.filter(rascunho=rascunho).update(rascunho=None)
+        
+        # Excluir o objeto rascunho (que agora está vazio)
+        rascunho.delete()
+        
+        return JsonResponse({'success': True})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)

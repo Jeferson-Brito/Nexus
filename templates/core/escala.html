@@ -739,6 +739,14 @@
         </div>
         <div class="page-actions">
             {% if is_admin %}
+            <!-- Gestão de Rascunhos -->
+            <select id="rascunhoSelect" class="btn-escala" style="background: white; color: #1e293b; border: 1px solid #cbd5e1; min-width: 180px; font-weight: 600;" onchange="mudarRascunho(this.value)">
+                <option value="">Escala Principal</option>
+            </select>
+            <button class="btn-escala" onclick="criarRascunho()" style="background: #10b981; color: white;">
+                <i class="fa-solid fa-code-branch"></i> Nova Simulação
+            </button>
+            
             <button class="btn-escala" onclick="openAnalystModal()">
                 <i class="fa-solid fa-users-gear"></i> Gerenciar Analistas
             </button>
@@ -761,6 +769,24 @@
             </button>
         </div>
     </div>
+
+    {% if is_rascunho %}
+    <div style="background: #fffbeb; border: 1px solid #fde68a; color: #b45309; padding: 15px 25px; border-radius: 10px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);">
+        <div>
+            <i class="fa-solid fa-triangle-exclamation" style="font-size: 1.2rem; margin-right: 8px;"></i> 
+            <span style="font-size: 1.1rem;"><strong>MODO DE SIMULAÇÃO:</strong> Você está visualizando o rascunho <b>{{ rascunho_nome }}</b>.</span><br>
+            <small style="margin-left: 32px;">As alterações feitas aqui não afetam a escala principal ativa.</small>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <button class="btn-escala primary" onclick="abrirModalPublicarRascunho()" style="background: #ea580c; border: none;">
+                <i class="fa-solid fa-upload"></i> Substituir Escala Principal
+            </button>
+            <button class="btn-escala" onclick="excluirRascunhoAtual()" style="background: #ef4444; color: white; border: none;">
+                <i class="fa-solid fa-trash"></i> Descartar Simulação
+            </button>
+        </div>
+    </div>
+    {% endif %}
 
     <!-- Loading -->
     <div class="loading-container" id="loadingContainer" style="display: none;">
@@ -1080,6 +1106,33 @@
     </div>
 </div>
 
+<!-- Modal de Publicar Rascunho -->
+<div class="modal-escala" id="publishDraftModal">
+    <div class="modal-content-escala">
+        <div class="modal-header-escala">
+            <button class="modal-close" onclick="closePublishDraftModal()">&times;</button>
+            <div class="modal-icon" style="background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);">
+                <i class="fa-solid fa-upload"></i>
+            </div>
+            <h2>Substituir Escala Principal</h2>
+            <p>A escala atual será apagada e substituída por esta simulação.</p>
+        </div>
+        <div class="modal-body-escala">
+            <div class="alert alert-warning" style="margin-bottom: 20px; font-size: 0.9rem;">
+                <i class="fa-solid fa-triangle-exclamation"></i> <strong>Atenção!</strong> Esta ação requer privilégios de Administrador e é irreversível.
+            </div>
+            <div class="form-group-escala">
+                <label>Senha do Administrador</label>
+                <input type="password" id="publishPassword" placeholder="Digite a senha para confirmar..." autocomplete="new-password">
+            </div>
+        </div>
+        <div class="modal-footer-escala">
+            <button class="btn-escala" onclick="closePublishDraftModal()">Cancelar</button>
+            <button class="btn-escala primary" style="background: #ea580c;" onclick="publicarRascunho()">Confirmar Substituição</button>
+        </div>
+    </div>
+</div>
+
 <script>
     // ========================================
     // DADOS INICIAIS
@@ -1099,6 +1152,9 @@
         modals.forEach(modal => {
             document.body.appendChild(modal);
         });
+
+        // Carregar rascunhos se for admin
+        carregarRascunhos();
 
         // Definir mês atual
         const now = new Date();
@@ -1532,7 +1588,8 @@
             horario: document.getElementById('shiftTimeStart').value && document.getElementById('shiftTimeEnd').value ?
                 `${document.getElementById('shiftTimeStart').value} - ${document.getElementById('shiftTimeEnd').value}` : '',
             cor: document.getElementById('shiftColor').value,
-            ordem: turnos.length
+            ordem: turnos.length,
+            rascunho_id: rascunhoId
         };
 
         try {
@@ -1826,7 +1883,8 @@
             pausa: document.getElementById('analystBreakStart').value && document.getElementById('analystBreakEnd').value ?
                 `${document.getElementById('analystBreakStart').value} - ${document.getElementById('analystBreakEnd').value}` : '',
             data_primeira_folga: document.getElementById('analystStartDate').value || null,
-            ordem: analistas.length
+            ordem: analistas.length,
+            rascunho_id: rascunhoId
         };
 
         try {
@@ -1997,7 +2055,8 @@
                 mes: document.getElementById('cellMes').value,
                 ano: document.getElementById('cellAno').value,
                 tipo: tipo,
-                motivo: motivo
+                motivo: motivo,
+                rascunho_id: rascunhoId
             };
 
             try {
@@ -2332,6 +2391,106 @@
         html = html.replace(/^\- (.*$)/gim, '<li style="margin-bottom: 5px; list-style-type: none;">• $1</li>');
         
         return html;
+    }
+
+    // ========================================
+    // GESTÃO DE RASCUNHOS
+    // ========================================
+    async function carregarRascunhos() {
+        if (!isAdmin) return;
+        try {
+            const res = await fetch('/api/escala/rascunhos/');
+            const rascunhos = await res.json();
+            const select = document.getElementById('rascunhoSelect');
+            if(select) {
+                select.innerHTML = '<option value="">Escala Principal</option>';
+                rascunhos.forEach(r => {
+                    const selected = (rascunhoId == r.id) ? 'selected' : '';
+                    select.innerHTML += `<option value="${r.id}" ${selected}>${r.nome} (${r.data_atualizacao})</option>`;
+                });
+            }
+        } catch (e) {
+            console.error('Erro ao carregar rascunhos:', e);
+        }
+    }
+
+    function mudarRascunho(id) {
+        if (id) {
+            window.location.href = `?rascunho_id=${id}`;
+        } else {
+            window.location.href = window.location.pathname;
+        }
+    }
+
+    async function criarRascunho() {
+        const nome = prompt("Digite um nome para esta Simulação:");
+        if (nome === null) return;
+        
+        try {
+            const res = await fetch('/api/escala/rascunhos/create/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify({ nome: nome })
+            });
+            const data = await res.json();
+            if (data.error) {
+                alert(data.error);
+            } else {
+                window.location.href = `?rascunho_id=${data.id}`;
+            }
+        } catch (e) {
+            alert('Erro ao criar simulação: ' + e.message);
+        }
+    }
+
+    async function excluirRascunhoAtual() {
+        if (!rascunhoId) return;
+        if (!confirm('Tem certeza que deseja descartar esta simulação? A escala principal não será afetada.')) return;
+        
+        try {
+            await fetch(`/api/escala/rascunhos/${rascunhoId}/delete/`, {
+                method: 'DELETE',
+                headers: { 'X-CSRFToken': csrfToken }
+            });
+            window.location.href = window.location.pathname;
+        } catch (e) {
+            alert('Erro ao excluir: ' + e.message);
+        }
+    }
+
+    function abrirModalPublicarRascunho() {
+        document.getElementById('publishDraftModal').classList.add('show');
+        document.getElementById('publishPassword').value = '';
+    }
+
+    function closePublishDraftModal() {
+        document.getElementById('publishDraftModal').classList.remove('show');
+    }
+
+    async function publicarRascunho() {
+        if (!rascunhoId) return;
+        const password = document.getElementById('publishPassword').value;
+        if (!password) {
+            alert("Digite a senha do administrador para confirmar.");
+            return;
+        }
+        
+        try {
+            const res = await fetch(`/api/escala/rascunhos/${rascunhoId}/publish/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify({ password: password })
+            });
+            const data = await res.json();
+            if (data.error) {
+                alert(data.error);
+            } else {
+                alert("Escala substituída com sucesso!");
+                window.location.href = window.location.pathname;
+            }
+        } catch (e) {
+            alert('Erro ao publicar: ' + e.message);
+        }
     }
 </script>
 {% endblock %}

@@ -9,7 +9,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from datetime import datetime, timedelta
 import json
 from ..models import (
-    Turno, AnalistaEscala, FolgaManual, Department, 
+    Turno, AnalistaEscala, FolgaManual, EscalaRascunho, Department, 
     IndicadorDesempenho, MetaMensalGlobal, KanbanBoard, 
     KanbanList, CardLabel, Store, StoreAudit, 
     StoreAuditIssue, StoreAuditItem, SystemNotification,
@@ -46,12 +46,17 @@ def escala_view(request):
             messages.error(request, 'Você não tem permissão para acessar as ferramentas de NRS Suporte.')
             return redirect('dashboard')
     
-    turnos = Turno.objects.filter(ativo=True).order_by('ordem', 'nome')
-    
-    # Busca todos os analistas ativos — o modelo AnalistaEscala é exclusivo do NRS Suporte,
-    # portanto não há necessidade de filtrar por departamento. O filtro anterior por
-    # user__department quebraria quando o campo 'user' estivesse nulo.
-    analistas = AnalistaEscala.objects.filter(ativo=True).select_related('turno').order_by('turno__ordem', 'ordem', 'nome')
+    rascunho_id = request.GET.get('rascunho_id')
+    rascunho_obj = None
+    if rascunho_id:
+        rascunho_obj = get_object_or_404(EscalaRascunho, id=rascunho_id)
+        turnos = Turno.objects.filter(ativo=True, rascunho=rascunho_obj).order_by('ordem', 'nome')
+        analistas = AnalistaEscala.objects.filter(ativo=True, rascunho=rascunho_obj).select_related('turno').order_by('turno__ordem', 'ordem', 'nome')
+        folgas = FolgaManual.objects.filter(rascunho=rascunho_obj).select_related('analista')
+    else:
+        turnos = Turno.objects.filter(ativo=True, rascunho__isnull=True).order_by('ordem', 'nome')
+        analistas = AnalistaEscala.objects.filter(ativo=True, rascunho__isnull=True).select_related('turno').order_by('turno__ordem', 'ordem', 'nome')
+        folgas = FolgaManual.objects.filter(rascunho__isnull=True).select_related('analista')
     
     turnos_data = [{
         'id': str(t.id),
@@ -71,7 +76,6 @@ def escala_view(request):
         'ordem': a.ordem
     } for a in analistas]
     
-    folgas = FolgaManual.objects.select_related('analista').all()
     folgas_data = {}
     for f in folgas:
         key = f"{f.analista.id}-{f.data.year}-{f.data.month}-{f.data.day}"
@@ -92,7 +96,10 @@ def escala_view(request):
         'folgas_json': json.dumps(folgas_data),
         'is_admin': is_admin,
         'is_admin_json': 'true' if is_admin else 'false',
-        'can_export': can_export
+        'can_export': can_export,
+        'is_rascunho': rascunho_obj is not None,
+        'rascunho_id': str(rascunho_obj.id) if rascunho_obj else None,
+        'rascunho_nome': rascunho_obj.nome if rascunho_obj else None
     }
     
     return render(request, 'core/escala.html', context)

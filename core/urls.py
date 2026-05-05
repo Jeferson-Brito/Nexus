@@ -183,6 +183,12 @@ urlpatterns = [
     path('api/escala/folgas/<int:pk>/delete/', api_escala.api_folga_delete, name='api_folga_delete'),
     path('api/escala/auditoria-ia/', api_escala.api_auditar_escala_ia, name='api_auditar_escala_ia'),
     
+    # API Escala Rascunhos
+    path('api/escala/rascunhos/', api_escala.api_rascunhos_list, name='api_rascunhos_list'),
+    path('api/escala/rascunhos/create/', api_escala.api_rascunho_create, name='api_rascunho_create'),
+    path('api/escala/rascunhos/<int:pk>/publish/', api_escala.api_rascunho_publish, name='api_rascunho_publish'),
+    path('api/escala/rascunhos/<int:pk>/delete/', api_escala.api_rascunho_delete, name='api_rascunho_delete'),
+    
     # API Calendário
     path('api/eventos/users/', api_eventos.api_eventos_users_list, name='api_eventos_users_list'),
     path('api/eventos/', api_eventos.api_eventos_list, name='api_eventos_list'),
