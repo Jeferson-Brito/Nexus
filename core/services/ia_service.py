@@ -262,7 +262,7 @@ REGRAS DE RESPOSTA:
 - Tom construtivo, focado em desenvolvimento.
 - Estrutura obrigatória: ### 🌟 Visão Geral / ### ✅ Pontos Fortes / ### 🎯 Áreas de Melhoria e Riscos / ### 🚀 Plano de Ação Prático"""
 
-        response = client.models.generate_content(model='gemini-1.5-flash', contents=prompt)
+        response = client.models.generate_content(model='gemini-2.0-flash-lite', contents=prompt)
         return {"resposta": response.text.strip()}
 
     except ValueError as e:
@@ -359,11 +359,11 @@ REGRAS: true = atendeu, false = não atendeu. Campos erro_X: vazio se true, 1-2 
 RESPONDA APENAS COM O JSON:"""
 
         try:
-            response = client.models.generate_content(model='gemini-1.5-flash', contents=prompt)
+            response = client.models.generate_content(model='gemini-2.0-flash-lite', contents=prompt)
         except Exception as e:
             if "503" in str(e) or "UNAVAILABLE" in str(e):
                 logger.warning("[Nexus IA Auditor] Fallback secundário")
-                response = client.models.generate_content(model='gemini-1.5-flash', contents=prompt)
+                response = client.models.generate_content(model='gemini-2.0-flash-lite', contents=prompt)
             else:
                 raise e
 
@@ -441,7 +441,7 @@ REGRAS DE RESPOSTA:
 
 SUA ANÁLISE:"""
 
-        response = client.models.generate_content(model='gemini-1.5-flash', contents=prompt)
+        response = client.models.generate_content(model='gemini-2.0-flash-lite', contents=prompt)
         return {"resposta": response.text.strip()}
 
     except Exception as e:
