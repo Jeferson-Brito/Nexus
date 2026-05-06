@@ -373,62 +373,88 @@ def api_rascunhos_list(request):
 @require_http_methods(["POST"])
 @check_nrs_permission
 def api_rascunho_create(request):
-    """Cria um novo rascunho copiando a escala principal"""
+    """Cria um novo rascunho: em branco (sem turnos, analistas sem turno) ou cópia de uma fonte."""
     try:
         if EscalaRascunho.objects.count() >= 3:
             return JsonResponse({'error': 'Limite de 3 rascunhos atingido. Exclua um rascunho para criar outro.'}, status=400)
-            
+
         data = json.loads(request.body)
         nome = data.get('nome', f'Rascunho {datetime.now().strftime("%d/%m %H:%M")}')
-        
-        rascunho = EscalaRascunho.objects.create(
-            nome=nome,
-            autor=request.user
-        )
-        
-        # Copiar Turnos
-        turnos_ativos = Turno.objects.filter(ativo=True, rascunho__isnull=True)
-        turno_map = {}
-        for t in turnos_ativos:
-            novo_t = Turno.objects.create(
-                rascunho=rascunho,
-                nome=t.nome,
-                horario=t.horario,
-                cor=t.cor,
-                ordem=t.ordem,
-                ativo=t.ativo
-            )
-            turno_map[t.id] = novo_t
+        tipo = data.get('tipo', 'copia')        # 'em_branco' ou 'copia'
+        fonte_id = data.get('fonte_id', 'principal')  # 'principal' ou ID numérico de um rascunho
 
-        # Copiar Analistas
-        analistas_ativos = AnalistaEscala.objects.filter(ativo=True, rascunho__isnull=True)
-        analista_map = {}
-        for a in analistas_ativos:
-            novo_turno = turno_map.get(a.turno_id) if a.turno_id else None
-            novo_a = AnalistaEscala.objects.create(
-                rascunho=rascunho,
-                user=a.user,
-                nome=a.nome,
-                turno=novo_turno,
-                pausa=a.pausa,
-                data_primeira_folga=a.data_primeira_folga,
-                ordem=a.ordem,
-                ativo=a.ativo
-            )
-            analista_map[a.id] = novo_a
+        rascunho = EscalaRascunho.objects.create(nome=nome, autor=request.user)
 
-        # Copiar Folgas
-        folgas_ativas = FolgaManual.objects.filter(rascunho__isnull=True)
-        for f in folgas_ativas:
-            if f.analista_id in analista_map:
-                FolgaManual.objects.create(
+        if tipo == 'em_branco':
+            # --- MODO EM BRANCO ---
+            # Sem turnos, sem folgas. Apenas copia os analistas da escala principal
+            # sem vínculo de turno, para que possam ser atribuídos manualmente depois.
+            analistas_ativos = AnalistaEscala.objects.filter(ativo=True, rascunho__isnull=True)
+            for a in analistas_ativos:
+                AnalistaEscala.objects.create(
                     rascunho=rascunho,
-                    analista=analista_map[f.analista_id],
-                    data=f.data,
-                    tipo=f.tipo,
-                    motivo=f.motivo
+                    user=a.user,
+                    nome=a.nome,
+                    turno=None,          # Sem turno - será definido na simulação
+                    pausa='',
+                    data_primeira_folga=None,
+                    ordem=a.ordem,
+                    ativo=a.ativo
                 )
-                
+
+        else:
+            # --- MODO CÓPIA ---
+            # Determinar a fonte: escala principal ou um rascunho existente
+            if fonte_id == 'principal' or not fonte_id:
+                turnos_fonte = Turno.objects.filter(ativo=True, rascunho__isnull=True)
+                analistas_fonte = AnalistaEscala.objects.filter(ativo=True, rascunho__isnull=True)
+                folgas_fonte = FolgaManual.objects.filter(rascunho__isnull=True)
+            else:
+                fonte_rascunho = get_object_or_404(EscalaRascunho, pk=fonte_id)
+                turnos_fonte = Turno.objects.filter(ativo=True, rascunho=fonte_rascunho)
+                analistas_fonte = AnalistaEscala.objects.filter(ativo=True, rascunho=fonte_rascunho)
+                folgas_fonte = FolgaManual.objects.filter(rascunho=fonte_rascunho)
+
+            # Copiar Turnos
+            turno_map = {}
+            for t in turnos_fonte:
+                novo_t = Turno.objects.create(
+                    rascunho=rascunho,
+                    nome=t.nome,
+                    horario=t.horario,
+                    cor=t.cor,
+                    ordem=t.ordem,
+                    ativo=t.ativo
+                )
+                turno_map[t.id] = novo_t
+
+            # Copiar Analistas
+            analista_map = {}
+            for a in analistas_fonte:
+                novo_turno = turno_map.get(a.turno_id) if a.turno_id else None
+                novo_a = AnalistaEscala.objects.create(
+                    rascunho=rascunho,
+                    user=a.user,
+                    nome=a.nome,
+                    turno=novo_turno,
+                    pausa=a.pausa,
+                    data_primeira_folga=a.data_primeira_folga,
+                    ordem=a.ordem,
+                    ativo=a.ativo
+                )
+                analista_map[a.id] = novo_a
+
+            # Copiar Folgas
+            for f in folgas_fonte:
+                if f.analista_id in analista_map:
+                    FolgaManual.objects.create(
+                        rascunho=rascunho,
+                        analista=analista_map[f.analista_id],
+                        data=f.data,
+                        tipo=f.tipo,
+                        motivo=f.motivo
+                    )
+
         return JsonResponse({'success': True, 'id': rascunho.id, 'nome': rascunho.nome})
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)

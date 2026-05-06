@@ -1200,6 +1200,47 @@
                 <label>Nome da Simulação</label>
                 <input type="text" id="draftNameInput" placeholder="Ex: Escala Teste Maio" required>
             </div>
+
+            <div class="form-group-escala">
+                <label style="margin-bottom: 12px; display: block;">Tipo de Simulação</label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+
+                    <!-- Opção: Em Branco -->
+                    <label class="draft-type-card" id="cardEmBranco" onclick="selecionarTipoDraft('em_branco')" style="cursor:pointer;">
+                        <input type="radio" name="draftTipo" value="em_branco" id="radioEmBranco" style="display:none;">
+                        <div class="draft-type-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                            <i class="fa-solid fa-file-circle-plus"></i>
+                        </div>
+                        <div class="draft-type-info">
+                            <strong>Em Branco</strong>
+                            <span>Sem turnos. Analistas disponíveis para atribuição.</span>
+                        </div>
+                        <div class="draft-type-check"><i class="fa-solid fa-circle-check"></i></div>
+                    </label>
+
+                    <!-- Opção: Cópia -->
+                    <label class="draft-type-card draft-type-card--active" id="cardCopia" onclick="selecionarTipoDraft('copia')" style="cursor:pointer;">
+                        <input type="radio" name="draftTipo" value="copia" id="radioCopia" checked style="display:none;">
+                        <div class="draft-type-icon" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">
+                            <i class="fa-solid fa-copy"></i>
+                        </div>
+                        <div class="draft-type-info">
+                            <strong>Cópia de Escala</strong>
+                            <span>Começa com todos os dados de uma escala existente.</span>
+                        </div>
+                        <div class="draft-type-check"><i class="fa-solid fa-circle-check"></i></div>
+                    </label>
+
+                </div>
+            </div>
+
+            <!-- Dropdown de fonte (visível apenas no modo cópia) -->
+            <div class="form-group-escala" id="draftFonteGroup" style="overflow: hidden; transition: max-height 0.35s ease, opacity 0.35s ease; max-height: 120px; opacity: 1;">
+                <label>Copiar a partir de</label>
+                <select id="draftFonteSelect" style="width:100%; padding: 10px 12px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 14px; background: white;">
+                    <option value="principal">⭐ Escala Principal (ativa)</option>
+                </select>
+            </div>
         </div>
         <div class="modal-footer-escala">
             <button class="btn-escala" onclick="closeCreateDraftModal()">Cancelar</button>
@@ -1207,6 +1248,73 @@
         </div>
     </div>
 </div>
+
+<style>
+.draft-type-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 12px;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    background: white;
+    transition: all 0.2s ease;
+    position: relative;
+    text-align: center;
+    user-select: none;
+}
+.draft-type-card:hover {
+    border-color: #94a3b8;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+.draft-type-card--active {
+    border-color: #3b82f6 !important;
+    background: #eff6ff !important;
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.15) !important;
+}
+.draft-type-card--active.em-branco-active {
+    border-color: #f59e0b !important;
+    background: #fffbeb !important;
+    box-shadow: 0 0 0 3px rgba(245,158,11,0.15) !important;
+}
+.draft-type-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+}
+.draft-type-info strong {
+    display: block;
+    font-size: 0.9rem;
+    color: #1e293b;
+    margin-bottom: 4px;
+}
+.draft-type-info span {
+    font-size: 0.78rem;
+    color: #64748b;
+    line-height: 1.3;
+}
+.draft-type-check {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    color: #3b82f6;
+    font-size: 1.1rem;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+.draft-type-card--active .draft-type-check {
+    opacity: 1;
+}
+.draft-type-card--active.em-branco-active .draft-type-check {
+    color: #f59e0b;
+}
+</style>
 
 <script>
     // ========================================
@@ -2497,8 +2605,54 @@
         }
     }
 
-    function abrirModalCriarRascunho() {
+    // Tipo selecionado no modal de criar rascunho
+    let _draftTipoSelecionado = 'copia';
+
+    function selecionarTipoDraft(tipo) {
+        _draftTipoSelecionado = tipo;
+
+        const cardEmBranco = document.getElementById('cardEmBranco');
+        const cardCopia    = document.getElementById('cardCopia');
+        const fonteGroup   = document.getElementById('draftFonteGroup');
+
+        // Resetar classes
+        cardEmBranco.classList.remove('draft-type-card--active', 'em-branco-active');
+        cardCopia.classList.remove('draft-type-card--active');
+
+        if (tipo === 'em_branco') {
+            cardEmBranco.classList.add('draft-type-card--active', 'em-branco-active');
+            // Esconder dropdown de fonte com animação
+            fonteGroup.style.maxHeight = '0';
+            fonteGroup.style.opacity = '0';
+            fonteGroup.style.marginBottom = '0';
+        } else {
+            cardCopia.classList.add('draft-type-card--active');
+            // Mostrar dropdown de fonte com animação
+            fonteGroup.style.maxHeight = '120px';
+            fonteGroup.style.opacity = '1';
+            fonteGroup.style.marginBottom = '20px';
+        }
+    }
+
+    async function abrirModalCriarRascunho() {
         document.getElementById('draftNameInput').value = '';
+        // Resetar para modo cópia
+        selecionarTipoDraft('copia');
+
+        // Carregar rascunhos existentes no dropdown de fonte
+        const select = document.getElementById('draftFonteSelect');
+        select.innerHTML = '<option value="principal">⭐ Escala Principal (ativa)</option>';
+        try {
+            const res = await fetch('/api/escala/rascunhos/');
+            const lista = await res.json();
+            lista.forEach(r => {
+                // Não incluir o próprio rascunho atual como opção de fonte
+                if (r.id !== rascunhoId) {
+                    select.innerHTML += `<option value="${r.id}">📋 ${r.nome} (${r.data_atualizacao})</option>`;
+                }
+            });
+        } catch(e) { /* ignora erro silencioso */ }
+
         document.getElementById('createDraftModal').classList.add('show');
     }
 
@@ -2515,16 +2669,22 @@
             return;
         }
 
+        const tipo    = _draftTipoSelecionado;
+        const fonteId = tipo === 'copia' ? (document.getElementById('draftFonteSelect').value || 'principal') : null;
+
         const btn = document.getElementById('btnConfirmDraft');
         const oldText = btn.innerHTML;
         btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Criando...';
         btn.disabled = true;
-        
+
         try {
+            const payload = { nome, tipo };
+            if (fonteId) payload.fonte_id = fonteId;
+
             const res = await fetch('/api/escala/rascunhos/create/', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-                body: JSON.stringify({ nome: nome })
+                body: JSON.stringify(payload)
             });
             const data = await res.json();
             if (data.error) {
