@@ -723,9 +723,82 @@
 
 {% block content %}
 <div class="app-escala">
+    {% if is_planejamento_mode %}
+    <!-- CABEÇALHO MODO SIMULAÇÃO (LABORATÓRIO) -->
+    <div class="page-header-escala" style="background: linear-gradient(135deg, #1e293b, #0f172a); color: white; border: 1px solid #334155;">
+        <div class="page-title-section">
+            <h1 class="page-title" style="color: white; font-weight: 800;"><i class="fa-solid fa-flask" style="color: #10b981;"></i> Laboratório de Escalas</h1>
+            <h2 class="page-month-display" id="mesDisplay" style="color: #94a3b8; font-size: 1.1em; letter-spacing: 2px;">-</h2>
+        </div>
+        
+        <div style="display: flex; gap: 20px; align-items: center; flex-wrap: wrap;">
+            <!-- Controles de Mês -->
+            <div class="input-group-mes" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px;">
+                <i class="fa-solid fa-calendar-day" style="color: #94a3b8;"></i>
+                <input type="month" id="mesInput" style="background: transparent; color: white; color-scheme: dark; border: none; outline: none; font-weight: 600;">
+                <button class="btn-escala" onclick="generateTables()" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.5); border-radius: 8px;">
+                    <i class="fa-solid fa-rotate"></i> Carregar
+                </button>
+            </div>
+            
+            <div style="width: 1px; height: 40px; background: rgba(255,255,255,0.1);" class="d-none d-md-block"></div>
+            
+            <!-- Controles de Simulação -->
+            <div style="display: flex; gap: 10px; align-items: center; background: rgba(16, 185, 129, 0.1); padding: 8px 12px; border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.2);">
+                <i class="fa-solid fa-code-branch" style="color: #34d399; margin-left: 5px;"></i>
+                <select id="rascunhoSelect" class="btn-escala" style="background: rgba(15, 23, 42, 0.8); color: white; border: 1px solid rgba(255,255,255,0.2); min-width: 220px; font-weight: 600; font-size: 14px;" onchange="mudarRascunho(this.value)">
+                    <option value="">Escala Principal (Visualização)</option>
+                </select>
+                <button class="btn-escala" onclick="criarRascunho()" style="background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
+                    <i class="fa-solid fa-plus"></i> Nova Simulação
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toolbar de Ações do Simulador -->
+    {% if is_rascunho %}
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; background: white; padding: 15px 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-left: 5px solid #10b981; flex-wrap: wrap; gap: 15px;">
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <div style="background: #ecfdf5; color: #065f46; padding: 8px 15px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; border: 1px solid #a7f3d0;">
+                <i class="fa-solid fa-pen-to-square me-1"></i> Editando: {{ rascunho_nome }}
+            </div>
+            
+            <div style="display: flex; gap: 8px;">
+                <button class="btn-escala" onclick="openAnalystModal()" style="background: white; color: #334155; border: 1px solid #cbd5e1; font-weight: 600; font-size: 13px;">
+                    <i class="fa-solid fa-users-gear" style="color: #3b82f6;"></i> Analistas
+                </button>
+                <button class="btn-escala" onclick="openShiftModal()" style="background: white; color: #334155; border: 1px solid #cbd5e1; font-weight: 600; font-size: 13px;">
+                    <i class="fa-solid fa-clock" style="color: #f59e0b;"></i> Turnos
+                </button>
+                <button class="btn-escala" onclick="auditarEscalaIA()" style="background: white; color: #334155; border: 1px solid #cbd5e1; font-weight: 600; font-size: 13px;">
+                    <i class="fa-solid fa-robot" style="color: #8b5cf6;"></i> Testar com IA
+                </button>
+            </div>
+        </div>
+        
+        <div style="display: flex; gap: 10px;">
+            <button class="btn-escala" onclick="excluirRascunhoAtual()" style="background: #fef2f2; color: #ef4444; border: 1px solid #fecaca; font-weight: 600; font-size: 13px;">
+                <i class="fa-solid fa-trash"></i> Descartar
+            </button>
+            <button class="btn-escala" onclick="abrirModalPublicarRascunho()" style="background: linear-gradient(135deg, #f97316, #ea580c); color: white; border: none; font-weight: bold; font-size: 13px; box-shadow: 0 4px 10px rgba(234, 88, 12, 0.3);">
+                <i class="fa-solid fa-rocket"></i> Aprovar e Publicar
+            </button>
+        </div>
+    </div>
+    {% else %}
+    <div style="background: #f8fafc; border: 1px dashed #cbd5e1; color: #475569; padding: 25px; border-radius: 12px; margin-bottom: 25px; text-align: center;">
+        <i class="fa-solid fa-eye" style="font-size: 2rem; color: #94a3b8; margin-bottom: 15px;"></i>
+        <h4 style="font-size: 1.1rem; font-weight: 700; color: #334155; margin-bottom: 8px;">Modo de Visualização</h4>
+        <p style="margin: 0; font-size: 0.95rem; max-width: 600px; margin: 0 auto;">Você está visualizando a Escala Principal ativa. Para realizar testes, mover horários e gerenciar analistas sem afetar a operação, selecione uma simulação existente ou clique em <b>Nova Simulação</b> acima.</p>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <!-- CABEÇALHO ESCALA NORMAL -->
     <div class="page-header-escala">
         <div class="page-title-section">
-            <h1 class="page-title"><i class="fa-solid fa-calendar-alt"></i> Gerador de Escala</h1>
+            <h1 class="page-title"><i class="fa-solid fa-calendar-alt text-primary"></i> Escala de Operação</h1>
             <h2 class="page-month-display" id="mesDisplay">-</h2>
         </div>
         <div class="page-controls">
@@ -733,24 +806,14 @@
                 <i class="fa-solid fa-calendar-day icon-mes"></i>
                 <input type="month" id="mesInput">
                 <button class="btn-escala primary" onclick="generateTables()">
-                    <i class="fa-solid fa-calendar-plus"></i> Gerar
+                    <i class="fa-solid fa-calendar-check"></i> Gerar
                 </button>
             </div>
         </div>
         <div class="page-actions">
             {% if is_admin %}
-            {% if is_planejamento_mode %}
-            <!-- Gestão de Rascunhos -->
-            <select id="rascunhoSelect" class="btn-escala" style="background: white; color: #1e293b; border: 1px solid #cbd5e1; min-width: 180px; font-weight: 600;" onchange="mudarRascunho(this.value)">
-                <option value="">Escala Principal</option>
-            </select>
-            <button class="btn-escala" onclick="criarRascunho()" style="background: #10b981; color: white;">
-                <i class="fa-solid fa-code-branch"></i> Nova Simulação
-            </button>
-            {% endif %}
-            
             <button class="btn-escala" onclick="openAnalystModal()">
-                <i class="fa-solid fa-users-gear"></i> Gerenciar Analistas
+                <i class="fa-solid fa-users-gear"></i> Analistas
             </button>
             <button class="btn-escala" onclick="openShiftModal()">
                 <i class="fa-solid fa-clock"></i> Turnos
@@ -759,32 +822,15 @@
 
             {% if can_export %}
             <button class="btn-escala" onclick="openMonthlySummaryModal()" style="background: #0ea5e9;">
-                <i class="fa-solid fa-list-check"></i> Resumo Mensal
+                <i class="fa-solid fa-list-check"></i> Resumo
             </button>
-            <button class="btn-escala" onclick="openExportModal()">
+            <button class="btn-escala" onclick="openExportModal()" style="background: #475569;">
                 <i class="fa-solid fa-download"></i> Exportar
             </button>
             {% endif %}
 
             <button class="btn-escala" onclick="auditarEscalaIA()" style="background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white;">
-                <i class="fa-solid fa-robot"></i> Auditar com IA
-            </button>
-        </div>
-    </div>
-
-    {% if is_rascunho %}
-    <div style="background: #fffbeb; border: 1px solid #fde68a; color: #b45309; padding: 15px 25px; border-radius: 10px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);">
-        <div>
-            <i class="fa-solid fa-triangle-exclamation" style="font-size: 1.2rem; margin-right: 8px;"></i> 
-            <span style="font-size: 1.1rem;"><strong>MODO DE SIMULAÇÃO:</strong> Você está visualizando o rascunho <b>{{ rascunho_nome }}</b>.</span><br>
-            <small style="margin-left: 32px;">As alterações feitas aqui não afetam a escala principal ativa.</small>
-        </div>
-        <div style="display: flex; gap: 10px;">
-            <button class="btn-escala primary" onclick="abrirModalPublicarRascunho()" style="background: #ea580c; border: none;">
-                <i class="fa-solid fa-upload"></i> Substituir Escala Principal
-            </button>
-            <button class="btn-escala" onclick="excluirRascunhoAtual()" style="background: #ef4444; color: white; border: none;">
-                <i class="fa-solid fa-trash"></i> Descartar Simulação
+                <i class="fa-solid fa-robot"></i> Auditar IA
             </button>
         </div>
     </div>
@@ -2405,7 +2451,7 @@
             const rascunhos = await res.json();
             const select = document.getElementById('rascunhoSelect');
             if(select) {
-                select.innerHTML = '<option value="">Escala Principal</option>';
+                select.innerHTML = '<option value="">Escala Principal (Visualização)</option>';
                 rascunhos.forEach(r => {
                     const selected = (rascunhoId == r.id) ? 'selected' : '';
                     select.innerHTML += `<option value="${r.id}" ${selected}>${r.nome} (${r.data_atualizacao})</option>`;
