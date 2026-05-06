@@ -749,7 +749,7 @@
                 <select id="rascunhoSelect" class="btn-escala" style="background: rgba(15, 23, 42, 0.8); color: white; border: 1px solid rgba(255,255,255,0.2); min-width: 220px; font-weight: 600; font-size: 14px;" onchange="mudarRascunho(this.value)">
                     <option value="">Escala Principal (Visualização)</option>
                 </select>
-                <button class="btn-escala" onclick="criarRascunho()" style="background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
+                <button class="btn-escala" onclick="abrirModalCriarRascunho()" style="background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
                     <i class="fa-solid fa-plus"></i> Nova Simulação
                 </button>
             </div>
@@ -778,6 +778,9 @@
         </div>
         
         <div style="display: flex; gap: 10px;">
+            <button class="btn-escala" onclick="salvarRascunho()" style="background: white; color: #10b981; border: 1px solid #10b981; font-weight: 600; font-size: 13px;">
+                <i class="fa-solid fa-floppy-disk"></i> Salvar Rascunho
+            </button>
             <button class="btn-escala" onclick="excluirRascunhoAtual()" style="background: #fef2f2; color: #ef4444; border: 1px solid #fecaca; font-weight: 600; font-size: 13px;">
                 <i class="fa-solid fa-trash"></i> Descartar
             </button>
@@ -1177,6 +1180,30 @@
         <div class="modal-footer-escala">
             <button class="btn-escala" onclick="closePublishDraftModal()">Cancelar</button>
             <button class="btn-escala primary" style="background: #ea580c;" onclick="publicarRascunho()">Confirmar Substituição</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Criar Simulação -->
+<div class="modal-escala" id="createDraftModal">
+    <div class="modal-content-escala">
+        <div class="modal-header-escala">
+            <button class="modal-close" onclick="closeCreateDraftModal()">&times;</button>
+            <div class="modal-icon" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                <i class="fa-solid fa-code-branch"></i>
+            </div>
+            <h2>Nova Simulação</h2>
+            <p>Crie um ambiente de testes para a escala</p>
+        </div>
+        <div class="modal-body-escala">
+            <div class="form-group-escala">
+                <label>Nome da Simulação</label>
+                <input type="text" id="draftNameInput" placeholder="Ex: Escala Teste Maio" required>
+            </div>
+        </div>
+        <div class="modal-footer-escala">
+            <button class="btn-escala" onclick="closeCreateDraftModal()">Cancelar</button>
+            <button class="btn-escala primary" style="background: #10b981;" id="btnConfirmDraft" onclick="confirmarCriarRascunho()">Criar Simulação</button>
         </div>
     </div>
 </div>
@@ -2470,9 +2497,28 @@
         }
     }
 
-    async function criarRascunho() {
-        const nome = prompt("Digite um nome para esta Simulação:");
-        if (nome === null) return;
+    function abrirModalCriarRascunho() {
+        document.getElementById('draftNameInput').value = '';
+        document.getElementById('createDraftModal').classList.add('show');
+    }
+
+    function closeCreateDraftModal() {
+        document.getElementById('createDraftModal').classList.remove('show');
+    }
+
+    async function confirmarCriarRascunho() {
+        const nomeInput = document.getElementById('draftNameInput');
+        const nome = nomeInput.value.trim();
+        if (!nome) {
+            alert('Por favor, digite um nome para a simulação.');
+            nomeInput.focus();
+            return;
+        }
+
+        const btn = document.getElementById('btnConfirmDraft');
+        const oldText = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Criando...';
+        btn.disabled = true;
         
         try {
             const res = await fetch('/api/escala/rascunhos/create/', {
@@ -2483,12 +2529,23 @@
             const data = await res.json();
             if (data.error) {
                 alert(data.error);
+                btn.innerHTML = oldText;
+                btn.disabled = false;
             } else {
                 window.location.href = `?rascunho_id=${data.id}`;
             }
         } catch (e) {
             alert('Erro ao criar simulação: ' + e.message);
+            btn.innerHTML = oldText;
+            btn.disabled = false;
         }
+    }
+
+    function salvarRascunho() {
+        // O rascunho já é salvo automaticamente nas alterações de células/analistas.
+        // Apenas informamos o usuário e voltamos para a visualização principal.
+        alert('Rascunho salvo com sucesso!');
+        window.location.href = window.location.pathname;
     }
 
     async function excluirRascunhoAtual() {
