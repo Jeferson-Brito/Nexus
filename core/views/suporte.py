@@ -90,6 +90,8 @@ def escala_view(request):
     is_admin = (user.is_gestor() or user.is_administrador()) and not is_rh
     can_export = is_admin or (user.department and user.department.name == 'RH')
     
+    is_planejamento_mode = request.resolver_match.url_name == 'planejamento_escala'
+    
     context = {
         'turnos_json': json.dumps(turnos_data),
         'analistas_json': json.dumps(analistas_data),
@@ -99,7 +101,8 @@ def escala_view(request):
         'can_export': can_export,
         'is_rascunho': rascunho_obj is not None,
         'rascunho_id': str(rascunho_obj.id) if rascunho_obj else None,
-        'rascunho_nome': rascunho_obj.nome if rascunho_obj else None
+        'rascunho_nome': rascunho_obj.nome if rascunho_obj else None,
+        'is_planejamento_mode': is_planejamento_mode,
     }
     
     return render(request, 'core/escala.html', context)

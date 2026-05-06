@@ -739,6 +739,7 @@
         </div>
         <div class="page-actions">
             {% if is_admin %}
+            {% if is_planejamento_mode %}
             <!-- Gestão de Rascunhos -->
             <select id="rascunhoSelect" class="btn-escala" style="background: white; color: #1e293b; border: 1px solid #cbd5e1; min-width: 180px; font-weight: 600;" onchange="mudarRascunho(this.value)">
                 <option value="">Escala Principal</option>
@@ -746,6 +747,7 @@
             <button class="btn-escala" onclick="criarRascunho()" style="background: #10b981; color: white;">
                 <i class="fa-solid fa-code-branch"></i> Nova Simulação
             </button>
+            {% endif %}
             
             <button class="btn-escala" onclick="openAnalystModal()">
                 <i class="fa-solid fa-users-gear"></i> Gerenciar Analistas

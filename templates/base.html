@@ -214,11 +214,32 @@
             {% elif current_department.name == 'RH' or current_department.slug == 'rh' %}
             <!-- RH -->
             <div class="nav-group-title">Recursos Humanos</div>
-            <a href="{% url 'escala' %}"
-                class="nav-link {% if request.resolver_match.url_name == 'escala' %}active{% endif %}">
+            <a href="#escalaSubmenuRH"
+                class="nav-link dropdown-toggle-custom {% if request.resolver_match.url_name == 'escala' or request.resolver_match.url_name == 'planejamento_escala' %}active{% endif %}"
+                data-bs-toggle="collapse"
+                aria-expanded="{% if request.resolver_match.url_name == 'escala' or request.resolver_match.url_name == 'planejamento_escala' %}true{% else %}false{% endif %}"
+                aria-controls="escalaSubmenuRH">
                 <i class="bi bi-calendar-event"></i>
                 <span class="link-text">Escala</span>
+                <i class="bi bi-chevron-down ms-auto arrow-icon"></i>
             </a>
+            <div class="collapse nav-submenu-container {% if request.resolver_match.url_name == 'escala' or request.resolver_match.url_name == 'planejamento_escala' %}show{% endif %}"
+                id="escalaSubmenuRH">
+                <div class="nav-submenu">
+                    <a href="{% url 'escala' %}"
+                        class="nav-link sub-link {% if request.resolver_match.url_name == 'escala' %}active{% endif %}"
+                        title="Escala">
+                        <i class="bi bi-calendar3"></i>
+                        <span class="link-text">Escala</span>
+                    </a>
+                    <a href="{% url 'planejamento_escala' %}"
+                        class="nav-link sub-link {% if request.resolver_match.url_name == 'planejamento_escala' %}active{% endif %}"
+                        title="Planejamento de Escala">
+                        <i class="bi bi-calendar2-plus"></i>
+                        <span class="link-text">Planejamento de Escala</span>
+                    </a>
+                </div>
+            </div>
 
             <div class="nav-group-title">Gestão de Pessoas</div>
             <a href="#rhCadastrosSubmenu"
@@ -406,11 +427,32 @@
             {% elif current_department.slug == 'nrs-suporte' or current_department.slug == 'nrp' or current_department.name == 'NRS Suporte' or current_department.name == 'NRP' %}
             <!-- NRS Suporte / NRP -->
             <div class="nav-group-title">Operação</div>
-            <a href="{% url 'escala' %}"
-                class="nav-link {% if request.resolver_match.url_name == 'escala' %}active{% endif %}">
+            <a href="#escalaSubmenuSuporte"
+                class="nav-link dropdown-toggle-custom {% if request.resolver_match.url_name == 'escala' or request.resolver_match.url_name == 'planejamento_escala' %}active{% endif %}"
+                data-bs-toggle="collapse"
+                aria-expanded="{% if request.resolver_match.url_name == 'escala' or request.resolver_match.url_name == 'planejamento_escala' %}true{% else %}false{% endif %}"
+                aria-controls="escalaSubmenuSuporte">
                 <i class="bi bi-calendar-event"></i>
                 <span class="link-text">Escala</span>
+                <i class="bi bi-chevron-down ms-auto arrow-icon"></i>
             </a>
+            <div class="collapse nav-submenu-container {% if request.resolver_match.url_name == 'escala' or request.resolver_match.url_name == 'planejamento_escala' %}show{% endif %}"
+                id="escalaSubmenuSuporte">
+                <div class="nav-submenu">
+                    <a href="{% url 'escala' %}"
+                        class="nav-link sub-link {% if request.resolver_match.url_name == 'escala' %}active{% endif %}"
+                        title="Escala">
+                        <i class="bi bi-calendar3"></i>
+                        <span class="link-text">Escala</span>
+                    </a>
+                    <a href="{% url 'planejamento_escala' %}"
+                        class="nav-link sub-link {% if request.resolver_match.url_name == 'planejamento_escala' %}active{% endif %}"
+                        title="Planejamento de Escala">
+                        <i class="bi bi-calendar2-plus"></i>
+                        <span class="link-text">Planejamento de Escala</span>
+                    </a>
+                </div>
+            </div>
 
             <a href="#auditoriaLojasSubmenu"
                 class="nav-link dropdown-toggle-custom {% if 'verificacao_lojas' in request.resolver_match.url_name %}active{% endif %}"
@@ -556,11 +598,32 @@
             {% elif current_department.slug == 'logistica' or current_department.name == 'Logística' %}
             <!-- Logística -->
             <div class="nav-group-title">Logística</div>
-            <a href="{% url 'escala' %}"
-                class="nav-link {% if request.resolver_match.url_name == 'escala' %}active{% endif %}">
+            <a href="#escalaSubmenuLog"
+                class="nav-link dropdown-toggle-custom {% if request.resolver_match.url_name == 'escala' or request.resolver_match.url_name == 'planejamento_escala' %}active{% endif %}"
+                data-bs-toggle="collapse"
+                aria-expanded="{% if request.resolver_match.url_name == 'escala' or request.resolver_match.url_name == 'planejamento_escala' %}true{% else %}false{% endif %}"
+                aria-controls="escalaSubmenuLog">
                 <i class="bi bi-calendar-event"></i>
                 <span class="link-text">Escala</span>
+                <i class="bi bi-chevron-down ms-auto arrow-icon"></i>
             </a>
+            <div class="collapse nav-submenu-container {% if request.resolver_match.url_name == 'escala' or request.resolver_match.url_name == 'planejamento_escala' %}show{% endif %}"
+                id="escalaSubmenuLog">
+                <div class="nav-submenu">
+                    <a href="{% url 'escala' %}"
+                        class="nav-link sub-link {% if request.resolver_match.url_name == 'escala' %}active{% endif %}"
+                        title="Escala">
+                        <i class="bi bi-calendar3"></i>
+                        <span class="link-text">Escala</span>
+                    </a>
+                    <a href="{% url 'planejamento_escala' %}"
+                        class="nav-link sub-link {% if request.resolver_match.url_name == 'planejamento_escala' %}active{% endif %}"
+                        title="Planejamento de Escala">
+                        <i class="bi bi-calendar2-plus"></i>
+                        <span class="link-text">Planejamento de Escala</span>
+                    </a>
+                </div>
+            </div>
             <a href="{% url 'tasks_view' %}"
                 class="nav-link {% if request.resolver_match.url_name == 'tasks_view' %}active{% endif %}">
                 <i class="bi bi-list-check"></i>
@@ -845,7 +908,10 @@
                 { toggle: document.querySelector('a[href="#reclameAquiSubmenu"]'), submenu: document.getElementById('reclameAquiSubmenu') },
                 { toggle: document.querySelector('a[href="#reclameAquiSubmenuCS"]'), submenu: document.getElementById('reclameAquiSubmenuCS') },
                 { toggle: document.querySelector('a[href="#hubAtendimentoSubmenu"]'), submenu: document.getElementById('hubAtendimentoSubmenu') },
-                { toggle: document.querySelector('a[href="#auditoriaLojasSubmenu"]'), submenu: document.getElementById('auditoriaLojasSubmenu') }
+                { toggle: document.querySelector('a[href="#auditoriaLojasSubmenu"]'), submenu: document.getElementById('auditoriaLojasSubmenu') },
+                { toggle: document.querySelector('a[href="#escalaSubmenuRH"]'), submenu: document.getElementById('escalaSubmenuRH') },
+                { toggle: document.querySelector('a[href="#escalaSubmenuSuporte"]'), submenu: document.getElementById('escalaSubmenuSuporte') },
+                { toggle: document.querySelector('a[href="#escalaSubmenuLog"]'), submenu: document.getElementById('escalaSubmenuLog') }
             ];
 
             submenuConfigs.forEach(config => {
