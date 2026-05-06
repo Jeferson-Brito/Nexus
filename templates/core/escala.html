@@ -724,114 +724,201 @@
 {% block content %}
 <div class="app-escala">
     {% if is_config_mode %}
-    <!-- CABEÇALHO MODO CONFIGURAÇÃO -->
-    <div class="page-header-escala" style="border-left: 6px solid #3b82f6; background: linear-gradient(to right, #ffffff, #f8fafc);">
-        <div class="page-title-section">
-            <h1 class="page-title" style="font-weight: 800; color: #1e293b;"><i class="fa-solid fa-gears" style="color: #3b82f6;"></i> Configuração de Escalas</h1>
-            <p style="color: #64748b; margin-top: 4px; font-size: 0.95rem; font-weight: 500;">Gerencie os modelos de jornada e regras automáticas do sistema</p>
-        </div>
-        <div class="page-actions">
-            {% if is_admin %}
-            <button class="btn-escala primary" onclick="abrirModalModeloEscala()" style="background: linear-gradient(135deg, #3b82f6, #2563eb); border: none; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);">
-                <i class="fa-solid fa-plus-circle"></i> Novo Modelo de Jornada
-            </button>
-            {% endif %}
-        </div>
-    </div>
-
-    <div class="table-wrap" style="border: none; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05); border-radius: 16px; overflow: hidden;">
-        <table class="escala-table" id="modelosTable" style="border: none;">
-            <thead>
-                <tr style="background: #f1f5f9;">
-                    <th style="width: 25%; background: #f1f5f9; color: #475569 !important; border: none; font-size: 12px; text-align: left; padding-left: 25px;">NOME DO MODELO</th>
-                    <th style="width: 15%; background: #f1f5f9; color: #475569 !important; border: none; font-size: 12px;">JORNADA</th>
-                    <th style="width: 15%; background: #f1f5f9; color: #475569 !important; border: none; font-size: 12px;">TIPO</th>
-                    <th style="width: 15%; background: #f1f5f9; color: #475569 !important; border: none; font-size: 12px;">FIM DE SEMANA</th>
-                    <th style="width: 20%; background: #f1f5f9; color: #475569 !important; border: none; font-size: 12px;">OBSERVAÇÕES</th>
-                    {% if is_admin %}
-                    <th style="width: 10%; background: #f1f5f9; color: #475569 !important; border: none; font-size: 12px;">AÇÕES</th>
-                    {% endif %}
-                </tr>
-            </thead>
-            <tbody id="modelosTableBody">
-                <!-- Preenchido via JS -->
-            </tbody>
-        </table>
+    <!-- CABEÇALHO MODO CONFIGURAÇÃO (RH Pattern) -->
+    <div class="container-fluid py-4" style="padding-left: 0; padding-right: 0;" id="configContainer">
         
-        <div id="emptyModelosState" style="display: none; padding: 80px 40px; text-align: center; background: white;">
-            <div style="width: 80px; height: 80px; background: #f1f5f9; border-radius: 20px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 20px; color: #94a3b8; font-size: 2rem;">
-                <i class="fa-solid fa-calendar-xmark"></i>
-            </div>
-            <h3 style="color: #1e293b; font-weight: 700; margin-bottom: 8px;">Nenhum modelo cadastrado</h3>
-            <p style="color: #64748b; font-size: 0.95rem; max-width: 400px; margin: 0 auto 25px;">Cadastre os modelos de jornada (ex: 5x2, 6x1) para automatizar a geração das escalas.</p>
-            {% if is_admin %}
-            <button class="btn-escala" onclick="abrirModalModeloEscala()" style="background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0;">
-                <i class="fa-solid fa-plus"></i> Criar Primeiro Modelo
-            </button>
-            {% endif %}
-        </div>
-    </div>
-
-    <!-- Modal Modelo Escala (Premium Upgrade) -->
-    <div class="modal-escala" id="modeloEscalaModal">
-        <div class="modal-content-escala" style="max-width: 650px; border-radius: 20px;">
-            <div class="modal-header-escala" style="background: linear-gradient(135deg, #1e293b, #0f172a); color: white; padding: 30px; border-bottom: none;">
-                <button class="modal-close" onclick="fecharModalModeloEscala()" style="color: white; opacity: 0.7;">&times;</button>
-                <div style="width:56px; height:56px; background:linear-gradient(135deg,#3b82f6,#2563eb); border-radius:16px; display:inline-flex; align-items:center; justify-content:center; font-size:1.5rem; color:white; margin-bottom:14px; box-shadow:0 8px 20px rgba(37, 99, 235, 0.3);">
-                    <i class="fa-solid fa-clock-rotate-left"></i>
+        <!-- ESTADO 1: LISTAGEM -->
+        <div id="modelosListState">
+            <div class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
+                <!-- Header -->
+                <div class="card-header border-0 d-flex align-items-center justify-content-between py-3 px-4"
+                    style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
+                    <h5 class="fw-bold mb-0 text-white"><i class="fa-solid fa-gears me-2"></i> Modelos de Jornada</h5>
+                    {% if is_admin %}
+                    <button class="btn d-flex align-items-center gap-2" onclick="showModeloForm()"
+                        style="background:rgba(255,255,255,0.2); color:#fff; border:1.5px solid rgba(255,255,255,0.6); font-weight:600; border-radius: 8px; transition: all 0.2s;">
+                        <i class="fa-solid fa-plus"></i> Novo Modelo
+                    </button>
+                    {% endif %}
                 </div>
-                <h2 style="margin:0; color:white; font-size:1.5rem; font-weight:800; letter-spacing:-0.3px;" id="modeloModalTitle">Novo Modelo de Escala</h2>
-                <p style="margin:6px 0 0; color:rgba(255,255,255,0.7); font-size:0.9rem;">Configure as regras de dias trabalhados e folgas</p>
-            </div>
 
-            <div style="padding: 30px; background: #ffffff;">
-                <input type="hidden" id="modeloId">
-                
-                <div style="margin-bottom:20px;">
-                    <label style="display:block; font-weight:700; color:#1e293b; margin-bottom:8px; font-size:0.85rem; text-transform:uppercase; letter-spacing:0.5px;">Nome do Modelo</label>
-                    <input type="text" id="modeloNome" placeholder="Ex: 5x2, 6x1 Diurno" style="width:100%; padding:12px 16px; border-radius:10px; border:1.5px solid #e2e8f0; font-size:15px; box-sizing:border-box; transition:border 0.2s;" onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='#e2e8f0'">
-                </div>
-                
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; margin-bottom:20px;">
-                    <div>
-                        <label style="display:block; font-weight:700; color:#1e293b; margin-bottom:8px; font-size:0.85rem; text-transform:uppercase; letter-spacing:0.5px;">Dias Trabalhados</label>
-                        <input type="number" id="modeloTrabalho" value="5" min="1" onchange="validarTipoEscala()" style="width:100%; padding:12px 16px; border-radius:10px; border:1.5px solid #e2e8f0; font-size:15px; box-sizing:border-box;">
-                    </div>
-                    <div>
-                        <label style="display:block; font-weight:700; color:#1e293b; margin-bottom:8px; font-size:0.85rem; text-transform:uppercase; letter-spacing:0.5px;">Dias de Folga</label>
-                        <input type="number" id="modeloFolga" value="2" min="1" onchange="validarTipoEscala()" style="width:100%; padding:12px 16px; border-radius:10px; border:1.5px solid #e2e8f0; font-size:15px; box-sizing:border-box;">
+                <!-- Toolbar -->
+                <div class="card-body border-bottom py-3 px-4" style="background: #f8fafc;">
+                    <div class="d-flex flex-wrap align-items-center gap-3">
+                        <div class="d-flex align-items-center gap-2 text-muted small">
+                            Mostrar
+                            <select id="modelosPerPage" class="form-select form-select-sm" style="width: auto;" onchange="renderModelos()">
+                                <option value="10">10</option>
+                                <option value="25">25</option>
+                                <option value="50">50</option>
+                            </select>
+                            registros
+                        </div>
+
+                        <div class="ms-auto d-flex align-items-center gap-2">
+                            <label class="text-muted small mb-0">Buscar:</label>
+                            <input type="text" id="modelosSearch" class="form-control form-control-sm"
+                                placeholder="Filtrar modelos..." style="width: 250px; border-radius: 8px;" oninput="renderModelos()">
+                        </div>
                     </div>
                 </div>
 
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; margin-bottom:20px;">
-                    <div>
-                        <label style="display:block; font-weight:700; color:#1e293b; margin-bottom:8px; font-size:0.85rem; text-transform:uppercase; letter-spacing:0.5px;">Tipo de Escala</label>
-                        <select id="modeloTipo" onchange="validarTipoEscala()" style="width:100%; padding:12px 16px; border-radius:10px; border:1.5px solid #e2e8f0; font-size:15px; background:white; cursor:pointer;">
-                            <option value="fixa">Fixa (Folgas fixas)</option>
-                            <option value="rotativa">Rotativa (Folgas avançam)</option>
-                        </select>
-                        <small class="text-danger d-none mt-1 fw-bold" id="modeloTipoHelp" style="font-size: 0.75rem;">Escalas 6x1 não podem ser rotativas.</small>
-                    </div>
-                    <div>
-                        <label style="display:block; font-weight:700; color:#1e293b; margin-bottom:8px; font-size:0.85rem; text-transform:uppercase; letter-spacing:0.5px;">Finais de Semana?</label>
-                        <select id="modeloFDS" style="width:100%; padding:12px 16px; border-radius:10px; border:1.5px solid #e2e8f0; font-size:15px; background:white; cursor:pointer;">
-                            <option value="true">Permitido</option>
-                            <option value="false">Não Permitido</option>
-                        </select>
-                    </div>
+                <!-- Tabela -->
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0" id="modelosTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="px-4 py-3" style="width: 250px; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; font-weight: 700;">Nome do Modelo</th>
+                                <th class="py-3" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; font-weight: 700;">Configuração</th>
+                                <th class="py-3" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; font-weight: 700;">Tipo</th>
+                                <th class="py-3 text-center" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; font-weight: 700;">Fim de Semana</th>
+                                <th class="py-3" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; font-weight: 700;">Observações</th>
+                                {% if is_admin %}
+                                <th class="py-3 text-end pe-4" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; font-weight: 700;">Ações</th>
+                                {% endif %}
+                            </tr>
+                        </thead>
+                        <tbody id="modelosTableBody"></tbody>
+                    </table>
                 </div>
-                
-                <div>
-                    <label style="display:block; font-weight:700; color:#1e293b; margin-bottom:8px; font-size:0.85rem; text-transform:uppercase; letter-spacing:0.5px;">Observações</label>
-                    <textarea id="modeloObs" rows="2" placeholder="Opcional" style="width:100%; padding:12px 16px; border-radius:10px; border:1.5px solid #e2e8f0; font-size:14px; box-sizing:border-box; resize:none;"></textarea>
+
+                <!-- Footer -->
+                <div class="card-footer bg-white border-top d-flex align-items-center justify-content-between py-3 px-4">
+                    <span class="text-muted small" id="modelosPaginationInfo">Mostrando 0 registros</span>
+                    <nav><ul class="pagination pagination-sm mb-0 gap-1" id="modelosPaginationControles"></ul></nav>
                 </div>
             </div>
-
-            <div style="padding:20px 30px; background:#f8fafc; border-top:1px solid #e2e8f0; border-radius:0 0 20px 20px; display:flex; justify-content:flex-end; gap:12px;">
-                <button class="btn-escala" onclick="fecharModalModeloEscala()" style="color:#64748b; background:white; border:1px solid #e2e8f0;">Cancelar</button>
-                <button class="btn-escala primary" id="btnSalvarModelo" onclick="salvarModeloEscala()" style="background:linear-gradient(135deg,#3b82f6,#2563eb); border:none; padding:10px 25px;">
-                    <i class="fa-solid fa-save"></i> Salvar Modelo
+            
+            <!-- Empty State -->
+            <div id="emptyModelosState" style="display: none; padding: 100px 40px; text-align: center; background: white; border-radius: 12px; margin-top: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                <div style="width: 80px; height: 80px; background: #f1f5f9; border-radius: 20px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 25px; color: #94a3b8; font-size: 2rem;">
+                    <i class="fa-solid fa-calendar-xmark"></i>
+                </div>
+                <h3 style="color: #1e293b; font-weight: 800; margin-bottom: 12px;">Nenhum modelo configurado</h3>
+                <p style="color: #64748b; font-size: 1rem; max-width: 400px; margin: 0 auto 30px;">Crie os modelos de jornada para automatizar o planejamento das escalas.</p>
+                {% if is_admin %}
+                <button class="btn btn-primary px-4 py-2 fw-bold" onclick="showModeloForm()" style="border-radius: 10px; background: #2563eb; border: none;">
+                    <i class="fa-solid fa-plus me-2"></i> Criar Primeiro Modelo
                 </button>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- ESTADO 2: FORMULÁRIO (Pattern RH Horários) -->
+        <div id="modeloFormState" style="display: none;">
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <div class="d-flex align-items-center gap-3">
+                    <button class="btn btn-light btn-sm rounded-circle shadow-sm border" onclick="hideModeloForm()">
+                        <i class="fa-solid fa-arrow-left"></i>
+                    </button>
+                    <h4 class="fw-bold mb-0" id="formModeloTitle">Novo Modelo de Escala</h4>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-light px-4 border" onclick="hideModeloForm()">Cancelar</button>
+                    <button type="button" class="btn btn-primary px-4 shadow-sm" onclick="salvarModeloEscala()" style="background: #2563eb; border: none;">
+                        <i class="fa-solid fa-check me-1"></i> Salvar Modelo
+                    </button>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm" style="border-radius: 12px; min-height: 500px; overflow: hidden;">
+                <div class="card-header border-0 p-0" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
+                    <ul class="nav nav-tabs border-0 px-4" id="modeloTabs" role="tablist">
+                        <li class="nav-item">
+                            <button class="nav-link active fw-bold small text-uppercase py-3" data-bs-toggle="tab" data-bs-target="#tab-geral" type="button">Configuração Geral</button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link fw-bold small text-uppercase py-3" data-bs-toggle="tab" data-bs-target="#tab-preview" type="button" onclick="updatePreviewCycle()">Visualização do Ciclo</button>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="card-body p-4">
+                    <div class="tab-content">
+                        <!-- ABA GERAL -->
+                        <div class="tab-pane fade show active" id="tab-geral">
+                            <div class="alert alert-light border shadow-sm mb-4">
+                                <div class="d-flex align-items-start gap-2">
+                                    <i class="fa-solid fa-circle-info text-primary mt-1"></i>
+                                    <div class="small text-muted">
+                                        <strong class="text-dark d-block mb-1">Sobre Modelos de Jornada</strong>
+                                        Defina a regra de dias trabalhados seguidos pelos dias de folga. 
+                                        O tipo <strong>Fixa</strong> mantém as folgas nos mesmos dias da semana, enquanto a <strong>Rotativa</strong> faz com que as folgas avancem no calendário.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row g-4 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold small text-muted text-uppercase">Nome do Modelo *</label>
+                                    <input type="text" id="formModeloNome" class="form-control form-control-lg" placeholder="Ex: Jornada 5x2 Administrativa" style="border-radius: 10px;">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label fw-bold small text-muted text-uppercase">Dias de Trabalho *</label>
+                                    <input type="number" id="formModeloTrabalho" class="form-control form-control-lg" value="5" min="1" oninput="updatePreviewCycle()" style="border-radius: 10px;">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label fw-bold small text-muted text-uppercase">Dias de Folga *</label>
+                                    <input type="number" id="formModeloFolga" class="form-control form-control-lg" value="2" min="1" oninput="updatePreviewCycle()" style="border-radius: 10px;">
+                                </div>
+                                
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold small text-muted text-uppercase">Tipo de Escala *</label>
+                                    <select id="formModeloTipo" class="form-select form-select-lg" onchange="validarTipoEscalaForm()" style="border-radius: 10px;">
+                                        <option value="fixa">Fixa (Dias fixos na semana)</option>
+                                        <option value="rotativa">Rotativa (Folgas alternadas)</option>
+                                    </select>
+                                    <small class="text-danger d-none fw-bold mt-1" id="formModeloTipoHelp">Escalas 6x1 não podem ser rotativas.</small>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold small text-muted text-uppercase">Permitir Fins de Semana?</label>
+                                    <select id="formModeloFDS" class="form-select form-select-lg" style="border-radius: 10px;">
+                                        <option value="true">Sim, permitido</option>
+                                        <option value="false">Não, apenas dias úteis</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label fw-bold small text-muted text-uppercase">Observações Internas</label>
+                                <textarea id="formModeloObs" class="form-control" rows="3" placeholder="Informações adicionais sobre este modelo de jornada..." style="border-radius: 10px; resize: none;"></textarea>
+                            </div>
+                        </div>
+
+                        <!-- ABA PREVIEW -->
+                        <div class="tab-pane fade" id="tab-preview">
+                            <div class="alert alert-primary-subtle border-primary-subtle mb-4">
+                                <h6 class="fw-bold mb-1"><i class="fa-solid fa-eye me-2"></i> Pré-visualização do Ciclo de 30 Dias</h6>
+                                <p class="small mb-0 opacity-75">Veja abaixo como a jornada se comportará ao longo de um mês completo com base nas regras definidas.</p>
+                            </div>
+                            
+                            <div class="table-responsive rounded-3 border">
+                                <table class="table table-bordered mb-0 text-center align-middle">
+                                    <thead class="bg-light">
+                                        <tr>
+                                            <th style="width: 150px;">Semana</th>
+                                            <th>Dom</th><th>Seg</th><th>Ter</th><th>Qua</th><th>Qui</th><th>Sex</th><th>Sáb</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="cyclePreviewTbody">
+                                        <!-- Gerado via JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <div class="mt-4 d-flex gap-4 justify-content-center">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div style="width: 16px; height: 16px; background: #dcfce7; border: 1px solid #16a34a; border-radius: 4px;"></div>
+                                    <span class="small fw-bold text-muted">DIA TRABALHADO</span>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div style="width: 16px; height: 16px; background: #fee2e2; border: 1px solid #dc2626; border-radius: 4px;"></div>
+                                    <span class="small fw-bold text-muted">FOLGA</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -1819,100 +1906,208 @@
     // MODELOS DE ESCALA (CONFIGURAÇÃO)
     // ========================================
     
+    let currentPageModelos = 1;
+
     function renderModelos() {
         if (!isConfigMode) return;
         const tbody = document.getElementById('modelosTableBody');
         const emptyState = document.getElementById('emptyModelosState');
-        const table = document.getElementById('modelosTable');
+        const card = document.querySelector('.card.border-0.shadow-sm');
         if (!tbody) return;
         
+        const q = (document.getElementById('modelosSearch')?.value || '').toLowerCase();
+        const filtered = modelos.filter(m => 
+            (m.nome || '').toLowerCase().includes(q) || 
+            `${m.dias_trabalhados}x${m.dias_folga}`.includes(q)
+        );
+
+        const pp = parseInt(document.getElementById('modelosPerPage')?.value) || 10;
+        const total = filtered.length;
+        const totalPag = Math.max(1, Math.ceil(total / pp));
+        if (currentPageModelos > totalPag) currentPageModelos = totalPag;
+
+        const inicio = (currentPageModelos - 1) * pp;
+        const pagina = filtered.slice(inicio, inicio + pp);
+
+        // Atualizar info de paginação
+        const info = document.getElementById('modelosPaginationInfo');
+        if (info) {
+            if (total === 0) info.textContent = '0 registros';
+            else info.textContent = `${inicio + 1} a ${Math.min(inicio + pp, total)} de ${total}`;
+        }
+
+        renderPaginacaoModelos(totalPag);
+
         tbody.innerHTML = '';
         
-        if (modelos.length === 0) {
-            if (emptyState) emptyState.style.display = 'block';
-            if (table) table.style.display = 'none';
+        if (total === 0) {
+            if (emptyState && !q) {
+                emptyState.style.display = 'block';
+                if (card) card.style.display = 'none';
+            } else {
+                tbody.innerHTML = `<tr><td colspan="${isAdmin ? 6 : 5}" class="text-center py-5 text-muted">Nenhum modelo encontrado para sua busca.</td></tr>`;
+            }
             return;
         }
         
         if (emptyState) emptyState.style.display = 'none';
-        if (table) table.style.display = 'table';
+        if (card) card.style.display = 'block';
         
-        modelos.forEach(m => {
+        pagina.forEach(m => {
             const tr = document.createElement('tr');
-            tr.style.borderBottom = '1px solid #f1f5f9';
-            tr.style.transition = 'background 0.2s';
-            tr.onmouseover = () => tr.style.background = '#f8fafc';
-            tr.onmouseout = () => tr.style.background = 'transparent';
             
             const tipoBadge = m.tipo === 'fixa' 
-                ? '<span style="background:#eff6ff; color:#2563eb; padding:4px 12px; border-radius:6px; font-size:0.75rem; font-weight:700; border:1px solid #dbeafe;">FIXA</span>' 
-                : '<span style="background:#f0fdf4; color:#16a34a; padding:4px 12px; border-radius:6px; font-size:0.75rem; font-weight:700; border:1px solid #dcfce7;">ROTATIVA</span>';
+                ? '<span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1">Fixa</span>' 
+                : '<span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">Rotativa</span>';
                 
             const fdsBadge = m.permite_fim_de_semana 
-                ? '<span style="color:#16a34a; font-weight:600; display:flex; align-items:center; gap:6px; justify-content:center;"><i class="fa-solid fa-circle-check"></i> Permitido</span>' 
-                : '<span style="color:#dc2626; font-weight:600; display:flex; align-items:center; gap:6px; justify-content:center;"><i class="fa-solid fa-circle-xmark"></i> Bloqueado</span>';
+                ? '<span class="text-success small fw-bold"><i class="fa-solid fa-check-circle me-1"></i> Sim</span>' 
+                : '<span class="text-danger small fw-bold"><i class="fa-solid fa-times-circle me-1"></i> Não</span>';
             
             let acoes = '';
             if (isAdmin) {
                 acoes = `
-                    <td style="text-align:center; padding: 12px 0;">
-                        <button class="btn-icon edit" onclick="editarModelo(${m.id})" title="Editar" style="background:#eff6ff; color:#2563eb; width:32px; height:32px; border-radius:8px; border:none; cursor:pointer; margin-right:5px; transition:0.2s;"><i class="fa-solid fa-edit"></i></button>
-                        <button class="btn-icon delete" onclick="excluirModelo(${m.id})" title="Excluir" style="background:#fef2f2; color:#dc2626; width:32px; height:32px; border-radius:8px; border:none; cursor:pointer; transition:0.2s;"><i class="fa-solid fa-trash"></i></button>
+                    <td class="text-end pe-4">
+                        <button class="btn btn-sm btn-light border me-1" onclick="editarModelo(${m.id})" title="Editar">
+                            <i class="fa-solid fa-pencil-alt text-primary"></i>
+                        </button>
+                        <button class="btn btn-sm btn-light border" onclick="excluirModelo(${m.id})" title="Excluir">
+                            <i class="fa-solid fa-trash text-danger"></i>
+                        </button>
                     </td>
                 `;
             }
             
             tr.innerHTML = `
-                <td style="padding: 18px 25px; text-align: left; font-weight:700; color:#1e293b;">${m.nome}</td>
-                <td style="padding: 18px 0; color:#475569; font-weight:600; font-size:0.9rem;">${m.dias_trabalhados}x${m.dias_folga}</td>
-                <td style="padding: 18px 0;">${tipoBadge}</td>
-                <td style="padding: 18px 0; font-size:0.85rem;">${fdsBadge}</td>
-                <td style="padding: 18px 0; color:#64748b; font-size:0.8rem; line-height:1.4;">${m.observacao || '-'}</td>
+                <td class="px-4 fw-bold text-dark">${m.nome}</td>
+                <td><span class="badge bg-light text-dark border px-2 py-1">${m.dias_trabalhados}x${m.dias_folga}</span></td>
+                <td>${tipoBadge}</td>
+                <td class="text-center">${fdsBadge}</td>
+                <td class="small text-muted" style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${m.observacao || '—'}</td>
                 ${acoes}
             `;
             tbody.appendChild(tr);
         });
     }
 
-    function abrirModalModeloEscala() {
-        document.getElementById('modeloId').value = '';
-        document.getElementById('modeloNome').value = '';
-        document.getElementById('modeloTrabalho').value = '5';
-        document.getElementById('modeloFolga').value = '2';
-        document.getElementById('modeloTipo').value = 'fixa';
-        document.getElementById('modeloFDS').value = 'true';
-        document.getElementById('modeloObs').value = '';
-        document.getElementById('modeloModalTitle').innerText = 'Novo Modelo de Escala';
-        validarTipoEscala();
-        
-        const modal = document.getElementById('modeloEscalaModal');
-        modal.classList.add('show');
-        document.body.style.overflow = 'hidden';
+    function renderPaginacaoModelos(total) {
+        const ul = document.getElementById('modelosPaginationControles');
+        if (!ul) return;
+        ul.innerHTML = '';
+
+        const prev = document.createElement('li');
+        prev.className = `page-item ${currentPageModelos === 1 ? 'disabled' : ''}`;
+        prev.innerHTML = `<button class="page-link shadow-none" style="border-radius: 6px;">‹</button>`;
+        prev.onclick = () => { if (currentPageModelos > 1) { currentPageModelos--; renderModelos(); } };
+        ul.appendChild(prev);
+
+        for (let p = 1; p <= total; p++) {
+            const li = document.createElement('li');
+            li.className = `page-item ${p === currentPageModelos ? 'active' : ''}`;
+            li.innerHTML = `<button class="page-link shadow-none" style="border-radius: 6px;">${p}</button>`;
+            const pg = p;
+            li.onclick = () => { currentPageModelos = pg; renderModelos(); };
+            ul.appendChild(li);
+        }
+
+        const next = document.createElement('li');
+        next.className = `page-item ${currentPageModelos === total ? 'disabled' : ''}`;
+        next.innerHTML = `<button class="page-link shadow-none" style="border-radius: 6px;">›</button>`;
+        next.onclick = () => { if (currentPageModelos < total) { currentPageModelos++; renderModelos(); } };
+        ul.appendChild(next);
     }
 
-    function fecharModalModeloEscala() {
-        const modal = document.getElementById('modeloEscalaModal');
-        modal.classList.remove('show');
-        document.body.style.overflow = '';
+    function showModeloForm(modelo = null) {
+        document.getElementById('modelosListState').style.display = 'none';
+        document.getElementById('modeloFormState').style.display = 'block';
+        
+        // Reset or fill fields
+        document.getElementById('modeloId').value = modelo ? modelo.id : '';
+        document.getElementById('formModeloNome').value = modelo ? modelo.nome : '';
+        document.getElementById('formModeloTrabalho').value = modelo ? modelo.dias_trabalhados : '5';
+        document.getElementById('formModeloFolga').value = modelo ? modelo.dias_folga : '2';
+        document.getElementById('formModeloTipo').value = modelo ? modelo.tipo : 'fixa';
+        document.getElementById('formModeloFDS').value = modelo ? modelo.permite_fim_de_semana.toString() : 'true';
+        document.getElementById('formModeloObs').value = modelo ? (modelo.observacao || '') : '';
+        
+        document.getElementById('formModeloTitle').innerText = modelo ? 'Editar Modelo de Escala' : 'Novo Modelo de Escala';
+        
+        // Reset tabs
+        const tabEl = document.querySelector('#modeloTabs button[data-bs-target="#tab-geral"]');
+        if (tabEl) bootstrap.Tab.getInstance(tabEl)?.show() || new bootstrap.Tab(tabEl).show();
+        
+        validarTipoEscalaForm();
+        updatePreviewCycle();
+    }
+
+    function hideModeloForm() {
+        document.getElementById('modelosListState').style.display = 'block';
+        document.getElementById('modeloFormState').style.display = 'none';
+        renderModelos(); // Garantir que a lista esteja atualizada
+    }
+
+    function validarTipoEscalaForm() {
+        const trab = parseInt(document.getElementById('formModeloTrabalho').value);
+        const folga = parseInt(document.getElementById('formModeloFolga').value);
+        const tipo = document.getElementById('formModeloTipo');
+        const help = document.getElementById('formModeloTipoHelp');
+
+        if (trab === 6 && folga === 1) {
+            tipo.value = 'fixa';
+            tipo.disabled = true;
+            help.classList.remove('d-none');
+        } else {
+            tipo.disabled = false;
+            help.classList.add('d-none');
+        }
+        updatePreviewCycle();
+    }
+
+    function updatePreviewCycle() {
+        const trab = parseInt(document.getElementById('formModeloTrabalho').value) || 0;
+        const folga = parseInt(document.getElementById('formModeloFolga').value) || 0;
+        const cycle = trab + folga;
+        if (cycle === 0) return;
+
+        const tbody = document.getElementById('cyclePreviewTbody');
+        tbody.innerHTML = '';
+
+        let dayCounter = 1;
+        let cycleCounter = 0;
+
+        for (let w = 0; w < 5; w++) {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td class="bg-light fw-bold text-muted small">Semana ${w + 1}</td>`;
+            
+            for (let d = 0; d < 7; d++) {
+                if (dayCounter > 31) {
+                    tr.innerHTML += `<td class="bg-light"></td>`;
+                    continue;
+                }
+
+                const isWork = (cycleCounter % cycle) < trab;
+                const color = isWork ? '#dcfce7' : '#fee2e2';
+                const border = isWork ? '#16a34a' : '#dc2626';
+                const textColor = isWork ? '#166534' : '#991b1b';
+                
+                tr.innerHTML += `
+                    <td style="background: ${color}; border: 1px solid ${border}; color: ${textColor}; height: 50px; transition: all 0.2s;">
+                        <div class="fw-bold">${dayCounter}</div>
+                        <div style="font-size: 0.65rem; font-weight: 800; opacity: 0.8;">${isWork ? 'TRABALHO' : 'FOLGA'}</div>
+                    </td>
+                `;
+                
+                dayCounter++;
+                cycleCounter++;
+            }
+            tbody.appendChild(tr);
+        }
     }
 
     function editarModelo(id) {
         const modelo = modelos.find(m => m.id === id);
         if (!modelo) return;
-        
-        document.getElementById('modeloId').value = modelo.id;
-        document.getElementById('modeloNome').value = modelo.nome;
-        document.getElementById('modeloTrabalho').value = modelo.dias_trabalhados;
-        document.getElementById('modeloFolga').value = modelo.dias_folga;
-        document.getElementById('modeloTipo').value = modelo.tipo;
-        document.getElementById('modeloFDS').value = modelo.permite_fim_de_semana ? 'true' : 'false';
-        document.getElementById('modeloObs').value = modelo.observacao || '';
-        document.getElementById('modeloModalTitle').innerText = 'Editar Modelo de Escala';
-        validarTipoEscala();
-        
-        const modal = document.getElementById('modeloEscalaModal');
-        modal.classList.add('show');
-        document.body.style.overflow = 'hidden';
+        showModeloForm(modelo);
     }
 
     function validarTipoEscala() {
@@ -1940,14 +2135,13 @@
     }
 
     function salvarModeloEscala() {
-        const btn = document.getElementById('btnSalvarModelo');
         const id = document.getElementById('modeloId').value;
-        const nome = document.getElementById('modeloNome').value.trim();
-        const trab = parseInt(document.getElementById('modeloTrabalho').value);
-        const folga = parseInt(document.getElementById('modeloFolga').value);
-        const tipo = document.getElementById('modeloTipo').value;
-        const fds = document.getElementById('modeloFDS').value === 'true';
-        const obs = document.getElementById('modeloObs').value.trim();
+        const nome = document.getElementById('formModeloNome').value.trim();
+        const trab = parseInt(document.getElementById('formModeloTrabalho').value);
+        const folga = parseInt(document.getElementById('formModeloFolga').value);
+        const tipo = document.getElementById('formModeloTipo').value;
+        const fds = document.getElementById('formModeloFDS').value === 'true';
+        const obs = document.getElementById('formModeloObs').value.trim();
 
         if (!nome) {
             showToast('O nome do modelo é obrigatório.', 'error');
@@ -1969,9 +2163,6 @@
             observacao: obs
         };
 
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Salvando...';
-
         fetch('/api/escala/modelos/save/', {
             method: 'POST',
             headers: {
@@ -1992,19 +2183,13 @@
                 modelos.push(data);
             }
             
-            // Reordenar por nome
             modelos.sort((a, b) => a.nome.localeCompare(b.nome));
             
-            fecharModalModeloEscala();
-            renderModelos();
+            hideModeloForm();
             showToast('Modelo de escala salvo com sucesso!', 'success');
         })
         .catch(error => {
             showToast(error.message, 'error');
-        })
-        .finally(() => {
-            btn.disabled = false;
-            btn.innerHTML = 'Salvar Modelo';
         });
     }
 
