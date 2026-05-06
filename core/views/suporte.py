@@ -93,7 +93,12 @@ def escala_view(request):
     
     is_planejamento_mode = request.resolver_match.url_name == 'planejamento_escala'
     is_config_mode = request.resolver_match.url_name == 'configuracao_escalas'
-    
+
+    # Segurança: Apenas gestores e administradores acessam planejamento e configuração
+    if (is_planejamento_mode or is_config_mode) and not (user.is_gestor() or user.is_administrador()):
+        messages.error(request, 'Você não tem permissão para acessar esta área da escala.')
+        return redirect('escala')
+
     modelos = ModeloEscala.objects.all().order_by('nome')
     modelos_data = [{
         'id': m.id,

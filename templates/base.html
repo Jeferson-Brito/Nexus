@@ -232,6 +232,7 @@
                         <i class="bi bi-calendar3"></i>
                         <span class="link-text">Escala</span>
                     </a>
+                    {% if request.user.is_gestor or request.user.is_administrador %}
                     <a href="{% url 'planejamento_escala' %}"
                         class="nav-link sub-link {% if request.resolver_match.url_name == 'planejamento_escala' %}active{% endif %}"
                         title="Planejamento de Escala">
@@ -244,6 +245,7 @@
                         <i class="bi bi-gear"></i>
                         <span class="link-text">Configuração de Escalas</span>
                     </a>
+                    {% endif %}
                 </div>
             </div>
 
@@ -451,6 +453,7 @@
                         <i class="bi bi-calendar3"></i>
                         <span class="link-text">Escala</span>
                     </a>
+                    {% if request.user.is_gestor or request.user.is_administrador %}
                     <a href="{% url 'planejamento_escala' %}"
                         class="nav-link sub-link {% if request.resolver_match.url_name == 'planejamento_escala' %}active{% endif %}"
                         title="Planejamento de Escala">
@@ -463,6 +466,7 @@
                         <i class="bi bi-gear"></i>
                         <span class="link-text">Configuração de Escalas</span>
                     </a>
+                    {% endif %}
                 </div>
             </div>
 
@@ -628,6 +632,7 @@
                         <i class="bi bi-calendar3"></i>
                         <span class="link-text">Escala</span>
                     </a>
+                    {% if request.user.is_gestor or request.user.is_administrador %}
                     <a href="{% url 'planejamento_escala' %}"
                         class="nav-link sub-link {% if request.resolver_match.url_name == 'planejamento_escala' %}active{% endif %}"
                         title="Planejamento de Escala">
@@ -640,6 +645,7 @@
                         <i class="bi bi-gear"></i>
                         <span class="link-text">Configuração de Escalas</span>
                     </a>
+                    {% endif %}
                 </div>
             </div>
             <a href="{% url 'tasks_view' %}"
