@@ -2212,7 +2212,7 @@
                     const response = await fetch('/api/escala/folgas/save/', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-                        body: JSON.stringify(data)
+                        body: JSON.stringify({ ...data, rascunho_id: rascunhoId })
                     });
 
                     const result = await response.json();
@@ -2702,10 +2702,11 @@
     }
 
     function salvarRascunho() {
-        // O rascunho já é salvo automaticamente nas alterações de células/analistas.
-        // Apenas informamos o usuário e voltamos para a visualização principal.
-        alert('Rascunho salvo com sucesso!');
-        window.location.href = window.location.pathname;
+        // As alterações de células, analistas e turnos já são persistidas
+        // automaticamente no banco a cada ação. Este botão apenas confirma
+        // ao usuário que está tudo salvo e o mantém no rascunho atual.
+        alert('Rascunho salvo com sucesso! Todas as alterações estão registradas.');
+        // Permanecer no rascunho atual (não remover o rascunho_id da URL)
     }
 
     async function excluirRascunhoAtual() {
