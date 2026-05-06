@@ -850,16 +850,29 @@
 
                             <div class="row g-4 mb-4">
                                 <div class="col-md-6">
-                                    <label class="form-label fw-bold small text-muted text-uppercase">Nome do Modelo *</label>
-                                    <input type="text" id="formModeloNome" class="form-control form-control-lg" placeholder="Ex: Jornada 5x2 Administrativa" style="border-radius: 10px;">
+                                    <label class="form-label fw-bold small text-muted text-uppercase">Modelo de Jornada *</label>
+                                    <select id="formModeloRegra" class="form-select form-select-lg" onchange="updateJornadaValues()" style="border-radius: 10px;">
+                                        <option value="5x2">5x2 (5 Trabalha / 2 Folga)</option>
+                                        <option value="6x1">6x1 (6 Trabalha / 1 Folga)</option>
+                                        <option value="6x2">6x2 (6 Trabalha / 2 Folga)</option>
+                                        <option value="4x2">4x2 (4 Trabalha / 2 Folga)</option>
+                                        <option value="12x36">12x36 (1 Trabalha / 1 Folga)</option>
+                                        <option value="24x72">24x72 (1 Trabalha / 3 Folga)</option>
+                                        <option value="custom">Personalizado...</option>
+                                    </select>
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-3" id="colTrabalho" style="display: none;">
                                     <label class="form-label fw-bold small text-muted text-uppercase">Dias de Trabalho *</label>
                                     <input type="number" id="formModeloTrabalho" class="form-control form-control-lg" value="5" min="1" oninput="updatePreviewCycle()" style="border-radius: 10px;">
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-3" id="colFolga" style="display: none;">
                                     <label class="form-label fw-bold small text-muted text-uppercase">Dias de Folga *</label>
                                     <input type="number" id="formModeloFolga" class="form-control form-control-lg" value="2" min="1" oninput="updatePreviewCycle()" style="border-radius: 10px;">
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold small text-muted text-uppercase">Nome do Modelo *</label>
+                                    <input type="text" id="formModeloNome" class="form-control form-control-lg" placeholder="Ex: Jornada 5x2 Administrativa" style="border-radius: 10px;">
                                 </div>
                                 
                                 <div class="col-md-4">
@@ -2024,8 +2037,25 @@
         // Reset or fill fields
         document.getElementById('modeloId').value = modelo ? modelo.id : '';
         document.getElementById('formModeloNome').value = modelo ? modelo.nome : '';
-        document.getElementById('formModeloTrabalho').value = modelo ? modelo.dias_trabalhados : '5';
-        document.getElementById('formModeloFolga').value = modelo ? modelo.dias_folga : '2';
+        
+        const trab = modelo ? modelo.dias_trabalhados : 5;
+        const folga = modelo ? modelo.dias_folga : 2;
+        document.getElementById('formModeloTrabalho').value = trab;
+        document.getElementById('formModeloFolga').value = folga;
+        
+        // Determinar regra no dropdown
+        const regraVal = `${trab}x${folga}`;
+        const selectRegra = document.getElementById('formModeloRegra');
+        let found = false;
+        for (let i = 0; i < selectRegra.options.length; i++) {
+            if (selectRegra.options[i].value === regraVal) {
+                selectRegra.value = regraVal;
+                found = true;
+                break;
+            }
+        }
+        if (!found) selectRegra.value = 'custom';
+        
         document.getElementById('formModeloTipo').value = modelo ? modelo.tipo : 'fixa';
         document.getElementById('formModeloFDS').value = modelo ? modelo.permite_fim_de_semana.toString() : 'true';
         document.getElementById('formModeloObs').value = modelo ? (modelo.observacao || '') : '';
@@ -2036,7 +2066,36 @@
         const tabEl = document.querySelector('#modeloTabs button[data-bs-target="#tab-geral"]');
         if (tabEl) bootstrap.Tab.getInstance(tabEl)?.show() || new bootstrap.Tab(tabEl).show();
         
+        updateJornadaValues(); 
         validarTipoEscalaForm();
+        updatePreviewCycle();
+    }
+
+    function updateJornadaValues() {
+        const regra = document.getElementById('formModeloRegra').value;
+        const colTrab = document.getElementById('colTrabalho');
+        const colFolga = document.getElementById('colFolga');
+        const inputTrab = document.getElementById('formModeloTrabalho');
+        const inputFolga = document.getElementById('formModeloFolga');
+        const selectTipo = document.getElementById('formModeloTipo');
+
+        if (regra === 'custom') {
+            colTrab.style.display = 'block';
+            colFolga.style.display = 'block';
+        } else {
+            colTrab.style.display = 'none';
+            colFolga.style.display = 'none';
+            const [t, f] = regra.split('x').map(Number);
+            inputTrab.value = t;
+            inputFolga.value = f;
+            
+            // Sugestão de tipo para jornadas específicas
+            if (regra === '12x36' || regra === '24x72') {
+                selectTipo.value = 'rotativa';
+            } else if (regra === '6x1' || regra === '5x2') {
+                selectTipo.value = 'fixa';
+            }
+        }
         updatePreviewCycle();
     }
 
