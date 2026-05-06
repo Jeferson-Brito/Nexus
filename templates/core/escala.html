@@ -1217,6 +1217,7 @@
     let folgasManuais = {{ folgas_json| safe }};
     const isAdmin = {{ is_admin_json }};
     const csrfToken = '{{ csrf_token }}';
+    const rascunhoId = {% if rascunho_id %}{{ rascunho_id }}{% else %}null{% endif %};
 
     // ========================================
     // INICIALIZAÇÃO
@@ -2472,7 +2473,6 @@
     // GESTÃO DE RASCUNHOS
     // ========================================
     async function carregarRascunhos() {
-        if (!isAdmin) return;
         try {
             const res = await fetch('/api/escala/rascunhos/');
             const rascunhos = await res.json();
