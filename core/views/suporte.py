@@ -13,7 +13,7 @@ from ..models import (
     IndicadorDesempenho, MetaMensalGlobal, KanbanBoard, 
     KanbanList, CardLabel, Store, StoreAudit, 
     StoreAuditIssue, StoreAuditItem, SystemNotification,
-    User, DailyAuditQuota
+    User, DailyAuditQuota, ModeloEscala, ConfiguracaoEscala
 )
 from ..forms import StoreForm
 
@@ -51,11 +51,11 @@ def escala_view(request):
     if rascunho_id:
         rascunho_obj = get_object_or_404(EscalaRascunho, id=rascunho_id)
         turnos = Turno.objects.filter(ativo=True, rascunho=rascunho_obj).order_by('ordem', 'nome')
-        analistas = AnalistaEscala.objects.filter(ativo=True, rascunho=rascunho_obj).select_related('turno').order_by('turno__ordem', 'ordem', 'nome')
+        analistas = AnalistaEscala.objects.filter(ativo=True, rascunho=rascunho_obj).select_related('turno', 'modelo_escala').order_by('turno__ordem', 'ordem', 'nome')
         folgas = FolgaManual.objects.filter(rascunho=rascunho_obj).select_related('analista')
     else:
         turnos = Turno.objects.filter(ativo=True, rascunho__isnull=True).order_by('ordem', 'nome')
-        analistas = AnalistaEscala.objects.filter(ativo=True, rascunho__isnull=True).select_related('turno').order_by('turno__ordem', 'ordem', 'nome')
+        analistas = AnalistaEscala.objects.filter(ativo=True, rascunho__isnull=True).select_related('turno', 'modelo_escala').order_by('turno__ordem', 'ordem', 'nome')
         folgas = FolgaManual.objects.filter(rascunho__isnull=True).select_related('analista')
     
     turnos_data = [{
@@ -71,6 +71,7 @@ def escala_view(request):
         'nome': a.nome,
         'turno': a.turno.nome if a.turno else None,
         'turno_id': a.turno.id if a.turno else None,
+        'modelo_escala_id': a.modelo_escala.id if a.modelo_escala else None,
         'pausa': a.pausa,
         'data_primeira_folga': a.data_primeira_folga.isoformat() if a.data_primeira_folga else None,
         'ordem': a.ordem
@@ -91,18 +92,37 @@ def escala_view(request):
     can_export = is_admin or (user.department and user.department.name == 'RH')
     
     is_planejamento_mode = request.resolver_match.url_name == 'planejamento_escala'
+    is_config_mode = request.resolver_match.url_name == 'configuracao_escalas'
     
+    modelos = ModeloEscala.objects.all().order_by('nome')
+    modelos_data = [{
+        'id': m.id,
+        'nome': m.nome,
+        'dias_trabalhados': m.dias_trabalhados,
+        'dias_folga': m.dias_folga,
+        'tipo': m.tipo,
+        'permite_fim_de_semana': m.permite_fim_de_semana,
+        'observacao': m.observacao
+    } for m in modelos]
+    
+    config = ConfiguracaoEscala.objects.first()
+    modelo_principal_id = config.modelo_escala_principal.id if config and config.modelo_escala_principal else None
+
     context = {
         'turnos_json': json.dumps(turnos_data),
         'analistas_json': json.dumps(analistas_data),
         'folgas_json': json.dumps(folgas_data),
+        'modelos_json': json.dumps(modelos_data),
+        'modelo_principal_id': modelo_principal_id,
         'is_admin': is_admin,
         'is_admin_json': 'true' if is_admin else 'false',
         'can_export': can_export,
         'is_rascunho': rascunho_obj is not None,
         'rascunho_id': str(rascunho_obj.id) if rascunho_obj else None,
+        'rascunho_modelo_id': str(rascunho_obj.modelo_escala.id) if rascunho_obj and rascunho_obj.modelo_escala else None,
         'rascunho_nome': rascunho_obj.nome if rascunho_obj else None,
         'is_planejamento_mode': is_planejamento_mode,
+        'is_config_mode': is_config_mode,
     }
     
     return render(request, 'core/escala.html', context)

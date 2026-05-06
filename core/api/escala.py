@@ -6,7 +6,7 @@ from django.shortcuts import get_object_or_404
 import json
 from datetime import datetime
 
-from ..models import Turno, AnalistaEscala, FolgaManual, EscalaRascunho
+from ..models import Turno, AnalistaEscala, FolgaManual, EscalaRascunho, ModeloEscala, ConfiguracaoEscala
 from django.contrib.auth import authenticate
 
 
@@ -28,6 +28,74 @@ def check_nrs_permission(view_func):
         return view_func(request, *args, **kwargs)
     return _wrapped_view
 
+
+# ========================================
+# API VIEWS PARA MODELOS DE ESCALA
+# ========================================
+@login_required
+@check_nrs_permission
+def api_modelos_escala_list(request):
+    """Lista todos os modelos de escala"""
+    modelos = ModeloEscala.objects.all().order_by('nome')
+    data = [{
+        'id': str(m.id),
+        'nome': m.nome,
+        'dias_trabalhados': m.dias_trabalhados,
+        'dias_folga': m.dias_folga,
+        'tipo': m.tipo,
+        'permite_fim_de_semana': m.permite_fim_de_semana,
+        'observacao': m.observacao
+    } for m in modelos]
+    return JsonResponse(data, safe=False)
+
+@login_required
+@require_http_methods(["POST"])
+@check_nrs_permission
+def api_modelo_escala_save(request):
+    """Cria ou atualiza um modelo de escala"""
+    try:
+        data = json.loads(request.body)
+        modelo_id = data.get('id')
+        
+        # Validação 6x1 não pode ser rotativa
+        if int(data.get('dias_trabalhados', 5)) == 6 and int(data.get('dias_folga', 1)) == 1 and data.get('tipo') == 'rotativa':
+            return JsonResponse({'error': 'Escalas 6x1 não podem ser rotativas devido a regras de descanso semanal.'}, status=400)
+
+        if modelo_id:
+            modelo = get_object_or_404(ModeloEscala, pk=modelo_id)
+            modelo.nome = data.get('nome', modelo.nome)
+            modelo.dias_trabalhados = data.get('dias_trabalhados', modelo.dias_trabalhados)
+            modelo.dias_folga = data.get('dias_folga', modelo.dias_folga)
+            modelo.tipo = data.get('tipo', modelo.tipo)
+            modelo.permite_fim_de_semana = data.get('permite_fim_de_semana', modelo.permite_fim_de_semana)
+            modelo.observacao = data.get('observacao', modelo.observacao)
+            modelo.save()
+        else:
+            modelo = ModeloEscala.objects.create(
+                nome=data.get('nome', ''),
+                dias_trabalhados=data.get('dias_trabalhados', 5),
+                dias_folga=data.get('dias_folga', 2),
+                tipo=data.get('tipo', 'fixa'),
+                permite_fim_de_semana=data.get('permite_fim_de_semana', True),
+                observacao=data.get('observacao', '')
+            )
+            
+        return JsonResponse({'success': True, 'id': str(modelo.id)})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+@login_required
+@require_http_methods(["DELETE"])
+@check_nrs_permission
+def api_modelo_escala_delete(request, pk):
+    """Exclui um modelo de escala"""
+    modelo = get_object_or_404(ModeloEscala, pk=pk)
+    # Check if it is being used
+    if modelo.rascunhos.exists() or modelo.analistas.exists() or ConfiguracaoEscala.objects.filter(modelo_escala_principal=modelo).exists():
+        return JsonResponse({'error': 'Não é possível excluir um modelo que está em uso por uma escala ou analista.'}, status=400)
+    
+    modelo.delete()
+    return JsonResponse({'success': True})
 
 # ========================================
 # API VIEWS PARA ESCALA NRS
@@ -132,6 +200,7 @@ def api_analistas_list(request):
         'nome': a.nome,
         'turno': a.turno.nome if a.turno else None,
         'turno_id': str(a.turno.id) if a.turno else None,
+        'modelo_escala_id': str(a.modelo_escala.id) if a.modelo_escala else None,
         'pausa': a.pausa,
         'data_primeira_folga': a.data_primeira_folga.isoformat() if a.data_primeira_folga else None,
         'ordem': a.ordem
@@ -159,9 +228,14 @@ def api_analista_create(request):
         if data.get('data_primeira_folga'):
             data_folga = datetime.strptime(data['data_primeira_folga'], '%Y-%m-%d').date()
         
+        modelo_escala = None
+        if data.get('modelo_escala_id'):
+            modelo_escala = ModeloEscala.objects.filter(id=data['modelo_escala_id']).first()
+
         analista = AnalistaEscala.objects.create(
             nome=data.get('nome', ''),
             turno=turno,
+            modelo_escala=modelo_escala,
             pausa=data.get('pausa', ''),
             data_primeira_folga=data_folga,
             ordem=data.get('ordem', 0),
@@ -172,6 +246,7 @@ def api_analista_create(request):
             'nome': analista.nome,
             'turno': analista.turno.nome if analista.turno else None,
             'turno_id': str(analista.turno.id) if analista.turno else None,
+            'modelo_escala_id': str(analista.modelo_escala.id) if analista.modelo_escala else None,
             'pausa': analista.pausa,
             'data_primeira_folga': analista.data_primeira_folga.isoformat() if analista.data_primeira_folga else None,
             'ordem': analista.ordem
@@ -199,6 +274,12 @@ def api_analista_detail(request, pk):
             elif data.get('turno'):
                 analista.turno = Turno.objects.filter(nome=data['turno']).first()
             
+            if 'modelo_escala_id' in data:
+                if data['modelo_escala_id']:
+                    analista.modelo_escala = ModeloEscala.objects.filter(id=data['modelo_escala_id']).first()
+                else:
+                    analista.modelo_escala = None
+            
             if data.get('data_primeira_folga'):
                 analista.data_primeira_folga = datetime.strptime(data['data_primeira_folga'], '%Y-%m-%d').date()
             
@@ -208,6 +289,7 @@ def api_analista_detail(request, pk):
                 'nome': analista.nome,
                 'turno': analista.turno.nome if analista.turno else None,
                 'turno_id': str(analista.turno.id) if analista.turno else None,
+                'modelo_escala_id': str(analista.modelo_escala.id) if analista.modelo_escala else None,
                 'pausa': analista.pausa,
                 'data_primeira_folga': analista.data_primeira_folga.isoformat() if analista.data_primeira_folga else None,
                 'ordem': analista.ordem
@@ -382,8 +464,13 @@ def api_rascunho_create(request):
         nome = data.get('nome', f'Rascunho {datetime.now().strftime("%d/%m %H:%M")}')
         tipo = data.get('tipo', 'copia')        # 'em_branco' ou 'copia'
         fonte_id = data.get('fonte_id', 'principal')  # 'principal' ou ID numérico de um rascunho
+        modelo_escala_id = data.get('modelo_escala_id')
 
-        rascunho = EscalaRascunho.objects.create(nome=nome, autor=request.user)
+        modelo_escala = None
+        if modelo_escala_id:
+            modelo_escala = get_object_or_404(ModeloEscala, pk=modelo_escala_id)
+
+        rascunho = EscalaRascunho.objects.create(nome=nome, autor=request.user, modelo_escala=modelo_escala)
 
         if tipo == 'em_branco':
             # --- MODO EM BRANCO ---
@@ -534,6 +621,11 @@ def api_rascunho_publish(request, pk):
         Turno.objects.filter(rascunho=rascunho).update(rascunho=None)
         AnalistaEscala.objects.filter(rascunho=rascunho).update(rascunho=None)
         FolgaManual.objects.filter(rascunho=rascunho).update(rascunho=None)
+
+        # Salvar o modelo_escala do rascunho na configuração principal
+        config, created = ConfiguracaoEscala.objects.get_or_create(id=1)
+        config.modelo_escala_principal = rascunho.modelo_escala
+        config.save()
         
         # Excluir o objeto rascunho (que agora está vazio)
         rascunho.delete()

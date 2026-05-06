@@ -289,10 +289,49 @@ class AuditLog(models.Model):
 # MODELOS PARA ESCALA NRS SUPORTE
 # ========================================
 
+class ModeloEscala(models.Model):
+    """Regras de jornada (ex: 5x2, 6x1, 12x36) utilizadas dinamicamente"""
+    TIPO_CHOICES = [
+        ('fixa', 'Fixa'),
+        ('rotativa', 'Rotativa'),
+    ]
+
+    nome = models.CharField(max_length=100)
+    dias_trabalhados = models.IntegerField(default=5)
+    dias_folga = models.IntegerField(default=2)
+    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, default='fixa')
+    permite_fim_de_semana = models.BooleanField(default=True, verbose_name="Permitir Finais de Semana")
+    observacao = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['nome']
+        verbose_name = 'Modelo de Escala'
+        verbose_name_plural = 'Modelos de Escala'
+
+    def __str__(self):
+        return f"{self.nome} ({self.dias_trabalhados}x{self.dias_folga} - {self.get_tipo_display()})"
+
+
+class ConfiguracaoEscala(models.Model):
+    """Singleton para armazenar configurações da Escala Principal"""
+    modelo_escala_principal = models.ForeignKey(ModeloEscala, on_delete=models.SET_NULL, null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Configuração de Escala'
+        verbose_name_plural = 'Configurações de Escala'
+
+    def __str__(self):
+        return "Configuração Principal do Sistema"
+
+
 class EscalaRascunho(models.Model):
     """Rascunhos/Simulações de escala independentes da escala principal"""
     nome = models.CharField(max_length=100)
     autor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='rascunhos_escala')
+    modelo_escala = models.ForeignKey(ModeloEscala, on_delete=models.SET_NULL, null=True, blank=True, related_name='rascunhos')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -328,6 +367,7 @@ class AnalistaEscala(models.Model):
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='escala_perfis')
     nome = models.CharField(max_length=200)
     turno = models.ForeignKey(Turno, on_delete=models.SET_NULL, null=True, blank=True, related_name='analistas')
+    modelo_escala = models.ForeignKey(ModeloEscala, on_delete=models.SET_NULL, null=True, blank=True, related_name='analistas', help_text="Override do modelo de escala do rascunho/principal")
     pausa = models.CharField(max_length=50, blank=True)  # Ex: "01:00 - 02:00"
     data_primeira_folga = models.DateField(null=True, blank=True)  # Data da primeira folga no ciclo 6x2
     ordem = models.IntegerField(default=0)

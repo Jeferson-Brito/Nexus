@@ -61,6 +61,7 @@ urlpatterns = [
     # NRS Suporte - Abas implementadas
     path('escala/', views.escala_view, name='escala'),
     path('planejamento-escala/', views.escala_view, name='planejamento_escala'),
+    path('configuracao-escalas/', views.escala_view, name='configuracao_escalas'),
     path('sites/', views.sites_view, name='sites'),
     path('localizacao-lojas/', views.localizacao_view, name='localizacao'),
     path('verificacao-lojas/', views.verificacao_lojas, name='verificacao_lojas'),
@@ -169,6 +170,10 @@ urlpatterns = [
         'page_name': 'Acompanhamento de Onboarding',
         'description': 'Checklist interativo para garantir que todos os novos colaboradores recebam equipamentos, acessos e treinamentos necessários.'
     }, name='rh_onboarding'),
+    # API Modelos Escala
+    path('api/escala/modelos/', api_escala.api_modelos_escala_list, name='api_modelos_escala_list'),
+    path('api/escala/modelos/save/', api_escala.api_modelo_escala_save, name='api_modelo_escala_save'),
+    path('api/escala/modelos/<int:pk>/delete/', api_escala.api_modelo_escala_delete, name='api_modelo_escala_delete'),
     
     # API Escala NRS
     path('api/escala/turnos/', api_escala.api_turnos_list, name='api_turnos_list'),

@@ -238,6 +238,12 @@
                         <i class="bi bi-calendar2-plus"></i>
                         <span class="link-text">Planejamento de Escala</span>
                     </a>
+                    <a href="{% url 'configuracao_escalas' %}"
+                        class="nav-link sub-link {% if request.resolver_match.url_name == 'configuracao_escalas' %}active{% endif %}"
+                        title="Configuração de Escalas">
+                        <i class="bi bi-gear"></i>
+                        <span class="link-text">Configuração de Escalas</span>
+                    </a>
                 </div>
             </div>
 
@@ -451,6 +457,12 @@
                         <i class="bi bi-calendar2-plus"></i>
                         <span class="link-text">Planejamento de Escala</span>
                     </a>
+                    <a href="{% url 'configuracao_escalas' %}"
+                        class="nav-link sub-link {% if request.resolver_match.url_name == 'configuracao_escalas' %}active{% endif %}"
+                        title="Configuração de Escalas">
+                        <i class="bi bi-gear"></i>
+                        <span class="link-text">Configuração de Escalas</span>
+                    </a>
                 </div>
             </div>
 
@@ -621,6 +633,12 @@
                         title="Planejamento de Escala">
                         <i class="bi bi-calendar2-plus"></i>
                         <span class="link-text">Planejamento de Escala</span>
+                    </a>
+                    <a href="{% url 'configuracao_escalas' %}"
+                        class="nav-link sub-link {% if request.resolver_match.url_name == 'configuracao_escalas' %}active{% endif %}"
+                        title="Configuração de Escalas">
+                        <i class="bi bi-gear"></i>
+                        <span class="link-text">Configuração de Escalas</span>
                     </a>
                 </div>
             </div>

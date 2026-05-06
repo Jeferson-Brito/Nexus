@@ -723,7 +723,99 @@
 
 {% block content %}
 <div class="app-escala">
-    {% if is_planejamento_mode %}
+    {% if is_config_mode %}
+    <!-- CABEÇALHO MODO CONFIGURAÇÃO -->
+    <div class="page-header-escala">
+        <div class="page-title-section">
+            <h1 class="page-title"><i class="fa-solid fa-gear text-primary"></i> Configuração de Escalas</h1>
+            <p style="color: #64748b; margin-top: 5px; font-size: 0.95rem;">Cadastre e gerencie as regras e modelos de jornada de trabalho utilizadas no sistema.</p>
+        </div>
+        <div class="page-actions">
+            {% if is_admin %}
+            <button class="btn-escala primary" onclick="abrirModalModeloEscala()">
+                <i class="fa-solid fa-plus"></i> Novo Modelo
+            </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="table-wrap">
+        <table class="escala-table" id="modelosTable">
+            <thead>
+                <tr>
+                    <th style="width: 25%">Nome do Modelo</th>
+                    <th style="width: 15%">Jornada</th>
+                    <th style="width: 15%">Tipo</th>
+                    <th style="width: 15%">Fins de Semana</th>
+                    <th style="width: 20%">Observações</th>
+                    {% if is_admin %}
+                    <th style="width: 10%">Ações</th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody id="modelosTableBody">
+                <!-- Preenchido via JS -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Modal Modelo Escala -->
+    <div class="custom-modal-overlay" id="modeloEscalaModal">
+        <div class="custom-modal" style="max-width: 600px;">
+            <div class="custom-modal-header">
+                <h3><i class="fa-solid fa-clock"></i> <span id="modeloModalTitle">Novo Modelo de Escala</span></h3>
+                <button class="close-btn" onclick="fecharModalModeloEscala()">&times;</button>
+            </div>
+            <div class="custom-modal-body text-start">
+                <input type="hidden" id="modeloId">
+                
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Nome do Modelo</label>
+                    <input type="text" id="modeloNome" class="form-control" placeholder="Ex: 5x2, 6x1 Diurno">
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <label class="form-label fw-bold">Dias Trabalhados</label>
+                        <input type="number" id="modeloTrabalho" class="form-control" value="5" min="1" onchange="validarTipoEscala()">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fw-bold">Dias de Folga</label>
+                        <input type="number" id="modeloFolga" class="form-control" value="2" min="1" onchange="validarTipoEscala()">
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <label class="form-label fw-bold">Tipo de Escala</label>
+                        <select id="modeloTipo" class="form-select" onchange="validarTipoEscala()">
+                            <option value="fixa">Fixa (Folgas fixas)</option>
+                            <option value="rotativa">Rotativa (Folgas avançam na semana)</option>
+                        </select>
+                        <small class="text-danger d-none mt-1 fw-bold" id="modeloTipoHelp" style="font-size: 0.8rem;">Escalas 6x1 não podem ser rotativas (limite trabalhista).</small>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fw-bold">Finais de Semana?</label>
+                        <select id="modeloFDS" class="form-select">
+                            <option value="true">Permitido</option>
+                            <option value="false">Não Permitido</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Observações</label>
+                    <textarea id="modeloObs" class="form-control" rows="2" placeholder="Opcional"></textarea>
+                </div>
+            </div>
+            <div class="custom-modal-footer">
+                <button class="btn btn-secondary" onclick="fecharModalModeloEscala()">Cancelar</button>
+                <button class="btn btn-primary" id="btnSalvarModelo" onclick="salvarModeloEscala()">Salvar Modelo</button>
+            </div>
+        </div>
+    </div>
+
+    {% elif is_planejamento_mode %}
     <!-- CABEÇALHO MODO SIMULAÇÃO (LABORATÓRIO) -->
     <div class="page-header-escala" style="background: linear-gradient(135deg, #1e293b, #0f172a); color: white; border: 1px solid #334155;">
         <div class="page-title-section">
@@ -1041,6 +1133,12 @@
                     <select id="analystShift" required></select>
                 </div>
                 <div class="form-group-escala">
+                    <label for="analystModeloEscala">Modelo de Jornada (Opcional)</label>
+                    <select id="analystModeloEscala">
+                        <option value="">(Usar Modelo Padrão da Escala)</option>
+                    </select>
+                </div>
+                <div class="form-group-escala">
                     <label class="d-block mb-2 font-weight-bold">Pausa</label>
                     <div class="row g-2">
                         <div class="col-6">
@@ -1228,72 +1326,83 @@
 
 <!-- Modal de Criar Simulação (Premium) -->
 <div class="modal-escala" id="createDraftModal">
-    <div class="modal-content-escala" style="max-width: 620px; width: 95%;">
+    <div class="modal-content-escala" style="max-width: 850px; width: 95%; border-radius: 20px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);">
         <!-- Header com gradiente especial -->
-        <div style="background: linear-gradient(135deg, #064e3b 0%, #065f46 60%, #047857 100%); padding: 32px 28px 24px; border-radius: 16px 16px 0 0; position: relative; text-align: center;">
-            <button class="modal-close" onclick="closeCreateDraftModal()" style="position:absolute; top:14px; right:14px; background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.2); color:white;">&times;</button>
-            <div style="width:64px; height:64px; background:linear-gradient(135deg,#10b981,#059669); border-radius:18px; display:inline-flex; align-items:center; justify-content:center; font-size:1.6rem; color:white; margin-bottom:14px; box-shadow:0 8px 24px rgba(16,185,129,0.35);">
+        <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 40px 30px; border-radius: 20px 20px 0 0; position: relative; text-align: center;">
+            <button class="modal-close" onclick="closeCreateDraftModal()" style="position:absolute; top:20px; right:20px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:white; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 10px;">&times;</button>
+            <div style="width:70px; height:70px; background:linear-gradient(135deg,#10b981,#059669); border-radius:20px; display:inline-flex; align-items:center; justify-content:center; font-size:1.8rem; color:white; margin-bottom:18px; box-shadow:0 10px 25px rgba(16,185,129,0.4);">
                 <i class="fa-solid fa-code-branch"></i>
             </div>
-            <h2 style="margin:0; color:white; font-size:1.5rem; font-weight:800; letter-spacing:-0.3px;">Nova Simulação</h2>
-            <p style="margin:6px 0 0; color:rgba(255,255,255,0.7); font-size:0.9rem;">Crie um ambiente isolado para testar alterações na escala</p>
+            <h2 style="margin:0; color:white; font-size:1.8rem; font-weight:800; letter-spacing:-0.5px;">Nova Simulação</h2>
+            <p style="margin:8px 0 0; color:rgba(255,255,255,0.6); font-size:1rem;">Crie um ambiente isolado para testar alterações na escala com total segurança</p>
         </div>
 
-        <div style="padding: 28px; background: #f8fafc;">
-            <!-- Nome -->
-            <div style="margin-bottom:20px;">
-                <label style="display:block; font-weight:700; color:#1e293b; margin-bottom:8px; font-size:0.85rem; text-transform:uppercase; letter-spacing:0.5px;">Nome da Simulação</label>
-                <input type="text" id="draftNameInput" placeholder="Ex: Teste Escala Junho" style="width:100%; padding:12px 16px; border-radius:10px; border:1.5px solid #e2e8f0; font-size:15px; box-sizing:border-box; transition:border 0.2s; background:white;" onfocus="this.style.borderColor='#10b981'" onblur="this.style.borderColor='#e2e8f0'" required>
-            </div>
+        <div style="padding: 35px; background: #ffffff;">
+            <div class="row g-4">
+                <!-- Coluna Esquerda: Dados Básicos -->
+                <div class="col-md-5" style="border-right: 1px solid #f1f5f9;">
+                    <div style="margin-bottom:25px; padding-right: 15px;">
+                        <label style="display:block; font-weight:700; color:#334155; margin-bottom:10px; font-size:0.85rem; text-transform:uppercase; letter-spacing:0.8px;">Identificação</label>
+                        <input type="text" id="draftNameInput" placeholder="Ex: Planejamento Verão 2024" style="width:100%; padding:14px 18px; border-radius:12px; border:2px solid #e2e8f0; font-size:16px; box-sizing:border-box; transition:all 0.3s; background:#f8fafc;" onfocus="this.style.borderColor='#10b981'; this.style.background='white'; this.style.boxShadow='0 0 0 4px rgba(16,185,129,0.1)'" onblur="this.style.borderColor='#e2e8f0'; this.style.background='#f8fafc'; this.style.boxShadow='none'" required>
+                    </div>
 
-            <!-- Tipo -->
-            <div style="margin-bottom:20px;">
-                <label style="display:block; font-weight:700; color:#1e293b; margin-bottom:12px; font-size:0.85rem; text-transform:uppercase; letter-spacing:0.5px;">Tipo de Simulação</label>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+                    <div style="margin-bottom:25px; padding-right: 15px;">
+                        <label style="display:block; font-weight:700; color:#334155; margin-bottom:10px; font-size:0.85rem; text-transform:uppercase; letter-spacing:0.8px;">Modelo de Jornada</label>
+                        <select id="draftModeloSelect" style="width:100%; padding:14px 18px; border-radius:12px; border:2px solid #e2e8f0; font-size:15px; background:#f8fafc; box-sizing:border-box; cursor:pointer; transition:all 0.3s;" onfocus="this.style.borderColor='#10b981'; this.style.background='white'" onblur="this.style.borderColor='#e2e8f0'; this.style.background='#f8fafc'">
+                            <!-- Preenchido via JS -->
+                        </select>
+                        <small style="display:block; margin-top:8px; color:#64748b; font-size:0.75rem; line-height: 1.4;">Define a regra automática (5x2, 6x1, etc) que servirá de base para esta simulação.</small>
+                    </div>
 
-                    <!-- Em Branco -->
-                    <label class="draft-type-card" id="cardEmBranco" onclick="selecionarTipoDraft('em_branco')" style="cursor:pointer; padding:20px 16px;">
-                        <input type="radio" name="draftTipo" value="em_branco" style="display:none;">
-                        <div style="width:56px; height:56px; background:linear-gradient(135deg,#f59e0b,#d97706); border-radius:16px; display:flex; align-items:center; justify-content:center; color:white; font-size:1.4rem; box-shadow:0 6px 16px rgba(245,158,11,0.3);">
-                            <i class="fa-solid fa-file-circle-plus"></i>
-                        </div>
-                        <div style="margin-top:4px;">
-                            <strong style="display:block; font-size:1rem; color:#1e293b; margin-bottom:5px;">Em Branco</strong>
-                            <span style="font-size:0.78rem; color:#64748b; line-height:1.4;">Nenhum turno criado. Analistas disponíveis para atribuição livre.</span>
-                        </div>
-                        <div class="draft-type-check" style="color:#f59e0b;"><i class="fa-solid fa-circle-check"></i></div>
-                    </label>
-
-                    <!-- Cópia -->
-                    <label class="draft-type-card draft-type-card--active" id="cardCopia" onclick="selecionarTipoDraft('copia')" style="cursor:pointer; padding:20px 16px;">
-                        <input type="radio" name="draftTipo" value="copia" checked style="display:none;">
-                        <div style="width:56px; height:56px; background:linear-gradient(135deg,#3b82f6,#1d4ed8); border-radius:16px; display:flex; align-items:center; justify-content:center; color:white; font-size:1.4rem; box-shadow:0 6px 16px rgba(59,130,246,0.3);">
-                            <i class="fa-solid fa-copy"></i>
-                        </div>
-                        <div style="margin-top:4px;">
-                            <strong style="display:block; font-size:1rem; color:#1e293b; margin-bottom:5px;">Cópia de Escala</strong>
-                            <span style="font-size:0.78rem; color:#64748b; line-height:1.4;">Duplica turnos, analistas e folgas de uma escala existente.</span>
-                        </div>
-                        <div class="draft-type-check"><i class="fa-solid fa-circle-check"></i></div>
-                    </label>
-
+                    <div id="draftFonteGroup" style="overflow:hidden; transition:all 0.4s ease; padding-right: 15px;">
+                        <label style="display:block; font-weight:700; color:#334155; margin-bottom:10px; font-size:0.85rem; text-transform:uppercase; letter-spacing:0.8px;">Origem dos Dados</label>
+                        <select id="draftFonteSelect" style="width:100%; padding:14px 18px; border-radius:12px; border:2px solid #e2e8f0; font-size:15px; background:#f8fafc; box-sizing:border-box; cursor:pointer;">
+                            <option value="principal">⭐ Escala Principal (ativa)</option>
+                        </select>
+                    </div>
                 </div>
-            </div>
 
-            <!-- Fonte (apenas no modo cópia) -->
-            <div id="draftFonteGroup" style="overflow:hidden; transition:max-height 0.35s ease, opacity 0.35s ease; max-height:110px; opacity:1;">
-                <label style="display:block; font-weight:700; color:#1e293b; margin-bottom:8px; font-size:0.85rem; text-transform:uppercase; letter-spacing:0.5px;">Copiar a partir de</label>
-                <select id="draftFonteSelect" style="width:100%; padding:12px 16px; border-radius:10px; border:1.5px solid #e2e8f0; font-size:14px; background:white; box-sizing:border-box;">
-                    <option value="principal">⭐ Escala Principal (ativa)</option>
-                </select>
+                <!-- Coluna Direita: Tipo de Início -->
+                <div class="col-md-7">
+                    <label style="display:block; font-weight:700; color:#334155; margin-bottom:15px; font-size:0.85rem; text-transform:uppercase; letter-spacing:0.8px;">Como deseja iniciar?</label>
+                    <div style="display:grid; grid-template-columns:1fr; gap:16px;">
+
+                        <!-- Cópia -->
+                        <label class="draft-type-card draft-type-card--active" id="cardCopia" onclick="selecionarTipoDraft('copia')" style="cursor:pointer; display:flex; flex-direction:row; align-items:center; text-align:left; padding:20px; gap:20px; border-width: 2px;">
+                            <input type="radio" name="draftTipo" value="copia" checked style="display:none;">
+                            <div style="width:60px; height:60px; background:linear-gradient(135deg,#3b82f6,#1d4ed8); border-radius:16px; display:flex; align-items:center; justify-content:center; color:white; font-size:1.6rem; flex-shrink:0; box-shadow:0 8px 20px rgba(59,130,246,0.25);">
+                                <i class="fa-solid fa-copy"></i>
+                            </div>
+                            <div style="flex:1;">
+                                <strong style="display:block; font-size:1.1rem; color:#1e293b; margin-bottom:4px;">Cópia de Escala</strong>
+                                <span style="font-size:0.85rem; color:#64748b; line-height:1.5;">Duplica turnos, analistas e folgas de uma escala existente para iniciar rapidamente.</span>
+                            </div>
+                            <div class="draft-type-check" style="position:static; opacity:1; color: #3b82f6;"><i class="fa-solid fa-circle-check fa-xl"></i></div>
+                        </label>
+
+                        <!-- Em Branco -->
+                        <label class="draft-type-card" id="cardEmBranco" onclick="selecionarTipoDraft('em_branco')" style="cursor:pointer; display:flex; flex-direction:row; align-items:center; text-align:left; padding:20px; gap:20px; border-width: 2px;">
+                            <input type="radio" name="draftTipo" value="em_branco" style="display:none;">
+                            <div style="width:60px; height:60px; background:linear-gradient(135deg,#f59e0b,#d97706); border-radius:16px; display:flex; align-items:center; justify-content:center; color:white; font-size:1.6rem; flex-shrink:0; box-shadow:0 8px 20px rgba(245,158,11,0.25);">
+                                <i class="fa-solid fa-file-circle-plus"></i>
+                            </div>
+                            <div style="flex:1;">
+                                <strong style="display:block; font-size:1.1rem; color:#1e293b; margin-bottom:4px;">Totalmente Vazia</strong>
+                                <span style="font-size:0.85rem; color:#64748b; line-height:1.5;">Começa do zero. Sem turnos ou horários. Ideal para novas montagens estruturais.</span>
+                            </div>
+                            <div class="draft-type-check" style="position:static; color: #f59e0b;"><i class="fa-solid fa-circle-check fa-xl"></i></div>
+                        </label>
+
+                    </div>
+                </div>
             </div>
         </div>
 
         <!-- Footer -->
-        <div style="padding:18px 28px; background:white; border-top:1px solid #e2e8f0; border-radius:0 0 16px 16px; display:flex; justify-content:flex-end; gap:12px;">
-            <button class="btn-escala" onclick="closeCreateDraftModal()" style="color:#64748b; background:#f1f5f9; border:none;">Cancelar</button>
-            <button class="btn-escala primary" style="background:linear-gradient(135deg,#10b981,#059669); border:none; padding:10px 24px; font-weight:700; font-size:15px; box-shadow:0 4px 14px rgba(16,185,129,0.35);" id="btnConfirmDraft" onclick="confirmarCriarRascunho()">
-                <i class="fa-solid fa-rocket"></i> Criar Simulação
+        <div style="padding:25px 35px; background:#f8fafc; border-top:1px solid #e2e8f0; border-radius:0 0 20px 20px; display:flex; justify-content:flex-end; gap:15px;">
+            <button class="btn-escala" onclick="closeCreateDraftModal()" style="color:#64748b; background:white; border:1px solid #e2e8f0; padding:12px 25px; font-weight:600; border-radius: 10px;">Cancelar</button>
+            <button class="btn-escala primary" style="background:linear-gradient(135deg,#10b981,#059669); border:none; padding:12px 35px; font-weight:700; font-size:16px; border-radius: 10px; box-shadow:0 10px 20px rgba(16,185,129,0.3);" id="btnConfirmDraft" onclick="confirmarCriarRascunho()">
+                <i class="fa-solid fa-rocket me-2"></i> Criar Simulação
             </button>
         </div>
     </div>
@@ -1350,9 +1459,13 @@
     let turnos = {{ turnos_json| safe }};
     let analistas = {{ analistas_json| safe }};
     let folgasManuais = {{ folgas_json| safe }};
+    let modelos = {{ modelos_json| default:"[]"|safe }};
     const isAdmin = {{ is_admin_json }};
+    const isConfigMode = {{ is_config_mode|yesno:"true,false" }};
     const csrfToken = '{{ csrf_token }}';
-    const rascunhoId = {% if rascunho_id %}{{ rascunho_id }}{% else %}null{% endif %};
+    const rascunhoId = {% if rascunho_id %}'{{ rascunho_id }}'{% else %}null{% endif %};
+    const rascunhoModeloId = {% if rascunho_modelo_id %}'{{ rascunho_modelo_id }}'{% else %}null{% endif %};
+    const modeloPrincipalId = {% if modelo_principal_id %}'{{ modelo_principal_id }}'{% else %}null{% endif %};
 
     // ========================================
     // INICIALIZAÇÃO
@@ -1375,10 +1488,14 @@
         updateMonthDisplay();
 
         // Gerar tabelas automaticamente se houver dados
-        if (turnos.length > 0 && analistas.length > 0) {
-            generateTables();
+        if (isConfigMode) {
+            renderModelos();
         } else {
-            checkEmptyStates();
+            if (turnos.length > 0 && analistas.length > 0) {
+                generateTables();
+            } else {
+                checkEmptyStates();
+            }
         }
 
         // Listener para mudança de mês
@@ -1632,7 +1749,20 @@
             return { class: folgaManual.tipo, text: text };
         }
 
-        // Cálculo automático do ciclo 6x2
+        // Identificar o modelo aplicável
+        let modeloId = analista.modelo_escala_id;
+        if (!modeloId) {
+            modeloId = rascunhoId ? rascunhoModeloId : modeloPrincipalId;
+        }
+
+        const modelo = modelos.find(m => m.id == modeloId);
+        
+        // Se não houver modelo (ex: novo rascunho em branco sem modelo definido ainda),
+        // assume o padrão 6x2 para não quebrar a visualização
+        const trab = modelo ? modelo.dias_trabalhados : 6;
+        const folga = modelo ? modelo.dias_folga : 2;
+        const cicloTotal = trab + folga;
+
         const dataAtual = new Date(ano, mes, dia);
         dataAtual.setHours(0, 0, 0, 0);
 
@@ -1653,15 +1783,228 @@
         const diffTime = dataAtual.getTime() - dataPrimeiraFolga.getTime();
         const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
 
-        // Posição no ciclo de 8 dias (6 trabalho + 2 folga)
-        let posicaoNoCiclo = ((diffDays % 8) + 8) % 8;
+        // Posição no ciclo dinâmico
+        let posicaoNoCiclo = ((diffDays % cicloTotal) + cicloTotal) % cicloTotal;
 
-        // Se a posição é 0 ou 1, são os 2 dias de folga
-        if (posicaoNoCiclo === 0 || posicaoNoCiclo === 1) {
+        // Se a posição está dentro do intervalo de dias de folga (iniciando do anchor)
+        if (posicaoNoCiclo < folga) {
             return { class: 'folga', text: 'FOLGA' };
         }
 
         return { class: 'trabalho', text: turno.horario };
+    }
+
+    // ========================================
+    // MODELOS DE ESCALA (CONFIGURAÇÃO)
+    // ========================================
+    
+    function renderModelos() {
+        if (!isConfigMode) return;
+        const tbody = document.getElementById('modelosTableBody');
+        if (!tbody) return;
+        
+        tbody.innerHTML = '';
+        
+        if (modelos.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="${isAdmin ? 6 : 5}" class="text-center text-muted py-4"><i class="fa-solid fa-box-open me-2"></i>Nenhum modelo cadastrado.</td></tr>`;
+            return;
+        }
+        
+        modelos.forEach(m => {
+            const tr = document.createElement('tr');
+            
+            const tipoBadge = m.tipo === 'fixa' 
+                ? '<span class="badge bg-primary">Fixa</span>' 
+                : '<span class="badge bg-info text-dark">Rotativa</span>';
+                
+            const fdsBadge = m.permite_fim_de_semana 
+                ? '<span class="badge bg-success">Permitido</span>' 
+                : '<span class="badge bg-danger">Bloqueado</span>';
+            
+            let acoes = '';
+            if (isAdmin) {
+                acoes = `
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-outline-primary me-1" onclick="editarModelo(${m.id})" title="Editar"><i class="fa-solid fa-edit"></i></button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="excluirModelo(${m.id})" title="Excluir"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                `;
+            }
+            
+            tr.innerHTML = `
+                <td class="fw-bold">${m.nome}</td>
+                <td>${m.dias_trabalhados}x${m.dias_folga}</td>
+                <td>${tipoBadge}</td>
+                <td>${fdsBadge}</td>
+                <td class="text-start text-muted small">${m.observacao || '-'}</td>
+                ${acoes}
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function abrirModalModeloEscala() {
+        document.getElementById('modeloId').value = '';
+        document.getElementById('modeloNome').value = '';
+        document.getElementById('modeloTrabalho').value = '5';
+        document.getElementById('modeloFolga').value = '2';
+        document.getElementById('modeloTipo').value = 'fixa';
+        document.getElementById('modeloFDS').value = 'true';
+        document.getElementById('modeloObs').value = '';
+        document.getElementById('modeloModalTitle').innerText = 'Novo Modelo de Escala';
+        validarTipoEscala();
+        
+        const modal = document.getElementById('modeloEscalaModal');
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function fecharModalModeloEscala() {
+        const modal = document.getElementById('modeloEscalaModal');
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    function editarModelo(id) {
+        const modelo = modelos.find(m => m.id === id);
+        if (!modelo) return;
+        
+        document.getElementById('modeloId').value = modelo.id;
+        document.getElementById('modeloNome').value = modelo.nome;
+        document.getElementById('modeloTrabalho').value = modelo.dias_trabalhados;
+        document.getElementById('modeloFolga').value = modelo.dias_folga;
+        document.getElementById('modeloTipo').value = modelo.tipo;
+        document.getElementById('modeloFDS').value = modelo.permite_fim_de_semana ? 'true' : 'false';
+        document.getElementById('modeloObs').value = modelo.observacao || '';
+        document.getElementById('modeloModalTitle').innerText = 'Editar Modelo de Escala';
+        validarTipoEscala();
+        
+        const modal = document.getElementById('modeloEscalaModal');
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function validarTipoEscala() {
+        const trab = parseInt(document.getElementById('modeloTrabalho').value) || 0;
+        const folga = parseInt(document.getElementById('modeloFolga').value) || 0;
+        const tipoSel = document.getElementById('modeloTipo');
+        const tipoHelp = document.getElementById('modeloTipoHelp');
+        
+        if (trab === 6 && folga === 1) {
+            tipoHelp.classList.remove('d-none');
+            // Se estava rotativa, muda pra fixa
+            if (tipoSel.value === 'rotativa') {
+                tipoSel.value = 'fixa';
+            }
+            // Desabilita a opção rotativa
+            Array.from(tipoSel.options).forEach(opt => {
+                if (opt.value === 'rotativa') opt.disabled = true;
+            });
+        } else {
+            tipoHelp.classList.add('d-none');
+            Array.from(tipoSel.options).forEach(opt => {
+                opt.disabled = false;
+            });
+        }
+    }
+
+    function salvarModeloEscala() {
+        const btn = document.getElementById('btnSalvarModelo');
+        const id = document.getElementById('modeloId').value;
+        const nome = document.getElementById('modeloNome').value.trim();
+        const trab = parseInt(document.getElementById('modeloTrabalho').value);
+        const folga = parseInt(document.getElementById('modeloFolga').value);
+        const tipo = document.getElementById('modeloTipo').value;
+        const fds = document.getElementById('modeloFDS').value === 'true';
+        const obs = document.getElementById('modeloObs').value.trim();
+
+        if (!nome) {
+            showToast('O nome do modelo é obrigatório.', 'error');
+            return;
+        }
+        
+        if (trab === 6 && folga === 1 && tipo === 'rotativa') {
+            showToast('Modelo 6x1 não pode ser rotativo devido às leis trabalhistas.', 'error');
+            return;
+        }
+
+        const payload = {
+            id: id || null,
+            nome: nome,
+            dias_trabalhados: trab,
+            dias_folga: folga,
+            tipo: tipo,
+            permite_fim_de_semana: fds,
+            observacao: obs
+        };
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Salvando...';
+
+        fetch('/api/escala/modelos/save/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('Erro ao salvar modelo.');
+            return response.json();
+        })
+        .then(data => {
+            if (id) {
+                const index = modelos.findIndex(m => m.id == data.id);
+                if (index !== -1) modelos[index] = data;
+            } else {
+                modelos.push(data);
+            }
+            
+            // Reordenar por nome
+            modelos.sort((a, b) => a.nome.localeCompare(b.nome));
+            
+            fecharModalModeloEscala();
+            renderModelos();
+            showToast('Modelo de escala salvo com sucesso!', 'success');
+        })
+        .catch(error => {
+            showToast(error.message, 'error');
+        })
+        .finally(() => {
+            btn.disabled = false;
+            btn.innerHTML = 'Salvar Modelo';
+        });
+    }
+
+    function excluirModelo(id) {
+        Swal.fire({
+            title: 'Excluir Modelo?',
+            text: "Os analistas vinculados a este modelo podem ser afetados. Deseja continuar?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'Sim, excluir',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/api/escala/modelos/${id}/delete/`, {
+                    method: 'DELETE',
+                    headers: { 'X-CSRFToken': csrfToken }
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error('Erro ao excluir modelo.');
+                    return response.json();
+                })
+                .then(() => {
+                    modelos = modelos.filter(m => m.id !== id);
+                    renderModelos();
+                    showToast('Modelo excluído com sucesso!', 'success');
+                })
+                .catch(error => showToast(error.message, 'error'));
+            }
+        });
     }
 
     // ========================================
@@ -2116,6 +2459,16 @@
         const select = document.getElementById('analystShift');
         select.innerHTML = turnos.map(t => `<option value="${t.nome}">${t.nome}</option>`).join('');
 
+        // Preencher select de modelos
+        const selectModelo = document.getElementById('analystModeloEscala');
+        if (selectModelo) {
+            selectModelo.innerHTML = '<option value="">(Usar Modelo Padrão da Escala)</option>';
+            modelos.forEach(m => {
+                selectModelo.innerHTML += `<option value="${m.id}">${m.nome} (${m.dias_trabalhados}x${m.dias_folga})</option>`;
+            });
+            selectModelo.value = '';
+        }
+
         closeAnalystModal();
         document.getElementById('analystFormModal').classList.add('show');
     }
@@ -2152,6 +2505,15 @@
         const select = document.getElementById('analystShift');
         select.innerHTML = turnos.map(t => `<option value="${t.nome}" ${t.nome === analista.turno ? 'selected' : ''}>${t.nome}</option>`).join('');
 
+        // Preencher select de modelos
+        const selectModelo = document.getElementById('analystModeloEscala');
+        if (selectModelo) {
+            selectModelo.innerHTML = '<option value="">(Usar Modelo Padrão da Escala)</option>';
+            modelos.forEach(m => {
+                selectModelo.innerHTML += `<option value="${m.id}" ${m.id == analista.modelo_escala_id ? 'selected' : ''}>${m.nome} (${m.dias_trabalhados}x${m.dias_folga})</option>`;
+            });
+        }
+
         closeAnalystModal();
         document.getElementById('analystFormModal').classList.add('show');
     }
@@ -2169,6 +2531,7 @@
             pausa: document.getElementById('analystBreakStart').value && document.getElementById('analystBreakEnd').value ?
                 `${document.getElementById('analystBreakStart').value} - ${document.getElementById('analystBreakEnd').value}` : '',
             data_primeira_folga: document.getElementById('analystStartDate').value || null,
+            modelo_escala_id: document.getElementById('analystModeloEscala') ? document.getElementById('analystModeloEscala').value : '',
             ordem: analistas.length,
             rascunho_id: rascunhoId
         };
@@ -2373,11 +2736,7 @@
     // ========================================
     // EXPORTAÇÃO E COPIAR TURNOS
     // ========================================
-    function openShiftModal(showCopyBanner = false) {
-        document.getElementById('shiftCopyBanner').style.display = showCopyBanner ? 'block' : 'none';
-        document.getElementById('shiftModal').classList.add('show');
-    }
-
+    // A função openShiftModal original já foi definida acima, não precisamos duplicar.
     function openCopyShiftsModal() {
         document.getElementById('copyShiftsModal').classList.add('show');
     }
@@ -2791,6 +3150,15 @@
             });
         } catch(e) { /* ignora erro silencioso */ }
 
+        // Carregar Modelos de Jornada
+        const selectModelo = document.getElementById('draftModeloSelect');
+        if (selectModelo) {
+            selectModelo.innerHTML = '<option value="">(Modelo Atual / Sem Alteração)</option>';
+            modelos.forEach(m => {
+                selectModelo.innerHTML += `<option value="${m.id}">${m.nome} (${m.dias_trabalhados}x${m.dias_folga})</option>`;
+            });
+        }
+
         document.getElementById('createDraftModal').classList.add('show');
     }
 
@@ -2809,6 +3177,7 @@
 
         const tipo    = _draftTipoSelecionado;
         const fonteId = tipo === 'copia' ? (document.getElementById('draftFonteSelect').value || 'principal') : null;
+        const modeloId = document.getElementById('draftModeloSelect').value;
 
         const btn = document.getElementById('btnConfirmDraft');
         const oldText = btn.innerHTML;
@@ -2818,6 +3187,7 @@
         try {
             const payload = { nome, tipo };
             if (fonteId) payload.fonte_id = fonteId;
+            if (modeloId) payload.modelo_escala_id = modeloId;
 
             const res = await fetch('/api/escala/rascunhos/create/', {
                 method: 'POST',
