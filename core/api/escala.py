@@ -460,6 +460,46 @@ def api_rascunho_create(request):
         return JsonResponse({'error': str(e)}, status=400)
 
 @login_required
+@require_http_methods(["POST"])
+@check_nrs_permission
+def api_rascunho_copiar_turnos(request, pk):
+    """Copia turnos de uma escala fonte para o rascunho atual"""
+    try:
+        rascunho_destino = get_object_or_404(EscalaRascunho, pk=pk)
+        data = json.loads(request.body)
+        fonte_id = data.get('fonte_id', 'principal')
+
+        if fonte_id == 'principal' or not fonte_id:
+            turnos_fonte = Turno.objects.filter(ativo=True, rascunho__isnull=True)
+        else:
+            fonte_rascunho = get_object_or_404(EscalaRascunho, pk=fonte_id)
+            turnos_fonte = Turno.objects.filter(ativo=True, rascunho=fonte_rascunho)
+
+        if not turnos_fonte.exists():
+            return JsonResponse({'error': 'A escala fonte não possui turnos para copiar.'}, status=400)
+
+        turnos_criados = []
+        for t in turnos_fonte:
+            novo_t = Turno.objects.create(
+                rascunho=rascunho_destino,
+                nome=t.nome,
+                horario=t.horario,
+                cor=t.cor,
+                ordem=t.ordem,
+                ativo=t.ativo
+            )
+            turnos_criados.append({
+                'id': novo_t.id,
+                'nome': novo_t.nome,
+                'horario': novo_t.horario,
+                'cor': novo_t.cor
+            })
+
+        return JsonResponse({'success': True, 'turnos': turnos_criados})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+@login_required
 @require_http_methods(["DELETE"])
 @check_nrs_permission
 def api_rascunho_delete(request, pk):

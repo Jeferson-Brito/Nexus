@@ -887,9 +887,22 @@
                 <i class="fa-solid fa-clock"></i>
             </div>
             <h2>Gerenciar Turnos</h2>
-            <p>Configure os turnos de trabalho e seus horários</p>
+            <p>Configure os turnos de trabalho e seus hor&aacute;rios</p>
         </div>
         <div class="modal-body-escala">
+            <!-- Banner de copiar turnos (visível apenas em rascunho sem turnos) -->
+            <div id="shiftCopyBanner" style="display:none; background: linear-gradient(135deg, #eff6ff, #dbeafe); border: 1px solid #93c5fd; border-radius: 10px; padding: 14px 18px; margin-bottom: 16px; display: flex; align-items: center; gap: 14px;">
+                <div style="background: #2563eb; color: white; width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 1rem;">
+                    <i class="fa-solid fa-clone"></i>
+                </div>
+                <div style="flex: 1;">
+                    <strong style="color: #1e3a8a; font-size: 0.9rem;">Escala em branco &mdash; sem turnos criados</strong>
+                    <p style="margin: 2px 0 0; font-size: 0.8rem; color: #3b82f6;">Copie os turnos de uma escala existente para agilizar a configura&ccedil;&atilde;o.</p>
+                </div>
+                <button class="btn-escala" onclick="abrirModalCopiarTurnos()" style="background: #2563eb; color: white; border: none; font-size: 13px; white-space: nowrap; flex-shrink: 0;">
+                    <i class="fa-solid fa-copy"></i> Copiar Turnos
+                </button>
+            </div>
             <div class="modal-actions-bar">
                 <button class="btn-escala primary" onclick="showAddShiftForm()">
                     <i class="fa-solid fa-plus"></i> Novo Turno
@@ -898,6 +911,35 @@
             <div class="item-list-container">
                 <div class="item-list" id="shiftList"></div>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Copiar Turnos -->
+<div class="modal-escala" id="copyShiftsModal">
+    <div class="modal-content-escala">
+        <div class="modal-header-escala">
+            <button class="modal-close" onclick="fecharModalCopiarTurnos()">&times;</button>
+            <div class="modal-icon" style="background: linear-gradient(135deg, #2563eb, #1d4ed8);">
+                <i class="fa-solid fa-clone"></i>
+            </div>
+            <h2>Copiar Turnos</h2>
+            <p>Selecione a escala de origem para copiar os turnos</p>
+        </div>
+        <div class="modal-body-escala">
+            <div class="form-group-escala">
+                <label>Copiar turnos a partir de</label>
+                <select id="copyShiftsFonteSelect" style="width:100%; padding: 10px 12px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 14px; background: white;">
+                    <option value="principal">&starf; Escala Principal (ativa)</option>
+                </select>
+            </div>
+            <div id="copyShiftsPreview" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px; min-height:60px; font-size:0.85rem; color:#64748b;">
+                Selecione uma escala para visualizar os turnos dispon&iacute;veis.
+            </div>
+        </div>
+        <div class="modal-footer-escala">
+            <button class="btn-escala" onclick="fecharModalCopiarTurnos()">Cancelar</button>
+            <button class="btn-escala primary" style="background:#2563eb;" id="btnConfirmCopyShifts" onclick="confirmarCopiarTurnos()"><i class="fa-solid fa-clone"></i> Copiar Turnos</button>
         </div>
     </div>
 </div>
@@ -1184,49 +1226,53 @@
     </div>
 </div>
 
-<!-- Modal de Criar Simulação -->
+<!-- Modal de Criar Simulação (Premium) -->
 <div class="modal-escala" id="createDraftModal">
-    <div class="modal-content-escala">
-        <div class="modal-header-escala">
-            <button class="modal-close" onclick="closeCreateDraftModal()">&times;</button>
-            <div class="modal-icon" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+    <div class="modal-content-escala" style="max-width: 620px; width: 95%;">
+        <!-- Header com gradiente especial -->
+        <div style="background: linear-gradient(135deg, #064e3b 0%, #065f46 60%, #047857 100%); padding: 32px 28px 24px; border-radius: 16px 16px 0 0; position: relative; text-align: center;">
+            <button class="modal-close" onclick="closeCreateDraftModal()" style="position:absolute; top:14px; right:14px; background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.2); color:white;">&times;</button>
+            <div style="width:64px; height:64px; background:linear-gradient(135deg,#10b981,#059669); border-radius:18px; display:inline-flex; align-items:center; justify-content:center; font-size:1.6rem; color:white; margin-bottom:14px; box-shadow:0 8px 24px rgba(16,185,129,0.35);">
                 <i class="fa-solid fa-code-branch"></i>
             </div>
-            <h2>Nova Simulação</h2>
-            <p>Crie um ambiente de testes para a escala</p>
+            <h2 style="margin:0; color:white; font-size:1.5rem; font-weight:800; letter-spacing:-0.3px;">Nova Simulação</h2>
+            <p style="margin:6px 0 0; color:rgba(255,255,255,0.7); font-size:0.9rem;">Crie um ambiente isolado para testar alterações na escala</p>
         </div>
-        <div class="modal-body-escala">
-            <div class="form-group-escala">
-                <label>Nome da Simulação</label>
-                <input type="text" id="draftNameInput" placeholder="Ex: Escala Teste Maio" required>
+
+        <div style="padding: 28px; background: #f8fafc;">
+            <!-- Nome -->
+            <div style="margin-bottom:20px;">
+                <label style="display:block; font-weight:700; color:#1e293b; margin-bottom:8px; font-size:0.85rem; text-transform:uppercase; letter-spacing:0.5px;">Nome da Simulação</label>
+                <input type="text" id="draftNameInput" placeholder="Ex: Teste Escala Junho" style="width:100%; padding:12px 16px; border-radius:10px; border:1.5px solid #e2e8f0; font-size:15px; box-sizing:border-box; transition:border 0.2s; background:white;" onfocus="this.style.borderColor='#10b981'" onblur="this.style.borderColor='#e2e8f0'" required>
             </div>
 
-            <div class="form-group-escala">
-                <label style="margin-bottom: 12px; display: block;">Tipo de Simulação</label>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <!-- Tipo -->
+            <div style="margin-bottom:20px;">
+                <label style="display:block; font-weight:700; color:#1e293b; margin-bottom:12px; font-size:0.85rem; text-transform:uppercase; letter-spacing:0.5px;">Tipo de Simulação</label>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
 
-                    <!-- Opção: Em Branco -->
-                    <label class="draft-type-card" id="cardEmBranco" onclick="selecionarTipoDraft('em_branco')" style="cursor:pointer;">
-                        <input type="radio" name="draftTipo" value="em_branco" id="radioEmBranco" style="display:none;">
-                        <div class="draft-type-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                    <!-- Em Branco -->
+                    <label class="draft-type-card" id="cardEmBranco" onclick="selecionarTipoDraft('em_branco')" style="cursor:pointer; padding:20px 16px;">
+                        <input type="radio" name="draftTipo" value="em_branco" style="display:none;">
+                        <div style="width:56px; height:56px; background:linear-gradient(135deg,#f59e0b,#d97706); border-radius:16px; display:flex; align-items:center; justify-content:center; color:white; font-size:1.4rem; box-shadow:0 6px 16px rgba(245,158,11,0.3);">
                             <i class="fa-solid fa-file-circle-plus"></i>
                         </div>
-                        <div class="draft-type-info">
-                            <strong>Em Branco</strong>
-                            <span>Sem turnos. Analistas disponíveis para atribuição.</span>
+                        <div style="margin-top:4px;">
+                            <strong style="display:block; font-size:1rem; color:#1e293b; margin-bottom:5px;">Em Branco</strong>
+                            <span style="font-size:0.78rem; color:#64748b; line-height:1.4;">Nenhum turno criado. Analistas disponíveis para atribuição livre.</span>
                         </div>
-                        <div class="draft-type-check"><i class="fa-solid fa-circle-check"></i></div>
+                        <div class="draft-type-check" style="color:#f59e0b;"><i class="fa-solid fa-circle-check"></i></div>
                     </label>
 
-                    <!-- Opção: Cópia -->
-                    <label class="draft-type-card draft-type-card--active" id="cardCopia" onclick="selecionarTipoDraft('copia')" style="cursor:pointer;">
-                        <input type="radio" name="draftTipo" value="copia" id="radioCopia" checked style="display:none;">
-                        <div class="draft-type-icon" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">
+                    <!-- Cópia -->
+                    <label class="draft-type-card draft-type-card--active" id="cardCopia" onclick="selecionarTipoDraft('copia')" style="cursor:pointer; padding:20px 16px;">
+                        <input type="radio" name="draftTipo" value="copia" checked style="display:none;">
+                        <div style="width:56px; height:56px; background:linear-gradient(135deg,#3b82f6,#1d4ed8); border-radius:16px; display:flex; align-items:center; justify-content:center; color:white; font-size:1.4rem; box-shadow:0 6px 16px rgba(59,130,246,0.3);">
                             <i class="fa-solid fa-copy"></i>
                         </div>
-                        <div class="draft-type-info">
-                            <strong>Cópia de Escala</strong>
-                            <span>Começa com todos os dados de uma escala existente.</span>
+                        <div style="margin-top:4px;">
+                            <strong style="display:block; font-size:1rem; color:#1e293b; margin-bottom:5px;">Cópia de Escala</strong>
+                            <span style="font-size:0.78rem; color:#64748b; line-height:1.4;">Duplica turnos, analistas e folgas de uma escala existente.</span>
                         </div>
                         <div class="draft-type-check"><i class="fa-solid fa-circle-check"></i></div>
                     </label>
@@ -1234,17 +1280,21 @@
                 </div>
             </div>
 
-            <!-- Dropdown de fonte (visível apenas no modo cópia) -->
-            <div class="form-group-escala" id="draftFonteGroup" style="overflow: hidden; transition: max-height 0.35s ease, opacity 0.35s ease; max-height: 120px; opacity: 1;">
-                <label>Copiar a partir de</label>
-                <select id="draftFonteSelect" style="width:100%; padding: 10px 12px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 14px; background: white;">
+            <!-- Fonte (apenas no modo cópia) -->
+            <div id="draftFonteGroup" style="overflow:hidden; transition:max-height 0.35s ease, opacity 0.35s ease; max-height:110px; opacity:1;">
+                <label style="display:block; font-weight:700; color:#1e293b; margin-bottom:8px; font-size:0.85rem; text-transform:uppercase; letter-spacing:0.5px;">Copiar a partir de</label>
+                <select id="draftFonteSelect" style="width:100%; padding:12px 16px; border-radius:10px; border:1.5px solid #e2e8f0; font-size:14px; background:white; box-sizing:border-box;">
                     <option value="principal">⭐ Escala Principal (ativa)</option>
                 </select>
             </div>
         </div>
-        <div class="modal-footer-escala">
-            <button class="btn-escala" onclick="closeCreateDraftModal()">Cancelar</button>
-            <button class="btn-escala primary" style="background: #10b981;" id="btnConfirmDraft" onclick="confirmarCriarRascunho()">Criar Simulação</button>
+
+        <!-- Footer -->
+        <div style="padding:18px 28px; background:white; border-top:1px solid #e2e8f0; border-radius:0 0 16px 16px; display:flex; justify-content:flex-end; gap:12px;">
+            <button class="btn-escala" onclick="closeCreateDraftModal()" style="color:#64748b; background:#f1f5f9; border:none;">Cancelar</button>
+            <button class="btn-escala primary" style="background:linear-gradient(135deg,#10b981,#059669); border:none; padding:10px 24px; font-weight:700; font-size:15px; box-shadow:0 4px 14px rgba(16,185,129,0.35);" id="btnConfirmDraft" onclick="confirmarCriarRascunho()">
+                <i class="fa-solid fa-rocket"></i> Criar Simulação
+            </button>
         </div>
     </div>
 </div>
@@ -1255,9 +1305,8 @@
     flex-direction: column;
     align-items: center;
     gap: 10px;
-    padding: 16px 12px;
     border: 2px solid #e2e8f0;
-    border-radius: 12px;
+    border-radius: 14px;
     background: white;
     transition: all 0.2s ease;
     position: relative;
@@ -1266,54 +1315,32 @@
 }
 .draft-type-card:hover {
     border-color: #94a3b8;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
 }
 .draft-type-card--active {
     border-color: #3b82f6 !important;
-    background: #eff6ff !important;
+    background: linear-gradient(135deg, #eff6ff, #f0f9ff) !important;
     box-shadow: 0 0 0 3px rgba(59,130,246,0.15) !important;
 }
 .draft-type-card--active.em-branco-active {
     border-color: #f59e0b !important;
-    background: #fffbeb !important;
+    background: linear-gradient(135deg, #fffbeb, #fef9c3) !important;
     box-shadow: 0 0 0 3px rgba(245,158,11,0.15) !important;
-}
-.draft-type-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 1.25rem;
-}
-.draft-type-info strong {
-    display: block;
-    font-size: 0.9rem;
-    color: #1e293b;
-    margin-bottom: 4px;
-}
-.draft-type-info span {
-    font-size: 0.78rem;
-    color: #64748b;
-    line-height: 1.3;
 }
 .draft-type-check {
     position: absolute;
-    top: 8px;
-    right: 8px;
+    top: 10px;
+    right: 10px;
     color: #3b82f6;
-    font-size: 1.1rem;
+    font-size: 1.2rem;
     opacity: 0;
     transition: opacity 0.2s;
 }
-.draft-type-card--active .draft-type-check {
-    opacity: 1;
-}
-.draft-type-card--active.em-branco-active .draft-type-check {
-    color: #f59e0b;
-}
+.draft-type-card--active .draft-type-check { opacity: 1; }
+.draft-type-card--active.em-branco-active .draft-type-check { color: #f59e0b; }
+/* Override do modal-content-escala para o modal Nova Simulação */
+#createDraftModal .modal-content-escala { border-radius: 16px; overflow: hidden; }
 </style>
 
 <script>
@@ -1366,7 +1393,7 @@
     function openMonthlySummaryModal() {
         const inputVal = document.getElementById('mesInput').value;
         if (!inputVal) {
-            alert('Selecione um mês');
+            showToast('Selecione um mês', 'warning');
             return;
         }
 
@@ -1451,7 +1478,7 @@
     function generateTables() {
         const inputVal = document.getElementById('mesInput').value;
         if (!inputVal) {
-            alert('Selecione um mês');
+            showToast('Selecione um mês', 'warning');
             return;
         }
 
@@ -1642,11 +1669,86 @@
     // ========================================
     function openShiftModal() {
         renderShiftList();
+        
+        // Mostrar banner de copiar turnos se for um rascunho e não tiver turnos
+        const copyBanner = document.getElementById('shiftCopyBanner');
+        if (copyBanner) {
+            if (rascunhoId && turnos.length === 0) {
+                copyBanner.style.display = 'flex';
+            } else {
+                copyBanner.style.display = 'none';
+            }
+        }
+        
         document.getElementById('shiftModal').classList.add('show');
     }
 
     function closeShiftModal() {
         document.getElementById('shiftModal').classList.remove('show');
+    }
+
+    async function abrirModalCopiarTurnos() {
+        // Carregar rascunhos existentes no dropdown de fonte
+        const select = document.getElementById('copyShiftsFonteSelect');
+        select.innerHTML = '<option value="principal">⭐ Escala Principal (ativa)</option>';
+        try {
+            const res = await fetch('/api/escala/rascunhos/');
+            const lista = await res.json();
+            lista.forEach(r => {
+                // Não incluir o próprio rascunho atual
+                if (r.id !== rascunhoId) {
+                    select.innerHTML += `<option value="${r.id}">📋 ${r.nome} (${r.data_atualizacao})</option>`;
+                }
+            });
+        } catch(e) { /* ignora erro silencioso */ }
+
+        document.getElementById('copyShiftsModal').classList.add('show');
+    }
+
+    function fecharModalCopiarTurnos() {
+        document.getElementById('copyShiftsModal').classList.remove('show');
+    }
+
+    async function confirmarCopiarTurnos() {
+        if (!rascunhoId) return;
+
+        const fonteId = document.getElementById('copyShiftsFonteSelect').value;
+        const btn = document.getElementById('btnConfirmCopyShifts');
+        const oldText = btn.innerHTML;
+        
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Copiando...';
+        btn.disabled = true;
+
+        try {
+            const res = await fetch(`/api/escala/rascunhos/${rascunhoId}/copiar-turnos/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify({ fonte_id: fonteId })
+            });
+            const data = await res.json();
+            
+            if (data.error) {
+                showToast(data.error, 'error');
+            } else {
+                // Sucesso: atualizar lista de turnos localmente
+                if (data.turnos && data.turnos.length > 0) {
+                    turnos = [...turnos, ...data.turnos];
+                    showToast(`${data.turnos.length} turnos copiados com sucesso!`, 'success');
+                    fecharModalCopiarTurnos();
+                    // Atualiza interface
+                    renderShiftList();
+                    const copyBanner = document.getElementById('shiftCopyBanner');
+                    if(copyBanner) copyBanner.style.display = 'none';
+                } else {
+                    showToast('A escala fonte não possuía turnos.', 'info');
+                }
+            }
+        } catch (e) {
+            showToast('Erro ao copiar turnos: ' + e.message, 'error');
+        } finally {
+            btn.innerHTML = oldText;
+            btn.disabled = false;
+        }
     }
 
     function renderShiftList() {
@@ -1809,7 +1911,7 @@
                 generateTables();
             }
         } catch (error) {
-            alert('Erro ao salvar turno: ' + error.message);
+            showToast('Erro ao salvar turno: ' + error.message, 'error');
         }
     }
 
@@ -1827,7 +1929,7 @@
             checkEmptyStates();
             generateTables();
         } catch (error) {
-            alert('Erro ao excluir turno: ' + error.message);
+            showToast('Erro ao excluir turno: ' + error.message, 'error');
         }
     }
 
@@ -2100,7 +2202,7 @@
             checkEmptyStates();
             generateTables();
         } catch (error) {
-            alert('Erro ao salvar analista: ' + error.message);
+            showToast('Erro ao salvar analista: ' + error.message, 'error');
         }
     }
 
@@ -2118,7 +2220,7 @@
             checkEmptyStates();
             generateTables();
         } catch (error) {
-            alert('Erro ao excluir analista: ' + error.message);
+            showToast('Erro ao excluir analista: ' + error.message, 'error');
         }
     }
 
@@ -2175,7 +2277,7 @@
             const dataFim = document.getElementById('cellDataFim').value;
 
             if (!dataInicio || !dataFim) {
-                alert('Por favor, selecione o período de início e fim.');
+                showToast('Por favor, selecione o período de início e fim.', 'warning');
                 return;
             }
 
@@ -2188,7 +2290,7 @@
             const fim = new Date(anoF, mesF - 1, diaF);
 
             if (fim < inicio) {
-                alert('A data de fim deve ser maior ou igual à data de início.');
+                showToast('A data de fim deve ser maior ou igual à data de início.', 'warning');
                 return;
             }
 
@@ -2229,7 +2331,7 @@
                 closeEditCellModal();
                 generateTables();
             } catch (error) {
-                alert('Erro ao salvar: ' + error.message);
+                showToast('Erro ao salvar: ' + error.message, 'error');
             }
         } else {
             // Salvar apenas o dia selecionado
@@ -2263,14 +2365,50 @@
                 closeEditCellModal();
                 generateTables();
             } catch (error) {
-                alert('Erro ao salvar: ' + error.message);
+                showToast('Erro ao salvar: ' + error.message, 'error');
             }
         }
     }
 
     // ========================================
-    // EXPORTAÇÃO
+    // EXPORTAÇÃO E COPIAR TURNOS
     // ========================================
+    function openShiftModal(showCopyBanner = false) {
+        document.getElementById('shiftCopyBanner').style.display = showCopyBanner ? 'block' : 'none';
+        document.getElementById('shiftModal').classList.add('show');
+    }
+
+    function openCopyShiftsModal() {
+        document.getElementById('copyShiftsModal').classList.add('show');
+    }
+
+    function closeCopyShiftsModal() {
+        document.getElementById('copyShiftsModal').classList.remove('show');
+    }
+
+    async function confirmCopyShifts() {
+        const fromAnalista = document.getElementById('fromAnalista').value;
+        const toAnalista = document.getElementById('toAnalista').value;
+        
+        if (!fromAnalista || !toAnalista) {
+            showToast('Selecione os analistas de origem e destino.', 'warning');
+            return;
+        }
+
+        try {
+            await fetch('/api/escala/folgas/copy/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify({ from: fromAnalista, to: toAnalista, rascunho_id: rascunhoId })
+            });
+            showToast('Folgas copiadas com sucesso!', 'success');
+            closeCopyShiftsModal();
+            generateTables();
+        } catch (e) {
+            showToast('Erro ao copiar folgas.', 'error');
+        }
+    }
+
     function openExportModal() {
         document.getElementById('exportModal').classList.add('show');
     }
@@ -2404,7 +2542,7 @@
     async function exportToPDF() {
         const tabelas = document.getElementById('tabelas');
         if (!tabelas || tabelas.children.length === 0) {
-            alert('Por favor, gere a escala primeiro.');
+            showToast('Por favor, gere a escala primeiro.', 'warning');
             return;
         }
 
@@ -2469,7 +2607,7 @@
 
         } catch (error) {
             console.error('Erro ao gerar PDF:', error);
-            alert('Erro ao gerar PDF: ' + error.message);
+            showToast('Erro ao gerar PDF: ' + error.message, 'error');
         } finally {
             document.getElementById('pdfLoadingOverlay')?.remove();
         }
@@ -2490,7 +2628,7 @@
     async function auditarEscalaIA() {
         const inputVal = document.getElementById('mesInput').value;
         if (!inputVal) {
-            alert('Selecione um mês e gere a escala primeiro.');
+            showToast('Selecione um mês e gere a escala primeiro.', 'warning');
             return;
         }
 
@@ -2549,12 +2687,12 @@
                 document.getElementById('aiAuditLoading').style.display = 'none';
                 document.getElementById('aiAuditContent').style.display = 'block';
             } else {
-                alert('Erro na auditoria: ' + data.error);
+                showToast('Erro na auditoria: ' + data.error, 'error');
                 closeAiAuditModal();
             }
         } catch (error) {
             console.error('Erro:', error);
-            alert('Erro ao conectar com a IA.');
+            showToast('Erro ao conectar com a IA.', 'error');
             closeAiAuditModal();
         }
     }
@@ -2664,7 +2802,7 @@
         const nomeInput = document.getElementById('draftNameInput');
         const nome = nomeInput.value.trim();
         if (!nome) {
-            alert('Por favor, digite um nome para a simulação.');
+            showToast('Por favor, digite um nome para a simulação.', 'warning');
             nomeInput.focus();
             return;
         }
@@ -2688,14 +2826,14 @@
             });
             const data = await res.json();
             if (data.error) {
-                alert(data.error);
+                showToast(data.error, 'error');
                 btn.innerHTML = oldText;
                 btn.disabled = false;
             } else {
                 window.location.href = `?rascunho_id=${data.id}`;
             }
         } catch (e) {
-            alert('Erro ao criar simulação: ' + e.message);
+            showToast('Erro ao criar simulação: ' + e.message, 'error');
             btn.innerHTML = oldText;
             btn.disabled = false;
         }
@@ -2705,7 +2843,7 @@
         // As alterações de células, analistas e turnos já são persistidas
         // automaticamente no banco a cada ação. Este botão apenas confirma
         // ao usuário que está tudo salvo e o mantém no rascunho atual.
-        alert('Rascunho salvo com sucesso! Todas as alterações estão registradas.');
+        showToast('Rascunho salvo! Todas as alterações estão registradas.', 'success');
         // Permanecer no rascunho atual (não remover o rascunho_id da URL)
     }
 
@@ -2720,7 +2858,7 @@
             });
             window.location.href = window.location.pathname;
         } catch (e) {
-            alert('Erro ao excluir: ' + e.message);
+            showToast('Erro ao excluir: ' + e.message, 'error');
         }
     }
 
@@ -2737,7 +2875,7 @@
         if (!rascunhoId) return;
         const password = document.getElementById('publishPassword').value;
         if (!password) {
-            alert("Digite a senha do administrador para confirmar.");
+            showToast("Digite a senha do administrador para confirmar.", 'warning');
             return;
         }
         
@@ -2749,13 +2887,13 @@
             });
             const data = await res.json();
             if (data.error) {
-                alert(data.error);
+                showToast(data.error, 'error');
             } else {
-                alert("Escala substituída com sucesso!");
+                showToast("Escala substituída com sucesso!", 'success');
                 window.location.href = window.location.pathname;
             }
         } catch (e) {
-            alert('Erro ao publicar: ' + e.message);
+            showToast('Erro ao publicar: ' + e.message, 'error');
         }
     }
 </script>

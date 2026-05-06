@@ -187,6 +187,7 @@ urlpatterns = [
     # API Escala Rascunhos
     path('api/escala/rascunhos/', api_escala.api_rascunhos_list, name='api_rascunhos_list'),
     path('api/escala/rascunhos/create/', api_escala.api_rascunho_create, name='api_rascunho_create'),
+    path('api/escala/rascunhos/<int:pk>/copiar-turnos/', api_escala.api_rascunho_copiar_turnos, name='api_rascunho_copiar_turnos'),
     path('api/escala/rascunhos/<int:pk>/publish/', api_escala.api_rascunho_publish, name='api_rascunho_publish'),
     path('api/escala/rascunhos/<int:pk>/delete/', api_escala.api_rascunho_delete, name='api_rascunho_delete'),
     
