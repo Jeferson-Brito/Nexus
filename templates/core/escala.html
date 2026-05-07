@@ -831,6 +831,7 @@
                 </div>
 
                 <div class="card-body p-4">
+                    <input type="hidden" id="formModeloId">
                     <div class="row g-4">
                         <!-- Lado Esquerdo: Configurações -->
                         <div class="col-xl-5">
@@ -2265,6 +2266,7 @@
             return response.json();
         })
         .then(data => {
+            // Se for edição, atualiza o item existente; se for novo, adiciona à lista
             if (id) {
                 const index = modelos.findIndex(m => m.id == data.id);
                 if (index !== -1) modelos[index] = data;
@@ -2272,7 +2274,12 @@
                 modelos.push(data);
             }
             
-            modelos.sort((a, b) => a.nome.localeCompare(b.nome));
+            // Re-ordena e atualiza a interface
+            modelos.sort((a, b) => {
+                const nameA = a.nome || "";
+                const nameB = b.nome || "";
+                return nameA.localeCompare(nameB);
+            });
             
             hideModeloForm();
             showToast('Modelo de escala salvo com sucesso!', 'success');

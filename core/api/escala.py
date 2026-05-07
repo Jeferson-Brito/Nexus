@@ -80,7 +80,16 @@ def api_modelo_escala_save(request):
                 observacao=data.get('observacao', '')
             )
             
-        return JsonResponse({'success': True, 'id': str(modelo.id)})
+        return JsonResponse({
+            'success': True, 
+            'id': str(modelo.id),
+            'nome': modelo.nome,
+            'dias_trabalhados': modelo.dias_trabalhados,
+            'dias_folga': modelo.dias_folga,
+            'tipo': modelo.tipo,
+            'permite_fim_de_semana': modelo.permite_fim_de_semana,
+            'observacao': modelo.observacao
+        })
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
 
