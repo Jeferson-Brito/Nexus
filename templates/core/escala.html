@@ -1613,8 +1613,17 @@
         const now = new Date();
         const year = now.getFullYear();
         const month = String(now.getMonth() + 1).padStart(2, '0');
-        document.getElementById('mesInput').value = `${year}-${month}`;
-        updateMonthDisplay();
+        
+        const mesInputEl = document.getElementById('mesInput');
+        if (mesInputEl) {
+            mesInputEl.value = `${year}-${month}`;
+            updateMonthDisplay();
+            
+            // Listener para mudança de mês
+            mesInputEl.addEventListener('change', function () {
+                updateMonthDisplay();
+            });
+        }
 
         // Gerar tabelas automaticamente se houver dados
         if (isConfigMode) {
@@ -1626,11 +1635,6 @@
                 checkEmptyStates();
             }
         }
-
-        // Listener para mudança de mês
-        document.getElementById('mesInput').addEventListener('change', function () {
-            updateMonthDisplay();
-        });
     });
 
     // ========================================
@@ -1703,14 +1707,21 @@
     }
 
     function updateMonthDisplay() {
-        const mes = document.getElementById('mesInput').value;
+        const mesInputEl = document.getElementById('mesInput');
+        if (!mesInputEl) return;
+        
+        const mes = mesInputEl.value;
         if (!mes) return;
 
         const [anoStr, mesStr] = mes.split('-');
         const meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
             'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
         const mesNome = meses[parseInt(mesStr, 10) - 1];
-        document.getElementById('mesDisplay').textContent = `${mesNome} de ${anoStr}`;
+        
+        const mesDisplayEl = document.getElementById('mesDisplay');
+        if (mesDisplayEl) {
+            mesDisplayEl.textContent = `${mesNome} de ${anoStr}`;
+        }
     }
 
     function checkEmptyStates() {
