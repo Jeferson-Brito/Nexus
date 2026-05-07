@@ -3329,15 +3329,16 @@
             for (let i = 0; i < tables.length; i++) {
                 const tableWrap = tables[i];
 
-                // Captura a tabela como imagem
+                // Captura a tabela como imagem (escala 1.5 é o equilíbrio perfeito para nitidez e tamanho)
                 const canvas = await html2canvas(tableWrap, {
-                    scale: 2,
+                    scale: 1.5,
                     useCORS: true,
                     backgroundColor: '#ffffff',
                     logging: false
                 });
 
-                const imgData = canvas.toDataURL('image/png');
+                // Utiliza JPEG comprimido (qualidade 0.8) em vez de PNG puro (lossless gigantesco)
+                const imgData = canvas.toDataURL('image/jpeg', 0.8);
                 const imgWidth = pageWidth - (margin * 2);
                 const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
@@ -3346,12 +3347,12 @@
                 }
                 isFirstPage = false;
 
-                // Se a imagem for maior que a pagina, ajusta
+                // Se a imagem for maior que a pagina, ajusta e insere com compressão FAST
                 if (imgHeight > pageHeight - (margin * 2)) {
                     const ratio = (pageHeight - (margin * 2)) / imgHeight;
-                    pdf.addImage(imgData, 'PNG', margin, margin, imgWidth * ratio, (pageHeight - (margin * 2)));
+                    pdf.addImage(imgData, 'JPEG', margin, margin, imgWidth * ratio, (pageHeight - (margin * 2)), undefined, 'FAST');
                 } else {
-                    pdf.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight);
+                    pdf.addImage(imgData, 'JPEG', margin, margin, imgWidth, imgHeight, undefined, 'FAST');
                 }
             }
 
