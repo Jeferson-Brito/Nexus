@@ -1218,10 +1218,15 @@
             <p>Configure os analistas e suas escalas de trabalho</p>
         </div>
         <div class="modal-body-escala">
-            <div class="modal-actions-bar">
-                <button class="btn-escala primary" onclick="showAddAnalystForm()">
+            <div class="modal-actions-bar" style="display: flex; gap: 10px; align-items: center; justify-content: flex-start; margin-bottom: 20px;">
+                <button class="btn-escala primary" onclick="showAddAnalystForm()" style="margin: 0;">
                     <i class="fa-solid fa-plus"></i> Novo Analista
                 </button>
+                {% if is_config_mode or rascunho_id %}
+                <button class="btn-escala" onclick="abrirModalCopiarTurnos()" style="margin: 0; background: #475569; color: white; border: none; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">
+                    <i class="fa-solid fa-copy"></i> Copiar Dados de Outra Escala
+                </button>
+                {% endif %}
             </div>
             <div class="item-list-container">
                 <div class="item-list" id="analystList"></div>
@@ -2370,18 +2375,10 @@
             if (data.error) {
                 showToast(data.error, 'error');
             } else {
-                // Sucesso: atualizar lista de turnos localmente
-                if (data.turnos && data.turnos.length > 0) {
-                    turnos = [...turnos, ...data.turnos];
-                    showToast(`${data.turnos.length} turnos copiados com sucesso!`, 'success');
-                    fecharModalCopiarTurnos();
-                    // Atualiza interface
-                    renderShiftList();
-                    const copyBanner = document.getElementById('shiftCopyBanner');
-                    if(copyBanner) copyBanner.style.display = 'none';
-                } else {
-                    showToast('A escala fonte não possuía turnos.', 'info');
-                }
+                showToast(`Dados copiados com sucesso! Recarregando...`, 'success');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
             }
         } catch (e) {
             showToast('Erro ao copiar turnos: ' + e.message, 'error');
