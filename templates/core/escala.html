@@ -824,57 +824,30 @@
             </div>
 
             <div class="card border-0 shadow-sm" style="border-radius: 12px; min-height: 500px; overflow: hidden;">
-                <div class="card-header border-0 p-0" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);">
-                    <ul class="nav nav-pills border-0 p-2 gap-2" id="modeloTabs" role="tablist">
-                        <li class="nav-item">
-                            <button class="nav-link active fw-bold small text-uppercase px-4 py-2 border-0" 
-                                    data-bs-toggle="tab" data-bs-target="#tab-geral" type="button"
-                                    style="border-radius: 8px; transition: all 0.3s;">
-                                CONFIGURAÇÃO GERAL
-                            </button>
-                        </li>
-                        <li class="nav-item">
-                            <button class="nav-link fw-bold small text-uppercase px-4 py-2 border-0" 
-                                    data-bs-toggle="tab" data-bs-target="#tab-preview" type="button" 
-                                    onclick="updatePreviewCycle()"
-                                    style="border-radius: 8px; color: rgba(255,255,255,0.6); transition: all 0.3s;">
-                                VISUALIZAÇÃO DO CICLO
-                            </button>
-                        </li>
-                    </ul>
+                <div class="card-header border-0 px-4 py-3" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);">
+                    <h5 class="text-white mb-0 fw-bold small text-uppercase letter-spacing-1">
+                        <i class="fa-solid fa-sliders me-2"></i> Parâmetros e Visualização do Ciclo
+                    </h5>
                 </div>
 
-                <style>
-                    #modeloTabs .nav-link.active {
-                        background: #3b82f6 !important;
-                        color: white !important;
-                        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
-                    }
-                    #modeloTabs .nav-link:not(.active):hover {
-                        background: rgba(255,255,255,0.1);
-                        color: white !important;
-                    }
-                </style>
-
                 <div class="card-body p-4">
-                    <div class="tab-content">
-                        <!-- ABA GERAL -->
-                        <div class="tab-pane fade show active" id="tab-geral">
+                    <div class="row g-4">
+                        <!-- Lado Esquerdo: Configurações -->
+                        <div class="col-xl-5">
                             <div class="alert alert-light border shadow-sm mb-4">
                                 <div class="d-flex align-items-start gap-2">
                                     <i class="fa-solid fa-circle-info text-primary mt-1"></i>
                                     <div class="small text-muted">
                                         <strong class="text-dark d-block mb-1">Sobre Modelos de Jornada</strong>
-                                        Defina a regra de dias trabalhados seguidos pelos dias de folga. 
-                                        O tipo <strong>Fixa</strong> mantém as folgas nos mesmos dias da semana, enquanto a <strong>Rotativa</strong> faz com que as folgas avancem no calendário.
+                                        Defina a regra de dias de trabalho e folga. O preview ao lado será atualizado instantaneamente.
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="row g-4 mb-4">
-                                <div class="col-md-6">
+                            <div class="row g-3 mb-4">
+                                <div class="col-12">
                                     <label class="form-label fw-bold small text-muted text-uppercase">Modelo de Jornada *</label>
-                                    <select id="formModeloRegra" class="form-select form-select-lg" onchange="updateJornadaValues()" style="border-radius: 10px;">
+                                    <select id="formModeloRegra" class="form-select form-select-lg" onchange="updateJornadaValues()" style="border-radius: 10px; border-color: #e2e8f0;">
                                         <option value="5x2">5x2 (5 Trabalha / 2 Folga)</option>
                                         <option value="6x1">6x1 (6 Trabalha / 1 Folga)</option>
                                         <option value="6x2">6x2 (6 Trabalha / 2 Folga)</option>
@@ -884,73 +857,76 @@
                                         <option value="custom">Personalizado...</option>
                                     </select>
                                 </div>
-                                <div class="col-md-3" id="colTrabalho" style="display: none;">
+                                
+                                <div class="col-md-6" id="colTrabalho" style="display: none;">
                                     <label class="form-label fw-bold small text-muted text-uppercase">Dias de Trabalho *</label>
                                     <input type="number" id="formModeloTrabalho" class="form-control form-control-lg" value="5" min="1" oninput="updatePreviewCycle()" style="border-radius: 10px;">
                                 </div>
-                                <div class="col-md-3" id="colFolga" style="display: none;">
+                                <div class="col-md-6" id="colFolga" style="display: none;">
                                     <label class="form-label fw-bold small text-muted text-uppercase">Dias de Folga *</label>
                                     <input type="number" id="formModeloFolga" class="form-control form-control-lg" value="2" min="1" oninput="updatePreviewCycle()" style="border-radius: 10px;">
                                 </div>
-                                
-                                <div class="col-md-6">
+
+                                <div class="col-12">
                                     <label class="form-label fw-bold small text-muted text-uppercase">Nome do Modelo *</label>
                                     <input type="text" id="formModeloNome" class="form-control form-control-lg" placeholder="Ex: Jornada 5x2 Administrativa" style="border-radius: 10px;">
                                 </div>
-                                
-                                <div class="col-md-4">
+
+                                <div class="col-md-6">
                                     <label class="form-label fw-bold small text-muted text-uppercase">Tipo de Escala *</label>
                                     <select id="formModeloTipo" class="form-select form-select-lg" onchange="validarTipoEscalaForm()" style="border-radius: 10px;">
-                                        <option value="fixa">Fixa (Dias fixos na semana)</option>
-                                        <option value="rotativa">Rotativa (Folgas alternadas)</option>
+                                        <option value="fixa">Fixa (Dias fixos)</option>
+                                        <option value="rotativa">Rotativa (Alternada)</option>
                                     </select>
-                                    <small class="text-danger d-none fw-bold mt-1" id="formModeloTipoHelp">Escalas 6x1 não podem ser rotativas.</small>
                                 </div>
-                                <div class="col-md-4">
-                                    <label class="form-label fw-bold small text-muted text-uppercase">Permitir Fins de Semana?</label>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold small text-muted text-uppercase">Fins de Semana?</label>
                                     <select id="formModeloFDS" class="form-select form-select-lg" style="border-radius: 10px;">
-                                        <option value="true">Sim, permitido</option>
-                                        <option value="false">Não, apenas dias úteis</option>
+                                        <option value="true">Sim, permitir</option>
+                                        <option value="false">Não, restringir</option>
                                     </select>
                                 </div>
                             </div>
 
-                            <div class="mb-4">
+                            <div class="mb-0">
                                 <label class="form-label fw-bold small text-muted text-uppercase">Observações Internas</label>
-                                <textarea id="formModeloObs" class="form-control" rows="3" placeholder="Informações adicionais sobre este modelo de jornada..." style="border-radius: 10px; resize: none;"></textarea>
+                                <textarea id="formModeloObs" class="form-control" rows="2" placeholder="Opcional..." style="border-radius: 10px; resize: none;"></textarea>
                             </div>
                         </div>
 
-                        <!-- ABA PREVIEW -->
-                        <div class="tab-pane fade" id="tab-preview">
-                            <div class="alert alert-primary-subtle border-primary-subtle mb-4">
-                                <h6 class="fw-bold mb-1"><i class="fa-solid fa-eye me-2"></i> Pré-visualização do Ciclo de 30 Dias</h6>
-                                <p class="small mb-0 opacity-75">Veja abaixo como a jornada se comportará ao longo de um mês completo com base nas regras definidas.</p>
-                            </div>
-                            
-                            <div class="table-responsive rounded-3 border">
-                                <table class="table table-bordered mb-0 text-center align-middle">
-                                    <thead class="bg-light">
-                                        <tr>
-                                            <th style="width: 150px;">Semana</th>
-                                            <th>Dom</th><th>Seg</th><th>Ter</th><th>Qua</th><th>Qui</th><th>Sex</th><th>Sáb</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="cyclePreviewTbody">
-                                        <!-- Gerado via JS -->
-                                    </tbody>
-                                </table>
-                            </div>
-                            
-                            <div class="mt-4 d-flex gap-4 justify-content-center">
-                                <div class="d-flex align-items-center gap-2">
-                                    <div style="width: 16px; height: 16px; background: #dcfce7; border: 1px solid #16a34a; border-radius: 4px;"></div>
-                                    <span class="small fw-bold text-muted">DIA TRABALHADO</span>
+                        <!-- Lado Direito: Preview -->
+                        <div class="col-xl-7">
+                            <div class="h-100 p-4 rounded-3 border bg-light shadow-sm" style="background-color: #f8fafc !important;">
+                                <div class="d-flex align-items-center justify-content-between mb-3">
+                                    <h6 class="fw-bold mb-0 text-dark"><i class="fa-solid fa-eye me-2 text-primary"></i> Pré-visualização (30 Dias)</h6>
+                                    <div class="d-flex gap-3">
+                                        <div class="d-flex align-items-center gap-1">
+                                            <div style="width: 12px; height: 12px; background: #dcfce7; border: 1px solid #16a34a; border-radius: 3px;"></div>
+                                            <span style="font-size: 0.7rem; font-weight: 700; color: #64748b;">TRABALHO</span>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-1">
+                                            <div style="width: 12px; height: 12px; background: #fee2e2; border: 1px solid #dc2626; border-radius: 3px;"></div>
+                                            <span style="font-size: 0.7rem; font-weight: 700; color: #64748b;">FOLGA</span>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="d-flex align-items-center gap-2">
-                                    <div style="width: 16px; height: 16px; background: #fee2e2; border: 1px solid #dc2626; border-radius: 4px;"></div>
-                                    <span class="small fw-bold text-muted">FOLGA</span>
+
+                                <div class="table-responsive rounded-3 bg-white border">
+                                    <table class="table table-bordered mb-0 text-center align-middle small">
+                                        <thead class="bg-light">
+                                            <tr>
+                                                <th style="width: 80px; background: #f1f5f9;">Sem.</th>
+                                                <th>DOM</th><th>SEG</th><th>TER</th><th>QUA</th><th>QUI</th><th>SEX</th><th>SÁB</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="cyclePreviewTbody">
+                                            <!-- Gerado via JS -->
+                                        </tbody>
+                                    </table>
                                 </div>
+                                <p class="small text-muted mt-3 mb-0" style="font-style: italic;">
+                                    * Esta prévia utiliza o primeiro dia do ciclo como âncora para demonstrar o comportamento sequencial.
+                                </p>
                             </div>
                         </div>
                     </div>
