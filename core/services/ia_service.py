@@ -135,7 +135,7 @@ SUA RESPOSTA:"""
                 config=types.GenerateContentConfig(tools=[tool_actions])
             )
         except Exception as e:
-            if "503" in str(e) or "UNAVAILABLE" in str(e):
+            if any(err in str(e) for err in ["503", "UNAVAILABLE", "429", "RESOURCE_EXHAUSTED"]):
                 logger.warning("[Nexus IA] Fallback para gemini-1.5-flash...")
                 response = client.models.generate_content(
                     model='gemini-1.5-flash',
@@ -202,7 +202,14 @@ Valores possíveis para "sentimento": "satisfeito", "neutro", "frustrado", "muit
 
 RESPONDA APENAS COM O JSON:"""
 
-        response = client.models.generate_content(model='gemini-flash-latest', contents=prompt)
+        try:
+            response = client.models.generate_content(model='gemini-2.5-flash', contents=prompt)
+        except Exception as e:
+            if any(err in str(e) for err in ["503", "UNAVAILABLE", "429", "RESOURCE_EXHAUSTED"]):
+                logger.warning("[Nexus IA] Fallback para gemini-1.5-flash em classificar_reclamacao...")
+                response = client.models.generate_content(model='gemini-1.5-flash', contents=prompt)
+            else:
+                raise e
         texto = response.text.strip()
         if "```" in texto:
             texto = texto.split("```")[1]
@@ -262,7 +269,14 @@ REGRAS DE RESPOSTA:
 - Tom construtivo, focado em desenvolvimento.
 - Estrutura obrigatória: ### 🌟 Visão Geral / ### ✅ Pontos Fortes / ### 🎯 Áreas de Melhoria e Riscos / ### 🚀 Plano de Ação Prático"""
 
-        response = client.models.generate_content(model='gemini-2.0-flash-lite', contents=prompt)
+        try:
+            response = client.models.generate_content(model='gemini-2.5-flash', contents=prompt)
+        except Exception as e:
+            if any(err in str(e) for err in ["503", "UNAVAILABLE", "429", "RESOURCE_EXHAUSTED"]):
+                logger.warning("[Nexus IA] Fallback para gemini-1.5-flash em gerar_avaliacao_auditoria...")
+                response = client.models.generate_content(model='gemini-1.5-flash', contents=prompt)
+            else:
+                raise e
         return {"resposta": response.text.strip()}
 
     except ValueError as e:
@@ -359,11 +373,11 @@ REGRAS: true = atendeu, false = não atendeu. Campos erro_X: vazio se true, 1-2 
 RESPONDA APENAS COM O JSON:"""
 
         try:
-            response = client.models.generate_content(model='gemini-2.0-flash-lite', contents=prompt)
+            response = client.models.generate_content(model='gemini-2.5-flash', contents=prompt)
         except Exception as e:
-            if "503" in str(e) or "UNAVAILABLE" in str(e):
-                logger.warning("[Nexus IA Auditor] Fallback secundário")
-                response = client.models.generate_content(model='gemini-2.0-flash-lite', contents=prompt)
+            if any(err in str(e) for err in ["503", "UNAVAILABLE", "429", "RESOURCE_EXHAUSTED"]):
+                logger.warning("[Nexus IA Auditor] Fallback para gemini-1.5-flash...")
+                response = client.models.generate_content(model='gemini-1.5-flash', contents=prompt)
             else:
                 raise e
 
@@ -441,7 +455,14 @@ REGRAS DE RESPOSTA:
 
 SUA ANÁLISE:"""
 
-        response = client.models.generate_content(model='gemini-2.0-flash-lite', contents=prompt)
+        try:
+            response = client.models.generate_content(model='gemini-2.5-flash', contents=prompt)
+        except Exception as e:
+            if any(err in str(e) for err in ["503", "UNAVAILABLE", "429", "RESOURCE_EXHAUSTED"]):
+                logger.warning("[Nexus IA] Fallback para gemini-1.5-flash em auditar_escala_ia...")
+                response = client.models.generate_content(model='gemini-1.5-flash', contents=prompt)
+            else:
+                raise e
         return {"resposta": response.text.strip()}
 
     except Exception as e:
