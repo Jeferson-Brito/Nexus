@@ -2084,7 +2084,16 @@
         } else {
             colTrab.style.display = 'none';
             colFolga.style.display = 'none';
-            const [t, f] = regra.split('x').map(Number);
+            
+            let t, f;
+            if (regra === '12x36') {
+                t = 1; f = 1;
+            } else if (regra === '24x72') {
+                t = 1; f = 3;
+            } else {
+                [t, f] = regra.split('x').map(Number);
+            }
+            
             inputTrab.value = t;
             inputFolga.value = f;
             
@@ -2101,22 +2110,17 @@
     function hideModeloForm() {
         document.getElementById('modelosListState').style.display = 'block';
         document.getElementById('modeloFormState').style.display = 'none';
-        renderModelos(); // Garantir que a lista esteja atualizada
+        renderModelos(); 
     }
 
     function validarTipoEscalaForm() {
         const trab = parseInt(document.getElementById('formModeloTrabalho').value);
         const folga = parseInt(document.getElementById('formModeloFolga').value);
         const tipo = document.getElementById('formModeloTipo');
-        const help = document.getElementById('formModeloTipoHelp');
 
         if (trab === 6 && folga === 1) {
             tipo.value = 'fixa';
-            tipo.disabled = true;
-            help.classList.remove('d-none');
-        } else {
-            tipo.disabled = false;
-            help.classList.add('d-none');
+            // tipo.disabled = true; // Removido para permitir flexibilidade se necessário, mas sugerido fixa
         }
         updatePreviewCycle();
     }
@@ -2124,6 +2128,9 @@
     function updatePreviewCycle() {
         const trab = parseInt(document.getElementById('formModeloTrabalho').value) || 0;
         const folga = parseInt(document.getElementById('formModeloFolga').value) || 0;
+        const tipo = document.getElementById('formModeloTipo').value; // 'fixa' ou 'rotativa'
+        const permiteFDS = document.getElementById('formModeloFDS').value === 'true';
+        
         const cycle = trab + folga;
         if (cycle === 0) return;
 
@@ -2135,23 +2142,39 @@
 
         for (let w = 0; w < 5; w++) {
             const tr = document.createElement('tr');
-            tr.innerHTML = `<td class="bg-light fw-bold text-muted small">Semana ${w + 1}</td>`;
+            tr.innerHTML = `<td class="bg-light fw-bold text-muted small">S. ${w + 1}</td>`;
             
-            for (let d = 0; d < 7; d++) {
+            for (let d = 0; d < 7; d++) { // 0=DOM, 1=SEG, ..., 6=SAB
                 if (dayCounter > 31) {
                     tr.innerHTML += `<td class="bg-light"></td>`;
                     continue;
                 }
 
-                const isWork = (cycleCounter % cycle) < trab;
+                let isWork = true;
+
+                // Regra 1: Fins de semana proibidos?
+                if (!permiteFDS && (d === 0 || d === 6)) {
+                    isWork = false;
+                } else {
+                    // Regra 2: Tipo de escala
+                    if (tipo === 'fixa' && cycle === 7) {
+                        // Se for ciclo de 7 dias (ex 5x2, 6x1) e FIXA, as folgas são sempre nos mesmos dias
+                        // Assumindo que o preview começa no Domingo (d=0) e as folgas são no início do ciclo
+                        isWork = (cycleCounter % 7) >= folga;
+                    } else {
+                        // Rotativa ou ciclo não-semanal: segue o fluxo contínuo
+                        isWork = (cycleCounter % cycle) < trab;
+                    }
+                }
+
                 const color = isWork ? '#dcfce7' : '#fee2e2';
                 const border = isWork ? '#16a34a' : '#dc2626';
                 const textColor = isWork ? '#166534' : '#991b1b';
                 
                 tr.innerHTML += `
-                    <td style="background: ${color}; border: 1px solid ${border}; color: ${textColor}; height: 50px; transition: all 0.2s;">
-                        <div class="fw-bold">${dayCounter}</div>
-                        <div style="font-size: 0.65rem; font-weight: 800; opacity: 0.8;">${isWork ? 'TRABALHO' : 'FOLGA'}</div>
+                    <td style="background: ${color}; border: 1px solid ${border}; color: ${textColor}; height: 45px; transition: all 0.2s;">
+                        <div class="fw-bold" style="font-size: 0.8rem;">${dayCounter}</div>
+                        <div style="font-size: 0.55rem; font-weight: 800; opacity: 0.8;">${isWork ? 'TRABALHO' : 'FOLGA'}</div>
                     </td>
                 `;
                 
