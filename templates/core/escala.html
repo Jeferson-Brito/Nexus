@@ -114,6 +114,77 @@
         background: #0b5ed7;
     }
 
+    /* Botões Premium do Simulador (Laboratório) */
+    .btn-simulador-action {
+        background: white !important;
+        color: #334155 !important;
+        border: 1px solid #cbd5e1 !important;
+        font-weight: 600 !important;
+        font-size: 13px !important;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
+    }
+
+    .btn-simulador-action:hover {
+        background: #f8fafc !important;
+        color: #1e293b !important;
+        border-color: #94a3b8 !important;
+        transform: translateY(-1.5px) !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+    }
+
+    .btn-simulador-save {
+        background: white !important;
+        color: #10b981 !important;
+        border: 1px solid #10b981 !important;
+        font-weight: 600 !important;
+        font-size: 13px !important;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
+    }
+
+    .btn-simulador-save:hover {
+        background: #10b981 !important;
+        color: white !important;
+        border-color: #10b981 !important;
+        transform: translateY(-1.5px) !important;
+        box-shadow: 0 6px 15px rgba(16, 185, 129, 0.3) !important;
+    }
+
+    .btn-simulador-discard {
+        background: #fef2f2 !important;
+        color: #ef4444 !important;
+        border: 1px solid #fecaca !important;
+        font-weight: 600 !important;
+        font-size: 13px !important;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
+    }
+
+    .btn-simulador-discard:hover {
+        background: #ef4444 !important;
+        color: white !important;
+        border-color: #ef4444 !important;
+        transform: translateY(-1.5px) !important;
+        box-shadow: 0 6px 15px rgba(239, 68, 68, 0.3) !important;
+    }
+
+    .btn-simulador-publish {
+        background: linear-gradient(135deg, #f97316, #ea580c) !important;
+        color: white !important;
+        border: none !important;
+        font-weight: 700 !important;
+        font-size: 13px !important;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        box-shadow: 0 4px 10px rgba(234, 88, 12, 0.3) !important;
+    }
+
+    .btn-simulador-publish:hover {
+        background: linear-gradient(135deg, #ea580c, #c2410c) !important;
+        transform: translateY(-1.5px) !important;
+        box-shadow: 0 8px 20px rgba(234, 88, 12, 0.5) !important;
+    }
+
     .page-actions {
         display: flex;
         gap: 10px;
@@ -978,32 +1049,32 @@
             </div>
             
             <div style="display: flex; gap: 8px;">
-                <button class="btn-escala" onclick="openAnalystModal()" style="background: white; color: #334155; border: 1px solid #cbd5e1; font-weight: 600; font-size: 13px;">
+                <button class="btn-escala btn-simulador-action" onclick="openAnalystModal()">
                     <i class="fa-solid fa-users-gear" style="color: #3b82f6;"></i> Analistas
                 </button>
-                <button class="btn-escala" onclick="openShiftModal()" style="background: white; color: #334155; border: 1px solid #cbd5e1; font-weight: 600; font-size: 13px;">
+                <button class="btn-escala btn-simulador-action" onclick="openShiftModal()">
                     <i class="fa-solid fa-clock" style="color: #f59e0b;"></i> Turnos
                 </button>
-                <button class="btn-escala" onclick="auditarEscalaIA()" style="background: white; color: #334155; border: 1px solid #cbd5e1; font-weight: 600; font-size: 13px;">
+                <button class="btn-escala btn-simulador-action" onclick="auditarEscalaIA()">
                     <i class="fa-solid fa-robot" style="color: #8b5cf6;"></i> Testar com IA
                 </button>
-                <button class="btn-escala" onclick="openMonthlySummaryModal()" style="background: white; color: #334155; border: 1px solid #cbd5e1; font-weight: 600; font-size: 13px;">
+                <button class="btn-escala btn-simulador-action" onclick="openMonthlySummaryModal()">
                     <i class="fa-solid fa-list-check" style="color: #0ea5e9;"></i> Resumo
                 </button>
-                <button class="btn-escala" onclick="openExportModal()" style="background: white; color: #334155; border: 1px solid #cbd5e1; font-weight: 600; font-size: 13px;">
+                <button class="btn-escala btn-simulador-action" onclick="openExportModal()">
                     <i class="fa-solid fa-download" style="color: #475569;"></i> Exportar
                 </button>
             </div>
         </div>
         
         <div style="display: flex; gap: 10px;">
-            <button class="btn-escala" onclick="salvarRascunho()" style="background: white; color: #10b981; border: 1px solid #10b981; font-weight: 600; font-size: 13px;">
+            <button class="btn-escala btn-simulador-save" onclick="salvarRascunho()">
                 <i class="fa-solid fa-floppy-disk"></i> Salvar Rascunho
             </button>
-            <button class="btn-escala" onclick="excluirRascunhoAtual()" style="background: #fef2f2; color: #ef4444; border: 1px solid #fecaca; font-weight: 600; font-size: 13px;">
+            <button class="btn-escala btn-simulador-discard" onclick="excluirRascunhoAtual()">
                 <i class="fa-solid fa-trash"></i> Descartar
             </button>
-            <button class="btn-escala" onclick="abrirModalPublicarRascunho()" style="background: linear-gradient(135deg, #f97316, #ea580c); color: white; border: none; font-weight: bold; font-size: 13px; box-shadow: 0 4px 10px rgba(234, 88, 12, 0.3);">
+            <button class="btn-escala btn-simulador-publish" onclick="abrirModalPublicarRascunho()">
                 <i class="fa-solid fa-rocket"></i> Aprovar e Publicar
             </button>
         </div>
