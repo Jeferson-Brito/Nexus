@@ -215,15 +215,15 @@
             <!-- RH -->
             <div class="nav-group-title">Recursos Humanos</div>
             <a href="#escalaSubmenuRH"
-                class="nav-link dropdown-toggle-custom {% if request.resolver_match.url_name == 'escala' or request.resolver_match.url_name == 'planejamento_escala' %}active{% endif %}"
+                class="nav-link dropdown-toggle-custom {% if request.resolver_match.url_name == 'escala' or request.resolver_match.url_name == 'planejamento_escala' or request.resolver_match.url_name == 'configuracao_escalas' %}active{% endif %}"
                 data-bs-toggle="collapse"
-                aria-expanded="{% if request.resolver_match.url_name == 'escala' or request.resolver_match.url_name == 'planejamento_escala' %}true{% else %}false{% endif %}"
+                aria-expanded="{% if request.resolver_match.url_name == 'escala' or request.resolver_match.url_name == 'planejamento_escala' or request.resolver_match.url_name == 'configuracao_escalas' %}true{% else %}false{% endif %}"
                 aria-controls="escalaSubmenuRH">
                 <i class="bi bi-calendar-event"></i>
                 <span class="link-text">Escala</span>
                 <i class="bi bi-chevron-down ms-auto arrow-icon"></i>
             </a>
-            <div class="collapse nav-submenu-container {% if request.resolver_match.url_name == 'escala' or request.resolver_match.url_name == 'planejamento_escala' %}show{% endif %}"
+            <div class="collapse nav-submenu-container {% if request.resolver_match.url_name == 'escala' or request.resolver_match.url_name == 'planejamento_escala' or request.resolver_match.url_name == 'configuracao_escalas' %}show{% endif %}"
                 id="escalaSubmenuRH">
                 <div class="nav-submenu">
                     <a href="{% url 'escala' %}"
@@ -436,15 +436,15 @@
             <!-- NRS Suporte / NRP -->
             <div class="nav-group-title">Operação</div>
             <a href="#escalaSubmenuSuporte"
-                class="nav-link dropdown-toggle-custom {% if request.resolver_match.url_name == 'escala' or request.resolver_match.url_name == 'planejamento_escala' %}active{% endif %}"
+                class="nav-link dropdown-toggle-custom {% if request.resolver_match.url_name == 'escala' or request.resolver_match.url_name == 'planejamento_escala' or request.resolver_match.url_name == 'configuracao_escalas' %}active{% endif %}"
                 data-bs-toggle="collapse"
-                aria-expanded="{% if request.resolver_match.url_name == 'escala' or request.resolver_match.url_name == 'planejamento_escala' %}true{% else %}false{% endif %}"
+                aria-expanded="{% if request.resolver_match.url_name == 'escala' or request.resolver_match.url_name == 'planejamento_escala' or request.resolver_match.url_name == 'configuracao_escalas' %}true{% else %}false{% endif %}"
                 aria-controls="escalaSubmenuSuporte">
                 <i class="bi bi-calendar-event"></i>
                 <span class="link-text">Escala</span>
                 <i class="bi bi-chevron-down ms-auto arrow-icon"></i>
             </a>
-            <div class="collapse nav-submenu-container {% if request.resolver_match.url_name == 'escala' or request.resolver_match.url_name == 'planejamento_escala' %}show{% endif %}"
+            <div class="collapse nav-submenu-container {% if request.resolver_match.url_name == 'escala' or request.resolver_match.url_name == 'planejamento_escala' or request.resolver_match.url_name == 'configuracao_escalas' %}show{% endif %}"
                 id="escalaSubmenuSuporte">
                 <div class="nav-submenu">
                     <a href="{% url 'escala' %}"
@@ -615,15 +615,15 @@
             <!-- Logística -->
             <div class="nav-group-title">Logística</div>
             <a href="#escalaSubmenuLog"
-                class="nav-link dropdown-toggle-custom {% if request.resolver_match.url_name == 'escala' or request.resolver_match.url_name == 'planejamento_escala' %}active{% endif %}"
+                class="nav-link dropdown-toggle-custom {% if request.resolver_match.url_name == 'escala' or request.resolver_match.url_name == 'planejamento_escala' or request.resolver_match.url_name == 'configuracao_escalas' %}active{% endif %}"
                 data-bs-toggle="collapse"
-                aria-expanded="{% if request.resolver_match.url_name == 'escala' or request.resolver_match.url_name == 'planejamento_escala' %}true{% else %}false{% endif %}"
+                aria-expanded="{% if request.resolver_match.url_name == 'escala' or request.resolver_match.url_name == 'planejamento_escala' or request.resolver_match.url_name == 'configuracao_escalas' %}true{% else %}false{% endif %}"
                 aria-controls="escalaSubmenuLog">
                 <i class="bi bi-calendar-event"></i>
                 <span class="link-text">Escala</span>
                 <i class="bi bi-chevron-down ms-auto arrow-icon"></i>
             </a>
-            <div class="collapse nav-submenu-container {% if request.resolver_match.url_name == 'escala' or request.resolver_match.url_name == 'planejamento_escala' %}show{% endif %}"
+            <div class="collapse nav-submenu-container {% if request.resolver_match.url_name == 'escala' or request.resolver_match.url_name == 'planejamento_escala' or request.resolver_match.url_name == 'configuracao_escalas' %}show{% endif %}"
                 id="escalaSubmenuLog">
                 <div class="nav-submenu">
                     <a href="{% url 'escala' %}"
