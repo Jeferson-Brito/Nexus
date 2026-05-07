@@ -550,7 +550,7 @@ def api_rascunho_create(request):
 @require_http_methods(["POST"])
 @check_nrs_permission
 def api_rascunho_copiar_turnos(request, pk):
-    """Copia turnos de uma escala fonte para o rascunho atual"""
+    """Copia turnos e analistas de uma escala fonte para o rascunho atual"""
     try:
         rascunho_destino = get_object_or_404(EscalaRascunho, pk=pk)
         data = json.loads(request.body)
@@ -558,13 +558,18 @@ def api_rascunho_copiar_turnos(request, pk):
 
         if fonte_id == 'principal' or not fonte_id:
             turnos_fonte = Turno.objects.filter(ativo=True, rascunho__isnull=True)
+            analistas_fonte = AnalistaEscala.objects.filter(ativo=True, rascunho__isnull=True)
         else:
             fonte_rascunho = get_object_or_404(EscalaRascunho, pk=fonte_id)
             turnos_fonte = Turno.objects.filter(ativo=True, rascunho=fonte_rascunho)
+            analistas_fonte = AnalistaEscala.objects.filter(ativo=True, rascunho=fonte_rascunho)
 
         if not turnos_fonte.exists():
             return JsonResponse({'error': 'A escala fonte não possui turnos para copiar.'}, status=400)
 
+        # Mapeamento para associar analistas aos novos turnos
+        mapa_turnos = {}
+        
         turnos_criados = []
         for t in turnos_fonte:
             novo_t = Turno.objects.create(
@@ -575,12 +580,30 @@ def api_rascunho_copiar_turnos(request, pk):
                 ordem=t.ordem,
                 ativo=t.ativo
             )
+            mapa_turnos[t.id] = novo_t
+            
             turnos_criados.append({
                 'id': novo_t.id,
                 'nome': novo_t.nome,
                 'horario': novo_t.horario,
                 'cor': novo_t.cor
             })
+
+        # Copiar Analistas
+        for a in analistas_fonte:
+            novo_turno = mapa_turnos.get(a.turno_id) if a.turno else None
+            
+            AnalistaEscala.objects.create(
+                rascunho=rascunho_destino,
+                user=a.user,
+                nome=a.nome,
+                turno=novo_turno,
+                modelo_escala=a.modelo_escala,
+                pausa=a.pausa,
+                data_primeira_folga=a.data_primeira_folga,
+                ordem=a.ordem,
+                ativo=a.ativo
+            )
 
         return JsonResponse({'success': True, 'turnos': turnos_criados})
     except Exception as e:
