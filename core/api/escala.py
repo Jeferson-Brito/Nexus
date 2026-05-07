@@ -567,20 +567,26 @@ def api_rascunho_copiar_turnos(request, pk):
         if not turnos_fonte.exists():
             return JsonResponse({'error': 'A escala fonte não possui turnos para copiar.'}, status=400)
 
-        # Mapeamento para associar analistas aos novos turnos
-        mapa_turnos = {}
+        # Mapeamento para associar analistas aos novos turnos (por ID e por NOME)
+        mapa_turnos_id = {}
+        mapa_turnos_nome = {}
         
         turnos_criados = []
         for t in turnos_fonte:
-            novo_t = Turno.objects.create(
-                rascunho=rascunho_destino,
-                nome=t.nome,
-                horario=t.horario,
-                cor=t.cor,
-                ordem=t.ordem,
-                ativo=t.ativo
-            )
-            mapa_turnos[t.id] = novo_t
+            # Tenta encontrar turno existente com mesmo nome no destino para não duplicar se já existir
+            novo_t = Turno.objects.filter(rascunho=rascunho_destino, nome=t.nome).first()
+            if not novo_t:
+                novo_t = Turno.objects.create(
+                    rascunho=rascunho_destino,
+                    nome=t.nome,
+                    horario=t.horario,
+                    cor=t.cor,
+                    ordem=t.ordem,
+                    ativo=t.ativo
+                )
+            
+            mapa_turnos_id[t.id] = novo_t
+            mapa_turnos_nome[t.nome] = novo_t
             
             turnos_criados.append({
                 'id': novo_t.id,
@@ -589,21 +595,36 @@ def api_rascunho_copiar_turnos(request, pk):
                 'cor': novo_t.cor
             })
 
-        # Copiar Analistas
+        # Copiar/Atualizar Analistas
         for a in analistas_fonte:
-            novo_turno = mapa_turnos.get(a.turno_id) if a.turno else None
+            novo_turno = mapa_turnos_id.get(a.turno_id) if a.turno else None
             
-            AnalistaEscala.objects.create(
-                rascunho=rascunho_destino,
-                user=a.user,
-                nome=a.nome,
-                turno=novo_turno,
-                modelo_escala=a.modelo_escala,
-                pausa=a.pausa,
-                data_primeira_folga=a.data_primeira_folga,
-                ordem=a.ordem,
-                ativo=a.ativo
-            )
+            # Tenta encontrar analista existente no destino pelo nome
+            analista_destino = AnalistaEscala.objects.filter(rascunho=rascunho_destino, nome=a.nome).first()
+            
+            if analista_destino:
+                # Atualiza analista existente
+                analista_destino.turno = novo_turno
+                analista_destino.user = a.user
+                analista_destino.modelo_escala = a.modelo_escala
+                analista_destino.pausa = a.pausa
+                analista_destino.data_primeira_folga = a.data_primeira_folga
+                analista_destino.ordem = a.ordem
+                analista_destino.ativo = a.ativo
+                analista_destino.save()
+            else:
+                # Cria novo analista
+                AnalistaEscala.objects.create(
+                    rascunho=rascunho_destino,
+                    user=a.user,
+                    nome=a.nome,
+                    turno=novo_turno,
+                    modelo_escala=a.modelo_escala,
+                    pausa=a.pausa,
+                    data_primeira_folga=a.data_primeira_folga,
+                    ordem=a.ordem,
+                    ativo=a.ativo
+                )
 
         return JsonResponse({'success': True, 'turnos': turnos_criados})
     except Exception as e:

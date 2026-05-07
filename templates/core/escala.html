@@ -2333,9 +2333,15 @@
     }
 
     async function abrirModalCopiarTurnos() {
+        if (!rascunhoId) return;
+        
+        // Mover para o final do body para ficar por cima se outro modal estiver aberto
+        const modal = document.getElementById('copyShiftsModal');
+        document.body.appendChild(modal);
+
         // Carregar rascunhos existentes no dropdown de fonte
         const select = document.getElementById('copyShiftsFonteSelect');
-        select.innerHTML = '<option value="principal">⭐ Escala Principal (ativa)</option>';
+        select.innerHTML = '<option value="principal">📊 Escala Principal (ativa)</option>';
         try {
             const res = await fetch('/api/escala/rascunhos/');
             const lista = await res.json();
@@ -2347,7 +2353,7 @@
             });
         } catch(e) { /* ignora erro silencioso */ }
 
-        document.getElementById('copyShiftsModal').classList.add('show');
+        modal.classList.add('show');
     }
 
     function fecharModalCopiarTurnos() {
