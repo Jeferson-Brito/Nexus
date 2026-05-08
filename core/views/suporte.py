@@ -89,7 +89,7 @@ def escala_view(request):
     # RH vê a escala em modo somente-leitura (sem botões de editar/adicionar analista/turno)
     is_rh = user.department and user.department.name == 'RH'
     is_admin = (user.is_gestor() or user.is_administrador()) and not is_rh
-    can_export = is_admin or (user.department and user.department.name == 'RH')
+    can_export = True  # Todos os usuários logados com acesso à escala podem ver Resumo e Exportar
     
     is_planejamento_mode = request.resolver_match.url_name == 'planejamento_escala'
     is_config_mode = request.resolver_match.url_name == 'configuracao_escalas'

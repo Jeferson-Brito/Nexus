@@ -1187,9 +1187,11 @@
             </button>
             {% endif %}
 
+            {% if is_admin %}
             <button class="btn-escala" onclick="auditarEscalaIA()" style="background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white;">
                 <i class="fa-solid fa-robot"></i> Auditar IA
             </button>
+            {% endif %}
             <!-- Botão Trocas de Folga -->
             <span style="position:relative; display:inline-flex;">
                 <button class="btn-escala" onclick="abrirModalTrocas()" id="btnTrocaFolga" style="background: linear-gradient(135deg, #0891b2, #0e7490); color:white;">
@@ -2069,6 +2071,7 @@
             // Listener para mudança de mês
             mesInputEl.addEventListener('change', function () {
                 updateMonthDisplay();
+                generateTables();
             });
         }
 
