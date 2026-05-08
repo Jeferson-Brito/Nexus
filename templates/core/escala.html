@@ -869,8 +869,18 @@
         border-radius: 12px;
         border: 1px solid #e2e8f0;
         z-index: 1000;
-        overflow: hidden;
         animation: fadeInDropdown 0.2s ease-out;
+    }
+
+    /* Ponte invisível para evitar perda do hover ao mover o mouse */
+    .escala-dropdown-menu::before {
+        content: "";
+        position: absolute;
+        top: -12px;
+        left: 0;
+        right: 0;
+        height: 12px;
+        background: transparent;
     }
 
     .escala-dropdown-menu a {
@@ -890,6 +900,16 @@
     .escala-dropdown-menu a:hover {
         background-color: #f1f5f9;
         color: #0f172a !important;
+    }
+
+    .escala-dropdown-menu a:first-of-type {
+        border-top-left-radius: 12px;
+        border-top-right-radius: 12px;
+    }
+
+    .escala-dropdown-menu a:last-of-type {
+        border-bottom-left-radius: 12px;
+        border-bottom-right-radius: 12px;
     }
 
     /* Mostrar ao hover ou via classe .show-dropdown */
@@ -1904,6 +1924,15 @@
                         <label class="fw-bold text-dark">Novo Dia da Folga Desejado</label>
                         <input type="date" id="trocaDataNovoDia" class="form-control" style="width:100%; padding:10px; border-radius:8px; border:1px solid #cbd5e1; font-size:14px;">
                         <small class="text-muted block mt-1" style="font-size: 0.75rem;">Selecione o dia em que você deseja folgar no lugar da folga original.</small>
+                        
+                        <!-- Visualização da escala para escolher o novo dia -->
+                        <div id="previewEscalaNovoDia" class="mt-3 p-3" style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 12px; display:none;">
+                            <strong class="d-block mb-2 text-secondary small text-uppercase" style="letter-spacing:0.5px;"><i class="fa-solid fa-calendar-days text-primary"></i> Selecione um Dia de Trabalho para Folgar</strong>
+                            <div id="previewNovoDiaCalendarGrid" class="d-flex flex-wrap gap-1" style="max-height: 150px; overflow-y: auto; padding-right: 5px;">
+                                <!-- Preenchido via JS -->
+                            </div>
+                            <small class="text-muted d-block mt-2" style="font-size: 0.7rem; font-style: italic;">Seus dias de trabalho programados estão marcados em cinza/escuro. Clique em um dia de trabalho para escolhê-lo como seu novo dia de folga.</small>
+                        </div>
                     </div>
                 </div>
 
@@ -4499,6 +4528,7 @@
         document.getElementById('formNovaTroca').reset();
         document.getElementById('previewEscalaReceptor').style.display = 'none';
         document.getElementById('previewEscalaSolicitante').style.display = 'none';
+        document.getElementById('previewEscalaNovoDia').style.display = 'none';
         mudarCenarioNovaTroca('propria');
 
         // Se não for admin, travar solicitante para si mesmo
@@ -4528,6 +4558,13 @@
         // Marcar o radio oculto
         const radio = document.querySelector(`input[name="tipoTrocaRadio"][value="${scenario}"]`);
         if (radio) radio.checked = true;
+
+        // Mostrar ou ocultar o preview de Novo Dia de forma inteligente
+        const solId = document.getElementById('trocaSolicitante').value;
+        const previewNovoDia = document.getElementById('previewEscalaNovoDia');
+        if (previewNovoDia) {
+            previewNovoDia.style.display = (scenario === 'propria' && solId) ? 'block' : 'none';
+        }
     }
 
     async function aoMudarSolicitanteTroca() {
@@ -4548,13 +4585,26 @@
         const container = document.getElementById('previewEscalaSolicitante');
         const grid = document.getElementById('previewSolicitanteCalendarGrid');
 
+        // Carrega preview de Novo Dia para Cenário 1 também!
+        const containerNovo = document.getElementById('previewEscalaNovoDia');
+        const gridNovo = document.getElementById('previewNovoDiaCalendarGrid');
+
         if (!solId) {
             container.style.display = 'none';
+            containerNovo.style.display = 'none';
             return;
         }
 
         grid.innerHTML = '<div class="text-center w-100 py-3 text-muted small"><i class="fa-solid fa-spinner fa-spin"></i> Carregando suas folgas...</div>';
         container.style.display = 'block';
+
+        const scenarioActive = document.getElementById('scenarioPropriaCard').classList.contains('active');
+        if (scenarioActive) {
+            containerNovo.style.display = 'block';
+            gridNovo.innerHTML = '<div class="text-center w-100 py-3 text-muted small"><i class="fa-solid fa-spinner fa-spin"></i> Carregando dias de trabalho...</div>';
+        } else {
+            containerNovo.style.display = 'none';
+        }
 
         try {
             const rParam = rascunhoId ? `?rascunho_id=${rascunhoId}` : '';
@@ -4562,6 +4612,7 @@
             if (res.ok) {
                 const data = await res.json();
                 grid.innerHTML = '';
+                gridNovo.innerHTML = '';
 
                 // Obter mês atual selecionado na escala
                 const mesVal = document.getElementById('mesInput').value;
@@ -4571,30 +4622,51 @@
                 for (let dia = 1; dia <= daysInMonth; dia++) {
                     const dataRef = new Date(ano, mesNum - 1, dia);
                     const cellInfo = calcularPreviaEscalaAnalista(data, dataRef);
-                    
-                    const badge = document.createElement('div');
                     const dStr = `${ano}-${String(mesNum).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
-                    badge.className = `day-badge-preview ${cellInfo.class}`;
-                    badge.textContent = dia;
-                    badge.title = `${dia}/${mesNum}: ${cellInfo.text}`;
+
+                    // --- 1. Grid 1: Folga Atual do Solicitante (Só clicável se folga) ---
+                    const badgeSol = document.createElement('div');
+                    badgeSol.className = `day-badge-preview ${cellInfo.class}`;
+                    badgeSol.textContent = dia;
+                    badgeSol.title = `${dia}/${mesNum}: ${cellInfo.text}`;
                     
                     if (cellInfo.class === 'folga') {
-                        badge.onclick = () => {
+                        badgeSol.onclick = () => {
                             grid.querySelectorAll('.day-badge-preview').forEach(b => b.classList.remove('selected'));
-                            badge.classList.add('selected');
+                            badgeSol.classList.add('selected');
                             document.getElementById('trocaDataSolicitante').value = dStr;
                         };
                     } else {
-                        badge.style.opacity = '0.5';
-                        badge.style.cursor = 'not-allowed';
+                        badgeSol.style.opacity = '0.5';
+                        badgeSol.style.cursor = 'not-allowed';
                     }
-                    grid.appendChild(badge);
+                    grid.appendChild(badgeSol);
+
+                    // --- 2. Grid 2: Novo Dia Desejado (Só clicável se trabalho/turno normal) ---
+                    const badgeNovo = document.createElement('div');
+                    badgeNovo.className = `day-badge-preview ${cellInfo.class}`;
+                    badgeNovo.textContent = dia;
+                    badgeNovo.title = `${dia}/${mesNum}: ${cellInfo.text}`;
+
+                    if (cellInfo.class !== 'folga' && cellInfo.class !== 'ferias' && cellInfo.class !== 'atestado' && cellInfo.class !== 'folga_vago') {
+                        badgeNovo.onclick = () => {
+                            gridNovo.querySelectorAll('.day-badge-preview').forEach(b => b.classList.remove('selected'));
+                            badgeNovo.classList.add('selected');
+                            document.getElementById('trocaDataNovoDia').value = dStr;
+                        };
+                    } else {
+                        badgeNovo.style.opacity = '0.5';
+                        badgeNovo.style.cursor = 'not-allowed';
+                    }
+                    gridNovo.appendChild(badgeNovo);
                 }
             } else {
                 grid.innerHTML = '<div class="text-danger w-100 py-2 small">Erro ao carregar escala</div>';
+                gridNovo.innerHTML = '<div class="text-danger w-100 py-2 small">Erro ao carregar escala</div>';
             }
         } catch(e) {
             grid.innerHTML = '<div class="text-danger w-100 py-2 small">Erro ao carregar escala</div>';
+            gridNovo.innerHTML = '<div class="text-danger w-100 py-2 small">Erro ao carregar escala</div>';
         }
     }
 
