@@ -1912,6 +1912,15 @@
                     </select>
                 </div>
 
+                <!-- Mês de Referência da Troca -->
+                <div class="form-group-escala mb-3">
+                    <label for="trocaMesReferencia" class="fw-bold text-dark" style="display:flex; align-items:center; gap:6px;">
+                        <i class="fa-solid fa-calendar-days text-info"></i> Mês de Referência da Troca
+                    </label>
+                    <input type="month" id="trocaMesReferencia" class="form-control" onchange="aoMudarMesReferencia()" style="width:100%; padding:10px; border-radius:8px; border:1px solid #cbd5e1; font-size:14px;">
+                    <small class="text-muted block mt-1" style="font-size: 0.75rem;">Altere este mês de referência para visualizar as folgas de outros meses.</small>
+                </div>
+
                 <!-- Campo de data da folga do solicitante -->
                 <div class="form-group-escala mb-3">
                     <label id="lblDataSolicitante" class="fw-bold text-dark">Sua Folga Atual (Dia que deseja ceder/trabalhar)</label>
@@ -4772,6 +4781,7 @@
 
         // Reset inputs
         document.getElementById('formNovaTroca').reset();
+        document.getElementById('trocaMesReferencia').value = document.getElementById('mesInput').value;
         document.getElementById('previewEscalaReceptor').style.display = 'none';
         document.getElementById('previewEscalaSolicitante').style.display = 'none';
         document.getElementById('previewEscalaNovoDia').style.display = 'none';
@@ -4811,6 +4821,11 @@
         if (previewNovoDia) {
             previewNovoDia.style.display = (scenario === 'propria' && solId) ? 'block' : 'none';
         }
+    }
+
+    function aoMudarMesReferencia() {
+        aoMudarSolicitanteTroca();
+        aoSelecionarReceptorTroca();
     }
 
     async function aoMudarSolicitanteTroca() {
@@ -4860,8 +4875,12 @@
                 grid.innerHTML = '';
                 gridNovo.innerHTML = '';
 
-                // Obter mês atual selecionado na escala
-                const mesVal = document.getElementById('mesInput').value;
+                // Obter mês de referência selecionado ou usar o mês atual da escala como fallback
+                let mesVal = document.getElementById('trocaMesReferencia').value;
+                if (!mesVal) {
+                    mesVal = document.getElementById('mesInput').value;
+                    document.getElementById('trocaMesReferencia').value = mesVal;
+                }
                 const [ano, mesNum] = mesVal.split('-').map(Number);
                 const daysInMonth = new Date(ano, mesNum, 0).getDate();
 
@@ -4936,8 +4955,12 @@
                 const data = await res.json();
                 grid.innerHTML = '';
 
-                // Obter mês atual selecionado na escala
-                const mesVal = document.getElementById('mesInput').value;
+                // Obter mês de referência selecionado ou usar o mês atual da escala como fallback
+                let mesVal = document.getElementById('trocaMesReferencia').value;
+                if (!mesVal) {
+                    mesVal = document.getElementById('mesInput').value;
+                    document.getElementById('trocaMesReferencia').value = mesVal;
+                }
                 const [ano, mesNum] = mesVal.split('-').map(Number);
                 const daysInMonth = new Date(ano, mesNum, 0).getDate();
 

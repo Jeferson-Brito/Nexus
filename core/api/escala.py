@@ -887,7 +887,7 @@ def api_troca_create(request):
             return JsonResponse({'error': 'Já existe uma solicitação pendente para esta folga.'}, status=400)
 
         # Validar regras de cobertura mínima de turno
-        ok, motivo = validar_regras_troca(
+        ok, erro_cobertura = validar_regras_troca(
             solicitante=solicitante,
             receptor=receptor,
             data_solicitante=data_solicitante,
@@ -896,7 +896,7 @@ def api_troca_create(request):
             rascunho=rascunho
         )
         if not ok:
-            return JsonResponse({'error': motivo, 'tipo': 'cobertura_insuficiente'}, status=400)
+            return JsonResponse({'error': erro_cobertura, 'tipo': 'cobertura_insuficiente'}, status=400)
 
         status_inicial = 'pendente_analista' if tipo == 'analista' else 'pendente_gestor'
 
@@ -906,7 +906,7 @@ def api_troca_create(request):
             receptor=receptor,
             data_solicitante=datetime.strptime(data_solicitante, '%Y-%m-%d').date(),
             data_receptor=datetime.strptime(data_receptor, '%Y-%m-%d').date() if data_receptor else None,
-            motivo=motivo,
+            motivo=motivo or '',
             status=status_inicial,
             rascunho=rascunho,
         )
