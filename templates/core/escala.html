@@ -1887,6 +1887,15 @@
                     <label id="lblDataSolicitante" class="fw-bold text-dark">Sua Folga Atual (Dia que deseja ceder/trabalhar)</label>
                     <input type="date" id="trocaDataSolicitante" class="form-control" style="width:100%; padding:10px; border-radius:8px; border:1px solid #cbd5e1; font-size:14px;" required>
                     <small class="text-muted block mt-1" style="font-size: 0.75rem;">Selecione o dia em que você atualmente tem uma folga programada.</small>
+                    
+                    <!-- Visualização da escala do solicitante -->
+                    <div id="previewEscalaSolicitante" class="mt-3 p-3" style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 12px; display:none;">
+                        <strong class="d-block mb-2 text-secondary small text-uppercase" style="letter-spacing:0.5px;"><i class="fa-solid fa-calendar-days text-primary"></i> Preview da Sua Escala</strong>
+                        <div id="previewSolicitanteCalendarGrid" class="d-flex flex-wrap gap-1" style="max-height: 150px; overflow-y: auto; padding-right: 5px;">
+                            <!-- Preenchido via JS -->
+                        </div>
+                        <small class="text-muted d-block mt-2" style="font-size: 0.7rem; font-style: italic;">Suas folgas programadas estão marcadas em verde/azul claro. Clique em um dia para selecioná-lo.</small>
+                    </div>
                 </div>
 
                 <!-- CENÁRIO 1: Mover Folga Própria para outro dia -->
@@ -4489,6 +4498,7 @@
         // Reset inputs
         document.getElementById('formNovaTroca').reset();
         document.getElementById('previewEscalaReceptor').style.display = 'none';
+        document.getElementById('previewEscalaSolicitante').style.display = 'none';
         mudarCenarioNovaTroca('propria');
 
         // Se não for admin, travar solicitante para si mesmo
@@ -4520,7 +4530,7 @@
         if (radio) radio.checked = true;
     }
 
-    function aoMudarSolicitanteTroca() {
+    async function aoMudarSolicitanteTroca() {
         const solId = document.getElementById('trocaSolicitante').value;
         const selRec = document.getElementById('trocaReceptor');
         
@@ -4533,6 +4543,59 @@
         });
 
         document.getElementById('previewEscalaReceptor').style.display = 'none';
+
+        // Carrega preview do solicitante também!
+        const container = document.getElementById('previewEscalaSolicitante');
+        const grid = document.getElementById('previewSolicitanteCalendarGrid');
+
+        if (!solId) {
+            container.style.display = 'none';
+            return;
+        }
+
+        grid.innerHTML = '<div class="text-center w-100 py-3 text-muted small"><i class="fa-solid fa-spinner fa-spin"></i> Carregando suas folgas...</div>';
+        container.style.display = 'block';
+
+        try {
+            const rParam = rascunhoId ? `?rascunho_id=${rascunhoId}` : '';
+            const res = await fetch(`/api/escala/analistas/${solId}/schedule/${rParam}`);
+            if (res.ok) {
+                const data = await res.json();
+                grid.innerHTML = '';
+
+                // Obter mês atual selecionado na escala
+                const mesVal = document.getElementById('mesInput').value;
+                const [ano, mesNum] = mesVal.split('-').map(Number);
+                const daysInMonth = new Date(ano, mesNum, 0).getDate();
+
+                for (let dia = 1; dia <= daysInMonth; dia++) {
+                    const dataRef = new Date(ano, mesNum - 1, dia);
+                    const cellInfo = calcularPreviaEscalaAnalista(data, dataRef);
+                    
+                    const badge = document.createElement('div');
+                    const dStr = `${ano}-${String(mesNum).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+                    badge.className = `day-badge-preview ${cellInfo.class}`;
+                    badge.textContent = dia;
+                    badge.title = `${dia}/${mesNum}: ${cellInfo.text}`;
+                    
+                    if (cellInfo.class === 'folga') {
+                        badge.onclick = () => {
+                            grid.querySelectorAll('.day-badge-preview').forEach(b => b.classList.remove('selected'));
+                            badge.classList.add('selected');
+                            document.getElementById('trocaDataSolicitante').value = dStr;
+                        };
+                    } else {
+                        badge.style.opacity = '0.5';
+                        badge.style.cursor = 'not-allowed';
+                    }
+                    grid.appendChild(badge);
+                }
+            } else {
+                grid.innerHTML = '<div class="text-danger w-100 py-2 small">Erro ao carregar escala</div>';
+            }
+        } catch(e) {
+            grid.innerHTML = '<div class="text-danger w-100 py-2 small">Erro ao carregar escala</div>';
+        }
     }
 
     async function aoSelecionarReceptorTroca() {
