@@ -4160,8 +4160,12 @@
 
     function mudarTabTrocas(tab) {
         activeTabTrocas = tab;
-        document.getElementById('tabMinhasTrocas').classList.toggle('active', tab === 'minhas');
-        document.getElementById('tabAprovacoesGestao').classList.toggle('active', tab === 'gestao');
+        const tabMinhas = document.getElementById('tabMinhasTrocas');
+        const tabGestao = document.getElementById('tabAprovacoesGestao');
+        
+        if (tabMinhas) tabMinhas.classList.toggle('active', tab === 'minhas');
+        if (tabGestao) tabGestao.classList.toggle('active', tab === 'gestao');
+        
         carregarTrocas();
     }
 
