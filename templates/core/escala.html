@@ -1727,10 +1727,12 @@
                     <button class="tab-btn active" id="tabMinhasTrocas" onclick="mudarTabTrocas('minhas')" style="border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 0.85rem; transition: all 0.2s;">
                         <i class="fa-solid fa-user me-1"></i> Minhas Trocas
                     </button>
+                    {% if is_admin %}
                     <button class="tab-btn" id="tabAprovacoesGestao" onclick="mudarTabTrocas('gestao')" style="border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 0.85rem; transition: all 0.2s;">
                         <i class="fa-solid fa-shield-halved me-1"></i> Painel de Gestão
                         <span id="badgeContagemGestor" class="badge bg-danger ms-1" style="display:none; font-size:0.7rem; border-radius: 999px;">0</span>
                     </button>
+                    {% endif %}
                 </div>
 
                 <!-- Botão Nova Solicitação -->
@@ -2034,6 +2036,7 @@
     let folgasManuais = {{ folgas_json| safe }};
     let modelos = {{ modelos_json| default:"[]"|safe }};
     const isAdmin = {{ is_admin_json }};
+    const loggedInAnalistaId = {% if user_analista_id %}'{{ user_analista_id }}'{% else %}null{% endif %};
     const isConfigMode = {{ is_config_mode|yesno:"true,false" }};
     const csrfToken = '{{ csrf_token }}';
     const rascunhoId = {% if rascunho_id %}'{{ rascunho_id }}'{% else %}null{% endif %};
@@ -4274,11 +4277,13 @@
                     // Nota: Para fins de flexibilidade, vamos permitir que o analista clique em aprovar se envolver o nome dele,
                     // ou que admins ajudem no processo.
                     if (t.status === 'pendente_analista') {
-                        actionButtons = `
-                            <div class="d-flex gap-2 justify-content-end mt-2">
-                                <button class="btn btn-sm btn-outline-danger" onclick="rejeitarTrocaAnalista(${t.id})"><i class="fa-solid fa-times"></i> Recusar Troca</button>
-                                <button class="btn btn-sm btn-success text-white" onclick="aprovarTrocaAnalista(${t.id})"><i class="fa-solid fa-check"></i> Aceitar Troca</button>
-                            </div>`;
+                        if (isAdmin || t.receptor_id == loggedInAnalistaId) {
+                            actionButtons = `
+                                <div class="d-flex gap-2 justify-content-end mt-2">
+                                    <button class="btn btn-sm btn-outline-danger" onclick="rejeitarTrocaAnalista(${t.id})"><i class="fa-solid fa-times"></i> Recusar Troca</button>
+                                    <button class="btn btn-sm btn-success text-white" onclick="aprovarTrocaAnalista(${t.id})"><i class="fa-solid fa-check"></i> Aceitar Troca</button>
+                                </div>`;
+                        }
                     } else if (t.status === 'pendente_gestor' && (isAdmin || activeTabTrocas === 'gestao')) {
                         actionButtons = `
                             <div class="d-flex gap-2 justify-content-end mt-2">
@@ -4286,10 +4291,12 @@
                                 <button class="btn btn-sm btn-success text-white" onclick="aprovarTrocaGestor(${t.id})"><i class="fa-solid fa-check"></i> Aprovar Troca</button>
                             </div>`;
                     } else if ((t.status === 'pendente_analista' || t.status === 'pendente_gestor') && activeTabTrocas === 'minhas') {
-                        actionButtons = `
-                            <div class="d-flex gap-2 justify-content-end mt-2">
-                                <button class="btn btn-sm btn-outline-secondary" onclick="cancelarTroca(${t.id})"><i class="fa-solid fa-ban"></i> Cancelar Solicitação</button>
-                            </div>`;
+                        if (isAdmin || t.solicitante_id == loggedInAnalistaId) {
+                            actionButtons = `
+                                <div class="d-flex gap-2 justify-content-end mt-2">
+                                    <button class="btn btn-sm btn-outline-secondary" onclick="cancelarTroca(${t.id})"><i class="fa-solid fa-ban"></i> Cancelar Solicitação</button>
+                                </div>`;
+                        }
                     }
 
                     let contentHtml = '';
@@ -4347,6 +4354,15 @@
         document.getElementById('formNovaTroca').reset();
         document.getElementById('previewEscalaReceptor').style.display = 'none';
         mudarCenarioNovaTroca('propria');
+
+        // Se não for admin, travar solicitante para si mesmo
+        if (!isAdmin && loggedInAnalistaId) {
+            selSol.value = loggedInAnalistaId;
+            selSol.disabled = true;
+            aoMudarSolicitanteTroca(); // Popula os receptores correspondentes
+        } else {
+            selSol.disabled = false;
+        }
     }
 
     function fecharModalNovaTroca() {

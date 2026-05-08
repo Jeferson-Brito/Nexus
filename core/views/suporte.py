@@ -113,6 +113,10 @@ def escala_view(request):
     config = ConfiguracaoEscala.objects.first()
     modelo_principal_id = config.modelo_escala_principal.id if config and config.modelo_escala_principal else None
 
+    user_analista = None
+    if user.is_authenticated:
+        user_analista = AnalistaEscala.objects.filter(user=user, rascunho__isnull=True, ativo=True).first()
+
     context = {
         'turnos_json': json.dumps(turnos_data),
         'analistas_json': json.dumps(analistas_data),
@@ -128,6 +132,7 @@ def escala_view(request):
         'rascunho_nome': rascunho_obj.nome if rascunho_obj else None,
         'is_planejamento_mode': is_planejamento_mode,
         'is_config_mode': is_config_mode,
+        'user_analista_id': str(user_analista.id) if user_analista else None,
     }
     
     return render(request, 'core/escala.html', context)
