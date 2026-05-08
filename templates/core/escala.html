@@ -4547,6 +4547,100 @@
                             </div>`;
                     }
 
+                    // --- Histórico / Fluxo de Aprovações ---
+                    let timelineHtml = '';
+                    if (t.tipo === 'analista') {
+                        const aceitoColega = !!t.aprovado_receptor_em || t.status === 'pendente_gestor' || t.status === 'aprovada';
+                        const rejeitadoColega = t.status === 'rejeitada' && t.motivo_rejeicao && !t.aprovado_receptor_em && !t.aprovado_gestor_por;
+
+                        let statusColega = '';
+                        if (aceitoColega) {
+                            const dataAceite = t.aprovado_receptor_em ? new Date(t.aprovado_receptor_em).toLocaleString() : '';
+                            statusColega = `
+                                <div class="d-flex align-items-center gap-2 text-success" style="font-weight: 500;">
+                                    <i class="fa-solid fa-circle-check"></i>
+                                    <span><strong>${t.receptor_nome}</strong> aceitou a troca ${dataAceite ? `em ${dataAceite}` : ''}</span>
+                                </div>`;
+                        } else if (rejeitadoColega) {
+                            statusColega = `
+                                <div class="d-flex align-items-center gap-2 text-danger" style="font-weight: 500;">
+                                    <i class="fa-solid fa-circle-xmark"></i>
+                                    <span><strong>${t.receptor_nome}</strong> recusou a troca</span>
+                                </div>`;
+                        } else {
+                            statusColega = `
+                                <div class="d-flex align-items-center gap-2 text-warning" style="font-style: italic;">
+                                    <i class="fa-solid fa-clock"></i>
+                                    <span>Aguardando o aceite de <strong>${t.receptor_nome}</strong></span>
+                                </div>`;
+                        }
+
+                        let statusGestor = '';
+                        if (t.status === 'aprovada') {
+                            const dataAprov = t.aprovado_gestor_em ? new Date(t.aprovado_gestor_em).toLocaleString() : '';
+                            statusGestor = `
+                                <div class="d-flex align-items-center gap-2 text-success mt-1" style="font-weight: 500;">
+                                    <i class="fa-solid fa-circle-check"></i>
+                                    <span>Aprovação final do gestor: <strong>Aprovada por ${t.aprovado_gestor_por || 'Gestão'}</strong> ${dataAprov ? `em ${dataAprov}` : ''}</span>
+                                </div>`;
+                        } else if (t.status === 'rejeitada' && aceitoColega) {
+                            statusGestor = `
+                                <div class="d-flex align-items-center gap-2 text-danger mt-1" style="font-weight: 500;">
+                                    <i class="fa-solid fa-circle-xmark"></i>
+                                    <span>Aprovação final do gestor: <strong>Rejeitada pela Gestão</strong></span>
+                                </div>`;
+                        } else if (t.status === 'pendente_gestor') {
+                            statusGestor = `
+                                <div class="d-flex align-items-center gap-2 text-muted mt-1" style="font-style: italic;">
+                                    <i class="fa-solid fa-circle-arrow-right text-info"></i>
+                                    <span>Aguardando a aprovação final da gestão</span>
+                                </div>`;
+                        } else if (t.status === 'pendente_analista') {
+                            statusGestor = `
+                                <div class="d-flex align-items-center gap-2 text-muted mt-1" style="opacity: 0.6;">
+                                    <i class="fa-solid fa-lock"></i>
+                                    <span>Aprovação final da gestão (Bloqueada até aceite do colega)</span>
+                                </div>`;
+                        }
+
+                        timelineHtml = `
+                            <div class="mt-3 p-3 bg-light border rounded-3" style="font-size: 0.8rem; line-height: 1.4; border-color:#e2e8f0 !important;">
+                                <div class="text-uppercase text-secondary fw-bold mb-2" style="font-size: 0.7rem; letter-spacing: 0.5px;">Fluxo de Aprovações</div>
+                                ${statusColega}
+                                ${statusGestor}
+                            </div>
+                        `;
+                    } else {
+                        let statusGestor = '';
+                        if (t.status === 'aprovada') {
+                            const dataAprov = t.aprovado_gestor_em ? new Date(t.aprovado_gestor_em).toLocaleString() : '';
+                            statusGestor = `
+                                <div class="d-flex align-items-center gap-2 text-success" style="font-weight: 500;">
+                                    <i class="fa-solid fa-circle-check"></i>
+                                    <span>Aprovação da gestão: <strong>Aprovada por ${t.aprovado_gestor_por || 'Gestão'}</strong> ${dataAprov ? `em ${dataAprov}` : ''}</span>
+                                </div>`;
+                        } else if (t.status === 'rejeitada') {
+                            statusGestor = `
+                                <div class="d-flex align-items-center gap-2 text-danger" style="font-weight: 500;">
+                                    <i class="fa-solid fa-circle-xmark"></i>
+                                    <span>Aprovação da gestão: <strong>Rejeitada pela Gestão</strong></span>
+                                </div>`;
+                        } else if (t.status === 'pendente_gestor') {
+                            statusGestor = `
+                                <div class="d-flex align-items-center gap-2 text-warning" style="font-style: italic;">
+                                    <i class="fa-solid fa-clock"></i>
+                                    <span>Aguardando aprovação da gestão</span>
+                                </div>`;
+                        }
+
+                        timelineHtml = `
+                            <div class="mt-3 p-3 bg-light border rounded-3" style="font-size: 0.8rem; line-height: 1.4; border-color:#e2e8f0 !important;">
+                                <div class="text-uppercase text-secondary fw-bold mb-2" style="font-size: 0.7rem; letter-spacing: 0.5px;">Fluxo de Aprovações</div>
+                                ${statusGestor}
+                            </div>
+                        `;
+                    }
+
                     card.innerHTML = `
                         <div class="d-flex justify-content-between align-items-start border-bottom pb-2">
                             <div>
@@ -4560,6 +4654,7 @@
                             ${contentHtml}
                             ${t.motivo ? `<div class="mt-2 p-2 bg-light rounded text-muted" style="font-style:italic;">"${t.motivo}"</div>` : ''}
                             ${t.motivo_rejeicao ? `<div class="mt-2 p-2 bg-danger-subtle rounded text-danger" style="font-weight: 500;"><i class="fa-solid fa-times-circle"></i> Rejeição: "${t.motivo_rejeicao}"</div>` : ''}
+                            ${timelineHtml}
                         </div>
                         <div class="d-flex justify-content-between align-items-center mt-1 border-top pt-2">
                             <span class="text-muted" style="font-size:0.75rem;"><i class="fa-solid fa-clock"></i> Criada em: ${new Date(t.created_at).toLocaleString()}</span>
