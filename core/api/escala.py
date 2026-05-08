@@ -126,7 +126,8 @@ def api_turnos_list(request):
         'nome': t.nome,
         'horario': t.horario,
         'cor': t.cor,
-        'ordem': t.ordem
+        'ordem': t.ordem,
+        'min_analistas': t.min_analistas,
     } for t in turnos]
     return JsonResponse(data, safe=False)
 
@@ -146,6 +147,7 @@ def api_turno_create(request):
             horario=data.get('horario', ''),
             cor=data.get('cor', '#2563eb'),
             ordem=data.get('ordem', 0),
+            min_analistas=int(data.get('min_analistas', 0)),
             rascunho=rascunho
         )
         return JsonResponse({
@@ -153,7 +155,8 @@ def api_turno_create(request):
             'nome': turno.nome,
             'horario': turno.horario,
             'cor': turno.cor,
-            'ordem': turno.ordem
+            'ordem': turno.ordem,
+            'min_analistas': turno.min_analistas,
         })
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
@@ -173,13 +176,15 @@ def api_turno_detail(request, pk):
             turno.horario = data.get('horario', turno.horario)
             turno.cor = data.get('cor', turno.cor)
             turno.ordem = data.get('ordem', turno.ordem)
+            turno.min_analistas = int(data.get('min_analistas', turno.min_analistas))
             turno.save()
             return JsonResponse({
                 'id': str(turno.id),
                 'nome': turno.nome,
                 'horario': turno.horario,
                 'cor': turno.cor,
-                'ordem': turno.ordem
+                'ordem': turno.ordem,
+                'min_analistas': turno.min_analistas,
             })
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=400)
@@ -693,6 +698,107 @@ def api_rascunho_publish(request, pk):
 # API VIEWS PARA TROCAS DE FOLGA
 # ========================================
 
+# ─────────────────────────────────────────────────────────────────────────────
+# HELPERS DE COBERTURA DE TURNO
+# ─────────────────────────────────────────────────────────────────────────────
+
+from datetime import date as date_type, timedelta
+
+def _get_modelo_ciclo(analista):
+    """Retorna (dias_trabalhados, dias_folga) do modelo do analista."""
+    modelo = analista.modelo_escala
+    if not modelo:
+        return (6, 2)  # Padrão 6x2
+    return (modelo.dias_trabalhados, modelo.dias_folga)
+
+
+def calcular_analistas_ativos(turno, data_alvo, rascunho=None):
+    """
+    Dado um turno e uma data, retorna o número de analistas que estarão
+    TRABALHANDO naquele dia (excluindo os que estão de folga manual ou cíclica).
+    """
+    if rascunho:
+        analistas = AnalistaEscala.objects.filter(turno=turno, ativo=True, rascunho=rascunho)
+    else:
+        analistas = AnalistaEscala.objects.filter(turno=turno, ativo=True, rascunho__isnull=True)
+
+    ativos = 0
+    for analista in analistas:
+        # 1. Verificar folga manual explícita
+        folga_manual = FolgaManual.objects.filter(
+            analista=analista, data=data_alvo, rascunho=rascunho
+        ).first()
+        if folga_manual:
+            if folga_manual.tipo != 'trabalho':
+                continue  # Está de folga/férias/atestado
+            else:
+                ativos += 1
+                continue
+
+        # 2. Calcular pelo ciclo
+        trab, folga = _get_modelo_ciclo(analista)
+        ciclo_total = trab + folga
+
+        primeira_folga = analista.data_primeira_folga
+        if not primeira_folga:
+            ativos += 1
+            continue
+
+        data_alvo_norm = data_alvo if isinstance(data_alvo, date_type) else data_alvo.date()
+        diff_days = (data_alvo_norm - primeira_folga).days
+        pos = ((diff_days % ciclo_total) + ciclo_total) % ciclo_total
+
+        if pos < folga:
+            continue  # Dia de folga cíclica
+        ativos += 1
+
+    return ativos
+
+
+def validar_regras_troca(solicitante, receptor, data_solicitante, data_receptor, tipo, rascunho=None):
+    """
+    Verifica se a troca deixaria algum turno abaixo do mínimo de analistas.
+    Retorna (True, None) se válida ou (False, mensagem_de_erro) se inválida.
+    """
+    # Converter strings de data para date se necessário
+    if isinstance(data_solicitante, str):
+        data_solicitante = datetime.strptime(data_solicitante, '%Y-%m-%d').date()
+    if data_receptor and isinstance(data_receptor, str):
+        data_receptor = datetime.strptime(data_receptor, '%Y-%m-%d').date()
+
+    def checar_saida(analista, data_saida):
+        """Verifica se o turno do analista ficará abaixo do mínimo quando ele sair naquele dia."""
+        turno = analista.turno
+        if not turno or turno.min_analistas <= 0:
+            return True, None
+        ativos_atuais = calcular_analistas_ativos(turno, data_saida, rascunho)
+        # Após a troca, este analista vai sair do turno nesse dia, então -1
+        ativos_pos_troca = ativos_atuais - 1
+        if ativos_pos_troca < turno.min_analistas:
+            return False, (
+                f"Cobertura insuficiente: o turno '{turno.nome}' em {data_saida.strftime('%d/%m/%Y')} "
+                f"ficaria com apenas {ativos_pos_troca} analista(s) ativo(s), "
+                f"abaixo do mínimo exigido de {turno.min_analistas}."
+            )
+        return True, None
+
+    # Cenário 1 (folga própria): solicitante sai no dia atual e entra no dia desejado
+    # Cenário 2 (troca mútua): solicitante sai no dia atual, receptor sai no seu dia
+
+    # Verificar saída do solicitante do seu dia de folga (ele vai trabalhar nesse dia)
+    ok, msg = checar_saida(solicitante, data_solicitante)
+    if not ok:
+        return False, msg
+
+    # Verificar saída do receptor do seu dia (apenas para troca entre analistas)
+    if tipo == 'analista' and receptor and data_receptor:
+        ok, msg = checar_saida(receptor, data_receptor)
+        if not ok:
+            return False, msg
+
+    return True, None
+
+
 def _serializar_troca(t):
     """Serializa um objeto TrocaFolga para dict JSON."""
     return {
@@ -780,6 +886,18 @@ def api_troca_create(request):
         if conflito:
             return JsonResponse({'error': 'Já existe uma solicitação pendente para esta folga.'}, status=400)
 
+        # Validar regras de cobertura mínima de turno
+        ok, motivo = validar_regras_troca(
+            solicitante=solicitante,
+            receptor=receptor,
+            data_solicitante=data_solicitante,
+            data_receptor=data_receptor,
+            tipo=tipo,
+            rascunho=rascunho
+        )
+        if not ok:
+            return JsonResponse({'error': motivo, 'tipo': 'cobertura_insuficiente'}, status=400)
+
         status_inicial = 'pendente_analista' if tipo == 'analista' else 'pendente_gestor'
 
         troca = TrocaFolga.objects.create(
@@ -841,6 +959,18 @@ def api_troca_aprovar_gestor(request, pk):
             return JsonResponse({'error': 'Esta troca não está aguardando aprovação do gestor.'}, status=400)
 
         rascunho = troca.rascunho
+
+        # Re-validar regras de cobertura mínima no momento da aprovação final
+        ok, motivo = validar_regras_troca(
+            solicitante=troca.solicitante,
+            receptor=troca.receptor,
+            data_solicitante=troca.data_solicitante,
+            data_receptor=troca.data_receptor,
+            tipo=troca.tipo,
+            rascunho=rascunho
+        )
+        if not ok:
+            return JsonResponse({'error': motivo, 'tipo': 'cobertura_insuficiente'}, status=400)
 
         def _aplicar_folga(analista, data_trabalho, data_folga):
             """Remove folga no dia de trabalho e insere folga no novo dia."""

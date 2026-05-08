@@ -350,6 +350,7 @@ class Turno(models.Model):
     horario = models.CharField(max_length=50)  # Ex: "22:00 - 06:00"
     cor = models.CharField(max_length=20, default='#2563eb')  # Cor hexadecimal
     ordem = models.IntegerField(default=0)
+    min_analistas = models.IntegerField(default=0, help_text='Número mínimo de analistas ativos exigido no turno. 0 = sem restrição.')
     ativo = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

@@ -1437,6 +1437,14 @@
                     <label for="shiftColor">Cor</label>
                     <input type="color" id="shiftColor" value="#2563eb">
                 </div>
+                <div class="form-group-escala">
+                    <label for="shiftMinAnalistas" style="display:flex;align-items:center;gap:6px;">
+                        <i class="fa-solid fa-users-line" style="color:#0891b2;"></i>
+                        Mínimo de Analistas Ativos
+                        <span style="font-size:0.75rem;color:#94a3b8;font-weight:400;">(0 = sem restrição)</span>
+                    </label>
+                    <input type="number" id="shiftMinAnalistas" min="0" max="99" value="0" placeholder="Ex: 3">
+                </div>
             </form>
         </div>
         <div class="modal-footer-escala">
@@ -1807,11 +1815,13 @@
             <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
                 <!-- Tabs -->
                 <div class="nav-tabs-trocas" style="display: flex; gap: 8px; background: #e2e8f0; padding: 4px; border-radius: 10px;">
+                    {% if not is_admin %}
                     <button class="tab-btn active" id="tabMinhasTrocas" onclick="mudarTabTrocas('minhas')" style="border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 0.85rem; transition: all 0.2s;">
                         <i class="fa-solid fa-user me-1"></i> Minhas Trocas
                     </button>
+                    {% endif %}
                     {% if is_admin %}
-                    <button class="tab-btn" id="tabAprovacoesGestao" onclick="mudarTabTrocas('gestao')" style="border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 0.85rem; transition: all 0.2s;">
+                    <button class="tab-btn active" id="tabAprovacoesGestao" onclick="mudarTabTrocas('gestao')" style="border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 0.85rem; transition: all 0.2s;">
                         <i class="fa-solid fa-shield-halved me-1"></i> Painel de Gestão
                         <span id="badgeContagemGestor" class="badge bg-danger ms-1" style="display:none; font-size:0.7rem; border-radius: 999px;">0</span>
                     </button>
@@ -2070,17 +2080,35 @@
 .cell-feriado {
     background-color: #faf5ff !important;
 }
+/* Célula de folga alterada por troca aprovada */
+.escala-table td.cell-folga-alterada {
+    background: linear-gradient(135deg, #bae6fd, #38bdf8) !important;
+    color: #0c4a6e !important;
+    border: 2px dashed #0284c7 !important;
+    font-weight: 700;
+    cursor: pointer;
+    position: relative;
+}
+.escala-table td.cell-folga-alterada:hover {
+    background: linear-gradient(135deg, #7dd3fc, #0ea5e9) !important;
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.3);
+}
 .cell-swap-indicator {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: rgba(8, 145, 178, 0.1);
-    color: #0891b2;
+    background: rgba(2, 132, 199, 0.2);
+    color: #0284c7;
     width: 18px;
     height: 18px;
     border-radius: 50%;
     font-size: 9px;
     margin-right: 4px;
+    animation: swapPulse 2s infinite;
+}
+@keyframes swapPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(2, 132, 199, 0.4); }
+    50%  { box-shadow: 0 0 0 5px rgba(2, 132, 199, 0); }
 }
 </style>
 
@@ -2312,21 +2340,20 @@
                 trocasAprovadasCache = {};
                 data.forEach(t => {
                     if (t.status === 'aprovada') {
+                        // Armazena o objeto completo da troca para exibir detalhes no hover/click
+                        const setCache = (analistaId, data) => {
+                            const key = `${analistaId}-${data}`;
+                            trocasAprovadasCache[key] = t;
+                        };
                         if (t.tipo === 'propria') {
-                            trocasAprovadasCache[`${t.solicitante_id}-${t.data_solicitante}`] = true;
-                            if (t.data_receptor) {
-                                trocasAprovadasCache[`${t.solicitante_id}-${t.data_receptor}`] = true;
-                            }
+                            setCache(t.solicitante_id, t.data_solicitante);
+                            if (t.data_receptor) setCache(t.solicitante_id, t.data_receptor);
                         } else {
-                            trocasAprovadasCache[`${t.solicitante_id}-${t.data_solicitante}`] = true;
-                            if (t.data_receptor) {
-                                trocasAprovadasCache[`${t.solicitante_id}-${t.data_receptor}`] = true;
-                            }
+                            setCache(t.solicitante_id, t.data_solicitante);
+                            if (t.data_receptor) setCache(t.solicitante_id, t.data_receptor);
                             if (t.receptor_id) {
-                                trocasAprovadasCache[`${t.receptor_id}-${t.data_solicitante}`] = true;
-                                if (t.data_receptor) {
-                                    trocasAprovadasCache[`${t.receptor_id}-${t.data_receptor}`] = true;
-                                }
+                                setCache(t.receptor_id, t.data_receptor);
+                                setCache(t.receptor_id, t.data_solicitante);
                             }
                         }
                     }
@@ -2455,13 +2482,26 @@
                             const isFeriado = !!feriadosNacionais[dStr];
                             
                             const cellData = getCellData(analista, turno, d.getFullYear(), d.getMonth(), dia);
-                            const clickHandler = isAdmin ? `onclick="openEditCellModal('${analista.id}', ${dia}, ${d.getMonth() + 1}, ${d.getFullYear()})"` : '';
-                            
+
                             // Verificar se o dia atual é fruto de uma troca de folga aprovada
-                            const isTroca = !!trocasAprovadasCache[`${analista.id}-${dStr}`];
-                            const swapIcon = isTroca ? `<span class="cell-swap-indicator" title="Esta folga foi alterada por uma troca aprovada"><i class="fa-solid fa-right-left"></i></span>` : '';
-                            
-                            rows += `<td class="${cellData.class} ${isFeriado ? 'cell-feriado' : ''}" ${clickHandler}>${swapIcon}${cellData.text}</td>`;
+                            const swapObj = trocasAprovadasCache[`${analista.id}-${dStr}`];
+                            const isTroca = !!swapObj;
+
+                            let clickHandler = '';
+                            let extraClass = '';
+                            let swapIcon = '';
+
+                            if (isTroca) {
+                                // Folga alterada: mostra destaque e abre modal de detalhe ao clicar
+                                extraClass = 'cell-folga-alterada';
+                                const title = `Folga alterada via troca aprovada — clique para detalhes`;
+                                swapIcon = `<span class="cell-swap-indicator" title="${title}"><i class="fa-solid fa-right-left"></i></span>`;
+                                clickHandler = `onclick="onSwapCellClick(${swapObj.id})"`;
+                            } else if (isAdmin) {
+                                clickHandler = `onclick="openEditCellModal('${analista.id}', ${dia}, ${d.getMonth() + 1}, ${d.getFullYear()})"`;
+                            }
+
+                            rows += `<td class="${cellData.class} ${extraClass} ${isFeriado ? 'cell-feriado' : ''}" ${clickHandler}>${swapIcon}${cellData.text}</td>`;
                         } else {
                             rows += '<td class="dia-vazio"></td>';
                         }
@@ -2562,6 +2602,49 @@
         }
 
         return { class: 'trabalho', text: turno.horario };
+    }
+
+    function onSwapCellClick(swapId) {
+        // Busca o objeto da troca no cache
+        const troca = Object.values(trocasAprovadasCache).find(t => t.id === swapId);
+        if (!troca) return;
+
+        const dataS = troca.data_solicitante ? troca.data_solicitante.split('-').reverse().join('/') : '—';
+        const dataR = troca.data_receptor  ? troca.data_receptor.split('-').reverse().join('/') : '—';
+        const dataAprov = troca.aprovado_gestor_em ? new Date(troca.aprovado_gestor_em).toLocaleString() : '—';
+        const aprovPor = troca.aprovado_gestor_por || 'Gestão';
+
+        let detalhe = '';
+        if (troca.tipo === 'propria') {
+            detalhe = `
+                <div style="background:#f0f9ff;border-radius:10px;padding:14px;margin:12px 0;font-size:0.9rem;text-align:left;border:1px solid #bae6fd;">
+                    <div style="margin-bottom:8px;"><strong>👤 Analista:</strong> ${troca.solicitante_nome}</div>
+                    <div style="margin-bottom:8px;"><strong>📅 Data original:</strong> <span style="color:#dc2626;">${dataS}</span></div>
+                    <div style="margin-bottom:8px;"><strong>📅 Nova data da folga:</strong> <span style="color:#16a34a;">${dataR}</span></div>
+                    <div><strong>✅ Aprovado por:</strong> ${aprovPor} em ${dataAprov}</div>
+                </div>`;
+        } else {
+            detalhe = `
+                <div style="background:#f0f9ff;border-radius:10px;padding:14px;margin:12px 0;font-size:0.9rem;text-align:left;border:1px solid #bae6fd;">
+                    <div style="margin-bottom:8px;"><strong>🔄 Troca entre:</strong> ${troca.solicitante_nome} ↔ ${troca.receptor_nome}</div>
+                    <div style="margin-bottom:8px;"><strong>📅 ${troca.solicitante_nome} cedeu:</strong> <span style="color:#dc2626;">${dataS}</span></div>
+                    <div style="margin-bottom:8px;"><strong>📅 ${troca.receptor_nome} cedeu:</strong> <span style="color:#dc2626;">${dataR}</span></div>
+                    <div><strong>✅ Aprovado por:</strong> ${aprovPor} em ${dataAprov}</div>
+                </div>`;
+        }
+
+        Swal.fire({
+            title: '<i class="fa-solid fa-right-left" style="color:#0284c7;"></i> Folga Alterada por Troca',
+            html: `
+                <p style="color:#64748b;font-size:0.9rem;margin-bottom:4px;">Esta folga foi modificada através de uma troca de folga autorizada.</p>
+                ${detalhe}
+                <span style="font-size:0.75rem;color:#94a3b8;">ID da Troca: #${troca.id}</span>
+            `,
+            icon: undefined,
+            confirmButtonColor: '#0284c7',
+            confirmButtonText: 'Fechar',
+            customClass: { popup: 'swal-swap-detail' }
+        });
     }
 
     // ========================================
@@ -3059,7 +3142,7 @@
                 <span class="item-color-dot" style="background: ${t.cor};"></span>
                 <div class="item-card-info">
                     <h4>${t.nome}</h4>
-                    <p>${t.horario}</p>
+                    <p>${t.horario} ${t.min_analistas > 0 ? `• <strong style="color: #0891b2;"><i class="fa-solid fa-users-line"></i> Mínimo: ${t.min_analistas}</strong>` : ''}</p>
                 </div>
             </div>
             <div class="item-card-actions">
@@ -3119,6 +3202,7 @@
             c.querySelectorAll('.selected').forEach(s => s.classList.remove('selected'));
         });
         document.getElementById('shiftColor').value = '#2563eb';
+        document.getElementById('shiftMinAnalistas').value = '0';
         closeShiftModal();
         document.getElementById('shiftFormModal').classList.add('show');
     }
@@ -3152,6 +3236,7 @@
         }
 
         document.getElementById('shiftColor').value = turno.cor;
+        document.getElementById('shiftMinAnalistas').value = turno.min_analistas || '0';
         closeShiftModal();
         document.getElementById('shiftFormModal').classList.add('show');
     }
@@ -3168,6 +3253,7 @@
             horario: document.getElementById('shiftTimeStart').value && document.getElementById('shiftTimeEnd').value ?
                 `${document.getElementById('shiftTimeStart').value} - ${document.getElementById('shiftTimeEnd').value}` : '',
             cor: document.getElementById('shiftColor').value,
+            min_analistas: parseInt(document.getElementById('shiftMinAnalistas').value || 0),
             ordem: turnos.length,
             rascunho_id: rascunhoId
         };
@@ -4353,7 +4439,11 @@
 
     function abrirModalTrocas() {
         document.getElementById('modalTrocas').classList.add('show');
-        mudarTabTrocas('minhas');
+        if (isAdmin) {
+            mudarTabTrocas('gestao');
+        } else {
+            mudarTabTrocas('minhas');
+        }
     }
 
     function fecharModalTrocas() {
@@ -4974,7 +5064,17 @@
             });
             const data = await res.json();
             if (data.error) {
-                showToast(data.error, 'error');
+                if (data.tipo === 'cobertura_insuficiente' || data.error.includes('Cobertura insuficiente')) {
+                    Swal.fire({
+                        title: '⚠️ Cobertura Insuficiente',
+                        text: data.error,
+                        icon: 'warning',
+                        confirmButtonText: 'Entendido',
+                        confirmButtonColor: '#e11d48'
+                    });
+                } else {
+                    showToast(data.error, 'error');
+                }
             } else {
                 showToast('Solicitação de troca enviada com sucesso!', 'success');
                 fecharModalNovaTroca();
@@ -5080,7 +5180,17 @@
                         generateTables();
                     } else {
                         const data = await res.json();
-                        showToast(data.error || 'Erro ao aprovar troca.', 'error');
+                        if (data.error && (data.tipo === 'cobertura_insuficiente' || data.error.includes('Cobertura insuficiente'))) {
+                            Swal.fire({
+                                title: '⚠️ Cobertura Insuficiente',
+                                text: data.error,
+                                icon: 'warning',
+                                confirmButtonText: 'Entendido',
+                                confirmButtonColor: '#e11d48'
+                            });
+                        } else {
+                            showToast(data.error || 'Erro ao aprovar troca.', 'error');
+                        }
                     }
                 } catch(e) {
                     showToast('Erro de conexão.', 'error');
