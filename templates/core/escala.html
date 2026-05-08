@@ -114,6 +114,39 @@
         background: #0b5ed7;
     }
 
+    /* Badge de alerta para botão Analistas */
+    .btn-analistas-wrapper {
+        position: relative;
+        display: inline-flex;
+    }
+
+    .badge-analistas-alerta {
+        position: absolute;
+        top: -6px;
+        right: -6px;
+        min-width: 20px;
+        height: 20px;
+        padding: 0 5px;
+        background: #ef4444;
+        color: white;
+        border-radius: 999px;
+        font-size: 0.68rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid white;
+        box-shadow: 0 2px 6px rgba(239, 68, 68, 0.5);
+        animation: pulseAlertaBadge 1.8s ease-in-out infinite;
+        z-index: 10;
+        pointer-events: none;
+    }
+
+    @keyframes pulseAlertaBadge {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); transform: scale(1); }
+        50% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); transform: scale(1.1); }
+    }
+
     /* Botões Premium do Simulador (Laboratório) */
     .btn-simulador-action {
         background: white !important;
@@ -1049,9 +1082,11 @@
             </div>
             
             <div style="display: flex; gap: 8px;">
-                <button class="btn-escala btn-simulador-action" onclick="openAnalystModal()">
-                    <i class="fa-solid fa-users-gear" style="color: #3b82f6;"></i> Analistas
-                </button>
+                <span class="btn-analistas-wrapper" id="btnAnalistasWrapperRascunho">
+                    <button class="btn-escala btn-simulador-action" id="btnAnalistasRascunho" onclick="openAnalystModal()">
+                        <i class="fa-solid fa-users-gear" style="color: #3b82f6;"></i> Analistas
+                    </button>
+                </span>
                 <button class="btn-escala btn-simulador-action" onclick="openShiftModal()">
                     <i class="fa-solid fa-clock" style="color: #f59e0b;"></i> Turnos
                 </button>
@@ -1105,9 +1140,11 @@
         </div>
         <div class="page-actions">
             {% if is_admin %}
-            <button class="btn-escala" onclick="openAnalystModal()">
-                <i class="fa-solid fa-users-gear"></i> Analistas
-            </button>
+            <span class="btn-analistas-wrapper" id="btnAnalistasWrapperNormal">
+                <button class="btn-escala" id="btnAnalistasNormal" onclick="openAnalystModal()">
+                    <i class="fa-solid fa-users-gear"></i> Analistas
+                </button>
+            </span>
             <button class="btn-escala" onclick="openShiftModal()">
                 <i class="fa-solid fa-clock"></i> Turnos
             </button>
@@ -1709,6 +1746,9 @@
                 checkEmptyStates();
             }
         }
+
+        // Inicializar badge de alerta de analistas sem turno
+        atualizarBadgeAnalistas();
     });
 
     // ========================================
@@ -2683,10 +2723,31 @@
         document.getElementById('analystModal').classList.remove('show');
     }
 
+    function atualizarBadgeAnalistas() {
+        const semTurno = analistas.filter(a => !a.turno);
+        const qtd = semTurno.length;
+        // Atualiza ambos os wrappers (rascunho e modo normal)
+        ['btnAnalistasWrapperRascunho', 'btnAnalistasWrapperNormal'].forEach(wrapperId => {
+            const wrapper = document.getElementById(wrapperId);
+            if (!wrapper) return;
+            // Remove badge anterior se existir
+            const badgeExistente = wrapper.querySelector('.badge-analistas-alerta');
+            if (badgeExistente) badgeExistente.remove();
+            if (qtd > 0) {
+                const badge = document.createElement('span');
+                badge.className = 'badge-analistas-alerta';
+                badge.title = `${qtd} analista${qtd > 1 ? 's' : ''} sem turno configurado`;
+                badge.textContent = qtd;
+                wrapper.appendChild(badge);
+            }
+        });
+    }
+
     function renderAnalystList() {
         const list = document.getElementById('analystList');
         if (analistas.length === 0) {
             list.innerHTML = '<p style="text-align: center; color: #64748b; padding: 40px 0;">Nenhum analista cadastrado.</p>';
+            atualizarBadgeAnalistas();
             return;
         }
 
@@ -2958,6 +3019,7 @@
 
             closeAnalystFormModal();
             checkEmptyStates();
+            atualizarBadgeAnalistas();
             generateTables();
         } catch (error) {
             showToast('Erro ao salvar analista: ' + error.message, 'error');
@@ -2976,6 +3038,7 @@
             analistas = analistas.filter(a => a.id !== id);
             renderAnalystList();
             checkEmptyStates();
+            atualizarBadgeAnalistas();
             generateTables();
         } catch (error) {
             showToast('Erro ao excluir analista: ' + error.message, 'error');
