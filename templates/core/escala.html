@@ -850,6 +850,64 @@
             width: 100%;
         }
     }
+
+    /* Estilos de Dropdown Premium */
+    .escala-dropdown {
+        position: relative;
+        display: inline-block;
+    }
+
+    .escala-dropdown-menu {
+        display: none;
+        position: absolute;
+        right: 0;
+        top: 100%;
+        margin-top: 8px;
+        background: #ffffff;
+        min-width: 210px;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        z-index: 1000;
+        overflow: hidden;
+        animation: fadeInDropdown 0.2s ease-out;
+    }
+
+    .escala-dropdown-menu a {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 16px;
+        color: #334155 !important;
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 0.875rem;
+        transition: all 0.15s ease-in-out;
+        border: none;
+        text-align: left;
+    }
+
+    .escala-dropdown-menu a:hover {
+        background-color: #f1f5f9;
+        color: #0f172a !important;
+    }
+
+    /* Mostrar ao hover ou via classe .show-dropdown */
+    .escala-dropdown:hover .escala-dropdown-menu,
+    .escala-dropdown.active .escala-dropdown-menu {
+        display: block;
+    }
+
+    @keyframes fadeInDropdown {
+        from {
+            opacity: 0;
+            transform: translateY(4px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
 </style>
 {% endblock %}
 
@@ -1161,37 +1219,35 @@
             <div class="input-group-mes">
                 <i class="fa-solid fa-calendar-day icon-mes"></i>
                 <input type="month" id="mesInput">
-                <button class="btn-escala primary" onclick="generateTables()">
-                    <i class="fa-solid fa-calendar-check"></i> Gerar
-                </button>
             </div>
         </div>
-        <div class="page-actions">
+        <div class="page-actions" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            
             {% if is_admin %}
-            <span class="btn-analistas-wrapper" id="btnAnalistasWrapperNormal">
-                <button class="btn-escala" id="btnAnalistasNormal" onclick="openAnalystModal()">
-                    <i class="fa-solid fa-users-gear"></i> Analistas
+            <!-- Menu Dropdown de Gestão -->
+            <div class="escala-dropdown">
+                <button class="btn-escala" style="background: linear-gradient(135deg, #1e293b, #334155); color: white;">
+                    <i class="fa-solid fa-sliders me-1"></i> Gestão <i class="fa-solid fa-chevron-down ms-1" style="font-size: 0.7rem; opacity: 0.8;"></i>
                 </button>
-            </span>
-            <button class="btn-escala" onclick="openShiftModal()">
-                <i class="fa-solid fa-clock"></i> Turnos
-            </button>
+                <div class="escala-dropdown-menu">
+                    <a href="#" onclick="openAnalystModal(); return false;"><i class="fa-solid fa-users-gear" style="color: #475569;"></i> Analistas</a>
+                    <a href="#" onclick="openShiftModal(); return false;"><i class="fa-solid fa-clock" style="color: #475569;"></i> Turnos</a>
+                    <a href="#" onclick="auditarEscalaIA(); return false;" style="border-top: 1px solid #f1f5f9;"><i class="fa-solid fa-robot" style="color: #7c3aed;"></i> Auditar IA</a>
+                </div>
+            </div>
             {% endif %}
 
-            {% if can_export %}
-            <button class="btn-escala" onclick="openMonthlySummaryModal()" style="background: #0ea5e9;">
-                <i class="fa-solid fa-list-check"></i> Resumo
-            </button>
-            <button class="btn-escala" onclick="openExportModal()" style="background: #475569;">
-                <i class="fa-solid fa-download"></i> Exportar
-            </button>
-            {% endif %}
+            <!-- Menu Dropdown de Exportação -->
+            <div class="escala-dropdown">
+                <button class="btn-escala" style="background: #475569; color: white;">
+                    <i class="fa-solid fa-download me-1"></i> Exportar <i class="fa-solid fa-chevron-down ms-1" style="font-size: 0.7rem; opacity: 0.8;"></i>
+                </button>
+                <div class="escala-dropdown-menu">
+                    <a href="#" onclick="openMonthlySummaryModal(); return false;"><i class="fa-solid fa-list-check" style="color: #0ea5e9;"></i> Resumo Mensal</a>
+                    <a href="#" onclick="openExportModal(); return false;"><i class="fa-solid fa-file-export" style="color: #64748b;"></i> Baixar PDF / Excel</a>
+                </div>
+            </div>
 
-            {% if is_admin %}
-            <button class="btn-escala" onclick="auditarEscalaIA()" style="background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white;">
-                <i class="fa-solid fa-robot"></i> Auditar IA
-            </button>
-            {% endif %}
             <!-- Botão Trocas de Folga -->
             <span style="position:relative; display:inline-flex;">
                 <button class="btn-escala" onclick="abrirModalTrocas()" id="btnTrocaFolga" style="background: linear-gradient(135deg, #0891b2, #0e7490); color:white;">
@@ -1537,9 +1593,14 @@
 <!-- Modal de Resumo Mensal -->
 <div class="modal-escala" id="monthlySummaryModal">
     <div class="modal-content-escala large">
-        <div class="modal-header-escala">
-            <h2 style="color: #0ea5e9;"><i class="fa-solid fa-list-check"></i> Resumo Mensal da Escala</h2>
-            <button class="modal-close" onclick="closeMonthlySummaryModal()">&times;</button>
+        <div class="modal-header-escala" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+            <h2 style="color: #0ea5e9; margin: 0;"><i class="fa-solid fa-list-check"></i> Resumo Mensal da Escala</h2>
+            <div style="display: flex; gap: 10px; align-items: center; margin-left: auto; margin-right: 15px;">
+                <button class="btn-escala primary" onclick="exportSummaryToExcel()" style="padding: 6px 12px; font-size: 0.8rem; background: #0ea5e9; border: none; border-radius: 6px; display: inline-flex; align-items: center; gap: 5px; color: white;">
+                    <i class="fa-solid fa-file-excel"></i> Exportar Excel
+                </button>
+            </div>
+            <button class="modal-close" onclick="closeMonthlySummaryModal()" style="margin: 0;">&times;</button>
         </div>
         <div class="modal-body-escala">
             <p style="text-align: center; color: #64748b; margin-bottom: 20px;">
@@ -3649,6 +3710,74 @@
 
     function closeExportModal() {
         document.getElementById('exportModal').classList.remove('show');
+    }
+
+    function exportSummaryToExcel() {
+        const table = document.getElementById('summaryTable');
+        if (!table) {
+            showToast('Tabela de resumo não encontrada.', 'error');
+            return;
+        }
+
+        let excelContent = `
+            <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">
+            <head>
+                <meta charset="UTF-8">
+                <style>
+                    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+                    th { 
+                        background-color: #0ea5e9; 
+                        color: #ffffff; 
+                        padding: 12px 8px; 
+                        font-weight: bold; 
+                        font-size: 12px; 
+                        text-align: center;
+                        border: 1px solid #cbd5e1;
+                    }
+                    td { 
+                        border: 1px solid #cbd5e1; 
+                        padding: 10px 6px; 
+                        text-align: center; 
+                        font-size: 13px; 
+                    }
+                    .title {
+                        font-size: 18px;
+                        font-weight: bold;
+                        color: #0f172a;
+                        text-align: center;
+                        margin-bottom: 10px;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="title">Resumo Mensal da Escala - ${document.getElementById('mesInput').value}</div>
+        `;
+
+        const clonedTable = table.cloneNode(true);
+        clonedTable.querySelectorAll('td, th').forEach(cell => {
+            const computedStyle = window.getComputedStyle(cell);
+            const bgColor = computedStyle.backgroundColor;
+            const color = computedStyle.color;
+
+            if (bgColor && bgColor !== 'rgba(0, 0, 0, 0)') {
+                cell.style.backgroundColor = bgColor;
+            }
+            if (color) {
+                cell.style.color = color;
+            }
+            cell.style.fontWeight = computedStyle.fontWeight;
+        });
+
+        excelContent += clonedTable.outerHTML;
+        excelContent += '</body></html>';
+
+        const blob = new Blob([excelContent], { type: 'application/vnd.ms-excel' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `resumo-escala-${document.getElementById('mesInput').value}.xls`;
+        a.click();
+        URL.revokeObjectURL(url);
     }
 
     function exportToExcel() {
