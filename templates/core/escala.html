@@ -1273,7 +1273,7 @@
                 <button class="btn-escala" onclick="abrirModalTrocas()" id="btnTrocaFolga" style="background: linear-gradient(135deg, #0891b2, #0e7490); color:white;">
                     <i class="fa-solid fa-right-left"></i> Trocas de Folga
                 </button>
-                <span id="badgeTrocasPendentes" style="display:none; position:absolute; top:-6px; right:-6px; min-width:18px; height:18px; background:#ef4444; color:white; border-radius:999px; font-size:0.65rem; font-weight:700; align-items:center; justify-content:center; border:2px solid white;">0</span>
+                <span id="badgeTrocasPendentes" class="badge-analistas-alerta" style="display:none;">0</span>
             </span>
         </div>
     </div>
@@ -4359,12 +4359,33 @@
 
     async function atualizarBadgeTrocasPendentes() {
         try {
-            const rParam = rascunhoId ? `&rascunho_id=${rascunhoId}` : '';
-            const res = await fetch(`/api/escala/trocas/?status=pendente_gestor${rParam}`);
+            const rParam = rascunhoId ? `?rascunho_id=${rascunhoId}` : '';
+            const res = await fetch(`/api/escala/trocas/${rParam}`);
             if (res.ok) {
                 const data = await res.json();
-                const total = data.length;
                 
+                let total = 0;
+                let totalGestor = 0;
+
+                data.forEach(t => {
+                    if (t.status === 'pendente_gestor') {
+                        totalGestor++;
+                    }
+                });
+
+                if (isAdmin) {
+                    // Para o gestor, a pendência principal do botão é pendente_gestor
+                    total = totalGestor;
+                    // Se o gestor também for analista e tiver trocas pendentes dele aceitar
+                    if (loggedInAnalistaId) {
+                        const totalAnalistaProprio = data.filter(t => t.status === 'pendente_analista' && t.receptor_id == loggedInAnalistaId).length;
+                        total += totalAnalistaProprio;
+                    }
+                } else if (loggedInAnalistaId) {
+                    // Para o analista comum, a pendência é quando ele é o receptor e está pendente_analista
+                    total = data.filter(t => t.status === 'pendente_analista' && t.receptor_id == loggedInAnalistaId).length;
+                }
+
                 const badgeHeader = document.getElementById('badgeTrocasPendentes');
                 const badgeTab = document.getElementById('badgeContagemGestor');
                 
@@ -4373,17 +4394,22 @@
                         badgeHeader.textContent = total;
                         badgeHeader.style.display = 'inline-flex';
                     }
-                    if (badgeTab) {
-                        badgeTab.textContent = total;
-                        badgeTab.style.display = 'inline-block';
-                    }
                 } else {
                     if (badgeHeader) badgeHeader.style.display = 'none';
-                    if (badgeTab) badgeTab.style.display = 'none';
+                }
+
+                // Abaixo atualiza a contagem da aba de Gestão dentro do modal de trocas
+                if (badgeTab) {
+                    if (totalGestor > 0) {
+                        badgeTab.textContent = totalGestor;
+                        badgeTab.style.display = 'inline-block';
+                    } else {
+                        badgeTab.style.display = 'none';
+                    }
                 }
             }
         } catch (e) {
-            console.error("Erro ao atualizar contagem de trocas:", e);
+            console.error("Erro ao atualizar badges de trocas:", e);
         }
     }
 
