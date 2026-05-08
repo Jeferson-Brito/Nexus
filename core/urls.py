@@ -195,8 +195,18 @@ urlpatterns = [
     path('api/escala/rascunhos/<int:pk>/copiar-turnos/', api_escala.api_rascunho_copiar_turnos, name='api_rascunho_copiar_turnos'),
     path('api/escala/rascunhos/<int:pk>/publish/', api_escala.api_rascunho_publish, name='api_rascunho_publish'),
     path('api/escala/rascunhos/<int:pk>/delete/', api_escala.api_rascunho_delete, name='api_rascunho_delete'),
-    
-    # API Calendário
+
+    # API Trocas de Folga
+    path('api/escala/trocas/', api_escala.api_trocas_list, name='api_trocas_list'),
+    path('api/escala/trocas/create/', api_escala.api_troca_create, name='api_troca_create'),
+    path('api/escala/trocas/<int:pk>/aprovar-analista/', api_escala.api_troca_aprovar_analista, name='api_troca_aprovar_analista'),
+    path('api/escala/trocas/<int:pk>/rejeitar-analista/', api_escala.api_troca_rejeitar_analista, name='api_troca_rejeitar_analista'),
+    path('api/escala/trocas/<int:pk>/aprovar-gestor/', api_escala.api_troca_aprovar_gestor, name='api_troca_aprovar_gestor'),
+    path('api/escala/trocas/<int:pk>/rejeitar-gestor/', api_escala.api_troca_rejeitar_gestor, name='api_troca_rejeitar_gestor'),
+    path('api/escala/trocas/<int:pk>/cancelar/', api_escala.api_troca_delete, name='api_troca_cancelar'),
+    path('api/escala/analistas/<int:pk>/schedule/', api_escala.api_analista_schedule, name='api_analista_schedule'),
+
+
     path('api/eventos/users/', api_eventos.api_eventos_users_list, name='api_eventos_users_list'),
     path('api/eventos/', api_eventos.api_eventos_list, name='api_eventos_list'),
     path('api/eventos/create/', api_eventos.api_evento_create, name='api_evento_create'),

@@ -6,7 +6,8 @@ from django.shortcuts import get_object_or_404
 import json
 from datetime import datetime
 
-from ..models import Turno, AnalistaEscala, FolgaManual, EscalaRascunho, ModeloEscala, ConfiguracaoEscala
+from ..models import Turno, AnalistaEscala, FolgaManual, EscalaRascunho, ModeloEscala, ConfiguracaoEscala, TrocaFolga
+from django.utils import timezone
 from django.contrib.auth import authenticate
 
 
@@ -686,3 +687,252 @@ def api_rascunho_publish(request, pk):
         return JsonResponse({'success': True})
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
+
+
+# ========================================
+# API VIEWS PARA TROCAS DE FOLGA
+# ========================================
+
+def _serializar_troca(t):
+    """Serializa um objeto TrocaFolga para dict JSON."""
+    return {
+        'id': t.id,
+        'tipo': t.tipo,
+        'tipo_display': t.get_tipo_display(),
+        'status': t.status,
+        'status_display': t.get_status_display(),
+        'solicitante_id': t.solicitante.id,
+        'solicitante_nome': t.solicitante.nome,
+        'receptor_id': t.receptor.id if t.receptor else None,
+        'receptor_nome': t.receptor.nome if t.receptor else None,
+        'data_solicitante': t.data_solicitante.isoformat(),
+        'data_receptor': t.data_receptor.isoformat() if t.data_receptor else None,
+        'motivo': t.motivo,
+        'motivo_rejeicao': t.motivo_rejeicao,
+        'aprovado_gestor_por': t.aprovado_gestor_por.get_full_name() or t.aprovado_gestor_por.username if t.aprovado_gestor_por else None,
+        'aprovado_gestor_em': t.aprovado_gestor_em.isoformat() if t.aprovado_gestor_em else None,
+        'aprovado_receptor_em': t.aprovado_receptor_em.isoformat() if t.aprovado_receptor_em else None,
+        'created_at': t.created_at.isoformat(),
+        'rascunho_id': t.rascunho_id,
+    }
+
+
+@login_required
+def api_trocas_list(request):
+    """Lista trocas de folga. Filtra por status e rascunho. Analistas veem apenas as suas."""
+    rascunho_id = request.GET.get('rascunho_id')
+    status_filter = request.GET.get('status')  # Ex: 'pendente_gestor'
+
+    if rascunho_id:
+        qs = TrocaFolga.objects.filter(rascunho_id=rascunho_id)
+    else:
+        qs = TrocaFolga.objects.filter(rascunho__isnull=True)
+
+    # Analistas veem apenas trocas onde são solicitante ou receptor
+    if not request.user.is_administrador() and request.user.role == 'analista':
+        analista_perfis = AnalistaEscala.objects.filter(user=request.user).values_list('id', flat=True)
+        qs = qs.filter(
+            solicitante_id__in=analista_perfis
+        ) | qs.filter(
+            receptor_id__in=analista_perfis
+        )
+        qs = qs.distinct()
+
+    if status_filter:
+        qs = qs.filter(status=status_filter)
+
+    qs = qs.select_related('solicitante', 'receptor', 'aprovado_gestor_por').order_by('-created_at')
+    return JsonResponse([_serializar_troca(t) for t in qs], safe=False)
+
+
+@login_required
+@require_http_methods(['POST'])
+def api_troca_create(request):
+    """Cria uma nova solicitação de troca de folga."""
+    try:
+        data = json.loads(request.body)
+        tipo = data.get('tipo')  # 'propria' ou 'analista'
+        solicitante_id = data.get('solicitante_id')
+        data_solicitante = data.get('data_solicitante')
+        data_receptor = data.get('data_receptor')
+        receptor_id = data.get('receptor_id')
+        motivo = data.get('motivo', '')
+        rascunho_id = data.get('rascunho_id')
+
+        if not all([tipo, solicitante_id, data_solicitante]):
+            return JsonResponse({'error': 'Campos obrigatórios: tipo, solicitante_id, data_solicitante.'}, status=400)
+
+        solicitante = get_object_or_404(AnalistaEscala, pk=solicitante_id)
+        rascunho = EscalaRascunho.objects.get(id=rascunho_id) if rascunho_id else None
+
+        receptor = None
+        if tipo == 'analista':
+            if not receptor_id or not data_receptor:
+                return JsonResponse({'error': 'Cenário 2 requer receptor_id e data_receptor.'}, status=400)
+            receptor = get_object_or_404(AnalistaEscala, pk=receptor_id)
+
+        # Verificar que não há outra troca pendente para os mesmos dados
+        conflito = TrocaFolga.objects.filter(
+            solicitante=solicitante,
+            data_solicitante=data_solicitante,
+            status__in=['pendente_analista', 'pendente_gestor']
+        ).first()
+        if conflito:
+            return JsonResponse({'error': 'Já existe uma solicitação pendente para esta folga.'}, status=400)
+
+        status_inicial = 'pendente_analista' if tipo == 'analista' else 'pendente_gestor'
+
+        troca = TrocaFolga.objects.create(
+            tipo=tipo,
+            solicitante=solicitante,
+            receptor=receptor,
+            data_solicitante=datetime.strptime(data_solicitante, '%Y-%m-%d').date(),
+            data_receptor=datetime.strptime(data_receptor, '%Y-%m-%d').date() if data_receptor else None,
+            motivo=motivo,
+            status=status_inicial,
+            rascunho=rascunho,
+        )
+        return JsonResponse({'success': True, 'troca': _serializar_troca(troca)})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+
+@login_required
+@require_http_methods(['POST'])
+def api_troca_aprovar_analista(request, pk):
+    """Receptor aprova a troca (Cenário 2). Move status para pendente_gestor."""
+    try:
+        troca = get_object_or_404(TrocaFolga, pk=pk)
+        if troca.status != 'pendente_analista':
+            return JsonResponse({'error': 'Esta troca não está aguardando aprovação do analista.'}, status=400)
+        troca.status = 'pendente_gestor'
+        troca.aprovado_receptor_em = timezone.now()
+        troca.save()
+        return JsonResponse({'success': True, 'troca': _serializar_troca(troca)})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+
+@login_required
+@require_http_methods(['POST'])
+def api_troca_rejeitar_analista(request, pk):
+    """Receptor rejeita a troca (Cenário 2)."""
+    try:
+        troca = get_object_or_404(TrocaFolga, pk=pk)
+        if troca.status != 'pendente_analista':
+            return JsonResponse({'error': 'Esta troca não está aguardando aprovação do analista.'}, status=400)
+        data = json.loads(request.body)
+        troca.status = 'rejeitada'
+        troca.motivo_rejeicao = data.get('motivo_rejeicao', 'Recusado pelo analista.')
+        troca.save()
+        return JsonResponse({'success': True, 'troca': _serializar_troca(troca)})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+
+@login_required
+@require_http_methods(['POST'])
+@check_nrs_permission
+def api_troca_aprovar_gestor(request, pk):
+    """Gestor/admin aprova e aplica a troca na escala."""
+    try:
+        troca = get_object_or_404(TrocaFolga, pk=pk)
+        if troca.status != 'pendente_gestor':
+            return JsonResponse({'error': 'Esta troca não está aguardando aprovação do gestor.'}, status=400)
+
+        rascunho = troca.rascunho
+
+        def _aplicar_folga(analista, data_trabalho, data_folga):
+            """Remove folga no dia de trabalho e insere folga no novo dia."""
+            # Remover qualquer registro manual que force 'folga' no dia de trabalho
+            FolgaManual.objects.filter(analista=analista, data=data_trabalho, rascunho=rascunho).delete()
+            # Criar/atualizar folga manual no novo dia
+            FolgaManual.objects.update_or_create(
+                analista=analista,
+                data=data_folga,
+                rascunho=rascunho,
+                defaults={'tipo': 'folga', 'motivo': f'Troca de folga aprovada (ID #{troca.id})'}
+            )
+            # Garantir que o dia cedido é marcado como trabalho (caso fosse folga automática)
+            FolgaManual.objects.update_or_create(
+                analista=analista,
+                data=data_trabalho,
+                rascunho=rascunho,
+                defaults={'tipo': 'trabalho', 'motivo': f'Troca de folga aprovada (ID #{troca.id})'}
+            )
+
+        if troca.tipo == 'propria':
+            # Cenário 1: mover folga do solicitante
+            _aplicar_folga(troca.solicitante, troca.data_solicitante, troca.data_receptor)
+        else:
+            # Cenário 2: troca mútua
+            _aplicar_folga(troca.solicitante, troca.data_solicitante, troca.data_receptor)
+            _aplicar_folga(troca.receptor, troca.data_receptor, troca.data_solicitante)
+
+        troca.status = 'aprovada'
+        troca.aprovado_gestor_por = request.user
+        troca.aprovado_gestor_em = timezone.now()
+        troca.save()
+        return JsonResponse({'success': True, 'troca': _serializar_troca(troca)})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+
+@login_required
+@require_http_methods(['POST'])
+@check_nrs_permission
+def api_troca_rejeitar_gestor(request, pk):
+    """Gestor/admin rejeita a troca."""
+    try:
+        troca = get_object_or_404(TrocaFolga, pk=pk)
+        if troca.status != 'pendente_gestor':
+            return JsonResponse({'error': 'Esta troca não está aguardando aprovação do gestor.'}, status=400)
+        data = json.loads(request.body)
+        troca.status = 'rejeitada'
+        troca.aprovado_gestor_por = request.user
+        troca.motivo_rejeicao = data.get('motivo_rejeicao', 'Rejeitado pelo gestor.')
+        troca.save()
+        return JsonResponse({'success': True, 'troca': _serializar_troca(troca)})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+
+@login_required
+@require_http_methods(['DELETE'])
+def api_troca_delete(request, pk):
+    """Cancela (ou exclui) uma solicitação pendente."""
+    try:
+        troca = get_object_or_404(TrocaFolga, pk=pk)
+        if troca.status not in ['pendente_analista', 'pendente_gestor']:
+            return JsonResponse({'error': 'Somente solicitações pendentes podem ser canceladas.'}, status=400)
+        troca.status = 'cancelada'
+        troca.save()
+        return JsonResponse({'success': True})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+
+@login_required
+def api_analista_schedule(request, pk):
+    """Retorna as folgas manuais de um analista (para preview no Cenário 2)."""
+    analista = get_object_or_404(AnalistaEscala, pk=pk)
+    rascunho_id = request.GET.get('rascunho_id')
+    if rascunho_id:
+        folgas = FolgaManual.objects.filter(analista=analista, rascunho_id=rascunho_id)
+    else:
+        folgas = FolgaManual.objects.filter(analista=analista, rascunho__isnull=True)
+
+    data = {}
+    for f in folgas:
+        key = f"{f.data.year}-{str(f.data.month).zfill(2)}-{str(f.data.day).zfill(2)}"
+        data[key] = {'tipo': f.tipo, 'motivo': f.motivo}
+
+    return JsonResponse({
+        'analista_id': analista.id,
+        'analista_nome': analista.nome,
+        'modelo_escala_id': str(analista.modelo_escala_id) if analista.modelo_escala_id else None,
+        'data_primeira_folga': analista.data_primeira_folga.isoformat() if analista.data_primeira_folga else None,
+        'turno': analista.turno.nome if analista.turno else None,
+        'turno_horario': analista.turno.horario if analista.turno else None,
+        'folgas_manuais': data,
+    })

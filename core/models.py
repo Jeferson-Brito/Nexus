@@ -419,6 +419,68 @@ class FolgaManual(models.Model):
         return f"{self.analista.nome} - {self.data} - {self.tipo}"
 
 
+class TrocaFolga(models.Model):
+    """Solicitações de troca de folga entre analistas ou para outro dia"""
+
+    TIPO_CHOICES = [
+        ('propria', 'Troca de Folga Própria'),    # Cenário 1: mover folga para outro dia
+        ('analista', 'Troca com Analista'),        # Cenário 2: trocar folgas com outro analista
+    ]
+
+    STATUS_CHOICES = [
+        ('pendente_analista', 'Aguardando Analista'),  # Cenário 2: aguardando receptor
+        ('pendente_gestor', 'Aguardando Gestor'),       # Aprovado pelo receptor / Cenário 1 direto
+        ('aprovada', 'Aprovada'),
+        ('rejeitada', 'Rejeitada'),
+        ('cancelada', 'Cancelada'),
+    ]
+
+    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES)
+    rascunho = models.ForeignKey(
+        EscalaRascunho, on_delete=models.CASCADE, null=True, blank=True,
+        related_name='trocas_folga'
+    )
+
+    # Quem solicita
+    solicitante = models.ForeignKey(
+        AnalistaEscala, on_delete=models.CASCADE,
+        related_name='trocas_solicitadas'
+    )
+    data_solicitante = models.DateField()   # Dia que o solicitante vai ceder (sua folga atual)
+
+    # Contraparte (apenas Cenário 2)
+    receptor = models.ForeignKey(
+        AnalistaEscala, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='trocas_recebidas'
+    )
+    data_receptor = models.DateField(null=True, blank=True)  # Dia que o receptor vai ceder / novo dia no Cenário 1
+
+    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='pendente_gestor')
+    motivo = models.TextField(blank=True)
+
+    # Rastreio de aprovações
+    aprovado_receptor_em = models.DateTimeField(null=True, blank=True)
+    aprovado_gestor_por = models.ForeignKey(
+        'User', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='trocas_aprovadas_gestor'
+    )
+    aprovado_gestor_em = models.DateTimeField(null=True, blank=True)
+    motivo_rejeicao = models.TextField(blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Troca de Folga'
+        verbose_name_plural = 'Trocas de Folga'
+
+    def __str__(self):
+        if self.tipo == 'propria':
+            return f"{self.solicitante.nome}: mover folga {self.data_solicitante} → {self.data_receptor} [{self.status}]"
+        return f"{self.solicitante.nome} ↔ {self.receptor.nome if self.receptor else '?'}: {self.data_solicitante} ↔ {self.data_receptor} [{self.status}]"
+
+
 class Evento(models.Model):
     """Eventos para o calendário"""
     TIPO_CHOICES = [

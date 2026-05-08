@@ -1190,6 +1190,13 @@
             <button class="btn-escala" onclick="auditarEscalaIA()" style="background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white;">
                 <i class="fa-solid fa-robot"></i> Auditar IA
             </button>
+            <!-- Botão Trocas de Folga -->
+            <span style="position:relative; display:inline-flex;">
+                <button class="btn-escala" onclick="abrirModalTrocas()" id="btnTrocaFolga" style="background: linear-gradient(135deg, #0891b2, #0e7490); color:white;">
+                    <i class="fa-solid fa-right-left"></i> Trocas de Folga
+                </button>
+                <span id="badgeTrocasPendentes" style="display:none; position:absolute; top:-6px; right:-6px; min-width:18px; height:18px; background:#ef4444; color:white; border-radius:999px; font-size:0.65rem; font-weight:700; align-items:center; justify-content:center; border:2px solid white;">0</span>
+            </span>
         </div>
     </div>
     {% endif %}
@@ -1694,6 +1701,286 @@
     </div>
 </div>
 
+        </div>
+    </div>
+</div>
+
+<!-- Modal Principal de Gerenciamento de Trocas -->
+<div class="modal-escala" id="modalTrocas" style="z-index: 1050;">
+    <div class="modal-content-escala large" style="max-width: 900px; width: 95%;">
+        <div class="modal-header-escala" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);">
+            <button class="modal-close" onclick="fecharModalTrocas()">&times;</button>
+            <div class="modal-header-top">
+                <div class="modal-icon" style="background: rgba(8, 145, 178, 0.2); color: #06b6d4;">
+                    <i class="fa-solid fa-right-left"></i>
+                </div>
+                <div class="modal-header-text">
+                    <h2 style="color: white; font-weight: 700;">Trocas de Folga</h2>
+                    <p style="color: #94a3b8; font-size: 0.9rem;">Solicite, aprove e gerencie as trocas de folga da equipe</p>
+                </div>
+            </div>
+        </div>
+        <div class="modal-body-escala" style="background: #f8fafc; padding: 24px;">
+            <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                <!-- Tabs -->
+                <div class="nav-tabs-trocas" style="display: flex; gap: 8px; background: #e2e8f0; padding: 4px; border-radius: 10px;">
+                    <button class="tab-btn active" id="tabMinhasTrocas" onclick="mudarTabTrocas('minhas')" style="border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 0.85rem; transition: all 0.2s;">
+                        <i class="fa-solid fa-user me-1"></i> Minhas Trocas
+                    </button>
+                    <button class="tab-btn" id="tabAprovacoesGestao" onclick="mudarTabTrocas('gestao')" style="border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 0.85rem; transition: all 0.2s;">
+                        <i class="fa-solid fa-shield-halved me-1"></i> Painel de Gestão
+                        <span id="badgeContagemGestor" class="badge bg-danger ms-1" style="display:none; font-size:0.7rem; border-radius: 999px;">0</span>
+                    </button>
+                </div>
+
+                <!-- Botão Nova Solicitação -->
+                <button class="btn-escala primary" onclick="abrirModalNovaTroca()" style="background: linear-gradient(135deg, #0891b2, #0e7490); border: none; font-weight: 600; padding: 10px 20px; border-radius: 10px; box-shadow: 0 4px 12px rgba(8, 145, 178, 0.25);">
+                    <i class="fa-solid fa-plus me-1"></i> Nova Solicitação
+                </button>
+            </div>
+
+            <!-- Filtros -->
+            <div class="mb-3 d-flex gap-2 align-items-center flex-wrap" style="background: white; padding: 12px; border-radius: 10px; border: 1px solid #e2e8f0;">
+                <span class="text-muted small fw-bold"><i class="fa-solid fa-filter me-1"></i> Filtrar Status:</span>
+                <button class="btn btn-sm btn-light border filter-status active" onclick="filtrarTrocasStatus('')">Todas</button>
+                <button class="btn btn-sm btn-light border filter-status" onclick="filtrarTrocasStatus('pendente_analista')">Aguardando Analista</button>
+                <button class="btn btn-sm btn-light border filter-status" onclick="filtrarTrocasStatus('pendente_gestor')">Aguardando Gestor</button>
+                <button class="btn btn-sm btn-light border filter-status" onclick="filtrarTrocasStatus('aprovada')">Aprovadas</button>
+                <button class="btn btn-sm btn-light border filter-status" onclick="filtrarTrocasStatus('rejeitada')">Rejeitadas</button>
+            </div>
+
+            <!-- Lista de Trocas -->
+            <div id="loadingTrocas" class="text-center py-5" style="display:none;">
+                <div class="spinner-border text-info" role="status"></div>
+                <p class="mt-2 text-muted small">Carregando solicitações...</p>
+            </div>
+
+            <div id="listaTrocasContainer" class="d-flex flex-column gap-3" style="max-height: 400px; overflow-y: auto; padding-right: 4px;">
+                <!-- Preenchido via JS -->
+            </div>
+            
+            <div id="emptyTrocasState" class="text-center py-5" style="display:none; background:white; border: 1px dashed #cbd5e1; border-radius:12px;">
+                <i class="fa-solid fa-right-left text-muted fa-2xl mb-3 d-block"></i>
+                <h5 class="fw-bold text-secondary">Nenhuma solicitação encontrada</h5>
+                <p class="text-muted small">Não há trocas registradas ou pendentes sob este filtro.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Nova Solicitação de Troca -->
+<div class="modal-escala" id="modalNovaTroca" style="z-index: 1060;">
+    <div class="modal-content-escala" style="max-width: 650px; width: 95%; border-radius: 16px;">
+        <div class="modal-header-escala" style="background: #1e293b;">
+            <button class="modal-close" onclick="fecharModalNovaTroca()">&times;</button>
+            <div class="modal-header-top">
+                <div class="modal-icon" style="background: rgba(14, 116, 144, 0.2); color: #22d3ee;">
+                    <i class="fa-solid fa-plus"></i>
+                </div>
+                <div class="modal-header-text">
+                    <h2 style="color: white; font-weight: 700;">Nova Solicitação de Troca</h2>
+                    <p style="color: #94a3b8; font-size: 0.85rem;">Preencha os campos para iniciar o fluxo de troca</p>
+                </div>
+            </div>
+        </div>
+        <div class="modal-body-escala" style="background: white; padding: 24px;">
+            <form id="formNovaTroca">
+                <!-- Seletor de Tipo / Cenário -->
+                <div class="form-group-escala mb-4">
+                    <label class="fw-bold mb-2 text-dark d-block">Tipo de Troca</label>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <label class="scenario-card p-3 d-flex flex-column align-items-center justify-content-center text-center active" id="scenarioPropriaCard" onclick="mudarCenarioNovaTroca('propria')" style="border: 2px solid #e2e8f0; border-radius: 12px; cursor: pointer; transition: all 0.2s;">
+                                <input type="radio" name="tipoTrocaRadio" value="propria" checked style="display:none;">
+                                <i class="fa-solid fa-calendar-day mb-2 text-info fa-lg"></i>
+                                <strong style="font-size: 0.85rem; color:#1e293b;">Mover Folga Própria</strong>
+                                <span class="text-muted" style="font-size: 0.75rem; margin-top: 4px;">Mover folga de um dia para outro</span>
+                            </label>
+                        </div>
+                        <div class="col-6">
+                            <label class="scenario-card p-3 d-flex flex-column align-items-center justify-content-center text-center" id="scenarioAnalistaCard" onclick="mudarCenarioNovaTroca('analista')" style="border: 2px solid #e2e8f0; border-radius: 12px; cursor: pointer; transition: all 0.2s;">
+                                <input type="radio" name="tipoTrocaRadio" value="analista" style="display:none;">
+                                <i class="fa-solid fa-people-arrows mb-2 text-primary fa-lg"></i>
+                                <strong style="font-size: 0.85rem; color:#1e293b;">Trocar com Colega</strong>
+                                <span class="text-muted" style="font-size: 0.75rem; margin-top: 4px;">Trocar um dia de folga com outro analista</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quem solicita (Sempre o analista logado ou selecionável se gestor) -->
+                <div class="form-group-escala mb-3">
+                    <label for="trocaSolicitante" class="fw-bold text-dark">Solicitante</label>
+                    <select id="trocaSolicitante" class="form-select" onchange="aoMudarSolicitanteTroca()" style="width:100%; padding:10px; border-radius:8px; border:1px solid #cbd5e1; font-size:14px;" required>
+                        <option value="">Selecione o solicitante...</option>
+                        <!-- Preenchido via JS -->
+                    </select>
+                </div>
+
+                <!-- Campo de data da folga do solicitante -->
+                <div class="form-group-escala mb-3">
+                    <label id="lblDataSolicitante" class="fw-bold text-dark">Sua Folga Atual (Dia que deseja ceder/trabalhar)</label>
+                    <input type="date" id="trocaDataSolicitante" class="form-control" style="width:100%; padding:10px; border-radius:8px; border:1px solid #cbd5e1; font-size:14px;" required>
+                    <small class="text-muted block mt-1" style="font-size: 0.75rem;">Selecione o dia em que você atualmente tem uma folga programada.</small>
+                </div>
+
+                <!-- CENÁRIO 1: Mover Folga Própria para outro dia -->
+                <div id="secaoCenarioPropria" class="mb-3">
+                    <div class="form-group-escala">
+                        <label class="fw-bold text-dark">Novo Dia da Folga Desejado</label>
+                        <input type="date" id="trocaDataNovoDia" class="form-control" style="width:100%; padding:10px; border-radius:8px; border:1px solid #cbd5e1; font-size:14px;">
+                        <small class="text-muted block mt-1" style="font-size: 0.75rem;">Selecione o dia em que você deseja folgar no lugar da folga original.</small>
+                    </div>
+                </div>
+
+                <!-- CENÁRIO 2: Trocar com colega -->
+                <div id="secaoCenarioAnalista" class="mb-3" style="display:none;">
+                    <div class="form-group-escala mb-3">
+                        <label for="trocaReceptor" class="fw-bold text-dark">Colega Analista</label>
+                        <select id="trocaReceptor" class="form-select" onchange="aoSelecionarReceptorTroca()" style="width:100%; padding:10px; border-radius:8px; border:1px solid #cbd5e1; font-size:14px;">
+                            <option value="">Selecione o colega...</option>
+                            <!-- Preenchido via JS -->
+                        </select>
+                    </div>
+
+                    <!-- Visualização da escala do colega -->
+                    <div id="previewEscalaReceptor" class="mb-3 p-3" style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 12px; display:none;">
+                        <strong class="d-block mb-2 text-secondary small text-uppercase" style="letter-spacing:0.5px;"><i class="fa-solid fa-calendar-days text-primary"></i> Preview da Escala do Colega</strong>
+                        <div id="previewReceptorCalendarGrid" class="d-flex flex-wrap gap-1" style="max-height: 150px; overflow-y: auto; padding-right: 5px;">
+                            <!-- Preenchido via JS -->
+                        </div>
+                        <small class="text-muted d-block mt-2" style="font-size: 0.7rem; font-style: italic;">As folgas programadas do colega estão marcadas em verde/azul claro. Clique em um dia para selecioná-lo.</small>
+                    </div>
+
+                    <div class="form-group-escala mb-3">
+                        <label class="fw-bold text-dark">Folga do Colega Desejada (Dia que você folgará)</label>
+                        <input type="date" id="trocaDataReceptor" class="form-control" style="width:100%; padding:10px; border-radius:8px; border:1px solid #cbd5e1; font-size:14px;">
+                        <small class="text-muted block mt-1" style="font-size: 0.75rem;">Selecione o dia em que o colega está de folga e que você passará a folgar.</small>
+                    </div>
+                </div>
+
+                <!-- Motivo -->
+                <div class="form-group-escala mb-3">
+                    <label for="trocaMotivo" class="fw-bold text-dark">Motivo / Justificativa (Opcional)</label>
+                    <textarea id="trocaMotivo" rows="2" class="form-control" placeholder="Explique o motivo da troca para a gestão..." style="width:100%; padding:10px; border-radius:8px; border:1px solid #cbd5e1; font-size:14px; resize: none;"></textarea>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer-escala" style="border-top: 1px solid #cbd5e1; background: #f8fafc; border-bottom-left-radius: 16px; border-bottom-right-radius: 16px;">
+            <button class="btn-escala" onclick="fecharModalNovaTroca()" style="background:white; color:#475569; border: 1px solid #cbd5e1;">Cancelar</button>
+            <button class="btn-escala primary" onclick="submeterNovaTroca()" style="background: linear-gradient(135deg, #0891b2, #0e7490); border:none;"><i class="fa-solid fa-paper-plane me-1"></i> Enviar Solicitação</button>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Estilos para a funcionalidade de Trocas */
+.nav-tabs-trocas .tab-btn {
+    color: #475569;
+    background: transparent;
+}
+.nav-tabs-trocas .tab-btn:hover {
+    color: #0f172a;
+}
+.nav-tabs-trocas .tab-btn.active {
+    background: white;
+    color: #0891b2;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+.scenario-card.active {
+    border-color: #0891b2 !important;
+    background: #ecfdf5 !important;
+    box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.1) !important;
+}
+.scenario-card:hover:not(.active) {
+    border-color: #cbd5e1;
+    background: #f8fafc;
+}
+.filter-status.active {
+    background: #0891b2 !important;
+    color: white !important;
+    border-color: #0891b2 !important;
+}
+.swap-card {
+    background: white;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    padding: 16px;
+    transition: all 0.2s ease;
+}
+.swap-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+    border-color: #94a3b8;
+}
+.day-badge-preview {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    user-select: none;
+    border: 1px solid #cbd5e1;
+}
+.day-badge-preview.folga {
+    background: #e2fbf0;
+    color: #0d9488;
+    border-color: #99f6e4;
+}
+.day-badge-preview.trabalho {
+    background: #f1f5f9;
+    color: #64748b;
+}
+.day-badge-preview:hover {
+    transform: scale(1.08);
+}
+.day-badge-preview.selected {
+    outline: 2px solid #0891b2;
+    outline-offset: 1px;
+    background: #0891b2 !important;
+    color: white !important;
+}
+
+/* Badge Feriado Nacional CSS */
+.escala-table th.header-feriado {
+    background: linear-gradient(135deg, #a855f7, #7c3aed) !important;
+    color: white !important;
+    position: relative;
+    border: 1px solid #581c87 !important;
+    text-align: center;
+}
+.feriado-badge {
+    font-size: 9px;
+    font-weight: 700;
+    background: rgba(255,255,255,0.25);
+    border-radius: 4px;
+    padding: 2px 5px;
+    margin-top: 3px;
+    display: inline-block;
+    letter-spacing: 0.3px;
+}
+.cell-feriado {
+    background-color: #faf5ff !important;
+}
+.cell-swap-indicator {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(8, 145, 178, 0.1);
+    color: #0891b2;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    font-size: 9px;
+    margin-right: 4px;
+}
+</style>
+
 <style>
 .draft-type-card {
     display: flex;
@@ -1892,7 +2179,60 @@
     // ========================================
     // GERAÇÃO DE TABELAS
     // ========================================
-    function generateTables() {
+    let feriadosNacionais = {};
+    let feriadosCarregados = {};
+    let trocasAprovadasCache = {};
+
+    async function loadFeriados(ano) {
+        if (feriadosCarregados[ano]) return;
+        try {
+            const res = await fetch(`https://brasilapi.com.br/api/feriados/v1/${ano}`);
+            if (res.ok) {
+                const data = await res.json();
+                data.forEach(f => {
+                    feriadosNacionais[f.date] = f.name;
+                });
+                feriadosCarregados[ano] = true;
+            }
+        } catch (e) {
+            console.error("Erro ao buscar feriados nacionais:", e);
+        }
+    }
+
+    async function carregarTrocasAprovadasCache() {
+        try {
+            const res = await fetch('/api/escala/trocas/?status=aprovada' + (rascunhoId ? `&rascunho_id=${rascunhoId}` : ''));
+            if (res.ok) {
+                const data = await res.json();
+                trocasAprovadasCache = {};
+                data.forEach(t => {
+                    if (t.status === 'aprovada') {
+                        if (t.tipo === 'propria') {
+                            trocasAprovadasCache[`${t.solicitante_id}-${t.data_solicitante}`] = true;
+                            if (t.data_receptor) {
+                                trocasAprovadasCache[`${t.solicitante_id}-${t.data_receptor}`] = true;
+                            }
+                        } else {
+                            trocasAprovadasCache[`${t.solicitante_id}-${t.data_solicitante}`] = true;
+                            if (t.data_receptor) {
+                                trocasAprovadasCache[`${t.solicitante_id}-${t.data_receptor}`] = true;
+                            }
+                            if (t.receptor_id) {
+                                trocasAprovadasCache[`${t.receptor_id}-${t.data_solicitante}`] = true;
+                                if (t.data_receptor) {
+                                    trocasAprovadasCache[`${t.receptor_id}-${t.data_receptor}`] = true;
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        } catch (e) {
+            console.error("Erro ao buscar trocas aprovadas para cache:", e);
+        }
+    }
+
+    async function generateTables() {
         const inputVal = document.getElementById('mesInput').value;
         if (!inputVal) {
             showToast('Selecione um mês', 'warning');
@@ -1919,6 +2259,10 @@
         document.getElementById('loadingContainer').style.display = 'flex';
         document.getElementById('tabelas').innerHTML = '';
 
+        // Carregar feriados e trocas aprovadas antes de gerar a tabela
+        await loadFeriados(ano);
+        await carregarTrocasAprovadasCache();
+
         setTimeout(() => {
             let html = '';
             let dataCorrente = new Date(dataInicio);
@@ -1938,6 +2282,9 @@
 
             document.getElementById('tabelas').innerHTML = html;
             document.getElementById('loadingContainer').style.display = 'none';
+            
+            // Recarregar contadores de trocas pendentes para o badge no header
+            atualizarBadgeTrocasPendentes();
         }, 100);
     }
 
@@ -1956,7 +2303,17 @@
         let headers = '<th>Turno</th><th>Analista</th>';
         diasDaSemana.forEach((d, i) => {
             if (d.getMonth() === mesTarget) {
-                headers += `<th>${diasSemanaNomes[i]} (${String(d.getDate()).padStart(2, '0')})</th>`;
+                const dStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                const feriadoNome = feriadosNacionais[dStr];
+                if (feriadoNome) {
+                    headers += `
+                        <th class="header-feriado" title="${feriadoNome}">
+                            <div>${diasSemanaNomes[i]} (${String(d.getDate()).padStart(2, '0')})</div>
+                            <span class="feriado-badge">🎉 ${feriadoNome}</span>
+                        </th>`;
+                } else {
+                    headers += `<th>${diasSemanaNomes[i]} (${String(d.getDate()).padStart(2, '0')})</th>`;
+                }
             } else {
                 headers += `<th style="background: #1e293b; color: rgba(255,255,255,0.4) !important;">${diasSemanaNomes[i]}</th>`;
             }
@@ -1989,9 +2346,17 @@
                     diasDaSemana.forEach(d => {
                         if (d.getMonth() === mesTarget) {
                             const dia = d.getDate();
+                            const dStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                            const isFeriado = !!feriadosNacionais[dStr];
+                            
                             const cellData = getCellData(analista, turno, d.getFullYear(), d.getMonth(), dia);
                             const clickHandler = isAdmin ? `onclick="openEditCellModal('${analista.id}', ${dia}, ${d.getMonth() + 1}, ${d.getFullYear()})"` : '';
-                            rows += `<td class="${cellData.class}" ${clickHandler}>${cellData.text}</td>`;
+                            
+                            // Verificar se o dia atual é fruto de uma troca de folga aprovada
+                            const isTroca = !!trocasAprovadasCache[`${analista.id}-${dStr}`];
+                            const swapIcon = isTroca ? `<span class="cell-swap-indicator" title="Esta folga foi alterada por uma troca aprovada"><i class="fa-solid fa-right-left"></i></span>` : '';
+                            
+                            rows += `<td class="${cellData.class} ${isFeriado ? 'cell-feriado' : ''}" ${clickHandler}>${swapIcon}${cellData.text}</td>`;
                         } else {
                             rows += '<td class="dia-vazio"></td>';
                         }
@@ -3769,6 +4134,515 @@
             }
         } catch (e) {
             showToast('Erro ao publicar: ' + e.message, 'error');
+        }
+    }
+
+    // ========================================
+    // LOGICA DE TROCAS DE FOLGA
+    // ========================================
+    let activeTabTrocas = 'minhas';
+    let filtroStatusTrocas = '';
+
+    function abrirModalTrocas() {
+        document.getElementById('modalTrocas').classList.add('show');
+        mudarTabTrocas('minhas');
+    }
+
+    function fecharModalTrocas() {
+        document.getElementById('modalTrocas').classList.remove('show');
+    }
+
+    function mudarTabTrocas(tab) {
+        activeTabTrocas = tab;
+        document.getElementById('tabMinhasTrocas').classList.toggle('active', tab === 'minhas');
+        document.getElementById('tabAprovacoesGestao').classList.toggle('active', tab === 'gestao');
+        carregarTrocas();
+    }
+
+    function filtrarTrocasStatus(status) {
+        filtroStatusTrocas = status;
+        document.querySelectorAll('.filter-status').forEach(btn => {
+            const text = btn.textContent.toLowerCase();
+            if (status === '' && text === 'todas') {
+                btn.classList.add('active');
+            } else if (status === 'pendente_analista' && text.includes('analista')) {
+                btn.classList.add('active');
+            } else if (status === 'pendente_gestor' && text.includes('gestor')) {
+                btn.classList.add('active');
+            } else if (status === 'aprovada' && text.includes('aprovadas')) {
+                btn.classList.add('active');
+            } else if (status === 'rejeitada' && text.includes('rejeitadas')) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+        carregarTrocas();
+    }
+
+    async function atualizarBadgeTrocasPendentes() {
+        try {
+            const rParam = rascunhoId ? `&rascunho_id=${rascunhoId}` : '';
+            const res = await fetch(`/api/escala/trocas/?status=pendente_gestor${rParam}`);
+            if (res.ok) {
+                const data = await res.json();
+                const total = data.length;
+                
+                const badgeHeader = document.getElementById('badgeTrocasPendentes');
+                const badgeTab = document.getElementById('badgeContagemGestor');
+                
+                if (total > 0) {
+                    if (badgeHeader) {
+                        badgeHeader.textContent = total;
+                        badgeHeader.style.display = 'inline-flex';
+                    }
+                    if (badgeTab) {
+                        badgeTab.textContent = total;
+                        badgeTab.style.display = 'inline-block';
+                    }
+                } else {
+                    if (badgeHeader) badgeHeader.style.display = 'none';
+                    if (badgeTab) badgeTab.style.display = 'none';
+                }
+            }
+        } catch (e) {
+            console.error("Erro ao atualizar contagem de trocas:", e);
+        }
+    }
+
+    async function carregarTrocas() {
+        const container = document.getElementById('listaTrocasContainer');
+        const emptyState = document.getElementById('emptyTrocasState');
+        const loading = document.getElementById('loadingTrocas');
+
+        container.innerHTML = '';
+        emptyState.style.display = 'none';
+        loading.style.display = 'block';
+
+        try {
+            const rParam = rascunhoId ? `&rascunho_id=${rascunhoId}` : '';
+            const res = await fetch(`/api/escala/trocas/?status=${filtroStatusTrocas}${rParam}`);
+            loading.style.display = 'none';
+
+            if (res.ok) {
+                let list = await res.json();
+
+                // Filtrar localmente se for a aba "Minhas Trocas"
+                if (activeTabTrocas === 'minhas') {
+                    // Se for admin, vê todas. Caso contrário, só onde está envolvido.
+                    // O backend já faz isso para não-admins.
+                } else {
+                    // Aba gestão: mostrar apenas as que dependem de aprovação do gestor ou pendentes gerais
+                    list = list.filter(t => t.status === 'pendente_gestor' || t.status === 'aprovada' || t.status === 'rejeitada');
+                }
+
+                if (list.length === 0) {
+                    emptyState.style.display = 'block';
+                    return;
+                }
+
+                list.forEach(t => {
+                    const card = document.createElement('div');
+                    card.className = 'swap-card d-flex flex-column gap-2 shadow-sm';
+                    
+                    let statusBadge = '';
+                    let actionButtons = '';
+
+                    switch(t.status) {
+                        case 'pendente_analista':
+                            statusBadge = `<span class="badge bg-warning-subtle text-warning border border-warning px-2 py-1"><i class="fa-solid fa-clock"></i> Aguardando Analista</span>`;
+                            break;
+                        case 'pendente_gestor':
+                            statusBadge = `<span class="badge bg-info-subtle text-info border border-info px-2 py-1"><i class="fa-solid fa-shield-halved"></i> Aguardando Gestor</span>`;
+                            break;
+                        case 'aprovada':
+                            statusBadge = `<span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check"></i> Aprovada</span>`;
+                            break;
+                        case 'rejeitada':
+                            statusBadge = `<span class="badge bg-danger-subtle text-danger border border-danger px-2 py-1"><i class="fa-solid fa-circle-xmark"></i> Rejeitada</span>`;
+                            break;
+                        case 'cancelada':
+                            statusBadge = `<span class="badge bg-secondary-subtle text-secondary border border-secondary px-2 py-1"><i class="fa-solid fa-ban"></i> Cancelada</span>`;
+                            break;
+                    }
+
+                    // Ações disponíveis
+                    const dataOriginalS = t.data_solicitante.split('-').reverse().join('/');
+                    const dataOriginalR = t.data_receptor ? t.data_receptor.split('-').reverse().join('/') : '';
+
+                    // Se a troca está aguardando o receptor e o receptor é o usuário logado
+                    // Nota: Para fins de flexibilidade, vamos permitir que o analista clique em aprovar se envolver o nome dele,
+                    // ou que admins ajudem no processo.
+                    if (t.status === 'pendente_analista') {
+                        actionButtons = `
+                            <div class="d-flex gap-2 justify-content-end mt-2">
+                                <button class="btn btn-sm btn-outline-danger" onclick="rejeitarTrocaAnalista(${t.id})"><i class="fa-solid fa-times"></i> Recusar Troca</button>
+                                <button class="btn btn-sm btn-success text-white" onclick="aprovarTrocaAnalista(${t.id})"><i class="fa-solid fa-check"></i> Aceitar Troca</button>
+                            </div>`;
+                    } else if (t.status === 'pendente_gestor' && (isAdmin || activeTabTrocas === 'gestao')) {
+                        actionButtons = `
+                            <div class="d-flex gap-2 justify-content-end mt-2">
+                                <button class="btn btn-sm btn-outline-danger" onclick="rejeitarTrocaGestor(${t.id})"><i class="fa-solid fa-times"></i> Rejeitar</button>
+                                <button class="btn btn-sm btn-success text-white" onclick="aprovarTrocaGestor(${t.id})"><i class="fa-solid fa-check"></i> Aprovar Troca</button>
+                            </div>`;
+                    } else if ((t.status === 'pendente_analista' || t.status === 'pendente_gestor') && activeTabTrocas === 'minhas') {
+                        actionButtons = `
+                            <div class="d-flex gap-2 justify-content-end mt-2">
+                                <button class="btn btn-sm btn-outline-secondary" onclick="cancelarTroca(${t.id})"><i class="fa-solid fa-ban"></i> Cancelar Solicitação</button>
+                            </div>`;
+                    }
+
+                    let contentHtml = '';
+                    if (t.tipo === 'propria') {
+                        contentHtml = `
+                            <div>
+                                <strong class="text-dark">${t.solicitante_nome}</strong> solicitou mover sua folga do dia <span class="badge bg-light text-dark border">${dataOriginalS}</span> para o dia <span class="badge bg-light text-dark border">${dataOriginalR}</span>.
+                            </div>`;
+                    } else {
+                        contentHtml = `
+                            <div>
+                                <strong class="text-dark">${t.solicitante_nome}</strong> solicitou trocar sua folga do dia <span class="badge bg-light text-dark border">${dataOriginalS}</span> pela folga do dia <span class="badge bg-light text-dark border">${dataOriginalR}</span> de <strong class="text-dark">${t.receptor_nome}</strong>.
+                            </div>`;
+                    }
+
+                    card.innerHTML = `
+                        <div class="d-flex justify-content-between align-items-start border-bottom pb-2">
+                            <div>
+                                <span class="text-muted small fw-bold">ID #${t.id} &bull; ${t.tipo_display}</span>
+                            </div>
+                            <div>
+                                ${statusBadge}
+                            </div>
+                        </div>
+                        <div class="py-1 text-secondary small">
+                            ${contentHtml}
+                            ${t.motivo ? `<div class="mt-2 p-2 bg-light rounded text-muted" style="font-style:italic;">"${t.motivo}"</div>` : ''}
+                            ${t.motivo_rejeicao ? `<div class="mt-2 p-2 bg-danger-subtle rounded text-danger" style="font-weight: 500;"><i class="fa-solid fa-times-circle"></i> Rejeição: "${t.motivo_rejeicao}"</div>` : ''}
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mt-1 border-top pt-2">
+                            <span class="text-muted" style="font-size:0.75rem;"><i class="fa-solid fa-clock"></i> Criada em: ${new Date(t.created_at).toLocaleString()}</span>
+                            ${actionButtons}
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+            }
+        } catch (e) {
+            loading.style.display = 'none';
+            showToast("Erro ao carregar trocas: " + e.message, "error");
+        }
+    }
+
+    function abrirModalNovaTroca() {
+        document.getElementById('modalNovaTroca').classList.add('show');
+        
+        // Popular Solicitante
+        const selSol = document.getElementById('trocaSolicitante');
+        selSol.innerHTML = '<option value="">Selecione o solicitante...</option>';
+        analistas.forEach(a => {
+            selSol.innerHTML += `<option value="${a.id}">${a.nome}</option>`;
+        });
+
+        // Reset inputs
+        document.getElementById('formNovaTroca').reset();
+        document.getElementById('previewEscalaReceptor').style.display = 'none';
+        mudarCenarioNovaTroca('propria');
+    }
+
+    function fecharModalNovaTroca() {
+        document.getElementById('modalNovaTroca').classList.remove('show');
+    }
+
+    function mudarCenarioNovaTroca(scenario) {
+        document.getElementById('scenarioPropriaCard').classList.toggle('active', scenario === 'propria');
+        document.getElementById('scenarioAnalistaCard').classList.toggle('active', scenario === 'analista');
+        
+        document.getElementById('secaoCenarioPropria').style.display = scenario === 'propria' ? 'block' : 'none';
+        document.getElementById('secaoCenarioAnalista').style.display = scenario === 'analista' ? 'block' : 'none';
+
+        // Atualizar texto da data do solicitante
+        document.getElementById('lblDataSolicitante').textContent = scenario === 'propria' ? 'Sua Folga Atual (Dia que deseja ceder/trabalhar)' : 'Sua Folga Selecionada';
+
+        // Marcar o radio oculto
+        const radio = document.querySelector(`input[name="tipoTrocaRadio"][value="${scenario}"]`);
+        if (radio) radio.checked = true;
+    }
+
+    function aoMudarSolicitanteTroca() {
+        const solId = document.getElementById('trocaSolicitante').value;
+        const selRec = document.getElementById('trocaReceptor');
+        
+        selRec.innerHTML = '<option value="">Selecione o colega...</option>';
+        
+        analistas.forEach(a => {
+            if (a.id != solId) {
+                selRec.innerHTML += `<option value="${a.id}">${a.nome}</option>`;
+            }
+        });
+
+        document.getElementById('previewEscalaReceptor').style.display = 'none';
+    }
+
+    async function aoSelecionarReceptorTroca() {
+        const recId = document.getElementById('trocaReceptor').value;
+        const container = document.getElementById('previewEscalaReceptor');
+        const grid = document.getElementById('previewReceptorCalendarGrid');
+
+        if (!recId) {
+            container.style.display = 'none';
+            return;
+        }
+
+        grid.innerHTML = '<div class="text-center w-100 py-3 text-muted small"><i class="fa-solid fa-spinner fa-spin"></i> Carregando folgas...</div>';
+        container.style.display = 'block';
+
+        try {
+            const rParam = rascunhoId ? `?rascunho_id=${rascunhoId}` : '';
+            const res = await fetch(`/api/escala/analistas/${recId}/schedule/${rParam}`);
+            if (res.ok) {
+                const data = await res.json();
+                grid.innerHTML = '';
+
+                // Obter mês atual selecionado na escala
+                const mesVal = document.getElementById('mesInput').value;
+                const [ano, mesNum] = mesVal.split('-').map(Number);
+                const daysInMonth = new Date(ano, mesNum, 0).getDate();
+
+                for (let dia = 1; dia <= daysInMonth; dia++) {
+                    const dataRef = new Date(ano, mesNum - 1, dia);
+                    const cellInfo = calcularPreviaEscalaAnalista(data, dataRef);
+                    
+                    const badge = document.createElement('div');
+                    const dStr = `${ano}-${String(mesNum).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+                    badge.className = `day-badge-preview ${cellInfo.class}`;
+                    badge.textContent = dia;
+                    badge.title = `${dia}/${mesNum}: ${cellInfo.text}`;
+                    
+                    if (cellInfo.class === 'folga') {
+                        badge.onclick = () => {
+                            grid.querySelectorAll('.day-badge-preview').forEach(b => b.classList.remove('selected'));
+                            badge.classList.add('selected');
+                            document.getElementById('trocaDataReceptor').value = dStr;
+                        };
+                    } else {
+                        badge.style.opacity = '0.5';
+                        badge.style.cursor = 'not-allowed';
+                    }
+                    grid.appendChild(badge);
+                }
+            } else {
+                grid.innerHTML = '<div class="text-danger small py-2">Não foi possível carregar a prévia.</div>';
+            }
+        } catch(e) {
+            grid.innerHTML = '<div class="text-danger small py-2">Erro de conexão.</div>';
+        }
+    }
+
+    function calcularPreviaEscalaAnalista(dados, dataAtual) {
+        dataAtual.setHours(0,0,0,0);
+        const ano = dataAtual.getFullYear();
+        const mes = dataAtual.getMonth();
+        const dia = dataAtual.getDate();
+
+        const dKey = `${ano}-${String(mes+1).padStart(2,'0')}-${String(dia).padStart(2,'0')}`;
+        const folgaManual = dados.folgas_manuais[dKey];
+
+        if (folgaManual) {
+            if (folgaManual.tipo === 'trabalho') return { class: 'trabalho', text: dados.turno_horario || 'Trabalho' };
+            return { class: 'folga', text: folgaManual.tipo.toUpperCase() };
+        }
+
+        let modeloId = dados.modelo_escala_id;
+        if (!modeloId) {
+            modeloId = rascunhoId ? rascunhoModeloId : modeloPrincipalId;
+        }
+
+        const modelo = modelos.find(m => m.id == modeloId);
+        const trab = modelo ? modelo.dias_trabalhados : 6;
+        const folga = modelo ? modelo.dias_folga : 2;
+        const cicloTotal = trab + folga;
+
+        let dataPrimeiraFolga;
+        if (dados.data_primeira_folga) {
+            const [anoFolga, mesFolga, diaFolga] = dados.data_primeira_folga.split('-').map(Number);
+            dataPrimeiraFolga = new Date(anoFolga, mesFolga - 1, diaFolga);
+        } else {
+            const hoje = new Date();
+            hoje.setHours(0, 0, 0, 0);
+            dataPrimeiraFolga = new Date(hoje);
+            dataPrimeiraFolga.setDate(hoje.getDate() + (7 - hoje.getDay()));
+        }
+        dataPrimeiraFolga.setHours(0, 0, 0, 0);
+
+        const diffTime = dataAtual.getTime() - dataPrimeiraFolga.getTime();
+        const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+        let posicaoNoCiclo = ((diffDays % cicloTotal) + cicloTotal) % cicloTotal;
+
+        if (posicaoNoCiclo < folga) {
+            return { class: 'folga', text: 'FOLGA' };
+        }
+        return { class: 'trabalho', text: dados.turno_horario || 'Trabalho' };
+    }
+
+    async function submeterNovaTroca() {
+        const tipo = document.querySelector('input[name="tipoTrocaRadio"]:checked').value;
+        const solicitanteId = document.getElementById('trocaSolicitante').value;
+        const dataSolicitante = document.getElementById('trocaDataSolicitante').value;
+        const motivo = document.getElementById('trocaMotivo').value.trim();
+
+        if (!solicitanteId || !dataSolicitante) {
+            showToast('Por favor, preencha todos os campos obrigatórios.', 'warning');
+            return;
+        }
+
+        const payload = {
+            tipo,
+            solicitante_id: parseInt(solicitanteId),
+            data_solicitante: dataSolicitante,
+            motivo,
+            rascunho_id: rascunhoId ? parseInt(rascunhoId) : null
+        };
+
+        if (tipo === 'propria') {
+            const dataNovoDia = document.getElementById('trocaDataNovoDia').value;
+            if (!dataNovoDia) {
+                showToast('Por favor, selecione o novo dia desejado para a folga.', 'warning');
+                return;
+            }
+            payload.data_receptor = dataNovoDia;
+        } else {
+            const receptorId = document.getElementById('trocaReceptor').value;
+            const dataReceptor = document.getElementById('trocaDataReceptor').value;
+
+            if (!receptorId || !dataReceptor) {
+                showToast('Por favor, selecione o colega analista e o dia correspondente.', 'warning');
+                return;
+            }
+            payload.receptor_id = parseInt(receptorId);
+            payload.data_receptor = dataReceptor;
+        }
+
+        try {
+            const res = await fetch('/api/escala/trocas/create/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (data.error) {
+                showToast(data.error, 'error');
+            } else {
+                showToast('Solicitação de troca enviada com sucesso!', 'success');
+                fecharModalNovaTroca();
+                carregarTrocas();
+                // Atualiza a tabela caso tenha sido algo instantâneo
+                generateTables();
+            }
+        } catch(e) {
+            showToast('Erro ao criar solicitação de troca.', 'error');
+        }
+    }
+
+    async function aprovarTrocaAnalista(id) {
+        if (!confirm('Deseja aceitar esta troca de folga? Ela seguirá para a aprovação final da gestão.')) return;
+        try {
+            const res = await fetch(`/api/escala/trocas/${id}/aprovar-analista/`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': csrfToken }
+            });
+            if (res.ok) {
+                showToast('Você aceitou a troca! Enviada para aprovação do gestor.', 'success');
+                carregarTrocas();
+            } else {
+                const data = await res.json();
+                showToast(data.error || 'Erro ao aprovar troca.', 'error');
+            }
+        } catch(e) {
+            showToast('Erro de conexão.', 'error');
+        }
+    }
+
+    async function rejeitarTrocaAnalista(id) {
+        const motivo = prompt('Por favor, digite o motivo da recusa:');
+        if (motivo === null) return; // cancelou o prompt
+
+        try {
+            const res = await fetch(`/api/escala/trocas/${id}/rejeitar-analista/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify({ motivo_rejeicao: motivo || 'Recusado pelo analista.' })
+            });
+            if (res.ok) {
+                showToast('Troca recusada com sucesso.', 'success');
+                carregarTrocas();
+            } else {
+                const data = await res.json();
+                showToast(data.error || 'Erro ao recusar troca.', 'error');
+            }
+        } catch(e) {
+            showToast('Erro de conexão.', 'error');
+        }
+    }
+
+    async function aprovarTrocaGestor(id) {
+        if (!confirm('Deseja aprovar definitivamente esta troca de folgas? A escala operacional será atualizada automaticamente.')) return;
+        try {
+            const res = await fetch(`/api/escala/trocas/${id}/aprovar-gestor/`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': csrfToken }
+            });
+            if (res.ok) {
+                showToast('Troca aprovada com sucesso! A escala foi atualizada.', 'success');
+                carregarTrocas();
+                generateTables();
+            } else {
+                const data = await res.json();
+                showToast(data.error || 'Erro ao aprovar troca.', 'error');
+            }
+        } catch(e) {
+            showToast('Erro de conexão.', 'error');
+        }
+    }
+
+    async function rejeitarTrocaGestor(id) {
+        const motivo = prompt('Por favor, digite a justificativa para a rejeição:');
+        if (motivo === null) return;
+
+        try {
+            const res = await fetch(`/api/escala/trocas/${id}/rejeitar-gestor/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify({ motivo_rejeicao: motivo || 'Rejeitado pelo gestor.' })
+            });
+            if (res.ok) {
+                showToast('Troca rejeitada pela gestão.', 'success');
+                carregarTrocas();
+            } else {
+                const data = await res.json();
+                showToast(data.error || 'Erro ao rejeitar troca.', 'error');
+            }
+        } catch(e) {
+            showToast('Erro de conexão.', 'error');
+        }
+    }
+
+    async function cancelarTroca(id) {
+        if (!confirm('Tem certeza que deseja cancelar esta solicitação pendente?')) return;
+        try {
+            const res = await fetch(`/api/escala/trocas/${id}/cancelar/`, {
+                method: 'DELETE',
+                headers: { 'X-CSRFToken': csrfToken }
+            });
+            if (res.ok) {
+                showToast('Solicitação cancelada.', 'success');
+                carregarTrocas();
+            } else {
+                const data = await res.json();
+                showToast(data.error || 'Erro ao cancelar troca.', 'error');
+            }
+        } catch(e) {
+            showToast('Erro de conexão.', 'error');
         }
     }
 </script>
