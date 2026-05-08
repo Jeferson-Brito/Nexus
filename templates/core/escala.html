@@ -433,119 +433,136 @@
     }
 
     .modal-content-escala {
-        background-color: #ffffff;
+        background: #ffffff;
         margin: auto !important;
-        /* Enable flex centering and scroll behavior */
         padding: 0;
-        border-radius: 12px;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+        border-radius: 20px;
+        box-shadow: 0 25px 60px rgba(0,0,0,0.18), 0 8px 24px rgba(0,0,0,0.10);
         width: 95%;
-        max-width: 450px;
-        /* Reduced from 500px */
+        max-width: 480px;
         position: relative;
-        animation: slideIn 0.3s ease-out;
+        animation: slideInModal 0.35s cubic-bezier(0.16, 1, 0.3, 1);
         overflow: hidden;
+        border: 1px solid rgba(255,255,255,0.6);
     }
 
     .modal-content-escala.large {
-        max-width: 650px;
-        /* Reduced from 700px */
+        max-width: 700px;
     }
 
-    @keyframes slideIn {
-        from {
-            transform: translateY(-30px);
-            opacity: 0;
-        }
-
-        to {
-            transform: translateY(0);
-            opacity: 1;
-        }
+    @keyframes slideInModal {
+        from { transform: translateY(24px) scale(0.97); opacity: 0; }
+        to   { transform: translateY(0)    scale(1);    opacity: 1; }
     }
 
     .modal-header-escala {
-        background: linear-gradient(180deg, #dbeafe 0%, #eff6ff 100%);
-        color: #1e293b;
-        padding: 25px 20px 20px 20px;
-        /* Significantly reduced padding */
+        background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 60%, #2563eb 100%);
+        color: white;
+        padding: 28px 28px 24px 28px;
         display: flex;
         flex-direction: column;
-        align-items: center;
-        text-align: center;
+        align-items: flex-start;
+        text-align: left;
         position: relative;
+        overflow: hidden;
+    }
+
+    .modal-header-escala::before {
+        content: '';
+        position: absolute;
+        top: -40px; right: -40px;
+        width: 160px; height: 160px;
+        background: rgba(255,255,255,0.06);
+        border-radius: 50%;
+    }
+    .modal-header-escala::after {
+        content: '';
+        position: absolute;
+        bottom: -20px; left: 60%;
+        width: 100px; height: 100px;
+        background: rgba(255,255,255,0.04);
+        border-radius: 50%;
+    }
+
+    .modal-header-escala .modal-header-top {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        width: 100%;
+        position: relative;
+        z-index: 1;
     }
 
     .modal-header-escala .modal-icon {
-        width: 50px;
-        /* Reduced from 70px */
-        height: 50px;
-        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-        border-radius: 50%;
+        width: 44px;
+        height: 44px;
+        background: rgba(255,255,255,0.18);
+        border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
-        margin-bottom: 12px;
-        /* Reduced margin */
         color: white;
-        font-size: 1.4rem;
-        /* Reduced font size */
-        box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
+        font-size: 1.2rem;
+        border: 1px solid rgba(255,255,255,0.25);
+        flex-shrink: 0;
     }
+
+    .modal-header-escala .modal-header-text { flex: 1; }
 
     .modal-header-escala h2 {
         margin: 0;
-        font-size: 1.25rem;
-        /* Reduced from 1.5rem */
-        color: #1e3a5f;
+        font-size: 1.15rem;
+        color: #ffffff;
         font-weight: 700;
+        letter-spacing: -0.01em;
     }
 
     .modal-header-escala p {
-        margin: 10px 0 0 0;
-        color: #64748b;
-        font-size: 0.95rem;
+        margin: 3px 0 0 0;
+        color: rgba(255,255,255,0.7);
+        font-size: 0.82rem;
     }
 
     .modal-close {
         position: absolute;
-        top: 12px;
-        right: 12px;
-        background: rgba(255, 255, 255, 0.8);
-        border: 1px solid #e2e8f0;
-        color: #64748b;
-        font-size: 1.2rem;
+        top: 16px;
+        right: 16px;
+        background: rgba(255,255,255,0.15);
+        border: 1px solid rgba(255,255,255,0.25);
+        color: rgba(255,255,255,0.85);
+        font-size: 1rem;
         cursor: pointer;
-        width: 32px;
-        height: 32px;
+        width: 30px;
+        height: 30px;
         border-radius: 8px;
         display: flex;
         align-items: center;
         justify-content: center;
         transition: all 0.2s;
+        z-index: 10;
     }
 
     .modal-close:hover {
-        background: #f1f5f9;
-        color: #1e293b;
+        background: rgba(255,255,255,0.28);
+        color: white;
     }
 
     .modal-body-escala {
-        padding: 25px;
-        background: #f1f5f9;
+        padding: 20px 24px 24px 24px;
+        background: #f8fafc;
         min-height: 200px;
     }
 
     .modal-actions-bar {
         display: flex;
-        justify-content: flex-start;
-        margin-bottom: 15px;
-        padding: 10px 15px;
-        /* Reduced padding */
-        background: white;
-        border-radius: 50px;
-        border: 1px solid #e2e8f0;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 16px;
+        padding: 0;
+        background: transparent;
+        border-radius: 0;
+        border: none;
+        box-shadow: none;
     }
 
     .form-group-escala {
@@ -562,13 +579,22 @@
     .form-group-escala input,
     .form-group-escala select {
         width: 100%;
-        padding: 10px 12px;
-        /* Reduced padding */
-        border-radius: 8px;
-        border: 1px solid #e2e8f0;
+        padding: 10px 14px;
+        border-radius: 10px;
+        border: 1.5px solid #e8edf4;
         font-size: 14px;
-        transition: all 0.3s;
+        transition: all 0.2s;
         box-sizing: border-box;
+        background: #f8fafc;
+        color: #0f172a;
+    }
+
+    .form-group-escala input:focus,
+    .form-group-escala select:focus {
+        outline: none;
+        border-color: #3b82f6;
+        background: #fff;
+        box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
     }
 
     .form-group-escala input[type="color"] {
@@ -603,8 +629,8 @@
     }
 
     .modal-footer-escala {
-        padding: 15px 25px;
-        border-top: 1px solid #e2e8f0;
+        padding: 14px 24px;
+        border-top: 1px solid #f1f5f9;
         display: flex;
         justify-content: flex-end;
         gap: 10px;
@@ -643,87 +669,89 @@
 
     .item-card {
         background: white;
-        border: 1px solid #e2e8f0;
-        border-radius: 10px;
-        padding: 12px 15px;
-        /* Reduced padding */
+        border: 1px solid #e8edf4;
+        border-radius: 12px;
+        padding: 11px 14px;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        transition: all 0.3s ease;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+        transition: all 0.22s cubic-bezier(0.4,0,0.2,1);
+        box-shadow: 0 1px 4px rgba(0,0,0,0.04);
     }
 
     .item-card:hover {
         transform: translateY(-2px);
-        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.06);
-        border-color: #3b82f6;
+        box-shadow: 0 6px 20px rgba(37,99,235,0.09);
+        border-color: #93c5fd;
     }
 
     .item-card-left {
         display: flex;
         align-items: center;
-        gap: 18px;
+        gap: 12px;
     }
 
     .item-drag-handle {
-        color: #94a3b8;
-        font-size: 1.1rem;
+        color: #cbd5e1;
+        font-size: 0.95rem;
         cursor: grab;
         display: flex;
         align-items: center;
+        transition: color 0.15s;
     }
+    .item-card:hover .item-drag-handle { color: #94a3b8; }
 
     .item-color-dot {
-        width: 14px;
-        height: 14px;
+        width: 10px;
+        height: 10px;
         border-radius: 50%;
         flex-shrink: 0;
-        box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.03);
+        box-shadow: 0 0 0 3px rgba(0,0,0,0.06);
     }
 
     .item-card-info {
         display: flex;
         flex-direction: column;
-        gap: 4px;
+        gap: 2px;
     }
 
     .item-card-info h4 {
         margin: 0;
-        color: #1e293b;
-        font-size: 1.05rem;
-        font-weight: 700;
+        color: #0f172a;
+        font-size: 0.92rem;
+        font-weight: 600;
+        letter-spacing: -0.01em;
     }
 
     .item-card-info p {
         margin: 0;
-        color: #64748b;
-        font-size: 0.9rem;
+        color: #94a3b8;
+        font-size: 0.78rem;
         font-weight: 500;
     }
 
     .item-card-actions {
         display: flex;
-        gap: 10px;
+        gap: 6px;
     }
 
     /* Agrupamento por Turno */
     .shift-group {
-        margin-bottom: 25px;
+        margin-bottom: 18px;
     }
 
     .shift-group-header {
-        background: #f8fafc;
-        padding: 10px 15px;
+        background: linear-gradient(90deg, #f8fafc 0%, #f1f5f9 100%);
+        padding: 8px 14px;
         font-weight: 700;
-        color: #1e293b;
-        border-radius: 8px;
-        margin-bottom: 12px;
-        font-size: 0.95rem;
+        color: #334155;
+        border-radius: 9px;
+        margin-bottom: 8px;
+        font-size: 0.72rem;
         display: flex;
         align-items: center;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        letter-spacing: 1px;
         border: 1px solid #e2e8f0;
     }
 
@@ -752,38 +780,38 @@
     }
 
     .btn-icon {
-        width: 38px;
-        height: 38px;
+        width: 32px;
+        height: 32px;
         border: none;
-        border-radius: 10px;
+        border-radius: 8px;
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
-        transition: all 0.2s;
-        font-size: 1rem;
+        transition: all 0.18s;
+        font-size: 0.82rem;
     }
 
     .btn-icon.edit {
-        background: #3b82f6;
-        color: white;
-        box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
+        background: #eff6ff;
+        color: #2563eb;
     }
 
     .btn-icon.edit:hover {
         background: #2563eb;
-        transform: scale(1.05);
+        color: white;
+        transform: scale(1.08);
     }
 
     .btn-icon.delete {
-        background: #ef4444;
-        color: white;
-        box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);
+        background: #fff1f2;
+        color: #ef4444;
     }
 
     .btn-icon.delete:hover {
-        background: #dc2626;
-        transform: scale(1.05);
+        background: #ef4444;
+        color: white;
+        transform: scale(1.08);
     }
 
     /* Turno Badge */
@@ -1210,11 +1238,15 @@
     <div class="modal-content-escala large">
         <div class="modal-header-escala">
             <button class="modal-close" onclick="closeShiftModal()">&times;</button>
-            <div class="modal-icon">
-                <i class="fa-solid fa-clock"></i>
+            <div class="modal-header-top">
+                <div class="modal-icon">
+                    <i class="fa-solid fa-clock"></i>
+                </div>
+                <div class="modal-header-text">
+                    <h2>Gerenciar Turnos</h2>
+                    <p>Configure os turnos de trabalho e seus hor&aacute;rios</p>
+                </div>
             </div>
-            <h2>Gerenciar Turnos</h2>
-            <p>Configure os turnos de trabalho e seus hor&aacute;rios</p>
         </div>
         <div class="modal-body-escala">
             <!-- Banner de copiar turnos (visível apenas em rascunho sem turnos) -->
@@ -1247,11 +1279,15 @@
     <div class="modal-content-escala">
         <div class="modal-header-escala">
             <button class="modal-close" onclick="fecharModalCopiarTurnos()">&times;</button>
-            <div class="modal-icon" style="background: linear-gradient(135deg, #2563eb, #1d4ed8);">
-                <i class="fa-solid fa-clone"></i>
+            <div class="modal-header-top">
+                <div class="modal-icon" style="background:rgba(255,255,255,0.2);">
+                    <i class="fa-solid fa-clone"></i>
+                </div>
+                <div class="modal-header-text">
+                    <h2>Copiar Turnos</h2>
+                    <p>Selecione a escala de origem para copiar os turnos</p>
+                </div>
             </div>
-            <h2>Copiar Turnos</h2>
-            <p>Selecione a escala de origem para copiar os turnos</p>
         </div>
         <div class="modal-body-escala">
             <div class="form-group-escala">
@@ -1276,13 +1312,17 @@
     <div class="modal-content-escala">
         <div class="modal-header-escala">
             <button class="modal-close" onclick="closeShiftFormModal()">&times;</button>
-            <div class="modal-icon">
-                <i class="fa-solid fa-clock"></i>
+            <div class="modal-header-top">
+                <div class="modal-icon">
+                    <i class="fa-solid fa-clock"></i>
+                </div>
+                <div class="modal-header-text">
+                    <h2 id="shiftFormTitle">Novo Turno</h2>
+                    <p>Preencha os dados do turno de trabalho</p>
+                </div>
             </div>
-            <h2 id="shiftFormTitle">Novo Turno</h2>
-            <p>Preencha os dados abaixo para configurar o turno</p>
         </div>
-        <div class="modal-body-escala">
+        <div class="modal-body-escala" style="background:white;">
             <form id="shiftForm">
                 <input type="hidden" id="shiftId">
                 <div class="form-group-escala">
@@ -1315,8 +1355,8 @@
             </form>
         </div>
         <div class="modal-footer-escala">
-            <button class="btn-escala" onclick="closeShiftFormModal()">Cancelar</button>
-            <button class="btn-escala primary" onclick="saveShift()">Salvar</button>
+            <button class="btn-escala" onclick="closeShiftFormModal()" style="background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;">Cancelar</button>
+            <button class="btn-escala primary" onclick="saveShift()">Salvar Turno</button>
         </div>
     </div>
 </div>
@@ -1326,20 +1366,24 @@
     <div class="modal-content-escala large">
         <div class="modal-header-escala">
             <button class="modal-close" onclick="closeAnalystModal()">&times;</button>
-            <div class="modal-icon">
-                <i class="fa-solid fa-users"></i>
+            <div class="modal-header-top">
+                <div class="modal-icon">
+                    <i class="fa-solid fa-users-gear"></i>
+                </div>
+                <div class="modal-header-text">
+                    <h2>Gerenciar Analistas</h2>
+                    <p>Configure e organize os analistas e seus turnos</p>
+                </div>
             </div>
-            <h2>Gerenciar Analistas</h2>
-            <p>Configure os analistas e suas escalas de trabalho</p>
         </div>
         <div class="modal-body-escala">
-            <div class="modal-actions-bar" style="display: flex; gap: 10px; align-items: center; justify-content: flex-start; margin-bottom: 20px;">
-                <button class="btn-escala primary" onclick="showAddAnalystForm()" style="margin: 0;">
+            <div class="modal-actions-bar">
+                <button class="btn-escala primary" onclick="showAddAnalystForm()" style="margin:0; border-radius:10px; padding:9px 18px; font-size:13px;">
                     <i class="fa-solid fa-plus"></i> Novo Analista
                 </button>
                 {% if is_config_mode or rascunho_id %}
-                <button class="btn-escala" onclick="abrirModalCopiarTurnos()" style="margin: 0; background: #475569; color: white; border: none; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">
-                    <i class="fa-solid fa-copy"></i> Copiar Dados de Outra Escala
+                <button class="btn-escala" onclick="abrirModalCopiarTurnos()" style="margin:0; background:#f1f5f9; color:#475569; border:1px solid #e2e8f0; border-radius:10px; padding:9px 16px; font-size:13px;">
+                    <i class="fa-solid fa-copy" style="color:#64748b;"></i> Copiar de Outra Escala
                 </button>
                 {% endif %}
             </div>
@@ -1355,13 +1399,17 @@
     <div class="modal-content-escala">
         <div class="modal-header-escala">
             <button class="modal-close" onclick="closeAnalystFormModal()">&times;</button>
-            <div class="modal-icon">
-                <i class="fa-solid fa-user-plus"></i>
+            <div class="modal-header-top">
+                <div class="modal-icon">
+                    <i class="fa-solid fa-user-pen"></i>
+                </div>
+                <div class="modal-header-text">
+                    <h2 id="analystFormTitle">Novo Analista</h2>
+                    <p>Preencha os dados do colaborador</p>
+                </div>
             </div>
-            <h2 id="analystFormTitle">Novo Analista</h2>
-            <p>Preencha os dados básicos do colaborador</p>
         </div>
-        <div class="modal-body-escala">
+        <div class="modal-body-escala" style="background:white;">
             <form id="analystForm">
                 <input type="hidden" id="analystId">
                 <div class="form-group-escala">
@@ -1373,7 +1421,7 @@
                     <select id="analystShift" required></select>
                 </div>
                 <div class="form-group-escala">
-                    <label for="analystModeloEscala">Modelo de Jornada (Opcional)</label>
+                    <label for="analystModeloEscala">Modelo de Jornada <span style="font-weight:400;color:#94a3b8;">(Opcional)</span></label>
                     <select id="analystModeloEscala">
                         <option value="">(Usar Modelo Padrão da Escala)</option>
                     </select>
@@ -1384,15 +1432,13 @@
                         <div class="col-6">
                             <label class="small text-muted text-uppercase mb-1">Início</label>
                             <div class="custom-timepicker-container">
-                                <input type="text" class="custom-timepicker-input" id="analystBreakStart"
-                                    placeholder="--:--" readonly>
+                                <input type="text" class="custom-timepicker-input" id="analystBreakStart" placeholder="--:--" readonly>
                             </div>
                         </div>
                         <div class="col-6">
                             <label class="small text-muted text-uppercase mb-1">Fim</label>
                             <div class="custom-timepicker-container">
-                                <input type="text" class="custom-timepicker-input" id="analystBreakEnd"
-                                    placeholder="--:--" readonly>
+                                <input type="text" class="custom-timepicker-input" id="analystBreakEnd" placeholder="--:--" readonly>
                             </div>
                         </div>
                     </div>
@@ -1404,8 +1450,8 @@
             </form>
         </div>
         <div class="modal-footer-escala">
-            <button class="btn-escala" onclick="closeAnalystFormModal()">Cancelar</button>
-            <button class="btn-escala primary" onclick="saveAnalyst()">Salvar</button>
+            <button class="btn-escala" onclick="closeAnalystFormModal()" style="background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;">Cancelar</button>
+            <button class="btn-escala primary" onclick="saveAnalyst()">Salvar Analista</button>
         </div>
     </div>
 </div>
