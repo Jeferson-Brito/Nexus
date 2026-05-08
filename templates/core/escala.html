@@ -3209,22 +3209,34 @@
         }
     }
 
-    async function deleteShift(id) {
-        if (!confirm('Tem certeza que deseja excluir este turno?')) return;
+    function deleteShift(id) {
+        Swal.fire({
+            title: 'Excluir Turno?',
+            text: "Tem certeza que deseja excluir este turno?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'Sim, excluir',
+            cancelButtonText: 'Cancelar'
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                try {
+                    await fetch(`/api/escala/turnos/${id}/`, {
+                        method: 'DELETE',
+                        headers: { 'X-CSRFToken': csrfToken }
+                    });
 
-        try {
-            await fetch(`/api/escala/turnos/${id}/`, {
-                method: 'DELETE',
-                headers: { 'X-CSRFToken': csrfToken }
-            });
-
-            turnos = turnos.filter(t => t.id !== id);
-            renderShiftList();
-            checkEmptyStates();
-            generateTables();
-        } catch (error) {
-            showToast('Erro ao excluir turno: ' + error.message, 'error');
-        }
+                    turnos = turnos.filter(t => t.id !== id);
+                    renderShiftList();
+                    checkEmptyStates();
+                    generateTables();
+                    showToast('Turno excluído com sucesso!', 'success');
+                } catch (error) {
+                    showToast('Erro ao excluir turno: ' + error.message, 'error');
+                }
+            }
+        });
     }
 
     // ========================================
@@ -3542,23 +3554,35 @@
         }
     }
 
-    async function deleteAnalyst(id) {
-        if (!confirm('Tem certeza que deseja excluir este analista?')) return;
+    function deleteAnalyst(id) {
+        Swal.fire({
+            title: 'Excluir Analista?',
+            text: "Tem certeza que deseja excluir este analista?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'Sim, excluir',
+            cancelButtonText: 'Cancelar'
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                try {
+                    await fetch(`/api/escala/analistas/${id}/`, {
+                        method: 'DELETE',
+                        headers: { 'X-CSRFToken': csrfToken }
+                    });
 
-        try {
-            await fetch(`/api/escala/analistas/${id}/`, {
-                method: 'DELETE',
-                headers: { 'X-CSRFToken': csrfToken }
-            });
-
-            analistas = analistas.filter(a => a.id !== id);
-            renderAnalystList();
-            checkEmptyStates();
-            atualizarBadgeAnalistas();
-            generateTables();
-        } catch (error) {
-            showToast('Erro ao excluir analista: ' + error.message, 'error');
-        }
+                    analistas = analistas.filter(a => a.id !== id);
+                    renderAnalystList();
+                    checkEmptyStates();
+                    atualizarBadgeAnalistas();
+                    generateTables();
+                    showToast('Analista excluído com sucesso!', 'success');
+                } catch (error) {
+                    showToast('Erro ao excluir analista: ' + error.message, 'error');
+                }
+            }
+        });
     }
 
     // ========================================
@@ -4260,19 +4284,30 @@
         // Permanecer no rascunho atual (não remover o rascunho_id da URL)
     }
 
-    async function excluirRascunhoAtual() {
+    function excluirRascunhoAtual() {
         if (!rascunhoId) return;
-        if (!confirm('Tem certeza que deseja descartar esta simulação? A escala principal não será afetada.')) return;
-        
-        try {
-            await fetch(`/api/escala/rascunhos/${rascunhoId}/delete/`, {
-                method: 'DELETE',
-                headers: { 'X-CSRFToken': csrfToken }
-            });
-            window.location.href = window.location.pathname;
-        } catch (e) {
-            showToast('Erro ao excluir: ' + e.message, 'error');
-        }
+        Swal.fire({
+            title: 'Descartar Simulação?',
+            text: "Tem certeza que deseja descartar esta simulação? A escala principal não será afetada.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'Sim, descartar',
+            cancelButtonText: 'Cancelar'
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                try {
+                    await fetch(`/api/escala/rascunhos/${rascunhoId}/delete/`, {
+                        method: 'DELETE',
+                        headers: { 'X-CSRFToken': csrfToken }
+                    });
+                    window.location.href = window.location.pathname;
+                } catch (e) {
+                    showToast('Erro ao excluir: ' + e.message, 'error');
+                }
+            }
+        });
     }
 
     function abrirModalPublicarRascunho() {
@@ -4857,106 +4892,176 @@
         }
     }
 
-    async function aprovarTrocaAnalista(id) {
-        if (!confirm('Deseja aceitar esta troca de folga? Ela seguirá para a aprovação final da gestão.')) return;
-        try {
-            const res = await fetch(`/api/escala/trocas/${id}/aprovar-analista/`, {
-                method: 'POST',
-                headers: { 'X-CSRFToken': csrfToken }
-            });
-            if (res.ok) {
-                showToast('Você aceitou a troca! Enviada para aprovação do gestor.', 'success');
-                carregarTrocas();
-            } else {
-                const data = await res.json();
-                showToast(data.error || 'Erro ao aprovar troca.', 'error');
+    function aprovarTrocaAnalista(id) {
+        Swal.fire({
+            title: 'Aceitar Troca?',
+            text: 'Deseja aceitar esta troca de folga? Ela seguirá para a aprovação final da gestão.',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#10b981',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'Sim, aceitar',
+            cancelButtonText: 'Cancelar'
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                try {
+                    const res = await fetch(`/api/escala/trocas/${id}/aprovar-analista/`, {
+                        method: 'POST',
+                        headers: { 'X-CSRFToken': csrfToken }
+                    });
+                    if (res.ok) {
+                        showToast('Você aceitou a troca! Enviada para aprovação do gestor.', 'success');
+                        carregarTrocas();
+                    } else {
+                        const data = await res.json();
+                        showToast(data.error || 'Erro ao aprovar troca.', 'error');
+                    }
+                } catch(e) {
+                    showToast('Erro de conexão.', 'error');
+                }
             }
-        } catch(e) {
-            showToast('Erro de conexão.', 'error');
-        }
+        });
     }
 
-    async function rejeitarTrocaAnalista(id) {
-        const motivo = prompt('Por favor, digite o motivo da recusa:');
-        if (motivo === null) return; // cancelou o prompt
-
-        try {
-            const res = await fetch(`/api/escala/trocas/${id}/rejeitar-analista/`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-                body: JSON.stringify({ motivo_rejeicao: motivo || 'Recusado pelo analista.' })
-            });
-            if (res.ok) {
-                showToast('Troca recusada com sucesso.', 'success');
-                carregarTrocas();
-            } else {
-                const data = await res.json();
-                showToast(data.error || 'Erro ao recusar troca.', 'error');
+    function rejeitarTrocaAnalista(id) {
+        Swal.fire({
+            title: 'Recusar Troca?',
+            text: 'Por favor, insira o motivo da recusa:',
+            input: 'text',
+            inputPlaceholder: 'Ex: Não terei disponibilidade no dia...',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'Sim, recusar',
+            cancelButtonText: 'Cancelar',
+            inputValidator: (value) => {
+                if (!value) {
+                    return 'Você precisa informar um motivo!';
+                }
             }
-        } catch(e) {
-            showToast('Erro de conexão.', 'error');
-        }
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                const motivo = result.value;
+                try {
+                    const res = await fetch(`/api/escala/trocas/${id}/rejeitar-analista/`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                        body: JSON.stringify({ motivo_rejeicao: motivo })
+                    });
+                    if (res.ok) {
+                        showToast('Troca recusada com sucesso.', 'success');
+                        carregarTrocas();
+                    } else {
+                        const data = await res.json();
+                        showToast(data.error || 'Erro ao recusar troca.', 'error');
+                    }
+                } catch(e) {
+                    showToast('Erro de conexão.', 'error');
+                }
+            }
+        });
     }
 
-    async function aprovarTrocaGestor(id) {
-        if (!confirm('Deseja aprovar definitivamente esta troca de folgas? A escala operacional será atualizada automaticamente.')) return;
-        try {
-            const res = await fetch(`/api/escala/trocas/${id}/aprovar-gestor/`, {
-                method: 'POST',
-                headers: { 'X-CSRFToken': csrfToken }
-            });
-            if (res.ok) {
-                showToast('Troca aprovada com sucesso! A escala foi atualizada.', 'success');
-                carregarTrocas();
-                generateTables();
-            } else {
-                const data = await res.json();
-                showToast(data.error || 'Erro ao aprovar troca.', 'error');
+    function aprovarTrocaGestor(id) {
+        Swal.fire({
+            title: 'Aprovar Troca?',
+            text: 'Deseja aprovar definitivamente esta troca de folgas? A escala operacional será atualizada automaticamente.',
+            icon: 'info',
+            showCancelButton: true,
+            confirmButtonColor: '#10b981',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'Sim, aprovar',
+            cancelButtonText: 'Cancelar'
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                try {
+                    const res = await fetch(`/api/escala/trocas/${id}/aprovar-gestor/`, {
+                        method: 'POST',
+                        headers: { 'X-CSRFToken': csrfToken }
+                    });
+                    if (res.ok) {
+                        showToast('Troca aprovada com sucesso! A escala foi atualizada.', 'success');
+                        carregarTrocas();
+                        generateTables();
+                    } else {
+                        const data = await res.json();
+                        showToast(data.error || 'Erro ao aprovar troca.', 'error');
+                    }
+                } catch(e) {
+                    showToast('Erro de conexão.', 'error');
+                }
             }
-        } catch(e) {
-            showToast('Erro de conexão.', 'error');
-        }
+        });
     }
 
-    async function rejeitarTrocaGestor(id) {
-        const motivo = prompt('Por favor, digite a justificativa para a rejeição:');
-        if (motivo === null) return;
-
-        try {
-            const res = await fetch(`/api/escala/trocas/${id}/rejeitar-gestor/`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-                body: JSON.stringify({ motivo_rejeicao: motivo || 'Rejeitado pelo gestor.' })
-            });
-            if (res.ok) {
-                showToast('Troca rejeitada pela gestão.', 'success');
-                carregarTrocas();
-            } else {
-                const data = await res.json();
-                showToast(data.error || 'Erro ao rejeitar troca.', 'error');
+    function rejeitarTrocaGestor(id) {
+        Swal.fire({
+            title: 'Rejeitar Troca?',
+            text: 'Por favor, digite a justificativa para a rejeição:',
+            input: 'text',
+            inputPlaceholder: 'Ex: Indisponibilidade de cobertura de turno...',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'Sim, rejeitar',
+            cancelButtonText: 'Cancelar',
+            inputValidator: (value) => {
+                if (!value) {
+                    return 'Você precisa informar uma justificativa!';
+                }
             }
-        } catch(e) {
-            showToast('Erro de conexão.', 'error');
-        }
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                const motivo = result.value;
+                try {
+                    const res = await fetch(`/api/escala/trocas/${id}/rejeitar-gestor/`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                        body: JSON.stringify({ motivo_rejeicao: motivo })
+                    });
+                    if (res.ok) {
+                        showToast('Troca rejeitada pela gestão.', 'success');
+                        carregarTrocas();
+                    } else {
+                        const data = await res.json();
+                        showToast(data.error || 'Erro ao rejeitar troca.', 'error');
+                    }
+                } catch(e) {
+                    showToast('Erro de conexão.', 'error');
+                }
+            }
+        });
     }
 
-    async function cancelarTroca(id) {
-        if (!confirm('Tem certeza que deseja cancelar esta solicitação pendente?')) return;
-        try {
-            const res = await fetch(`/api/escala/trocas/${id}/cancelar/`, {
-                method: 'DELETE',
-                headers: { 'X-CSRFToken': csrfToken }
-            });
-            if (res.ok) {
-                showToast('Solicitação cancelada.', 'success');
-                carregarTrocas();
-            } else {
-                const data = await res.json();
-                showToast(data.error || 'Erro ao cancelar troca.', 'error');
+    function cancelarTroca(id) {
+        Swal.fire({
+            title: 'Cancelar Solicitação?',
+            text: 'Tem certeza que deseja cancelar esta solicitação pendente?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'Sim, cancelar',
+            cancelButtonText: 'Voltar'
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                try {
+                    const res = await fetch(`/api/escala/trocas/${id}/cancelar/`, {
+                        method: 'DELETE',
+                        headers: { 'X-CSRFToken': csrfToken }
+                    });
+                    if (res.ok) {
+                        showToast('Solicitação cancelada.', 'success');
+                        carregarTrocas();
+                    } else {
+                        const data = await res.json();
+                        showToast(data.error || 'Erro ao cancelar troca.', 'error');
+                    }
+                } catch(e) {
+                    showToast('Erro de conexão.', 'error');
+                }
             }
-        } catch(e) {
-            showToast('Erro de conexão.', 'error');
-        }
+        });
     }
 </script>
 {% endblock %}
