@@ -2076,18 +2076,18 @@
 
             <!-- Seção Visual: Timeline de Cobertura Horária -->
             <div class="p-4 border-bottom">
-                <h5 class="fw-bold mb-3 d-flex align-items-center gap-2" style="font-size: 1rem; color: #1e293b;">
-                    <i class="fa-solid fa-timeline text-primary"></i> Visão Visual por Horário (Timeline)
+                <h5 class="fw-bold mb-4 d-flex align-items-center gap-2" style="font-size: 1.1rem; color: #1e293b;">
+                    <i class="fa-solid fa-clock-rotate-left text-primary"></i> Visão por Horário (Timeline)
                 </h5>
-                <div class="timeline-coverage-container bg-white rounded-4 border p-3 overflow-hidden shadow-sm">
+                <div class="timeline-coverage-container bg-white rounded-4 border p-4 overflow-hidden shadow-sm">
                     <!-- Escala de Horas (0-23) -->
-                    <div class="d-flex mb-2 text-muted fw-bold" style="font-size: 0.6rem; letter-spacing: 0.5px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
-                        <div style="width: 120px;">TURNOS</div>
-                        <div class="d-flex flex-grow-1 justify-content-between">
-                            <span>0h</span><span>2h</span><span>4h</span><span>6h</span><span>8h</span><span>10h</span><span>12h</span><span>14h</span><span>16h</span><span>18h</span><span>20h</span><span>22h</span><span>24h</span>
+                    <div class="d-flex mb-3 text-muted fw-bold" style="font-size: 0.75rem; letter-spacing: 1px; border-bottom: 2px solid #f1f5f9; padding-bottom: 12px;">
+                        <div style="width: 140px;" class="text-primary">TURNOS</div>
+                        <div class="d-flex flex-grow-1 justify-content-between px-2">
+                            <span>00h</span><span>04h</span><span>08h</span><span>12h</span><span>16h</span><span>20h</span><span>24h</span>
                         </div>
                     </div>
-                    <div id="timelineCoberturaContent" class="d-flex flex-column gap-2">
+                    <div id="timelineCoberturaContent" class="d-flex flex-column gap-3">
                         <!-- JS Render -->
                     </div>
                 </div>
@@ -5698,16 +5698,22 @@
 
                 Object.keys(turnosGroup).forEach(nomeTurno => {
                     const t = turnosGroup[nomeTurno];
-                    const barStyle = calcularEstiloBarraTurno(t.horario);
+                    const segments = calcularEstiloBarraTurno(t.horario);
                     
+                    let barsHtml = '';
+                    segments.forEach(seg => {
+                        barsHtml += `
+                            <div class="position-absolute rounded-pill d-flex align-items-center justify-content-center" 
+                                 style="left: ${seg.left}%; width: ${seg.width}%; height: 100%; background: ${t.cor}; opacity: 0.85; box-shadow: 0 4px 8px rgba(0,0,0,0.15); transition: all 0.3s ease;">
+                                 <span style="color: white; font-size: 0.8rem; font-weight: 900; text-shadow: 0 1px 2px rgba(0,0,0,0.5);">${t.count}</span>
+                            </div>`;
+                    });
+
                     timelineContent.innerHTML += `
-                        <div class="d-flex align-items-center" style="height: 32px;">
-                            <div style="width: 120px; font-size: 0.7rem; font-weight: 700; color: #475569;" class="text-truncate" title="${nomeTurno}">${nomeTurno}</div>
-                            <div class="flex-grow-1 position-relative bg-light rounded-pill" style="height: 12px; background: #f8fafc !important; border: 1px solid #f1f5f9;">
-                                <div class="position-absolute rounded-pill d-flex align-items-center justify-content-center" 
-                                     style="left: ${barStyle.left}%; width: ${barStyle.width}%; height: 100%; background: ${t.cor}; opacity: 0.8; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                                     <span style="color: white; font-size: 0.5rem; font-weight: 900;">${t.count}</span>
-                                </div>
+                        <div class="d-flex align-items-center" style="height: 40px;">
+                            <div style="width: 140px; font-size: 0.85rem; font-weight: 700; color: #334155;" class="text-truncate" title="${nomeTurno}">${nomeTurno}</div>
+                            <div class="flex-grow-1 position-relative bg-light rounded-pill" style="height: 20px; background: #f1f5f9 !important; border: 1px solid #e2e8f0;">
+                                ${barsHtml}
                             </div>
                         </div>`;
                 });
@@ -5717,14 +5723,14 @@
                 listaTrabalho.innerHTML = '';
                 info.trabalhando.forEach(a => {
                     listaTrabalho.innerHTML += `
-                        <div class="p-3 bg-white rounded-4 border shadow-sm d-flex justify-content-between align-items-center hover-scale-sm" style="border-left: 4px solid ${a.cor} !important;">
+                        <div class="p-3 bg-white rounded-4 border shadow-sm d-flex justify-content-between align-items-center hover-scale-sm" style="border-left: 5px solid ${a.cor} !important;">
                             <div>
-                                <div class="fw-bold text-dark" style="font-size: 0.85rem;">${a.nome}</div>
-                                <div class="text-muted d-flex align-items-center gap-1" style="font-size: 0.7rem;">
+                                <div class="fw-bold text-dark" style="font-size: 0.95rem;">${a.nome}</div>
+                                <div class="text-muted d-flex align-items-center gap-1" style="font-size: 0.75rem;">
                                     <i class="fa-solid fa-clock"></i> ${a.turno} (${a.horario})
                                 </div>
                             </div>
-                            <span class="badge bg-success-subtle text-success border-0 px-2 py-1" style="font-size: 0.6rem; letter-spacing: 0.5px;">NO TURNO</span>
+                            <span class="badge bg-success-subtle text-success border-0 px-3 py-1" style="font-size: 0.65rem; letter-spacing: 0.5px; font-weight: 700;">NO TURNO</span>
                         </div>`;
                 });
 
@@ -5732,15 +5738,15 @@
                 listaFolga.innerHTML = '';
                 info.de_folga.forEach(a => {
                     listaFolga.innerHTML += `
-                        <div class="p-3 bg-white rounded-4 border shadow-sm d-flex justify-content-between align-items-center" style="border-left: 4px solid #cbd5e1 !important; opacity: 0.8;">
+                        <div class="p-3 bg-white rounded-4 border shadow-sm d-flex justify-content-between align-items-center" style="border-left: 5px solid #cbd5e1 !important; opacity: 0.85;">
                             <div>
-                                <div class="fw-bold text-secondary" style="font-size: 0.85rem;">${a.nome}</div>
-                                <div class="text-muted" style="font-size: 0.7rem;">${a.turno}</div>
+                                <div class="fw-bold text-secondary" style="font-size: 0.95rem;">${a.nome}</div>
+                                <div class="text-muted" style="font-size: 0.75rem;">${a.turno}</div>
                             </div>
-                            <span class="badge bg-light text-muted border px-2 py-1" style="font-size: 0.6rem;">${a.status.toUpperCase()}</span>
+                            <span class="badge bg-light text-muted border px-3 py-1" style="font-size: 0.65rem; font-weight: 700;">${a.status.toUpperCase()}</span>
                         </div>`;
                 });
-                if (info.de_folga.length === 0) listaFolga.innerHTML = '<p class="text-muted small italic p-3">Nenhuma folga registrada.</p>';
+                if (info.de_folga.length === 0) listaFolga.innerHTML = '<p class="text-muted small italic p-4 text-center">Nenhuma folga registrada para este dia.</p>';
                 
             } else {
                 showToast("Erro ao carregar detalhes.", "error");
@@ -5757,7 +5763,7 @@
         try {
             // Exemplo: "22:00 - 06:00" ou "06:00 - 14:20"
             const parts = horario.split(' - ');
-            if (parts.length !== 2) return { left: 0, width: 100 };
+            if (parts.length !== 2) return [{ left: 0, width: 100 }];
 
             const parseTime = (t) => {
                 const [h, m] = t.split(':').map(Number);
@@ -5767,19 +5773,22 @@
             let start = parseTime(parts[0]);
             let end = parseTime(parts[1]);
 
-            let left = (start / 24) * 100;
-            let width = 0;
-
             if (end < start) {
-                // Turno vira o dia
-                width = ((24 - start + end) / 24) * 100;
+                // Turno vira o dia (ex: 22h às 06h)
+                // Parte 1: 22h às 24h
+                const w1 = ((24 - start) / 24) * 100;
+                const l1 = (start / 24) * 100;
+                // Parte 2: 00h às 06h
+                const w2 = (end / 24) * 100;
+                const l2 = 0;
+                return [{ left: l1, width: w1 }, { left: l2, width: w2 }];
             } else {
-                width = ((end - start) / 24) * 100;
+                const width = ((end - start) / 24) * 100;
+                const left = (start / 24) * 100;
+                return [{ left, width }];
             }
-
-            return { left, width };
         } catch(e) {
-            return { left: 0, width: 100 };
+            return [{ left: 0, width: 100 }];
         }
     }
 </script>

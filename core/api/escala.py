@@ -1247,6 +1247,22 @@ def api_escala_coverage_details(request):
     try:
         data_ref = datetime.strptime(data_str, '%Y-%m-%d').date()
         
+        # Obter o modelo padrão (do rascunho ou do sistema)
+        default_modelo = None
+        if rascunho_id:
+            rascunho = EscalaRascunho.objects.filter(id=rascunho_id).select_related('modelo_escala').first()
+            if rascunho:
+                default_modelo = rascunho.modelo_escala
+        
+        if not default_modelo:
+            config = ConfiguracaoEscala.objects.first()
+            if config:
+                default_modelo = config.modelo_escala_principal
+        
+        # Fallback caso não haja nenhuma configuração
+        if not default_modelo:
+            default_modelo = ModeloEscala.objects.filter(tipo='fixa', dias_trabalhados=5, dias_folga=2).first()
+
         # FILTRO IMPORTANTE: Apenas analistas deste rascunho (ou da escala principal se rascunho_id for nulo)
         if rascunho_id:
             analistas = AnalistaEscala.objects.filter(ativo=True, rascunho_id=rascunho_id).select_related('turno', 'modelo_escala')
@@ -1273,8 +1289,8 @@ def api_escala_coverage_details(request):
                     is_folga = True
                     status_text = tipo.upper()
             else:
-                # 2. Calcular via modelo
-                modelo = a.modelo_escala
+                # 2. Calcular via modelo (usa o do analista ou o padrão)
+                modelo = a.modelo_escala or default_modelo
                 if modelo:
                     trab = modelo.dias_trabalhados
                     folga = modelo.dias_folga
