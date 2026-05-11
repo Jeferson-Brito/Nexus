@@ -1246,19 +1246,16 @@ def api_escala_coverage_details(request):
         
     try:
         data_ref = datetime.strptime(data_str, '%Y-%m-%d').date()
-        analistas = AnalistaEscala.objects.filter(ativo=True).select_related('turno', 'modelo_escala')
         
-        # Obter todas as folgas manuais para este dia e rascunho
+        # FILTRO IMPORTANTE: Apenas analistas deste rascunho (ou da escala principal se rascunho_id for nulo)
         if rascunho_id:
+            analistas = AnalistaEscala.objects.filter(ativo=True, rascunho_id=rascunho_id).select_related('turno', 'modelo_escala')
             folgas_manuais = FolgaManual.objects.filter(data=data_ref, rascunho_id=rascunho_id)
         else:
+            analistas = AnalistaEscala.objects.filter(ativo=True, rascunho__isnull=True).select_related('turno', 'modelo_escala')
             folgas_manuais = FolgaManual.objects.filter(data=data_ref, rascunho__isnull=True)
             
         folgas_map = {f.analista_id: f.tipo for f in folgas_manuais}
-        
-        # Obter modelos para cálculo
-        modelos = ModeloEscala.objects.all()
-        modelos_dict = {m.id: m for m in modelos}
         
         trabalhando = []
         de_folga = []
@@ -1288,16 +1285,16 @@ def api_escala_coverage_details(request):
                         posicao = (diff_days % ciclo + ciclo) % ciclo
                         if posicao < folga:
                             is_folga = True
-                            status_text = "FOLGA (Modelo)"
+                            status_text = "Folga"
                     else:
-                        # Fallback se não tiver data_primeira_folga (assume trabalho)
                         is_folga = False
                 
             info = {
                 'id': a.id,
                 'nome': a.nome,
-                'turno': a.turno.nome if a.turno else 'N/A',
-                'horario': a.turno.horario if a.turno else 'N/A',
+                'turno': a.turno.nome if a.turno else 'Sem Turno',
+                'horario': a.turno.horario if a.turno else '--:-- - --:--',
+                'cor': a.turno.cor if a.turno else '#64748b',
                 'status': status_text
             }
             
