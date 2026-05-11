@@ -1261,7 +1261,7 @@ def api_escala_coverage_details(request):
         
         # Fallback caso não haja nenhuma configuração
         if not default_modelo:
-            default_modelo = ModeloEscala.objects.filter(tipo='fixa', dias_trabalhados=5, dias_folga=2).first()
+            default_modelo = ModeloEscala.objects.first()
 
         # FILTRO IMPORTANTE: Apenas analistas deste rascunho (ou da escala principal se rascunho_id for nulo)
         if rascunho_id:
