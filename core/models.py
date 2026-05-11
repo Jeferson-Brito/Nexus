@@ -482,6 +482,55 @@ class TrocaFolga(models.Model):
         return f"{self.solicitante.nome} ↔ {self.receptor.nome if self.receptor else '?'}: {self.data_solicitante} ↔ {self.data_receptor} [{self.status}]"
 
 
+class SolicitacaoFolga(models.Model):
+    """Solicitações de folga extra (avulsa, banco de horas, outros)"""
+
+    TIPO_CHOICES = [
+        ('avulsa', 'Folga Avulsa'),
+        ('banco', 'Folga Banco de Horas'),
+        ('outros', 'Outros'),
+    ]
+
+    STATUS_CHOICES = [
+        ('pendente_gestor', 'Aguardando Gestor'),
+        ('aprovada', 'Aprovada'),
+        ('rejeitada', 'Rejeitada'),
+        ('cancelada', 'Cancelada'),
+    ]
+
+    analista = models.ForeignKey(
+        AnalistaEscala, on_delete=models.CASCADE,
+        related_name='solicitacoes_folga'
+    )
+    rascunho = models.ForeignKey(
+        EscalaRascunho, on_delete=models.CASCADE, null=True, blank=True,
+        related_name='solicitacoes_folga'
+    )
+    data = models.DateField()
+    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES)
+    motivo = models.TextField()
+    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='pendente_gestor')
+
+    # Rastreio de aprovações
+    aprovado_gestor_por = models.ForeignKey(
+        'User', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='folgas_solicitadas_aprovadas_gestor'
+    )
+    aprovado_gestor_em = models.DateTimeField(null=True, blank=True)
+    motivo_rejeicao = models.TextField(blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Solicitação de Folga'
+        verbose_name_plural = 'Solicitações de Folga'
+
+    def __str__(self):
+        return f"{self.analista.nome}: {self.get_tipo_display()} em {self.data} [{self.status}]"
+
+
 class Evento(models.Model):
     """Eventos para o calendário"""
     TIPO_CHOICES = [
@@ -530,6 +579,8 @@ class ArtigoBaseConhecimento(models.Model):
     categoria = models.CharField(max_length=20, choices=CATEGORIA_CHOICES, default='tutorials')
     tags = models.CharField(max_length=255, blank=True)
     views = models.PositiveIntegerField(default=0)
+    votos_uteis = models.PositiveIntegerField(default=0)
+    votos_inuteis = models.PositiveIntegerField(default=0)
     
     department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name='artigos_kb')
     usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='artigos_kb_criados')

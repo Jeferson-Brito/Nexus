@@ -204,6 +204,14 @@ urlpatterns = [
     path('api/escala/trocas/<int:pk>/aprovar-gestor/', api_escala.api_troca_aprovar_gestor, name='api_troca_aprovar_gestor'),
     path('api/escala/trocas/<int:pk>/rejeitar-gestor/', api_escala.api_troca_rejeitar_gestor, name='api_troca_rejeitar_gestor'),
     path('api/escala/trocas/<int:pk>/cancelar/', api_escala.api_troca_delete, name='api_troca_cancelar'),
+    
+    # API Solicitações de Folga
+    path('api/escala/solicitacoes-folga/', api_escala.api_solicitacoes_folga_list, name='api_solicitacoes_folga_list'),
+    path('api/escala/solicitacoes-folga/create/', api_escala.api_solicitacao_folga_create, name='api_solicitacao_folga_create'),
+    path('api/escala/solicitacoes-folga/<int:pk>/aprovar/', api_escala.api_solicitacao_folga_aprovar, name='api_solicitacao_folga_aprovar'),
+    path('api/escala/solicitacoes-folga/<int:pk>/rejeitar/', api_escala.api_solicitacao_folga_rejeitar, name='api_solicitacao_folga_rejeitar'),
+    path('api/escala/solicitacoes-folga/<int:pk>/cancelar/', api_escala.api_solicitacao_folga_delete, name='api_solicitacao_folga_delete'),
+
     path('api/escala/analistas/<int:pk>/schedule/', api_escala.api_analista_schedule, name='api_analista_schedule'),
 
 
@@ -216,6 +224,7 @@ urlpatterns = [
     path('api/kb/articles/', api_kb.api_kb_articles_list, name='api_kb_articles_list'),
     path('api/kb/articles/create/', api_kb.api_kb_article_create, name='api_kb_article_create'),
     path('api/kb/articles/<int:pk>/', api_kb.api_kb_article_detail, name='api_kb_article_detail'),
+    path('api/kb/articles/<int:pk>/vote/', api_kb.api_kb_article_vote, name='api_kb_article_vote'),
     path('api/kb/tools/', api_kb.api_kb_tools_list, name='api_kb_tools_list'),
 
     # API Base de Auditoria IA

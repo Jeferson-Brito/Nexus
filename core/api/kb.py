@@ -1,4 +1,4 @@
-﻿import json
+import json
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.decorators import login_required
@@ -38,6 +38,9 @@ def api_kb_articles_list(request):
         'categoria': a.categoria,
         'tags': [t.strip() for t in a.tags.split(',')] if a.tags else [],
         'views': a.views,
+        'votos_uteis': a.votos_uteis,
+        'votos_inuteis': a.votos_inuteis,
+        'author': a.usuario.get_full_name() or a.usuario.username if a.usuario else 'Sistema',
         'created_at': a.created_at.isoformat(),
         'updated_at': a.updated_at.isoformat()
     } for a in queryset]
@@ -101,7 +104,12 @@ def api_kb_article_detail(request, pk):
             'conteudo': artigo.conteudo,
             'categoria': artigo.categoria,
             'tags': [t.strip() for t in artigo.tags.split(',')] if artigo.tags else [],
-            'views': artigo.views
+            'views': artigo.views,
+            'votos_uteis': artigo.votos_uteis,
+            'votos_inuteis': artigo.votos_inuteis,
+            'author': artigo.usuario.get_full_name() or artigo.usuario.username if artigo.usuario else 'Sistema',
+            'created_at': artigo.created_at.isoformat(),
+            'updated_at': artigo.updated_at.isoformat()
         })
     
     elif request.method == "PUT":
@@ -123,6 +131,9 @@ def api_kb_article_detail(request, pk):
                     'categoria': artigo.categoria,
                     'tags': [t.strip() for t in artigo.tags.split(',')] if artigo.tags else [],
                     'views': artigo.views,
+                    'votos_uteis': artigo.votos_uteis,
+                    'votos_inuteis': artigo.votos_inuteis,
+                    'author': artigo.usuario.get_full_name() or artigo.usuario.username if artigo.usuario else 'Sistema',
                     'created_at': artigo.created_at.isoformat(),
                     'updated_at': artigo.updated_at.isoformat()
                 }
@@ -181,3 +192,28 @@ def _seed_tools():
             url=url,
             defaults={'descricao': descricao, 'categoria': categoria}
         )
+
+
+@csrf_exempt
+@login_required
+@require_http_methods(["POST"])
+def api_kb_article_vote(request, pk):
+    """Incrementa voto_util ou voto_inutil para o artigo"""
+    artigo = get_object_or_404(ArtigoBaseConhecimento, pk=pk)
+    try:
+        data = json.loads(request.body)
+        voto = data.get('voto')  # 'sim' ou 'nao'
+        if voto == 'sim':
+            artigo.votos_uteis += 1
+        elif voto == 'nao':
+            artigo.votos_inuteis += 1
+        else:
+            return JsonResponse({'error': 'Tipo de voto inválido.'}, status=400)
+        artigo.save()
+        return JsonResponse({
+            'status': 'success',
+            'votos_uteis': artigo.votos_uteis,
+            'votos_inuteis': artigo.votos_inuteis
+        })
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)

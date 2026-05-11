@@ -6,7 +6,7 @@ from django.shortcuts import get_object_or_404
 import json
 from datetime import datetime
 
-from ..models import Turno, AnalistaEscala, FolgaManual, EscalaRascunho, ModeloEscala, ConfiguracaoEscala, TrocaFolga
+from ..models import Turno, AnalistaEscala, FolgaManual, EscalaRascunho, ModeloEscala, ConfiguracaoEscala, TrocaFolga, SolicitacaoFolga
 from django.utils import timezone
 from django.contrib.auth import authenticate
 
@@ -1066,3 +1066,166 @@ def api_analista_schedule(request, pk):
         'turno_horario': analista.turno.horario if analista.turno else None,
         'folgas_manuais': data,
     })
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# API VIEWS PARA SOLICITAÇÃO DE FOLGA (AVULSA / BANCO / OUTROS)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _serializar_solicitacao(s):
+    """Serializa um objeto SolicitacaoFolga para dict JSON."""
+    return {
+        'id': s.id,
+        'tipo': s.tipo,
+        'tipo_display': s.get_tipo_display(),
+        'status': s.status,
+        'status_display': s.get_status_display(),
+        'analista_id': s.analista.id,
+        'analista_nome': s.analista.nome,
+        'data': s.data.isoformat(),
+        'motivo': s.motivo,
+        'motivo_rejeicao': s.motivo_rejeicao,
+        'aprovado_gestor_por': s.aprovado_gestor_por.get_full_name() or s.aprovado_gestor_por.username if s.aprovado_gestor_por else None,
+        'aprovado_gestor_em': s.aprovado_gestor_em.isoformat() if s.aprovado_gestor_em else None,
+        'created_at': s.created_at.isoformat(),
+        'rascunho_id': s.rascunho_id,
+        'is_solicitacao': True, # Flag para o frontend diferenciar de TrocaFolga
+    }
+
+
+@login_required
+def api_solicitacoes_folga_list(request):
+    """Lista solicitações de folga. Analistas veem apenas as suas."""
+    rascunho_id = request.GET.get('rascunho_id')
+    status_filter = request.GET.get('status')
+
+    if rascunho_id:
+        qs = SolicitacaoFolga.objects.filter(rascunho_id=rascunho_id)
+    else:
+        qs = SolicitacaoFolga.objects.filter(rascunho__isnull=True)
+
+    if not request.user.is_administrador() and request.user.role == 'analista':
+        analista_perfis = AnalistaEscala.objects.filter(user=request.user).values_list('id', flat=True)
+        qs = qs.filter(analista_id__in=analista_perfis)
+
+    if status_filter:
+        qs = qs.filter(status=status_filter)
+
+    qs = qs.select_related('analista', 'aprovado_gestor_por').order_by('-created_at')
+    return JsonResponse([_serializar_solicitacao(s) for s in qs], safe=False)
+
+
+@login_required
+@require_http_methods(['POST'])
+def api_solicitacao_folga_create(request):
+    """Cria uma nova solicitação de folga."""
+    try:
+        data = json.loads(request.body)
+        analista_id = data.get('analista_id')
+        data_folga = data.get('data')
+        tipo = data.get('tipo')
+        motivo = data.get('motivo')
+        rascunho_id = data.get('rascunho_id')
+
+        if not all([analista_id, data_folga, tipo, motivo]):
+            return JsonResponse({'error': 'Todos os campos são obrigatórios: analista, data, tipo e motivo.'}, status=400)
+
+        analista = get_object_or_404(AnalistaEscala, pk=analista_id)
+        rascunho = EscalaRascunho.objects.get(id=rascunho_id) if rascunho_id else None
+
+        # Verificar se já existe solicitação pendente para este dia
+        conflito = SolicitacaoFolga.objects.filter(
+            analista=analista,
+            data=data_folga,
+            status='pendente_gestor'
+        ).first()
+        if conflito:
+            return JsonResponse({'error': 'Já existe uma solicitação pendente para este dia.'}, status=400)
+
+        solicitacao = SolicitacaoFolga.objects.create(
+            analista=analista,
+            rascunho=rascunho,
+            data=datetime.strptime(data_folga, '%Y-%m-%d').date(),
+            tipo=tipo,
+            motivo=motivo,
+            status='pendente_gestor'
+        )
+        return JsonResponse({'success': True, 'solicitacao': _serializar_solicitacao(solicitacao)})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+
+@login_required
+@require_http_methods(['POST'])
+@check_nrs_permission
+def api_solicitacao_folga_aprovar(request, pk):
+    """Gestor aprova a solicitação e aplica na escala."""
+    try:
+        solicitacao = get_object_or_404(SolicitacaoFolga, pk=pk)
+        if solicitacao.status != 'pendente_gestor':
+            return JsonResponse({'error': 'Esta solicitação não está aguardando aprovação.'}, status=400)
+
+        rascunho = solicitacao.rascunho
+        
+        # Aplicar na FolgaManual
+        FolgaManual.objects.update_or_create(
+            analista=solicitacao.analista,
+            data=solicitacao.data,
+            rascunho=rascunho,
+            defaults={
+                'tipo': 'folga',
+                'motivo': f'Folga solicitada ({solicitacao.get_tipo_display()}) aprovada por {request.user.get_full_name() or request.user.username}'
+            }
+        )
+
+        solicitacao.status = 'aprovada'
+        solicitacao.aprovado_gestor_por = request.user
+        solicitacao.aprovado_gestor_em = timezone.now()
+        solicitacao.save()
+        
+        return JsonResponse({'success': True, 'solicitacao': _serializar_solicitacao(solicitacao)})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+
+@login_required
+@require_http_methods(['POST'])
+@check_nrs_permission
+def api_solicitacao_folga_rejeitar(request, pk):
+    """Gestor rejeita a solicitação."""
+    try:
+        solicitacao = get_object_or_404(SolicitacaoFolga, pk=pk)
+        if solicitacao.status != 'pendente_gestor':
+            return JsonResponse({'error': 'Esta solicitação não está aguardando aprovação.'}, status=400)
+        
+        data = json.loads(request.body)
+        solicitacao.status = 'rejeitada'
+        solicitacao.motivo_rejeicao = data.get('motivo_rejeicao', 'Rejeitado pelo gestor.')
+        solicitacao.save()
+        
+        return JsonResponse({'success': True, 'solicitacao': _serializar_solicitacao(solicitacao)})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+
+@login_required
+@require_http_methods(['DELETE'])
+def api_solicitacao_folga_delete(request, pk):
+    """Analista cancela sua própria solicitação pendente."""
+    try:
+        solicitacao = get_object_or_404(SolicitacaoFolga, pk=pk)
+        
+        # Só pode cancelar se for o próprio analista (ou admin) e estiver pendente
+        if not request.user.is_administrador():
+            analista_perfis = AnalistaEscala.objects.filter(user=request.user).values_list('id', flat=True)
+            if solicitacao.analista.id not in analista_perfis:
+                return JsonResponse({'error': 'Permissão negada.'}, status=403)
+                
+        if solicitacao.status != 'pendente_gestor':
+            return JsonResponse({'error': 'Somente solicitações pendentes podem ser canceladas.'}, status=400)
+            
+        solicitacao.status = 'cancelada'
+        solicitacao.save()
+        return JsonResponse({'success': True})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)

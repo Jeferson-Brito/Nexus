@@ -1884,20 +1884,28 @@
                 <div class="form-group-escala mb-4">
                     <label class="fw-bold mb-2 text-dark d-block">Tipo de Troca</label>
                     <div class="row g-2">
-                        <div class="col-6">
-                            <label class="scenario-card p-3 d-flex flex-column align-items-center justify-content-center text-center active" id="scenarioPropriaCard" onclick="mudarCenarioNovaTroca('propria')" style="border: 2px solid #e2e8f0; border-radius: 12px; cursor: pointer; transition: all 0.2s;">
+                        <div class="col-4">
+                            <label class="scenario-card p-3 d-flex flex-column align-items-center justify-content-center text-center active" id="scenarioPropriaCard" onclick="mudarCenarioNovaTroca('propria')" style="border: 2px solid #e2e8f0; border-radius: 12px; cursor: pointer; transition: all 0.2s; height: 100%;">
                                 <input type="radio" name="tipoTrocaRadio" value="propria" checked style="display:none;">
                                 <i class="fa-solid fa-calendar-day mb-2 text-info fa-lg"></i>
-                                <strong style="font-size: 0.85rem; color:#1e293b;">Mover Folga Própria</strong>
-                                <span class="text-muted" style="font-size: 0.75rem; margin-top: 4px;">Mover folga de um dia para outro</span>
+                                <strong style="font-size: 0.8rem; color:#1e293b;">Mover Folga</strong>
+                                <span class="text-muted" style="font-size: 0.7rem; margin-top: 4px;">Mover folga de um dia para outro</span>
                             </label>
                         </div>
-                        <div class="col-6">
-                            <label class="scenario-card p-3 d-flex flex-column align-items-center justify-content-center text-center" id="scenarioAnalistaCard" onclick="mudarCenarioNovaTroca('analista')" style="border: 2px solid #e2e8f0; border-radius: 12px; cursor: pointer; transition: all 0.2s;">
+                        <div class="col-4">
+                            <label class="scenario-card p-3 d-flex flex-column align-items-center justify-content-center text-center" id="scenarioAnalistaCard" onclick="mudarCenarioNovaTroca('analista')" style="border: 2px solid #e2e8f0; border-radius: 12px; cursor: pointer; transition: all 0.2s; height: 100%;">
                                 <input type="radio" name="tipoTrocaRadio" value="analista" style="display:none;">
                                 <i class="fa-solid fa-people-arrows mb-2 text-primary fa-lg"></i>
-                                <strong style="font-size: 0.85rem; color:#1e293b;">Trocar com Colega</strong>
-                                <span class="text-muted" style="font-size: 0.75rem; margin-top: 4px;">Trocar um dia de folga com outro analista</span>
+                                <strong style="font-size: 0.8rem; color:#1e293b;">Trocar com Colega</strong>
+                                <span class="text-muted" style="font-size: 0.7rem; margin-top: 4px;">Trocar folga com outro analista</span>
+                            </label>
+                        </div>
+                        <div class="col-4">
+                            <label class="scenario-card p-3 d-flex flex-column align-items-center justify-content-center text-center" id="scenarioSolicitarCard" onclick="mudarCenarioNovaTroca('solicitacao')" style="border: 2px solid #e2e8f0; border-radius: 12px; cursor: pointer; transition: all 0.2s; height: 100%;">
+                                <input type="radio" name="tipoTrocaRadio" value="solicitacao" style="display:none;">
+                                <i class="fa-solid fa-hand-holding-heart mb-2 text-rose fa-lg" style="color: #f43f5e;"></i>
+                                <strong style="font-size: 0.8rem; color:#1e293b;">Solicitar Folga</strong>
+                                <span class="text-muted" style="font-size: 0.7rem; margin-top: 4px;">Solicitar folga extra (Avulsa/Banco)</span>
                             </label>
                         </div>
                     </div>
@@ -1923,9 +1931,9 @@
 
                 <!-- Campo de data da folga do solicitante -->
                 <div class="form-group-escala mb-3">
-                    <label id="lblDataSolicitante" class="fw-bold text-dark">Sua Folga Atual (Dia que deseja ceder/trabalhar)</label>
+                    <label id="lblDataSolicitante" class="fw-bold text-dark">Data da Folga / Solicitação</label>
                     <input type="date" id="trocaDataSolicitante" class="form-control" style="width:100%; padding:10px; border-radius:8px; border:1px solid #cbd5e1; font-size:14px;" required>
-                    <small class="text-muted block mt-1" style="font-size: 0.75rem;">Selecione o dia em que você atualmente tem uma folga programada.</small>
+                    <small id="helpDataSolicitante" class="text-muted block mt-1" style="font-size: 0.75rem;">Selecione o dia em que você atualmente tem uma folga programada.</small>
                     
                     <!-- Visualização da escala do solicitante -->
                     <div id="previewEscalaSolicitante" class="mt-3 p-3" style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 12px; display:none;">
@@ -1981,10 +1989,22 @@
                     </div>
                 </div>
 
+                <!-- CENÁRIO 3: Solicitar Folga Extra -->
+                <div id="secaoCenarioSolicitacao" class="mb-3" style="display: none;">
+                    <div class="form-group-escala mb-3">
+                        <label for="solicitacaoTipo" class="fw-bold text-dark">Tipo de Solicitação</label>
+                        <select id="solicitacaoTipo" class="form-select" style="width:100%; padding:10px; border-radius:8px; border:1px solid #cbd5e1; font-size:14px;">
+                            <option value="avulsa">Solicitar Folga avulsa</option>
+                            <option value="banco">Solicitar folga Banco de Horas</option>
+                            <option value="outros">Outros</option>
+                        </select>
+                    </div>
+                </div>
+
                 <!-- Motivo -->
                 <div class="form-group-escala mb-3">
-                    <label for="trocaMotivo" class="fw-bold text-dark">Motivo / Justificativa (Opcional)</label>
-                    <textarea id="trocaMotivo" rows="2" class="form-control" placeholder="Explique o motivo da troca para a gestão..." style="width:100%; padding:10px; border-radius:8px; border:1px solid #cbd5e1; font-size:14px; resize: none;"></textarea>
+                    <label for="trocaMotivo" id="lblTrocaMotivo" class="fw-bold text-dark">Motivo / Justificativa (Opcional)</label>
+                    <textarea id="trocaMotivo" rows="2" class="form-control" placeholder="Explique o motivo para a gestão..." style="width:100%; padding:10px; border-radius:8px; border:1px solid #cbd5e1; font-size:14px; resize: none;"></textarea>
                 </div>
             </form>
         </div>
@@ -4558,16 +4578,26 @@
 
         try {
             const rParam = rascunhoId ? `&rascunho_id=${rascunhoId}` : '';
-            const res = await fetch(`/api/escala/trocas/?status=${filtroStatusTrocas}${rParam}`);
+            
+            // Buscar trocas e solicitações em paralelo
+            const [resTrocas, resSolics] = await Promise.all([
+                fetch(`/api/escala/trocas/?status=${filtroStatusTrocas}${rParam}`),
+                fetch(`/api/escala/solicitacoes-folga/?status=${filtroStatusTrocas}${rParam}`)
+            ]);
+            
             loading.style.display = 'none';
 
-            if (res.ok) {
-                let list = await res.json();
+            if (resTrocas.ok && resSolics.ok) {
+                const trocas = await resTrocas.json();
+                const solics = await resSolics.json();
+                
+                // Mesclar e ordenar por data de criação descrescente
+                let list = [...trocas, ...solics];
+                list.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
                 // Filtrar localmente se for a aba "Minhas Trocas"
                 if (activeTabTrocas === 'minhas') {
-                    // Se for admin, vê todas. Caso contrário, só onde está envolvido.
-                    // O backend já faz isso para não-admins.
+                    // O backend já faz o filtro por usuário
                 } else {
                     // Aba gestão: mostrar apenas as que dependem de aprovação do gestor ou pendentes gerais
                     list = list.filter(t => t.status === 'pendente_gestor' || t.status === 'aprovada' || t.status === 'rejeitada');
@@ -4604,51 +4634,70 @@
                     }
 
                     // Ações disponíveis
-                    const dataOriginalS = t.data_solicitante.split('-').reverse().join('/');
+                    const dataFormatada = (t.data || t.data_solicitante).split('-').reverse().join('/');
                     const dataOriginalR = t.data_receptor ? t.data_receptor.split('-').reverse().join('/') : '';
 
-                    // Se a troca está aguardando o receptor e o receptor é o usuário logado
-                    // Nota: Para fins de flexibilidade, vamos permitir que o analista clique em aprovar se envolver o nome dele,
-                    // ou que admins ajudem no processo.
-                    if (t.status === 'pendente_analista') {
-                        if (isAdmin || t.receptor_id == loggedInAnalistaId) {
+                    if (t.is_solicitacao) {
+                        // Ações para Solicitação de Folga Extra
+                        if (t.status === 'pendente_gestor' && (isAdmin || activeTabTrocas === 'gestao')) {
                             actionButtons = `
                                 <div class="d-flex gap-2 justify-content-end mt-2">
-                                    <button class="btn btn-sm btn-outline-danger" onclick="rejeitarTrocaAnalista(${t.id})"><i class="fa-solid fa-times"></i> Recusar Troca</button>
-                                    <button class="btn btn-sm btn-success text-white" onclick="aprovarTrocaAnalista(${t.id})"><i class="fa-solid fa-check"></i> Aceitar Troca</button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="rejeitarSolicitacaoFolga(${t.id})"><i class="fa-solid fa-times"></i> Rejeitar</button>
+                                    <button class="btn btn-sm btn-success text-white" onclick="aprovarSolicitacaoFolga(${t.id})"><i class="fa-solid fa-check"></i> Aprovar Folga</button>
+                                </div>`;
+                        } else if (t.status === 'pendente_gestor' && activeTabTrocas === 'minhas') {
+                            actionButtons = `
+                                <div class="d-flex gap-2 justify-content-end mt-2">
+                                    <button class="btn btn-sm btn-outline-secondary" onclick="cancelarSolicitacaoFolga(${t.id})"><i class="fa-solid fa-ban"></i> Cancelar</button>
                                 </div>`;
                         }
-                    } else if (t.status === 'pendente_gestor' && (isAdmin || activeTabTrocas === 'gestao')) {
-                        actionButtons = `
-                            <div class="d-flex gap-2 justify-content-end mt-2">
-                                <button class="btn btn-sm btn-outline-danger" onclick="rejeitarTrocaGestor(${t.id})"><i class="fa-solid fa-times"></i> Rejeitar</button>
-                                <button class="btn btn-sm btn-success text-white" onclick="aprovarTrocaGestor(${t.id})"><i class="fa-solid fa-check"></i> Aprovar Troca</button>
-                            </div>`;
-                    } else if ((t.status === 'pendente_analista' || t.status === 'pendente_gestor') && activeTabTrocas === 'minhas') {
-                        if (isAdmin || t.solicitante_id == loggedInAnalistaId) {
+                    } else {
+                        // Ações para Troca de Folga
+                        if (t.status === 'pendente_analista') {
+                            if (isAdmin || t.receptor_id == loggedInAnalistaId) {
+                                actionButtons = `
+                                    <div class="d-flex gap-2 justify-content-end mt-2">
+                                        <button class="btn btn-sm btn-outline-danger" onclick="rejeitarTrocaAnalista(${t.id})"><i class="fa-solid fa-times"></i> Recusar Troca</button>
+                                        <button class="btn btn-sm btn-success text-white" onclick="aprovarTrocaAnalista(${t.id})"><i class="fa-solid fa-check"></i> Aceitar Troca</button>
+                                    </div>`;
+                            }
+                        } else if (t.status === 'pendente_gestor' && (isAdmin || activeTabTrocas === 'gestao')) {
                             actionButtons = `
                                 <div class="d-flex gap-2 justify-content-end mt-2">
-                                    <button class="btn btn-sm btn-outline-secondary" onclick="cancelarTroca(${t.id})"><i class="fa-solid fa-ban"></i> Cancelar Solicitação</button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="rejeitarTrocaGestor(${t.id})"><i class="fa-solid fa-times"></i> Rejeitar</button>
+                                    <button class="btn btn-sm btn-success text-white" onclick="aprovarTrocaGestor(${t.id})"><i class="fa-solid fa-check"></i> Aprovar Troca</button>
                                 </div>`;
+                        } else if ((t.status === 'pendente_analista' || t.status === 'pendente_gestor') && activeTabTrocas === 'minhas') {
+                            if (isAdmin || t.solicitante_id == loggedInAnalistaId) {
+                                actionButtons = `
+                                    <div class="d-flex gap-2 justify-content-end mt-2">
+                                        <button class="btn btn-sm btn-outline-secondary" onclick="cancelarTroca(${t.id})"><i class="fa-solid fa-ban"></i> Cancelar Solicitação</button>
+                                    </div>`;
+                            }
                         }
                     }
 
                     let contentHtml = '';
-                    if (t.tipo === 'propria') {
+                    if (t.is_solicitacao) {
                         contentHtml = `
                             <div>
-                                <strong class="text-dark">${t.solicitante_nome}</strong> solicitou mover sua folga do dia <span class="badge bg-light text-dark border">${dataOriginalS}</span> para o dia <span class="badge bg-light text-dark border">${dataOriginalR}</span>.
+                                <strong class="text-dark">${t.analista_nome}</strong> solicitou uma <strong>${t.tipo_display}</strong> para o dia <span class="badge bg-light text-dark border">${dataFormatada}</span>.
+                            </div>`;
+                    } else if (t.tipo === 'propria') {
+                        contentHtml = `
+                            <div>
+                                <strong class="text-dark">${t.solicitante_nome}</strong> solicitou mover sua folga do dia <span class="badge bg-light text-dark border">${dataFormatada}</span> para o dia <span class="badge bg-light text-dark border">${dataOriginalR}</span>.
                             </div>`;
                     } else {
                         contentHtml = `
                             <div>
-                                <strong class="text-dark">${t.solicitante_nome}</strong> solicitou trocar sua folga do dia <span class="badge bg-light text-dark border">${dataOriginalS}</span> pela folga do dia <span class="badge bg-light text-dark border">${dataOriginalR}</span> de <strong class="text-dark">${t.receptor_nome}</strong>.
+                                <strong class="text-dark">${t.solicitante_nome}</strong> solicitou trocar sua folga do dia <span class="badge bg-light text-dark border">${dataFormatada}</span> pela folga do dia <span class="badge bg-light text-dark border">${dataOriginalR}</span> de <strong class="text-dark">${t.receptor_nome}</strong>.
                             </div>`;
                     }
 
                     // --- Histórico / Fluxo de Aprovações ---
                     let timelineHtml = '';
-                    if (t.tipo === 'analista') {
+                    if (!t.is_solicitacao && t.tipo === 'analista') {
                         const aceitoColega = !!t.aprovado_receptor_em || t.status === 'pendente_gestor' || t.status === 'aprovada';
                         const rejeitadoColega = t.status === 'rejeitada' && t.motivo_rejeicao && !t.aprovado_receptor_em && !t.aprovado_gestor_por;
 
@@ -4743,7 +4792,7 @@
                     card.innerHTML = `
                         <div class="d-flex justify-content-between align-items-start border-bottom pb-2">
                             <div>
-                                <span class="text-muted small fw-bold">ID #${t.id} &bull; ${t.tipo_display}</span>
+                                <span class="text-muted small fw-bold">ID #${t.is_solicitacao ? 'S'+t.id : t.id} &bull; ${t.tipo_display}</span>
                             </div>
                             <div>
                                 ${statusBadge}
@@ -4765,7 +4814,7 @@
             }
         } catch (e) {
             loading.style.display = 'none';
-            showToast("Erro ao carregar trocas: " + e.message, "error");
+            showToast("Erro ao carregar solicitações: " + e.message, "error");
         }
     }
 
@@ -4804,12 +4853,26 @@
     function mudarCenarioNovaTroca(scenario) {
         document.getElementById('scenarioPropriaCard').classList.toggle('active', scenario === 'propria');
         document.getElementById('scenarioAnalistaCard').classList.toggle('active', scenario === 'analista');
+        document.getElementById('scenarioSolicitarCard').classList.toggle('active', scenario === 'solicitacao');
         
         document.getElementById('secaoCenarioPropria').style.display = scenario === 'propria' ? 'block' : 'none';
         document.getElementById('secaoCenarioAnalista').style.display = scenario === 'analista' ? 'block' : 'none';
+        document.getElementById('secaoCenarioSolicitacao').style.display = scenario === 'solicitacao' ? 'block' : 'none';
 
         // Atualizar texto da data do solicitante
-        document.getElementById('lblDataSolicitante').textContent = scenario === 'propria' ? 'Sua Folga Atual (Dia que deseja ceder/trabalhar)' : 'Sua Folga Selecionada';
+        const lblData = document.getElementById('lblDataSolicitante');
+        const helpData = document.getElementById('helpDataSolicitante');
+        const lblMotivo = document.getElementById('lblTrocaMotivo');
+
+        if (scenario === 'solicitacao') {
+            lblData.textContent = 'Data Desejada para Folga';
+            helpData.textContent = 'Selecione o dia em que você deseja solicitar uma folga extra.';
+            lblMotivo.innerHTML = 'Justificativa / Motivo <span class="text-danger">*</span>';
+        } else {
+            lblData.textContent = scenario === 'propria' ? 'Sua Folga Atual (Dia que deseja ceder/trabalhar)' : 'Sua Folga Selecionada';
+            helpData.textContent = 'Selecione o dia em que você atualmente tem uma folga programada.';
+            lblMotivo.textContent = 'Motivo / Justificativa (Opcional)';
+        }
 
         // Marcar o radio oculto
         const radio = document.querySelector(`input[name="tipoTrocaRadio"][value="${scenario}"]`);
@@ -4821,6 +4884,9 @@
         if (previewNovoDia) {
             previewNovoDia.style.display = (scenario === 'propria' && solId) ? 'block' : 'none';
         }
+
+        // Preview do solicitante se comporta diferente na solicitação
+        aoMudarSolicitanteTroca();
     }
 
     function aoMudarMesReferencia() {
@@ -5052,15 +5118,29 @@
             return;
         }
 
+        // Se for solicitação de folga extra, o motivo é obrigatório conforme solicitado pelo usuário
+        if (tipo === 'solicitacao' && !motivo) {
+            showToast('Por favor, insira a justificativa para a solicitação de folga.', 'warning');
+            document.getElementById('trocaMotivo').focus();
+            return;
+        }
+
         const payload = {
             tipo,
             solicitante_id: parseInt(solicitanteId),
+            analista_id: parseInt(solicitanteId), // compatibilidade com API de solicitação
+            data: dataSolicitante, // compatibilidade com API de solicitação
             data_solicitante: dataSolicitante,
             motivo,
             rascunho_id: rascunhoId ? parseInt(rascunhoId) : null
         };
 
-        if (tipo === 'propria') {
+        let endpoint = '/api/escala/trocas/create/';
+
+        if (tipo === 'solicitacao') {
+            endpoint = '/api/escala/solicitacoes-folga/create/';
+            payload.tipo = document.getElementById('solicitacaoTipo').value;
+        } else if (tipo === 'propria') {
             const dataNovoDia = document.getElementById('trocaDataNovoDia').value;
             if (!dataNovoDia) {
                 showToast('Por favor, selecione o novo dia desejado para a folga.', 'warning');
@@ -5080,7 +5160,7 @@
         }
 
         try {
-            const res = await fetch('/api/escala/trocas/create/', {
+            const res = await fetch(endpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
                 body: JSON.stringify(payload)
@@ -5099,14 +5179,14 @@
                     showToast(data.error, 'error');
                 }
             } else {
-                showToast('Solicitação de troca enviada com sucesso!', 'success');
+                showToast(tipo === 'solicitacao' ? 'Solicitação de folga enviada!' : 'Solicitação de troca enviada!', 'success');
                 fecharModalNovaTroca();
                 carregarTrocas();
                 // Atualiza a tabela caso tenha sido algo instantâneo
-                generateTables();
+                if (typeof generateTables === 'function') generateTables();
             }
         } catch(e) {
-            showToast('Erro ao criar solicitação de troca.', 'error');
+            showToast('Erro ao criar solicitação.', 'error');
         }
     }
 
@@ -5284,6 +5364,112 @@
                     } else {
                         const data = await res.json();
                         showToast(data.error || 'Erro ao cancelar troca.', 'error');
+                    }
+                } catch(e) {
+                    showToast('Erro de conexão.', 'error');
+                }
+            }
+        });
+    }
+
+    // ========================================
+    // AÇÕES PARA SOLICITAÇÃO DE FOLGA EXTRA
+    // ========================================
+
+    function aprovarSolicitacaoFolga(id) {
+        Swal.fire({
+            title: 'Aprovar Folga Extra?',
+            text: 'Deseja aprovar esta solicitação de folga? O dia será marcado como folga na escala do analista.',
+            icon: 'info',
+            showCancelButton: true,
+            confirmButtonColor: '#10b981',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'Sim, aprovar',
+            cancelButtonText: 'Cancelar'
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                try {
+                    const res = await fetch(`/api/escala/solicitacoes-folga/${id}/aprovar/`, {
+                        method: 'POST',
+                        headers: { 'X-CSRFToken': csrfToken }
+                    });
+                    if (res.ok) {
+                        showToast('Folga aprovada com sucesso!', 'success');
+                        carregarTrocas();
+                        if (typeof generateTables === 'function') generateTables();
+                    } else {
+                        const data = await res.json();
+                        showToast(data.error || 'Erro ao aprovar folga.', 'error');
+                    }
+                } catch(e) {
+                    showToast('Erro de conexão.', 'error');
+                }
+            }
+        });
+    }
+
+    function rejeitarSolicitacaoFolga(id) {
+        Swal.fire({
+            title: 'Rejeitar Solicitação?',
+            text: 'Por favor, digite a justificativa para a rejeição:',
+            input: 'text',
+            inputPlaceholder: 'Ex: Necessidade de contingência no dia...',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'Sim, rejeitar',
+            cancelButtonText: 'Cancelar',
+            inputValidator: (value) => {
+                if (!value) {
+                    return 'Você precisa informar uma justificativa!';
+                }
+            }
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                const motivo = result.value;
+                try {
+                    const res = await fetch(`/api/escala/solicitacoes-folga/${id}/rejeitar/`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                        body: JSON.stringify({ motivo_rejeicao: motivo })
+                    });
+                    if (res.ok) {
+                        showToast('Solicitação rejeitada.', 'success');
+                        carregarTrocas();
+                    } else {
+                        const data = await res.json();
+                        showToast(data.error || 'Erro ao rejeitar solicitação.', 'error');
+                    }
+                } catch(e) {
+                    showToast('Erro de conexão.', 'error');
+                }
+            }
+        });
+    }
+
+    function cancelarSolicitacaoFolga(id) {
+        Swal.fire({
+            title: 'Cancelar Solicitação?',
+            text: 'Deseja cancelar o seu pedido de folga?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'Sim, cancelar',
+            cancelButtonText: 'Voltar'
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                try {
+                    const res = await fetch(`/api/escala/solicitacoes-folga/${id}/cancelar/`, {
+                        method: 'DELETE',
+                        headers: { 'X-CSRFToken': csrfToken }
+                    });
+                    if (res.ok) {
+                        showToast('Solicitação cancelada.', 'success');
+                        carregarTrocas();
+                    } else {
+                        const data = await res.json();
+                        showToast(data.error || 'Erro ao cancelar.', 'error');
                     }
                 } catch(e) {
                     showToast('Erro de conexão.', 'error');
