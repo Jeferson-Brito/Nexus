@@ -211,6 +211,7 @@ urlpatterns = [
     path('api/escala/solicitacoes-folga/<int:pk>/aprovar/', api_escala.api_solicitacao_folga_aprovar, name='api_solicitacao_folga_aprovar'),
     path('api/escala/solicitacoes-folga/<int:pk>/rejeitar/', api_escala.api_solicitacao_folga_rejeitar, name='api_solicitacao_folga_rejeitar'),
     path('api/escala/solicitacoes-folga/<int:pk>/cancelar/', api_escala.api_solicitacao_folga_delete, name='api_solicitacao_folga_delete'),
+    path('api/escala/coverage-details/', api_escala.api_escala_coverage_details, name='api_escala_coverage_details'),
 
     path('api/escala/analistas/<int:pk>/schedule/', api_escala.api_analista_schedule, name='api_analista_schedule'),
 

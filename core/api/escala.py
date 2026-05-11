@@ -1229,3 +1229,91 @@ def api_solicitacao_folga_delete(request, pk):
         return JsonResponse({'success': True})
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
+
+
+@login_required
+@check_nrs_permission
+def api_escala_coverage_details(request):
+    """
+    Retorna detalhes de cobertura para uma data específica, calculando quem está 
+    trabalhando e quem está de folga com base nos modelos e folgas manuais.
+    """
+    data_str = request.GET.get('data')
+    rascunho_id = request.GET.get('rascunho_id')
+    
+    if not data_str:
+        return JsonResponse({'error': 'Data é obrigatória (formato YYYY-MM-DD).'}, status=400)
+        
+    try:
+        data_ref = datetime.strptime(data_str, '%Y-%m-%d').date()
+        analistas = AnalistaEscala.objects.filter(ativo=True).select_related('turno', 'modelo_escala')
+        
+        # Obter todas as folgas manuais para este dia e rascunho
+        if rascunho_id:
+            folgas_manuais = FolgaManual.objects.filter(data=data_ref, rascunho_id=rascunho_id)
+        else:
+            folgas_manuais = FolgaManual.objects.filter(data=data_ref, rascunho__isnull=True)
+            
+        folgas_map = {f.analista_id: f.tipo for f in folgas_manuais}
+        
+        # Obter modelos para cálculo
+        modelos = ModeloEscala.objects.all()
+        modelos_dict = {m.id: m for m in modelos}
+        
+        trabalhando = []
+        de_folga = []
+        
+        for a in analistas:
+            is_folga = False
+            status_text = "Trabalho"
+            
+            # 1. Verificar sobreposição manual
+            if a.id in folgas_map:
+                tipo = folgas_map[a.id]
+                if tipo == 'trabalho':
+                    is_folga = False
+                else:
+                    is_folga = True
+                    status_text = tipo.upper()
+            else:
+                # 2. Calcular via modelo
+                modelo = a.modelo_escala
+                if modelo:
+                    trab = modelo.dias_trabalhados
+                    folga = modelo.dias_folga
+                    ciclo = trab + folga
+                    
+                    if a.data_primeira_folga:
+                        diff_days = (data_ref - a.data_primeira_folga).days
+                        posicao = (diff_days % ciclo + ciclo) % ciclo
+                        if posicao < folga:
+                            is_folga = True
+                            status_text = "FOLGA (Modelo)"
+                    else:
+                        # Fallback se não tiver data_primeira_folga (assume trabalho)
+                        is_folga = False
+                
+            info = {
+                'id': a.id,
+                'nome': a.nome,
+                'turno': a.turno.nome if a.turno else 'N/A',
+                'horario': a.turno.horario if a.turno else 'N/A',
+                'status': status_text
+            }
+            
+            if is_folga:
+                de_folga.append(info)
+            else:
+                trabalhando.append(info)
+                
+        return JsonResponse({
+            'data': data_str,
+            'total_analistas': analistas.count(),
+            'total_trabalhando': len(trabalhando),
+            'total_folga': len(de_folga),
+            'trabalhando': trabalhando,
+            'de_folga': de_folga
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
