@@ -4922,11 +4922,13 @@
             return;
         }
 
-        grid.innerHTML = '<div class="text-center w-100 py-3 text-muted small"><i class="fa-solid fa-spinner fa-spin"></i> Carregando suas folgas...</div>';
+        const isPropria = document.getElementById('scenarioPropriaCard').classList.contains('active');
+        const isSolicitacao = document.getElementById('scenarioSolicitarCard').classList.contains('active');
+
+        grid.innerHTML = '<div class="text-center w-100 py-3 text-muted small"><i class="fa-solid fa-spinner fa-spin"></i> Carregando escala...</div>';
         container.style.display = 'block';
 
-        const scenarioActive = document.getElementById('scenarioPropriaCard').classList.contains('active');
-        if (scenarioActive) {
+        if (isPropria) {
             containerNovo.style.display = 'block';
             gridNovo.innerHTML = '<div class="text-center w-100 py-3 text-muted small"><i class="fa-solid fa-spinner fa-spin"></i> Carregando dias de trabalho...</div>';
         } else {
@@ -4955,41 +4957,53 @@
                     const cellInfo = calcularPreviaEscalaAnalista(data, dataRef);
                     const dStr = `${ano}-${String(mesNum).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
 
-                    // --- 1. Grid 1: Folga Atual do Solicitante (Só clicável se folga) ---
+                    // --- 1. Grid 1: Data do Solicitante ---
                     const badgeSol = document.createElement('div');
                     badgeSol.className = `day-badge-preview ${cellInfo.class}`;
                     badgeSol.textContent = dia;
                     badgeSol.title = `${dia}/${mesNum}: ${cellInfo.text}`;
                     
-                    if (cellInfo.class === 'folga') {
+                    let canClickSol = false;
+                    if (isSolicitacao) {
+                        // Na solicitação de folga extra, clicamos nos dias de TRABALHO para pedir folga
+                        canClickSol = (cellInfo.class !== 'folga' && cellInfo.class !== 'ferias' && cellInfo.class !== 'atestado' && cellInfo.class !== 'folga_vago');
+                    } else {
+                        // Nas trocas, clicamos nos dias de FOLGA para ceder
+                        canClickSol = (cellInfo.class === 'folga');
+                    }
+
+                    if (canClickSol) {
                         badgeSol.onclick = () => {
                             grid.querySelectorAll('.day-badge-preview').forEach(b => b.classList.remove('selected'));
                             badgeSol.classList.add('selected');
                             document.getElementById('trocaDataSolicitante').value = dStr;
                         };
                     } else {
-                        badgeSol.style.opacity = '0.5';
+                        badgeSol.style.opacity = '0.4';
                         badgeSol.style.cursor = 'not-allowed';
+                        badgeSol.style.filter = 'grayscale(0.5)';
                     }
                     grid.appendChild(badgeSol);
 
-                    // --- 2. Grid 2: Novo Dia Desejado (Só clicável se trabalho/turno normal) ---
-                    const badgeNovo = document.createElement('div');
-                    badgeNovo.className = `day-badge-preview ${cellInfo.class}`;
-                    badgeNovo.textContent = dia;
-                    badgeNovo.title = `${dia}/${mesNum}: ${cellInfo.text}`;
+                    // --- 2. Grid 2: Novo Dia Desejado (Apenas cenário própria) ---
+                    if (isPropria) {
+                        const badgeNovo = document.createElement('div');
+                        badgeNovo.className = `day-badge-preview ${cellInfo.class}`;
+                        badgeNovo.textContent = dia;
+                        badgeNovo.title = `${dia}/${mesNum}: ${cellInfo.text}`;
 
-                    if (cellInfo.class !== 'folga' && cellInfo.class !== 'ferias' && cellInfo.class !== 'atestado' && cellInfo.class !== 'folga_vago') {
-                        badgeNovo.onclick = () => {
-                            gridNovo.querySelectorAll('.day-badge-preview').forEach(b => b.classList.remove('selected'));
-                            badgeNovo.classList.add('selected');
-                            document.getElementById('trocaDataNovoDia').value = dStr;
-                        };
-                    } else {
-                        badgeNovo.style.opacity = '0.5';
-                        badgeNovo.style.cursor = 'not-allowed';
+                        if (cellInfo.class !== 'folga' && cellInfo.class !== 'ferias' && cellInfo.class !== 'atestado' && cellInfo.class !== 'folga_vago') {
+                            badgeNovo.onclick = () => {
+                                gridNovo.querySelectorAll('.day-badge-preview').forEach(b => b.classList.remove('selected'));
+                                badgeNovo.classList.add('selected');
+                                document.getElementById('trocaDataNovoDia').value = dStr;
+                            };
+                        } else {
+                            badgeNovo.style.opacity = '0.4';
+                            badgeNovo.style.cursor = 'not-allowed';
+                        }
+                        gridNovo.appendChild(badgeNovo);
                     }
-                    gridNovo.appendChild(badgeNovo);
                 }
             } else {
                 grid.innerHTML = '<div class="text-danger w-100 py-2 small">Erro ao carregar escala</div>';
