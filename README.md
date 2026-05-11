@@ -19,6 +19,14 @@ Sistema de gestão de escalas inteligente e dinâmico:
 - **Timeline Visual**: Visualização horária da cobertura por turnos (Madrugada, Matinal, Matutino, Diurno, Tarde).
 - **Simulações (Rascunhos)**: Crie e teste novas configurações de escala em ambiente isolado antes de publicar.
 
+### ⏱️ Nexus Ponto (Controle Eletrônico)
+Ecossistema completo para gestão de jornada e banco de horas:
+- **Registro Kiosk (Tablet)**: Interface otimizada para batida de ponto rápida via CPF com captura de foto para auditoria.
+- **Banco de Horas Inteligente**: Cálculo automatizado de saldos, horas extras e atrasos com integração a calendários de feriados.
+- **Dashboard do Gestor**: Visão em tempo real de presença (quem está na empresa, quem faltou e quem já saiu).
+- **Ajustes & Auditoria**: Fluxo de correção manual de batidas para administradores com registro de justificativa.
+- **Relatórios Consolidadores**: Exportação de espelho de ponto e relatórios gerenciais em Excel.
+
 ### 🤖 Nexus IA & Auditoria
 Integração nativa com Google Gemini:
 - **Auditor de Conformidade**: Análise automática de escalas frente às leis trabalhistas e regras internas.
