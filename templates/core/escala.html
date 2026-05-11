@@ -4965,10 +4965,10 @@
                     
                     let canClickSol = false;
                     if (isSolicitacao) {
-                        // Na solicitação de folga extra, clicamos nos dias de TRABALHO para pedir folga
-                        canClickSol = (cellInfo.class !== 'folga' && cellInfo.class !== 'ferias' && cellInfo.class !== 'atestado' && cellInfo.class !== 'folga_vago');
+                        // Na solicitação de folga extra, permitimos selecionar qualquer dia conforme pedido do usuário
+                        canClickSol = true;
                     } else {
-                        // Nas trocas, clicamos nos dias de FOLGA para ceder
+                        // Nas trocas, clicamos apenas nos dias de FOLGA para ceder/trabalhar no lugar
                         canClickSol = (cellInfo.class === 'folga');
                     }
 
