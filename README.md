@@ -1,65 +1,79 @@
-# Nexus - Sistema de Gestão de Reclamações
+# Nexus - Ecossistema de Gestão Operacional & Inteligência
 
-Sistema completo para gestão de reclamações desenvolvido em Django/Python com PostgreSQL.
+![Nexus Banner](https://img.shields.io/badge/Status-Active-brightgreen)
+![Django](https://img.shields.io/badge/Framework-Django%205.0-092E20?logo=django)
+![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL-336791?logo=postgresql)
+![AI](https://img.shields.io/badge/Intelligence-Gemini%20API-4285F4?logo=google-gemini)
 
-## 🚀 Funcionalidades
+O Nexus é uma plataforma corporativa robusta projetada para centralizar a gestão de reclamações, auditoria operacional e planejamento de escalas (NRS), integrando Inteligência Artificial para suporte à decisão.
 
-- ✅ Dashboard com métricas em tempo real
-- ✅ Gestão completa de reclamações
-- ✅ Sistema de usuários (Gestores e Analistas)
-- ✅ Filtros avançados e busca inteligente
-- ✅ Importação de planilhas XLSX
-- ✅ Exportação de dados (CSV/XLSX)
-- ✅ Relatórios e estatísticas detalhadas
-- ✅ Ações rápidas (mudança de status, atribuição de analista)
-- ✅ Histórico completo de atividades
-- ✅ Tema claro/escuro
+---
 
-## 📋 Requisitos
+## 💎 Módulos Principais
 
-- Python 3.11+
-- PostgreSQL
-- Django 5.0+
+### 📅 Nexus Escala (NRS)
+Sistema de gestão de escalas inteligente e dinâmico:
+- **Gestão de Folgas**: Solicitações de folga avulsa, banco de horas e outros motivos com fluxo de aprovação.
+- **Trocas de Turno**: Sistema de troca de folgas entre analistas ou movimentação de folga própria.
+- **Análise de Cobertura**: Painel de suporte à decisão para gestores com visão em tempo real da capacidade operacional e alertas de subdimensionamento.
+- **Timeline Visual**: Visualização horária da cobertura por turnos (Madrugada, Matinal, Matutino, Diurno, Tarde).
+- **Simulações (Rascunhos)**: Crie e teste novas configurações de escala em ambiente isolado antes de publicar.
 
-## 🔧 Instalação Local
+### 🤖 Nexus IA & Auditoria
+Integração nativa com Google Gemini:
+- **Auditor de Conformidade**: Análise automática de escalas frente às leis trabalhistas e regras internas.
+- **Chatbot Inteligente**: Assistente virtual para navegação no sistema e consulta rápida de dados.
 
-1. Clone o repositório
-2. Crie um ambiente virtual:
+### 📑 Gestão de Reclamações
+Fluxo completo de tratamento de ocorrências:
+- Dashboard interativo com métricas de performance.
+- Importação/Exportação inteligente (XLSX/CSV).
+- Histórico de auditoria detalhado por reclamação.
+
+---
+
+## 🎨 Design & UX
+- **Interface Premium**: Desenvolvida com conceitos de *Glassmorphism* e design corporativo moderno.
+- **Modo Dark/Light**: Adaptação completa para o conforto visual do usuário.
+- **Micro-interações**: Feedback visual fluido e transições suaves.
+
+---
+
+## 🚀 Guia Rápido de Instalação
+
+1. **Ambiente Virtual**:
    ```bash
    python -m venv venv
-   venv\Scripts\activate  # Windows
+   source venv/bin/activate  # Linux/Mac
+   venv\Scripts\activate     # Windows
    ```
 
-3. Instale as dependências:
+2. **Dependências**:
    ```bash
    pip install -r requirements.txt
    ```
 
-4. Configure o banco de dados no `settings.py` ou use variáveis de ambiente
-
-5. Execute as migrações:
+3. **Banco de Dados & Migrações**:
    ```bash
    python manage.py migrate
    python manage.py create_admin_user
    ```
 
-6. Inicie o servidor:
+4. **Execução**:
    ```bash
    python manage.py runserver
    ```
 
-## 🌐 Deploy no Render
+---
 
-Consulte o arquivo `DEPLOY_RENDER.md` para instruções completas de deploy.
+## 🛠️ Comandos de Administração
 
+- **Setup de Admin**: `python manage.py create_admin_user`
+- **Massa de Dados**: `python manage.py create_sample_data`
+- **Segurança**: `python generate_secret_key.py`
 
-## 🛠️ Comandos Úteis
-
-- Criar usuário admin: `python manage.py create_admin_user`
-- Criar dados de exemplo: `python manage.py create_sample_data`
-- Gerar SECRET_KEY: `python generate_secret_key.py`
+---
 
 ## 📄 Licença
-
-Uso interno.
+Propriedade privada. Uso restrito e interno.
 
