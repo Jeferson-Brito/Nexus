@@ -3299,6 +3299,12 @@ body.sidebar-collapsed {
     background: #f9fafb !important;
 }
 
+body.dark-theme .nav-submenu .nav-link:hover,
+html[data-bs-theme="dark"] .nav-submenu .nav-link:hover {
+    background: rgba(255, 255, 255, 0.05) !important;
+    color: #fff !important;
+}
+
 .sidebar.collapsed .nav-group-title {
     display: none;
 }
@@ -3335,6 +3341,13 @@ body.sidebar-collapsed {
     border: 1px solid #e5e7eb;
     padding: 0.5rem;
     z-index: 1100;
+}
+
+body.dark-theme .sidebar.collapsed .nav-submenu-container,
+html[data-bs-theme="dark"] .sidebar.collapsed .nav-submenu-container {
+    background: #1e293b;
+    border-color: #334155;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
 }
 
 .sidebar.collapsed .nav-submenu-container .nav-submenu {
