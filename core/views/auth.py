@@ -81,24 +81,6 @@ def logout_view(request):
     messages.success(request, 'Você saiu do sistema com sucesso!')
     return redirect('login')
 
-@login_required
-def change_password_view(request):
-    """Página para alteração de senha do usuário"""
-    if request.method == 'POST':
-        form = PasswordChangeForm(request.user, request.POST)
-        if form.is_valid():
-            user = form.save()
-            update_session_auth_hash(request, user)
-            messages.success(request, 'Sua senha foi alterada com sucesso!')
-            return redirect('dashboard')
-        else:
-            messages.error(request, 'Erro ao alterar senha. Verifique os campos.')
-    else:
-        form = PasswordChangeForm(request.user)
-    
-    return render(request, 'core/change_password.html', {
-        'form': form
-    })
 
 
 

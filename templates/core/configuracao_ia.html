@@ -163,11 +163,7 @@
                     <i class="bi bi-shield-check me-2"></i>Regras de Auditoria
                 </button>
             </li>
-            <li class="nav-item">
-                <button class="nav-link" id="sistema-tab" data-bs-toggle="pill" data-bs-target="#sistema-pane" type="button">
-                    <i class="bi bi-gear-wide-connected me-2"></i>Parâmetros e Exportação
-                </button>
-            </li>
+
         </ul>
     </div>
 
@@ -260,73 +256,7 @@
             </div>
         </div>
 
-        <!-- PANE 3: SISTEMA (Parâmetros e Exportação) -->
-        <div class="tab-pane fade" id="sistema-pane">
-            <div class="row g-4">
-                <div class="col-lg-6">
-                    <div class="premium-card h-100">
-                        <div class="card-icon-wrapper icon-orange">
-                            <i class="bi bi-gear-fill"></i>
-                        </div>
-                        <h3 class="premium-card-title">Parâmetros de Auditoria</h3>
-                        <p class="premium-card-subtitle">Configure as regras globais de avaliação automática</p>
-                        
-                        <form id="form-audit-config">
-                            <div class="mb-4">
-                                <label class="form-label fw-bold small text-muted text-uppercase">Percentual Mínimo Aceitável (%)</label>
-                                <div class="input-group">
-                                    <input type="number" step="0.1" class="form-control form-control-lg" id="percentual_minimo" required placeholder="Ex: 85" style="border-radius: 12px 0 0 12px;">
-                                    <span class="input-group-text px-4" style="border-radius: 0 12px 12px 0; background: #f8fafc; font-weight: 700;">%</span>
-                                </div>
-                                <div class="form-text mt-2">Notas abaixo deste percentual serão classificadas como "Insatisfatórias".</div>
-                            </div>
-                            <button type="submit" class="premium-btn w-100">
-                                <i class="bi bi-save me-2"></i>Salvar Parâmetros
-                            </button>
-                        </form>
-                    </div>
-                </div>
 
-                <div class="col-lg-6">
-                    <div class="premium-card h-100">
-                        <div class="card-icon-wrapper icon-green">
-                            <i class="bi bi-cloud-download-fill"></i>
-                        </div>
-                        <h3 class="premium-card-title">Exportação de Dados</h3>
-                        <p class="premium-card-subtitle">Baixe planilhas completas do sistema</p>
-
-                        <div class="export-grid">
-                            <div class="export-item">
-                                <div class="export-icon"><i class="bi bi-list-ul"></i></div>
-                                <h6 class="fw-bold">Reclamações</h6>
-                                <div class="d-flex gap-2 justify-content-center">
-                                    <a href="{% url 'export_complaints_csv' %}" class="btn-badge badge-csv">CSV</a>
-                                    <a href="{% url 'export_complaints_xlsx' %}" class="btn-badge badge-xlsx">XLSX</a>
-                                </div>
-                            </div>
-                            <div class="export-item">
-                                <div class="export-icon"><i class="bi bi-shop"></i></div>
-                                <h6 class="fw-bold">Lojas</h6>
-                                <div class="d-flex gap-2 justify-content-center">
-                                    <a href="{% url 'export_stores_csv' %}" class="btn-badge badge-csv">CSV</a>
-                                    <a href="{% url 'export_stores_xlsx' %}" class="btn-badge badge-xlsx">XLSX</a>
-                                </div>
-                            </div>
-                            {% if user.role == 'administrador' %}
-                            <div class="export-item">
-                                <div class="export-icon"><i class="bi bi-people-fill"></i></div>
-                                <h6 class="fw-bold">Usuários</h6>
-                                <div class="d-flex gap-2 justify-content-center">
-                                    <a href="{% url 'export_users_csv' %}" class="btn-badge badge-csv">CSV</a>
-                                    <a href="{% url 'export_users_xlsx' %}" class="btn-badge badge-xlsx">XLSX</a>
-                                </div>
-                            </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
 
     </div>
 </div>
@@ -702,33 +632,7 @@
         } catch (e) { showToast('Erro de conexão', 'danger'); }
     }
 
-    // ── SISTEMA LOGIC ──────────────────────────────────────
-    document.addEventListener('DOMContentLoaded', () => {
-        // Load Audit Config
-        fetch('/api/auditoria/config/', { credentials: 'include' })
-            .then(r => r.json())
-            .then(data => {
-                if (data.success && data.configuracao) {
-                    document.getElementById('percentual_minimo').value = data.configuracao.percentual_minimo_aceitavel;
-                }
-            });
 
-        // Save Audit Config
-        document.getElementById('form-audit-config').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const valor = document.getElementById('percentual_minimo').value;
-            fetch('/api/auditoria/config/update/', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
-                body: JSON.stringify({ percentual_minimo: valor })
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (data.success) showToast('Parâmetros salvos!', 'success');
-                else showToast(data.error || 'Erro ao salvar', 'danger');
-            });
-        });
-    });
 
 </script>
 {% endblock %}

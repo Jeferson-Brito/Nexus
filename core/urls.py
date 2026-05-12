@@ -43,7 +43,6 @@ urlpatterns = [
     path('users/<int:pk>/delete/', views.user_delete, name='user_delete'),
     path('users/history/', views.user_access_history, name='user_access_history'),
     path('configuracoes/ia/', views.configuracao_ia_view, name='configuracao_ia'),
-    path('alterar-senha/', views.change_password_view, name='change_password'),
 
 
     path('export/complaints/csv/', views.export_complaints_csv, name='export_complaints_csv'),
