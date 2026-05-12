@@ -144,7 +144,7 @@
         /* Dark Mode Fixes para a visão do analista */
         body.dark-theme .card-dashboard { background: #1e293b; border-color: #334155; }
         body.dark-theme .card-dashboard .text-dark { color: #f8fafc !important; }
-        body.dark-theme #analyst-list-container .card-header { background: #1e293b !important; border-bottom: 1px solid #334155 !important; }
+        body.dark-theme #analyst-list-container > div:first-child { background: #1e293b !important; border-bottom: 1px solid #334155 !important; }
         body.dark-theme #filtrosAnalistaPanel { background: #0f172a !important; border-color: #334155 !important; }
         body.dark-theme #analyst-list-container table { color: #e2e8f0; }
         body.dark-theme #analyst-list-container .table-light { background: #0f172a !important; color: #94a3b8 !important; border-bottom: 1px solid #334155; }
@@ -219,7 +219,7 @@
 
     <!-- Lista de Auditorias do Analista -->
     <div class="card border-0 shadow-sm rounded-4 mt-2 mb-5" id="analyst-list-container" style="display: none; overflow: hidden;">
-        <div class="card-header bg-white border-0 py-4 d-flex justify-content-between align-items-center">
+        <div class="bg-white border-0 py-4 px-4 d-flex justify-content-between align-items-center" style="background-image: none !important; border-bottom: 1px solid rgba(0,0,0,0.05) !important;">
             <div>
                 <h5 class="mb-0 fw-bold text-dark">
                     <i class="bi bi-card-checklist text-primary me-2"></i>Minhas Auditorias - <span id="current-filter-label" class="text-primary">Todos</span>
