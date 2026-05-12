@@ -156,8 +156,64 @@
     <div class="row mb-4">
         <!-- Dashboard Cards -->
         <div class="col-12 mb-3">
-            <h4 class="fw-bold text-dark mb-0"><i class="bi bi-speedometer2 text-primary me-2"></i>Meu Desempenho</h4>
-            <p class="text-muted small">Acompanhe as avaliações dos seus atendimentos</p>
+            <div class="d-flex justify-content-between align-items-end">
+                <div>
+                    <h4 class="fw-bold text-dark mb-0"><i class="bi bi-speedometer2 text-primary me-2"></i>Meu Desempenho</h4>
+                    <p class="text-muted small mb-0">Acompanhe as avaliações dos seus atendimentos</p>
+                </div>
+                <div class="text-end">
+                    <button class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" id="btnGerarInsightAnalista">
+                        <i class="bi bi-magic me-2"></i>Feedback da IA
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resumo Geral -->
+        <div class="col-12 mb-4">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                <div class="row g-0">
+                    <div class="col-md-4 border-end">
+                        <div class="p-4 text-center">
+                            <h6 class="text-muted text-uppercase small fw-bold mb-2" style="letter-spacing: 1px;">Total de Auditorias</h6>
+                            <h2 class="fw-bolder mb-0 text-primary display-6" id="analyst-total-geral">0</h2>
+                            <p class="text-muted small mb-0 mt-1">Histórico completo</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4 border-end">
+                        <div class="p-4 text-center">
+                            <h6 class="text-muted text-uppercase small fw-bold mb-2" style="letter-spacing: 1px;">No Período Atual</h6>
+                            <h2 class="fw-bolder mb-0 text-info display-6" id="analyst-total-periodo">0</h2>
+                            <p class="text-muted small mb-0 mt-1">Auditorias filtradas</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-4 text-center">
+                            <h6 class="text-muted text-uppercase small fw-bold mb-2" style="letter-spacing: 1px;">Média de Avaliação</h6>
+                            <h2 class="fw-bolder mb-0 text-success display-6" id="analyst-media-geral">0.0</h2>
+                            <p class="text-muted small mb-0 mt-1">Sua nota média total</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bloco IA Analista (Escondido por padrão) -->
+        <div class="col-12 mb-4" id="ia-block-analista" style="display: none;">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden" style="background: linear-gradient(135deg, #f8faff 0%, #eef2ff 100%);">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold text-primary mb-0"><i class="bi bi-robot me-2"></i>Feedback Inteligente Nexus IA</h5>
+                        <button type="button" class="btn-close" onclick="document.getElementById('ia-block-analista').style.display='none'"></button>
+                    </div>
+                    <div id="ia-loading-analista" class="text-center py-4" style="display: none;">
+                        <div class="spinner-grow text-primary" role="status"></div>
+                        <p class="mt-2 text-primary fw-bold">Analisando seu desempenho no período...</p>
+                    </div>
+                    <div id="ia-result-analista" class="ia-markdown-body bg-white p-4 rounded-4 shadow-sm" style="display: none; max-height: 500px; overflow-y: auto;">
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="col-md-3 mb-3">

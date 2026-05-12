@@ -347,6 +347,7 @@ urlpatterns = [
     path('api/auditoria/ranking/', api_auditoria.api_ranking_analistas, name='api_ranking_analistas'),
     path('api/auditoria/analista/<int:analista_id>/', api_auditoria.api_estatisticas_analista, name='api_estatisticas_analista'),
     path('api/auditoria/analista/<int:analista_id>/ia-insight/', api_auditoria.api_ia_insight_analista, name='api_ia_insight_analista'),
+    path('api/auditoria/analista/self/ia-insight/', api_auditoria.api_ia_insight_self, name='api_ia_insight_self'),
     path('api/auditoria/dashboard/', api_auditoria.api_dashboard_auditoria, name='api_dashboard_auditoria'),
     path('api/auditoria/config/', api_auditoria.api_configuracao_get, name='api_configuracao_get'),
     path('api/auditoria/config/update/', api_auditoria.api_configuracao_update, name='api_configuracao_update'),

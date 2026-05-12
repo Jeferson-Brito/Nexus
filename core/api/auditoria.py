@@ -673,18 +673,8 @@ def api_estatisticas_analista(request, analista_id):
                 'classificacao': ultima.get_classificacao_display(),
             } if ultima else None,
             'tem_alertas': tem_alertas,
-        })
-        
-    except User.DoesNotExist:
-        return JsonResponse({'error': 'Analista não encontrado'}, status=404)
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
-
-
-@gestor_or_admin_required
-@require_POST
-def api_ia_insight_analista(request, analista_id):
-    """Gera um relatório de feedback com IA para um analista específico baseado em seu histórico recente"""
+def _get_analista_ia_insight(request, analista, data_inicio=None, data_fim=None):
+    """Lógica compartilhada para gerar insight de IA para um analista"""
     from ..services.ia_service import gerar_avaliacao_auditoria
     try:
         department = request.session.get('current_department_obj') or request.user.department
@@ -693,15 +683,6 @@ def api_ia_insight_analista(request, analista_id):
             
         if not department:
              department = Department.objects.filter(id=1).first() or Department.objects.first()
-        
-        analista = User.objects.get(id=analista_id)
-        
-        # Obter as 15 auditorias mais recentes (ou de um período selecionado)
-        data = json.loads(request.body) if request.body else {}
-        
-        # Filtro de data opcional
-        data_inicio = data.get('data_inicio')
-        data_fim = data.get('data_fim')
         
         auditorias_qs = AuditoriaAtendimento.objects.filter(
             department=department,
@@ -716,7 +697,7 @@ def api_ia_insight_analista(request, analista_id):
         auditorias = auditorias_qs.order_by('-created_at')[:15]
         
         if not auditorias.exists():
-            return JsonResponse({'error': 'Nenhuma auditoria encontrada para este analista neste período. Impossível gerar avaliação.'}, status=400)
+            return {'error': 'Nenhuma auditoria encontrada para este analista neste período. Impossível gerar avaliação.'}
             
         # Preparar dados para IA
         historico_auditorias = []
@@ -773,16 +754,52 @@ def api_ia_insight_analista(request, analista_id):
         # Chamar o serviço do Gemini
         resultado_ia = gerar_avaliacao_auditoria(analista_nome, historico_auditorias, metricas)
         
-        return JsonResponse({
+        return {
             'success': True,
             'insight_markdown': resultado_ia.get('resposta', ''),
             'metricas': metricas
-        })
-        
+        }
     except Exception as e:
         import traceback
         traceback.print_exc()
-        return JsonResponse({'error': f'Erro ao processar IA: {str(e)}'}, status=500)
+        return {'error': str(e)}
+
+@gestor_admin_or_analyst_required
+@require_POST
+def api_ia_insight_self(request):
+    """Gera um relatório de feedback com IA para o próprio analista logado"""
+    try:
+        data = json.loads(request.body) if request.body else {}
+        data_inicio = data.get('data_inicio')
+        data_fim = data.get('data_fim')
+        
+        resultado = _get_analista_ia_insight(request, request.user, data_inicio, data_fim)
+        if 'error' in resultado:
+            return JsonResponse({'error': resultado['error']}, status=400 if 'Nenhuma auditoria' in resultado['error'] else 500)
+        
+        return JsonResponse(resultado)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+@gestor_or_admin_required
+@require_POST
+def api_ia_insight_analista(request, analista_id):
+    """Gera um relatório de feedback com IA para um analista específico (visão gestor)"""
+    try:
+        analista = User.objects.get(id=analista_id)
+        data = json.loads(request.body) if request.body else {}
+        data_inicio = data.get('data_inicio')
+        data_fim = data.get('data_fim')
+        
+        resultado = _get_analista_ia_insight(request, analista, data_inicio, data_fim)
+        if 'error' in resultado:
+            return JsonResponse({'error': resultado['error']}, status=400 if 'Nenhuma auditoria' in resultado['error'] else 500)
+        
+        return JsonResponse(resultado)
+    except User.DoesNotExist:
+        return JsonResponse({'error': 'Analista não encontrado'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
 
 
 @gestor_admin_or_analyst_required
@@ -819,6 +836,15 @@ def api_dashboard_auditoria(request):
         
         total = auditorias.count()
         nota_media_geral = auditorias.aggregate(Avg('nota'))['nota__avg'] or 0
+
+        # Estatísticas acumuladas (all-time)
+        if request.user.is_analista():
+            qs_all_time = AuditoriaAtendimento.objects.filter(analista_auditado=request.user)
+        else:
+            qs_all_time = AuditoriaAtendimento.objects.filter(department=department)
+        
+        total_all_time = qs_all_time.count()
+        nota_media_all_time = qs_all_time.aggregate(Avg('nota'))['nota__avg'] or 0
         
         # Distribuição por classificação
         # Distribuição por classificação - Otimizado (1 query em vez de 4)
@@ -896,7 +922,9 @@ def api_dashboard_auditoria(request):
                 'fim': data_fim.isoformat(),
             },
             'total_auditorias': total,
+            'total_all_time': total_all_time,
             'nota_media_geral': round(float(nota_media_geral), 2),
+            'nota_media_all_time': round(float(nota_media_all_time), 2),
             'distribuicao': distribuicao,
             'total_alertas': auditorias.filter(requer_acao=True).count(),
             'evolucao_diaria': dias_evolucao,

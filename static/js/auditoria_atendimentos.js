@@ -94,16 +94,16 @@ document.addEventListener('DOMContentLoaded', function () {
         const btnFiltrarAnalista = document.getElementById('btnFiltrarAnalista');
         if (btnFiltrarAnalista) {
             btnFiltrarAnalista.addEventListener('click', () => {
-                const activeCard = document.querySelector('.card-dashboard.active-filter'); // Precisa marcar qual card está ativo
-                // Se nenhum card estiver ativo, assume todos ou mantém o último
-                let classificacao = 'todos';
-                if (document.getElementById('current-filter-label')) {
-                    const label = document.getElementById('current-filter-label').innerText;
-                    // Mapear label de volta para classificação key se necessário, ou guardar no state
-                }
-                // Simplificação: apenas recarrega usando os inputs
+                // Atualiza os cards de desempenho baseados na data selecionada
+                initAnalystView();
+                // Atualiza a lista de auditorias
                 loadAnalystAudits(state.currentAnalystFilter || '');
             });
+        }
+
+        const btnIAAnalista = document.getElementById('btnGerarInsightAnalista');
+        if (btnIAAnalista) {
+            btnIAAnalista.addEventListener('click', handleGerarInsightAnalyst);
         }
 
         const btnAplicarFiltros = document.getElementById('btnAplicarFiltros');
@@ -1914,11 +1914,30 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function initAnalystView() {
+        const dataInicio = document.getElementById('filtro_analista_data_inicio')?.value;
+        const dataFim = document.getElementById('filtro_analista_data_fim')?.value;
+        
+        let url = '/api/auditoria/dashboard/';
+        if (dataInicio || dataFim) {
+            const params = new URLSearchParams();
+            if (dataInicio) params.append('data_inicio', dataInicio);
+            if (dataFim) params.append('data_fim', dataFim);
+            url += '?' + params.toString();
+        }
+
         // Carregar stats para os cards
-        fetch('/api/auditoria/dashboard/', { credentials: 'include' })
+        fetch(url, { credentials: 'include' })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
+                    // Preencher Resumo Geral
+                    if (document.getElementById('analyst-total-geral')) {
+                        document.getElementById('analyst-total-geral').textContent = data.total_all_time || 0;
+                        document.getElementById('analyst-total-periodo').textContent = data.total_auditorias || 0;
+                        document.getElementById('analyst-media-geral').textContent = data.nota_media_all_time ? data.nota_media_all_time.toFixed(1) : '0.0';
+                    }
+
+                    // Preencher Distribuição (Cards coloridos)
                     if (data.distribuicao) {
                         document.getElementById('count-excelente').textContent = data.distribuicao.excelente || 0;
                         document.getElementById('count-bom').textContent = data.distribuicao.bom || 0;
@@ -1928,6 +1947,58 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             })
             .catch(error => console.error('Erro ao carregar dashboard analista:', error));
+    }
+
+    function handleGerarInsightAnalyst() {
+        const block = document.getElementById('ia-block-analista');
+        const loading = document.getElementById('ia-loading-analista');
+        const result = document.getElementById('ia-result-analista');
+        
+        if (!block) return;
+        
+        block.style.display = 'block';
+        loading.style.display = 'block';
+        result.style.display = 'none';
+        
+        // Scroll para o bloco
+        block.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        // Obter datas do filtro
+        const dataInicio = document.getElementById('filtro_analista_data_inicio')?.value;
+        const dataFim = document.getElementById('filtro_analista_data_fim')?.value;
+        
+        fetch(`/api/auditoria/analista/self/ia-insight/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                data_inicio: dataInicio,
+                data_fim: dataFim
+            })
+        })
+        .then(r => r.json())
+        .then(data => {
+            loading.style.display = 'none';
+            if (data.success) {
+                result.style.display = 'block';
+                if (window.marked) {
+                    result.innerHTML = marked.parse(data.insight_markdown);
+                } else {
+                    result.innerText = data.insight_markdown;
+                }
+            } else {
+                Swal.fire('Aviso', data.error || 'Erro ao gerar feedback', 'warning');
+                block.style.display = 'none';
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            loading.style.display = 'none';
+            Swal.fire('Erro', 'Erro de conexão com o servidor', 'error');
+            block.style.display = 'none';
+        });
     }
 
     window.filterAnalystList = function (classificacao) {
