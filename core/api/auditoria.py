@@ -673,6 +673,13 @@ def api_estatisticas_analista(request, analista_id):
                 'classificacao': ultima.get_classificacao_display(),
             } if ultima else None,
             'tem_alertas': tem_alertas,
+        })
+        
+    except User.DoesNotExist:
+        return JsonResponse({'error': 'Analista não encontrado'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
 def _get_analista_ia_insight(request, analista, data_inicio=None, data_fim=None):
     """Lógica compartilhada para gerar insight de IA para um analista"""
     from ..services.ia_service import gerar_avaliacao_auditoria
