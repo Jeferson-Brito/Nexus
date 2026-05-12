@@ -894,7 +894,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         <div class="col-4">
                             <div class="p-2 bg-white rounded shadow-sm border">
                                 <small class="text-muted d-block text-uppercase" style="font-size:0.65rem">Nota</small>
-                                <span class="h5 mb-0 fw-bold text-primary">${aud.nota.toFixed(1)}</span>
+                                <span class="h5 mb-0 fw-bold text-primary">${aud.nota.toFixed(1)}/10</span>
                             </div>
                         </div>
                         <div class="col-4">
@@ -1945,12 +1945,17 @@ document.addEventListener('DOMContentLoaded', function () {
                         document.getElementById('count-regular').textContent = data.distribuicao.regular || 0;
                         document.getElementById('count-insatisfatorio').textContent = data.distribuicao.insatisfatorio || 0;
                     }
+                    
+                    // Carregar lista completa por padrão (Todas)
+                    loadAnalystAudits('');
+                    const container = document.getElementById('analyst-list-container');
+                    if (container) container.style.display = 'block';
                 }
             })
             .catch(error => console.error('Erro ao carregar dashboard analista:', error));
     }
 
-    function handleGerarInsightAnalyst() {
+    window.handleGerarInsightAnalyst = function() {
         const modalEl = document.getElementById('modalIAAnalista');
         const loading = document.getElementById('ia-loading-analista');
         const result = document.getElementById('ia-result-analista');
@@ -2010,7 +2015,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function checkPersistedFeedback() {
         const savedFeedback = sessionStorage.getItem('nexus_analyst_feedback');
-        const btnContainer = document.querySelector('#btnGerarInsightAnalyst')?.parentElement;
+        const btnContainer = document.querySelector('#btnGerarInsightAnalista')?.parentElement;
         
         if (savedFeedback && btnContainer) {
             // Se já existe o botão de ver feedback, não duplica
@@ -2041,38 +2046,52 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-
     window.filterAnalystList = function (classificacao) {
-        state.currentAnalystFilter = classificacao; // Guardar filtro atual
+        const cards = document.querySelectorAll('.card-dashboard');
+        
+        // Se clicar no que já está selecionado, desseleciona (mostra todos)
+        if (state.currentAnalystFilter === classificacao) {
+            state.currentAnalystFilter = '';
+            cards.forEach(c => c.classList.remove('selected'));
+        } else {
+            state.currentAnalystFilter = classificacao;
+            cards.forEach(c => c.classList.remove('selected'));
+            
+            // Adicionar classe selected ao card clicado
+            const targetCard = document.querySelector(`.card-dashboard[onclick*="'${classificacao}'"]`);
+            if (targetCard) targetCard.classList.add('selected');
+        }
+
         // Atualizar label
         const map = {
             'excelente': 'Excelente',
             'bom': 'Bom',
             'regular': 'Regular',
-            'insatisfatorio': 'Insatisfatório'
+            'insatisfatorio': 'Insatisfatório',
+            '': 'Todas'
         };
-        document.getElementById('current-filter-label').textContent = map[classificacao] || classificacao;
+        const label = document.getElementById('current-filter-label');
+        if (label) label.textContent = map[state.currentAnalystFilter] || 'Todas';
 
         // Mostrar container
         const container = document.getElementById('analyst-list-container');
-        container.style.display = 'block';
-        container.scrollIntoView({ behavior: 'smooth' });
+        if (container) {
+            container.style.display = 'block';
+        }
 
-        // Carregar auditorias
-        loadAnalystAudits(classificacao);
-    };
+        loadAnalystAudits(state.currentAnalystFilter);
+    }
 
     function loadAnalystAudits(classificacao) {
         const tbody = document.getElementById('lista-auditorias-analista');
+        if (!tbody) return;
         tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4"><div class="spinner-border text-primary"></div></td></tr>';
 
-        // Usar API de lista com filtro
         const params = new URLSearchParams({
             classificacao: classificacao,
             per_page: 50
         });
 
-        // Adicionar filtros de data se existirem
         const dataInicio = document.getElementById('filtro_analista_data_inicio')?.value;
         const dataFim = document.getElementById('filtro_analista_data_fim')?.value;
 
@@ -2094,21 +2113,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function renderAnalystAudits(auditorias, tbody) {
         if (auditorias.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">Nenhuma auditoria encontrada com esta classificação</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-5 text-muted"><i class="bi bi-inbox fs-2 d-block mb-2"></i>Nenhuma auditoria encontrada para este filtro.</td></tr>';
             return;
         }
 
         tbody.innerHTML = '';
-
         auditorias.forEach(aud => {
             const tr = document.createElement('tr');
-            // Make row clickable
             tr.style.cursor = 'pointer';
             tr.onclick = (e) => viewDetails(aud.id, e);
-
-            if (aud.requer_acao) {
-                tr.classList.add('row-alert');
-            }
+            if (aud.requer_acao) tr.classList.add('row-alert');
 
             const badgeClass = `badge-${aud.classificacao}`;
             const dataFormatada = formatDate(aud.data_atendimento);
@@ -2118,7 +2132,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 <td>${aud.id_conversa}</td>
                 <td><span class="badge bg-secondary">${aud.tipo_atendimento}</span></td>
                 <td>${aud.pontuacao}/9</td>
-                <td class="fw-bold">${aud.nota.toFixed(1)}</td>
+                <td class="fw-bold">${aud.nota.toFixed(1)}/10</td>
                 <td>
                     <span class="badge ${badgeClass}">${aud.classificacao_display}</span>
                     ${aud.requer_acao ? '<i class="bi bi-exclamation-triangle icon-alert ms-2"></i>' : ''}
@@ -2127,18 +2141,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     <button class="btn btn-sm btn-outline-primary" title="Ver detalhes">
                         <i class="bi bi-eye"></i>
                     </button>
-                    ${aud.can_edit ? `<button class="btn btn-sm btn-outline-warning ms-1" onclick="editAudit('${aud.id}')" title="Editar">
-                        <i class="bi bi-pencil"></i>
-                    </button>` : ''}
-                    ${aud.can_delete ? `<button class="btn btn-sm btn-outline-danger ms-1" onclick="deleteAudit('${aud.id}')" title="Excluir">
-                        <i class="bi bi-trash"></i>
-                    </button>` : ''}
                 </td>
             `;
-
             tbody.appendChild(tr);
 
-            // Hidden Details Row
             const trDetails = document.createElement('tr');
             trDetails.id = `details-${aud.id}`;
             trDetails.style.display = 'none';

@@ -402,6 +402,12 @@
     transition:var(--ease); cursor:pointer;
 }
 .card-dashboard:hover { box-shadow:var(--aa-shadow); transform:translateY(-3px); }
+.card-dashboard.selected {
+    border: 2px solid var(--aa-blue) !important;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1), var(--aa-shadow-lg) !important;
+    transform: translateY(-5px);
+    background: #f8faff;
+}
 .border-left-excelente { border-left:4px solid var(--aa-green) !important; }
 .border-left-bom       { border-left:4px solid var(--aa-blue) !important; }
 .border-left-regular   { border-left:4px solid var(--aa-amber) !important; }
