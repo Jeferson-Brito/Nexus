@@ -6,282 +6,338 @@
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4" style="max-width: 1400px; margin: 0 auto;">
-<div class="page-header fade-in">
-    <div class="row align-items-center">
-        <div class="col-md-8">
-            <h1 class="page-title">
-                {% if form_type == 'create' %}
-                <i class="bi bi-person-plus"></i> Novo Usuário
-                {% else %}
-                <i class="bi bi-pencil-square"></i> Editar Usuário
-                {% endif %}
+<style>
+    /* Premium Styling (Reused from Settings) */
+    .settings-container { font-family: 'Inter', sans-serif; }
+    .settings-hero {
+        border-radius: 24px; padding: 2.5rem 3rem; color: white; margin-bottom: 2rem;
+        box-shadow: 0 20px 40px rgba(37, 99, 235, 0.15); position: relative; overflow: hidden;
+        display: flex; align-items: center; justify-content: space-between;
+    }
+    .settings-hero::before {
+        content: ''; position: absolute; top: -50%; right: -10%; width: 400px; height: 400px;
+        background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%); border-radius: 50%; pointer-events: none;
+    }
+    .settings-hero-title { font-size: 2rem; font-weight: 800; margin-bottom: 0.3rem; letter-spacing: -0.5px; }
+    .settings-hero-subtitle { font-size: 1rem; opacity: 0.9; margin-bottom: 0; font-weight: 400; }
+    
+    .premium-card {
+        background: white; border-radius: 20px; border: 1px solid rgba(0,0,0,0.04);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.03); padding: 2rem; transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .premium-card:hover { transform: translateY(-3px); box-shadow: 0 15px 35px rgba(0,0,0,0.06); }
+    .premium-card-title { font-size: 1.25rem; font-weight: 700; color: #1e293b; margin-bottom: 0.3rem; }
+    .premium-card-subtitle { font-size: 0.9rem; color: #64748b; margin-bottom: 2rem; }
+    
+    .premium-input-group label { font-weight: 600; color: #475569; font-size: 0.9rem; margin-bottom: 0.5rem; display: block; }
+    .premium-input-group .form-control, .premium-input-group .form-select {
+        background: #f8fafc; border: 2px solid transparent; border-radius: 12px; padding: 0.8rem 1rem; transition: all 0.3s;
+    }
+    .premium-input-group .form-control:focus, .premium-input-group .form-select:focus {
+        background: white; border-color: #3b82f6; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+    }
+    .premium-input-group .form-control[readonly], .premium-input-group .form-control[disabled], .premium-input-group .form-select[disabled] {
+        background: #e2e8f0; color: #64748b; opacity: 1; cursor: not-allowed;
+    }
+    .premium-input-group .input-group-text {
+        background: #f8fafc; border: 2px solid transparent; border-radius: 12px; color: #64748b; cursor: pointer; transition: all 0.3s; border-left: none;
+    }
+    .premium-input-group .form-control:focus + .input-group-text { border-color: #3b82f6; border-left-color: transparent; background: white;}
+    
+    .premium-btn {
+        background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; border: none; border-radius: 99px;
+        padding: 0.8rem 2rem; font-weight: 600; transition: all 0.3s; display: inline-flex; justify-content: center; align-items: center;
+    }
+    .premium-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(37, 99, 235, 0.25); color: white; }
+
+    .premium-switch {
+        display: flex; align-items: center; justify-content: space-between; padding: 1.2rem;
+        background: #f8fafc; border-radius: 16px; border: 1px solid #f1f5f9; transition: all 0.2s;
+    }
+    .switch-label-area h6 { margin: 0 0 0.2rem 0; font-weight: 600; color: #334155; }
+    .switch-label-area p { margin: 0; font-size: 0.85rem; color: #64748b; }
+    .premium-toggle { width: 3rem; height: 1.5rem; cursor: pointer; }
+
+    /* Fix input group borders */
+    .premium-input-group .input-group > .form-control { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+    .premium-input-group .input-group > .input-group-text { border-top-left-radius: 0; border-bottom-left-radius: 0; }
+
+    /* Dark Mode Adjustments */
+    html[data-bs-theme="dark"] .premium-card, body.dark-theme .premium-card { background: #1e293b; border-color: #334155; }
+    html[data-bs-theme="dark"] .premium-card-title, body.dark-theme .premium-card-title,
+    html[data-bs-theme="dark"] .switch-label-area h6, body.dark-theme .switch-label-area h6 { color: #f8fafc; }
+    html[data-bs-theme="dark"] .premium-switch, body.dark-theme .premium-switch,
+    html[data-bs-theme="dark"] .premium-input-group .form-control, body.dark-theme .premium-input-group .form-control,
+    html[data-bs-theme="dark"] .premium-input-group .form-select, body.dark-theme .premium-input-group .form-select,
+    html[data-bs-theme="dark"] .premium-input-group .input-group-text, body.dark-theme .premium-input-group .input-group-text {
+        background: #0f172a; border-color: #1e293b; color: #e2e8f0;
+    }
+    html[data-bs-theme="dark"] .premium-input-group .form-control[readonly], body.dark-theme .premium-input-group .form-control[readonly],
+    html[data-bs-theme="dark"] .premium-input-group .form-control[disabled], body.dark-theme .premium-input-group .form-control[disabled],
+    html[data-bs-theme="dark"] .premium-input-group .form-select[disabled], body.dark-theme .premium-input-group .form-select[disabled] {
+        background: #1e293b; color: #94a3b8; border-color: rgba(255,255,255,0.05);
+    }
+    html[data-bs-theme="dark"] .premium-input-group label, body.dark-theme .premium-input-group label { color: #cbd5e1; }
+    html[data-bs-theme="dark"] .bg-light, body.dark-theme .bg-light { background-color: #0f172a !important; color: #cbd5e1 !important; border-color: #1e293b !important; }
+    html[data-bs-theme="dark"] .text-dark, body.dark-theme .text-dark { color: #f8fafc !important; }
+    html[data-bs-theme="dark"] .text-muted, body.dark-theme .text-muted { color: #94a3b8 !important; }
+</style>
+
+<div class="settings-container px-4 py-4" style="max-width: 1200px; margin: 0 auto;">
+    
+    <!-- Hero Section -->
+    <div class="settings-hero" style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);">
+        <div>
+            <h1 class="settings-hero-title">
+                {% if form_type == 'create' %}<i class="bi bi-person-plus me-2"></i>Novo Usuário{% else %}<i class="bi bi-person-bounding-box me-2"></i>{% if request.user == target_user %}Meu Perfil{% else %}Editar Usuário{% endif %}{% endif %}
             </h1>
-            <p class="page-subtitle">
-                {% if form_type == 'create' %}
-                Preencha os dados abaixo para criar um novo usuário no sistema
-                {% else %}
-                Atualize as informações do usuário
-                {% endif %}
+            <p class="settings-hero-subtitle">
+                {% if form_type == 'create' %}Cadastre um novo membro na plataforma{% else %}Atualize informações pessoais e configurações de acesso{% endif %}
             </p>
         </div>
-        <div class="col-md-4 text-md-end text-start mt-3 mt-md-0">
-            <a href="{% url 'user_list' %}" class="btn btn-outline-secondary">
-                <i class="bi bi-arrow-left"></i> Voltar para Lista
+        <div class="d-none d-md-block">
+            <a href="{% url 'user_list' %}" class="btn btn-light btn-lg rounded-pill fw-bold text-primary shadow-sm px-4">
+                <i class="bi bi-arrow-left me-2"></i>Voltar
             </a>
         </div>
     </div>
-</div>
 
-<div class="row justify-content-center fade-in">
-    <div class="col-lg-8">
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="bi bi-info-circle"></i> Informações Pessoais
-                </h5>
-            </div>
-            <div class="card-body">
-                {% if error %}
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ error }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <!-- Error Messages -->
+    {% if error %}
+    <div class="alert alert-danger alert-dismissible fade show rounded-4 shadow-sm" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ error }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="row g-4">
+            
+            <!-- Coluna Esquerda: Foto e Info Básica -->
+            <div class="col-lg-4">
+                <div class="premium-card text-center h-100 d-flex flex-column align-items-center">
+                    <div class="profile-photo-container mb-4 position-relative d-inline-block mt-3">
+                        {% if target_user and target_user.profile_photo %}
+                        <img src="{{ target_user.profile_photo.url }}" id="photo-preview"
+                            class="rounded-circle shadow-sm" alt="Foto de perfil"
+                            style="width: 160px; height: 160px; object-fit: cover; border: 4px solid #f8fafc;">
+                        {% else %}
+                        <div id="photo-preview-placeholder" class="rounded-circle shadow-sm d-flex align-items-center justify-content-center bg-light text-secondary" style="width: 160px; height: 160px; font-size: 4rem; border: 4px solid #f8fafc;">
+                            <i class="bi bi-person"></i>
+                        </div>
+                        <img src="" id="photo-preview" class="rounded-circle shadow-sm d-none" alt="Preview" style="width: 160px; height: 160px; object-fit: cover; border: 4px solid #f8fafc;">
+                        {% endif %}
+                        
+                        <label for="profile_photo" class="btn btn-primary rounded-circle position-absolute" style="bottom: 5px; right: 5px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.15); cursor: pointer; z-index: 10;">
+                            <i class="bi bi-camera-fill"></i>
+                        </label>
+                        <input type="file" id="profile_photo" name="profile_photo" class="d-none" accept="image/png, image/jpeg, image/jpg" onchange="previewImage(this)">
+                    </div>
+                    
+                    {% if form_type == 'edit' %}
+                    <h4 class="fw-bold text-dark mb-1">{{ target_user.first_name }} {{ target_user.last_name }}</h4>
+                    <p class="text-muted small mb-3">{{ target_user.get_role_display|default:target_user.role|title }}</p>
+                    <div class="d-flex justify-content-center gap-2 mb-4">
+                        {% if target_user.is_active %}
+                        <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill"><i class="bi bi-check-circle-fill me-1"></i> Ativo</span>
+                        {% else %}
+                        <span class="badge bg-danger bg-opacity-10 text-danger px-3 py-2 rounded-pill"><i class="bi bi-x-circle-fill me-1"></i> Inativo</span>
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <h5 class="fw-bold text-muted mb-4">Novo Perfil</h5>
+                    {% endif %}
+
+                    <div class="text-start bg-light p-3 rounded-4 mt-auto border w-100">
+                        <p class="small text-muted fw-bold mb-1"><i class="bi bi-info-circle-fill me-1"></i>Dica de Foto</p>
+                        <p class="small mb-0 text-secondary">Use uma imagem quadrada de até 5MB (JPG ou PNG) para melhor qualidade na plataforma.</p>
+                    </div>
                 </div>
-                {% endif %}
+            </div>
 
-                <form method="post" enctype="multipart/form-data">
-                    {% csrf_token %}
+            <!-- Coluna Direita: Formulário -->
+            <div class="col-lg-8">
+                <div class="premium-card mb-4">
+                    <h3 class="premium-card-title"><i class="bi bi-person-vcard text-primary me-2"></i>Dados Pessoais</h3>
+                    <p class="premium-card-subtitle">Informações básicas de identificação</p>
+                    
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="premium-input-group">
+                                <label>Nome <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="first_name" value="{{ target_user.first_name|default:form_data.first_name|default:'' }}" required placeholder="Ex: João">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="premium-input-group">
+                                <label>Sobrenome <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="last_name" value="{{ target_user.last_name|default:form_data.last_name|default:'' }}" required placeholder="Ex: Silva">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="premium-input-group">
+                                <label>Usuário <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="username" value="{{ target_user.username|default:form_data.username|default:'' }}" {% if form_type == 'edit' %}readonly{% endif %} required placeholder="joao.silva">
+                                {% if form_type == 'edit' %}<div class="form-text small mt-1"><i class="bi bi-lock-fill text-muted me-1"></i>Inalterável</div>{% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="premium-input-group">
+                                <label>E-mail Corporativo <span class="text-danger">*</span></label>
+                                <input type="email" class="form-control" name="email" value="{{ target_user.email|default:form_data.email|default:'' }}" {% if form_type == 'edit' and not request.user.is_administrador %}readonly{% endif %} required placeholder="joao@nexus.com">
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-                    <div class="row mb-3">
-                        <div class="col-md-12 text-center mb-4">
-                            <label class="form-label d-block fw-bold">Foto de Perfil</label>
-                            <div class="profile-photo-container mb-3">
-                                {% if target_user and target_user.profile_photo %}
-                                <img src="{{ target_user.profile_photo.url }}" id="photo-preview"
-                                    class="user-photo-large rounded-circle border shadow-sm" alt="Foto de perfil"
-                                    style="width: 150px; height: 150px; object-fit: cover;">
-                                {% else %}
-                                <img src="https://via.placeholder.com/150?text=Foto" id="photo-preview"
-                                    class="user-photo-large rounded-circle border shadow-sm" alt="Preview"
-                                    style="width: 150px; height: 150px; object-fit: cover; background-color: #f8f9fa;">
+                <div class="premium-card mb-4">
+                    <h3 class="premium-card-title"><i class="bi bi-building text-primary me-2"></i>Acesso e Corporativo</h3>
+                    <p class="premium-card-subtitle">Defina o nível de acesso e alocação do usuário</p>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="premium-input-group">
+                                <label>Perfil de Acesso <span class="text-danger">*</span></label>
+                                <select class="form-select" name="role" required {% if form_type == 'edit' and not request.user.is_administrador %}disabled{% endif %}>
+                                    <option value="">Selecione o nível...</option>
+                                    <option value="analista" {% if target_user and target_user.role == 'analista' %}selected{% elif form_data and form_data.role == 'analista' %}selected{% endif %}>Analista</option>
+                                    <option value="gestor" {% if target_user and target_user.role == 'gestor' %}selected{% elif form_data and form_data.role == 'gestor' %}selected{% endif %}>Gestor</option>
+                                    <option value="tablet" {% if target_user and target_user.role == 'tablet' %}selected{% elif form_data and form_data.role == 'tablet' %}selected{% endif %}>Tablet (Kiosk de Ponto)</option>
+                                    {% if request.user.is_administrador %}
+                                    <option value="administrador" {% if target_user and target_user.role == 'administrador' %}selected{% elif form_data and form_data.role == 'administrador' %}selected{% endif %}>Administrador</option>
+                                    {% endif %}
+                                </select>
+                                {% if form_type == 'edit' and not request.user.is_administrador %}
+                                <input type="hidden" name="role" value="{{ target_user.role }}">
                                 {% endif %}
                             </div>
-                            <div class="d-flex justify-content-center">
-                                <label for="profile_photo" class="btn btn-outline-primary btn-sm">
-                                    <i class="bi bi-camera"></i> Escolher Foto
-                                </label>
-                                <input type="file" id="profile_photo" name="profile_photo" class="d-none"
-                                    accept="image/png, image/jpeg, image/jpg" onchange="previewImage(this)">
-                            </div>
-                            <div class="form-text mt-2">
-                                Formatos aceitos: JPG e PNG. Tamanho máximo: 5MB.
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label">
-                                <i class="bi bi-person"></i> Nome <span class="text-danger">*</span>
-                            </label>
-                            <input type="text" class="form-control" name="first_name"
-                                value="{{ target_user.first_name|default:form_data.first_name|default:'' }}" required>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">
-                                <i class="bi bi-person"></i> Sobrenome <span class="text-danger">*</span>
-                            </label>
-                            <input type="text" class="form-control" name="last_name"
-                                value="{{ target_user.last_name|default:form_data.last_name|default:'' }}" required>
-                        </div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label">
-                                <i class="bi bi-person-badge"></i> Usuário <span class="text-danger">*</span>
-                            </label>
-                            <input type="text" class="form-control" name="username"
-                                value="{{ target_user.username|default:form_data.username|default:'' }}" {% if form_type == 'edit' %}readonly{% endif %} required>
-                            {% if form_type == 'edit' %}
-                            <div class="form-text">O nome de usuário não pode ser alterado.</div>
-                            {% endif %}
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">
-                                <i class="bi bi-envelope"></i> E-mail <span class="text-danger">*</span>
-                            </label>
-                            <input type="email" class="form-control" name="email"
-                                value="{{ target_user.email|default:form_data.email|default:'' }}" {% if not request.user.is_administrador %}readonly{% endif %} required>
-                        </div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label">
-                                <i class="bi bi-person-badge"></i> Perfil <span class="text-danger">*</span>
-                            </label>
-                            <select class="form-control" name="role" required {% if not request.user.is_administrador %}disabled{% endif %}>
-                                <option value="">Selecione...</option>
-                                <option value="analista" {% if target_user and target_user.role == 'analista' %}selected{% elif form_data and form_data.role == 'analista' %}selected{% endif %}>Analista</option>
-                                <option value="gestor" {% if target_user and target_user.role == 'gestor' %}selected{% elif form_data and form_data.role == 'gestor' %}selected{% endif %}>Gestor</option>
-                                <option value="tablet" {% if target_user and target_user.role == 'tablet' %}selected{% elif form_data and form_data.role == 'tablet' %}selected{% endif %}>Tablet (Kiosk de Ponto)</option>
-                                {% if request.user.is_administrador %}
-                                <option value="administrador" {% if target_user and target_user.role == 'administrador' %}selected{% elif form_data and form_data.role == 'administrador' %}selected{% endif %}>Administrador</option>
+                            <div class="premium-input-group">
+                                <label>Departamento</label>
+                                <select class="form-select" name="department" {% if form_type == 'edit' and not request.user.is_administrador %}disabled{% endif %}>
+                                    <option value="">Nenhum Departamento</option>
+                                    {% for dept in departments %}
+                                    {% localize off %}
+                                    <option value="{{ dept.id }}" {% if target_user and target_user.department_id == dept.id %}selected{% elif form_data and form_data.department_id|add:"0" == dept.id %}selected{% elif request.user.is_gestor and request.user.department_id == dept.id %}selected{% endif %}>{{ dept.name }}</option>
+                                    {% endlocalize %}
+                                    {% endfor %}
+                                </select>
+                                {% if request.user.is_gestor and form_type == 'create' %}
+                                <input type="hidden" name="department" value="{{ request.user.department_id }}">
+                                <div class="form-text small text-muted mt-1"><i class="bi bi-info-circle"></i> Vinculado ao seu departamento.</div>
+                                {% elif form_type == 'edit' and not request.user.is_administrador %}
+                                <input type="hidden" name="department" value="{{ target_user.department_id|default:'' }}">
                                 {% endif %}
-                            </select>
-                            {% if not request.user.is_administrador %}
-                            <input type="hidden" name="role" value="{{ target_user.role }}">
-                            {% endif %}
+                            </div>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label">
-                                <i class="bi bi-diagram-3"></i> Departamento
-                            </label>
-                            <select class="form-control" name="department" {% if not request.user.is_administrador %}disabled{% endif %}>
-                                <option value="">Nenhum</option>
-                                {% for dept in departments %}
-                                {% localize off %}
-                                <option value="{{ dept.id }}" {% if target_user and target_user.department_id == dept.id %}selected{% elif form_data and form_data.department_id|add:"0" == dept.id %}selected{% elif request.user.is_gestor and request.user.department_id == dept.id %}selected{% endif %}>
-                                    {{ dept.name }}
-                                </option>
-                                {% endlocalize %}
-                                {% endfor %}
-                            </select>
-                            {% if request.user.is_gestor and form_type == 'create' %}
-                            <input type="hidden" name="department" value="{{ request.user.department_id }}">
-                            <small class="text-muted">Gestores só podem criar usuários no seu próprio departamento.</small>
-                            {% elif not request.user.is_administrador %}
-                            <input type="hidden" name="department" value="{{ target_user.department_id|default:'' }}">
-                            {% endif %}
-                        </div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label">
-                                <i class="bi bi-toggle-on"></i> Status
-                            </label>
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" name="is_active" id="isActive" {% if target_user.is_active or form_type == 'create' %}checked{% endif %} {% if not request.user.is_administrador and not request.user.is_gestor %}disabled{% elif request.user.is_gestor and target_user == request.user %}disabled{% endif %}>
-                                <label class="form-check-label" for="isActive">Usuário Ativo</label>
+                        <div class="col-md-12 mt-4">
+                            <div class="premium-switch">
+                                <div class="d-flex gap-3 align-items-center">
+                                    <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                        <i class="bi bi-power text-primary fs-5"></i>
+                                    </div>
+                                    <div class="switch-label-area">
+                                        <h6>Ativar Usuário</h6>
+                                        <p>Habilita ou bloqueia o acesso deste usuário ao sistema Nexus</p>
+                                    </div>
+                                </div>
+                                <div class="form-check form-switch fs-4 mb-0">
+                                    <input class="form-check-input premium-toggle shadow-none m-0" type="checkbox" name="is_active" id="isActive" {% if target_user.is_active or form_type == 'create' %}checked{% endif %} {% if form_type == 'edit' and not request.user.is_administrador and not request.user.is_gestor %}disabled{% elif request.user.is_gestor and target_user == request.user %}disabled{% endif %}>
+                                </div>
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    <hr class="my-4">
+                <div class="premium-card mb-4">
+                    <h3 class="premium-card-title"><i class="bi bi-shield-lock text-primary me-2"></i>Segurança</h3>
+                    <p class="premium-card-subtitle">Credenciais de acesso à plataforma</p>
 
-                    <h5 class="mb-3">
-                        <i class="bi bi-lock"></i> Segurança
-                    </h5>
-
-                    <div class="row mb-3">
+                    <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label">
-                                <i class="bi bi-key"></i> Senha
-                                {% if form_type == 'create' %}<span class="text-danger">*</span>{% endif %}
-                            </label>
-                            <div class="input-group">
-                                <input type="password" class="form-control" name="password" id="passwordInput" {% if form_type == 'create' %}required{% endif %} minlength="6">
-                                <button class="btn btn-outline-secondary" type="button" id="togglePassword">
-                                    <i class="bi bi-eye"></i>
-                                </button>
+                            <div class="premium-input-group">
+                                <label>Senha {% if form_type == 'create' %}<span class="text-danger">*</span>{% endif %}</label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control border-end-0" name="password" id="passwordInput" {% if form_type == 'create' %}required{% endif %} minlength="6" placeholder="••••••••">
+                                    <span class="input-group-text bg-white" onclick="togglePassword('passwordInput', this.querySelector('i'))">
+                                        <i class="bi bi-eye"></i>
+                                    </span>
+                                </div>
+                                {% if form_type == 'edit' %}
+                                <div class="form-text small mt-1">Deixe em branco para manter a senha atual.</div>
+                                {% endif %}
                             </div>
-                            {% if form_type == 'edit' %}
-                            <div class="form-text">Deixe em branco para manter a senha atual.</div>
-                            {% endif %}
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">
-                                <i class="bi bi-key-fill"></i> Confirmar Senha
-                                {% if form_type == 'create' %}<span class="text-danger">*</span>{% endif %}
-                            </label>
-                            <div class="input-group">
-                                <input type="password" class="form-control" name="confirm_password"
-                                    id="confirmPasswordInput" {% if form_type == 'create' %}required{% endif %}>
-                                <button class="btn btn-outline-secondary" type="button" id="toggleConfirmPassword">
-                                    <i class="bi bi-eye"></i>
-                                </button>
+                            <div class="premium-input-group">
+                                <label>Confirmar Senha {% if form_type == 'create' %}<span class="text-danger">*</span>{% endif %}</label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control border-end-0" name="confirm_password" id="confirmPasswordInput" {% if form_type == 'create' %}required{% endif %} minlength="6" placeholder="••••••••">
+                                    <span class="input-group-text bg-white" onclick="togglePassword('confirmPasswordInput', this.querySelector('i'))">
+                                        <i class="bi bi-eye"></i>
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    <div class="d-flex justify-content-end gap-2 mt-4">
-                        <a href="{% url 'user_list' %}" class="btn btn-light border">
-                            Cancelar
-                        </a>
-                        <button type="submit" class="btn btn-primary px-4">
-                            {% if form_type == 'create' %}
-                            <i class="bi bi-check-lg"></i> Criar Usuário
-                            {% else %}
-                            <i class="bi bi-save"></i> Salvar Alterações
-                            {% endif %}
-                        </button>
-                    </div>
-                </form>
+                <!-- Botões de Ação -->
+                <div class="d-flex justify-content-end gap-3 mt-4 mb-3">
+                    <a href="{% url 'user_list' %}" class="btn btn-light btn-lg rounded-pill px-4 shadow-sm fw-bold border">
+                        Cancelar
+                    </a>
+                    <button type="submit" class="premium-btn">
+                        {% if form_type == 'create' %}
+                        <i class="bi bi-person-plus-fill me-2"></i> Criar Usuário
+                        {% else %}
+                        <i class="bi bi-check-circle-fill me-2"></i> Salvar Alterações
+                        {% endif %}
+                    </button>
+                </div>
+
             </div>
         </div>
-    </div>
+    </form>
 </div>
 
 <script>
-    // Toggle Password Visibility
-    document.getElementById('togglePassword').addEventListener('click', function () {
-        const input = document.getElementById('passwordInput');
-        const icon = this.querySelector('i');
-
+    function togglePassword(inputId, icon) {
+        const input = document.getElementById(inputId);
         if (input.type === 'password') {
             input.type = 'text';
-            icon.classList.remove('bi-eye');
-            icon.classList.add('bi-eye-slash');
+            icon.classList.replace('bi-eye', 'bi-eye-slash');
         } else {
             input.type = 'password';
-            icon.classList.remove('bi-eye-slash');
-            icon.classList.add('bi-eye');
+            icon.classList.replace('bi-eye-slash', 'bi-eye');
         }
-    });
+    }
 
-    document.getElementById('toggleConfirmPassword').addEventListener('click', function () {
-        const input = document.getElementById('confirmPasswordInput');
-        const icon = this.querySelector('i');
-
-        if (input.type === 'password') {
-            input.type = 'text';
-            icon.classList.remove('bi-eye');
-            icon.classList.add('bi-eye-slash');
-        } else {
-            input.type = 'password';
-            icon.classList.remove('bi-eye-slash');
-            icon.classList.add('bi-eye');
-        }
-    });
-
-    // Preview de Imagem
     function previewImage(input) {
         if (input.files && input.files[0]) {
             const file = input.files[0];
-
-            // Validação de tamanho (5MB)
             if (file.size > 5 * 1024 * 1024) {
                 alert('A imagem deve ter no máximo 5MB.');
                 input.value = '';
                 return;
             }
-
-            // Validação de tipo
             if (!['image/jpeg', 'image/png', 'image/jpg'].includes(file.type)) {
                 alert('Apenas arquivos JPG e PNG são permitidos.');
                 input.value = '';
                 return;
             }
-
             const reader = new FileReader();
             reader.onload = function (e) {
-                document.getElementById('photo-preview').src = e.target.result;
+                const preview = document.getElementById('photo-preview');
+                const placeholder = document.getElementById('photo-preview-placeholder');
+                if(placeholder) placeholder.classList.add('d-none');
+                preview.src = e.target.result;
+                preview.classList.remove('d-none');
             }
             reader.readAsDataURL(file);
         }
     }
 </script>
-</div>
 {% endblock %}
