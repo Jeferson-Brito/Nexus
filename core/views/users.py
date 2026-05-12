@@ -12,7 +12,7 @@ def user_list(request):
     """Lista de usuários - apenas para gestores e administradores"""
     if not (request.user.is_gestor() or request.user.is_administrador()):
         messages.error(request, 'Você não tem permissão para ver a lista de usuários.')
-        return redirect('dashboard')
+        return redirect(request.META.get('HTTP_REFERER', 'dashboard'))
     
     departments = Department.objects.all().order_by('name')
     
@@ -63,7 +63,7 @@ def user_create(request):
     """Criar novo usuário - apenas para gestores e administradores"""
     if not (request.user.is_gestor() or request.user.is_administrador()):
         messages.error(request, 'Você não tem permissão para criar usuários.')
-        return redirect('dashboard')
+        return redirect(request.META.get('HTTP_REFERER', 'dashboard'))
     
     departments = Department.objects.all()
     
@@ -177,14 +177,14 @@ def user_edit(request, pk):
         if user_to_edit != request.user:
             if user_to_edit.department != request.user.department or user_to_edit.role != 'analista':
                 messages.error(request, 'Você não tem permissão para editar este usuário.')
-                return redirect('user_list')
+                return redirect(request.META.get('HTTP_REFERER', 'dashboard'))
     elif request.user.is_analista() or getattr(request.user, 'role', '') == 'tablet':
         if user_to_edit != request.user:
             messages.error(request, 'Você só pode editar seu próprio perfil.')
-            return redirect('dashboard')
+            return redirect(request.META.get('HTTP_REFERER', 'dashboard'))
     else:
         messages.error(request, 'Você não tem permissão para acessar esta página.')
-        return redirect('dashboard')
+        return redirect(request.META.get('HTTP_REFERER', 'dashboard'))
     
     departments = Department.objects.all()
     
