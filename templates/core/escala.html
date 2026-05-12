@@ -19,100 +19,171 @@
         width: 100%;
     }
 
-    /* Header da Página */
+    /* Header da Página - Redesign Moderno */
     .page-header-escala {
-        background: white;
-        padding: 15px 25px;
-        border-radius: 10px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        margin-bottom: 25px;
+        background: #fff;
+        padding: 1.25rem 2rem;
+        border-radius: 20px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+        margin-bottom: 2rem;
         display: flex;
         justify-content: space-between;
         align-items: center;
         flex-wrap: wrap;
-        gap: 20px;
+        gap: 1.5rem;
         width: 100%;
         position: relative;
+        border: 1px solid rgba(0, 0, 0, 0.05);
     }
 
     .page-title-section {
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 4px;
+        min-width: 250px;
     }
 
     .page-title {
-        font-size: 1.8em;
-        color: #222;
+        font-size: 1.6rem;
+        color: #0f172a;
         margin: 0;
+        font-weight: 800;
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 12px;
+        letter-spacing: -0.5px;
+    }
+    
+    .page-title i {
+        color: #2563eb;
+        font-size: 1.4rem;
+        background: rgba(37, 99, 235, 0.08);
+        width: 42px;
+        height: 42px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
     }
 
     .page-month-display {
-        font-size: 1.4em;
-        color: #3b82f6;
+        font-size: 0.85rem;
+        color: #64748b;
         margin: 0;
         font-weight: 600;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        letter-spacing: 1.5px;
+        opacity: 0.8;
     }
 
-    .page-controls {
-        display: flex;
-        gap: 15px;
-        align-items: center;
-    }
-
-    .input-group-mes {
+    .page-controls-wrapper {
         display: flex;
         align-items: center;
-        gap: 10px;
-        background: white;
-        padding: 8px 15px;
-        border-radius: 8px;
-        border: 1px solid #ccc;
+        gap: 1.25rem;
+        flex-wrap: wrap;
     }
 
-    .icon-mes {
-        color: #0d6efd;
+    .month-selector-group {
+        display: flex;
+        align-items: center;
+        background: #f8fafc;
+        padding: 6px;
+        border-radius: 14px;
+        border: 1px solid #e2e8f0;
+        transition: all 0.2s ease;
+    }
+    
+    .month-selector-group:hover {
+        border-color: #cbd5e1;
+        background: #f1f5f9;
     }
 
-    .input-group-mes input[type="month"] {
+    .month-selector-group i {
+        color: #64748b;
+        margin: 0 10px;
+        font-size: 0.9rem;
+    }
+
+    .month-selector-group input[type="month"] {
+        background: transparent;
         border: none;
         outline: none;
-        font-size: 16px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #334155;
+        padding: 4px 8px;
+        cursor: pointer;
+    }
+
+    .action-button-group {
+        display: flex;
+        gap: 8px;
+        background: #f1f5f9;
         padding: 5px;
+        border-radius: 14px;
+        border: 1px solid #e2e8f0;
     }
 
     .btn-escala {
-        padding: 10px 20px;
+        padding: 10px 18px;
         border: none;
-        border-radius: 8px;
+        border-radius: 10px;
         cursor: pointer;
         font-weight: 600;
-        font-size: 14px;
+        font-size: 0.85rem;
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        transition: all 0.2s;
-        background: #6c757d;
-        color: white;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        background: #fff;
+        color: #334155;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
     }
 
     .btn-escala:hover {
-        background: #5c636a;
+        background: #f8fafc;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        border-color: #cbd5e1;
     }
 
     .btn-escala.primary {
-        background: #0d6efd;
+        background: #2563eb;
         color: white;
+        border-color: #2563eb;
     }
 
     .btn-escala.primary:hover {
-        background: #0b5ed7;
+        background: #1d4ed8;
+        border-color: #1d4ed8;
+        box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
     }
+    
+    .btn-escala.dark {
+        background: #1e293b;
+        color: white;
+        border-color: #1e293b;
+    }
+    
+    .btn-escala.dark:hover {
+        background: #0f172a;
+        border-color: #0f172a;
+        box-shadow: 0 4px 14px rgba(15, 23, 42, 0.25);
+    }
+    
+    .btn-escala.teal {
+        background: #0891b2;
+        color: white;
+        border-color: #0891b2;
+    }
+    
+    .btn-escala.teal:hover {
+        background: #0e7490;
+        border-color: #0e7490;
+        box-shadow: 0 4px 14px rgba(8, 145, 178, 0.3);
+    }
+
 
     /* Badge de alerta para botão Analistas */
     .btn-analistas-wrapper {
@@ -1247,54 +1318,58 @@
     {% endif %}
 
     {% else %}
-    <!-- CABEÇALHO ESCALA NORMAL -->
+    <!-- CABEÇALHO ESCALA NORMAL (Redesign) -->
     <div class="page-header-escala">
         <div class="page-title-section">
-            <h1 class="page-title"><i class="fa-solid fa-calendar-alt text-primary"></i> Escala de Operação</h1>
+            <h1 class="page-title"><i class="fa-solid fa-calendar-alt"></i> Escala de Operação</h1>
             <h2 class="page-month-display" id="mesDisplay">-</h2>
         </div>
-        <div class="page-controls">
-            <div class="input-group-mes">
-                <i class="fa-solid fa-calendar-day icon-mes"></i>
+
+        <div class="page-controls-wrapper">
+            <!-- Seletor de Mês Moderno -->
+            <div class="month-selector-group">
+                <i class="fa-solid fa-calendar-day"></i>
                 <input type="month" id="mesInput">
             </div>
-        </div>
-        <div class="page-actions" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-            
-            {% if is_admin %}
-            <!-- Menu Dropdown de Gestão -->
-            <div class="escala-dropdown">
-                <button class="btn-escala" style="background: linear-gradient(135deg, #1e293b, #334155); color: white;">
-                    <i class="fa-solid fa-sliders me-1"></i> Gestão <i class="fa-solid fa-chevron-down ms-1" style="font-size: 0.7rem; opacity: 0.8;"></i>
-                </button>
-                <div class="escala-dropdown-menu">
-                    <a href="#" onclick="openAnalystModal(); return false;"><i class="fa-solid fa-users-gear" style="color: #475569;"></i> Analistas</a>
-                    <a href="#" onclick="openShiftModal(); return false;"><i class="fa-solid fa-clock" style="color: #475569;"></i> Turnos</a>
-                    <a href="#" onclick="auditarEscalaIA(); return false;" style="border-top: 1px solid #f1f5f9;"><i class="fa-solid fa-robot" style="color: #7c3aed;"></i> Auditar IA</a>
+
+            <!-- Grupo de Ações Coeso -->
+            <div class="action-button-group">
+                {% if is_admin %}
+                <!-- Menu Gestão -->
+                <div class="escala-dropdown">
+                    <button class="btn-escala dark">
+                        <i class="fa-solid fa-sliders"></i> Gestão <i class="fa-solid fa-chevron-down ms-1" style="font-size: 0.65rem; opacity: 0.7;"></i>
+                    </button>
+                    <div class="escala-dropdown-menu">
+                        <a href="#" onclick="openAnalystModal(); return false;"><i class="fa-solid fa-users-gear"></i> Analistas</a>
+                        <a href="#" onclick="openShiftModal(); return false;"><i class="fa-solid fa-clock"></i> Turnos</a>
+                        <a href="#" onclick="auditarEscalaIA(); return false;" style="border-top: 1px solid #f1f5f9;"><i class="fa-solid fa-robot" style="color: #6366f1;"></i> Auditar IA</a>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Menu Exportar -->
+                <div class="escala-dropdown">
+                    <button class="btn-escala">
+                        <i class="fa-solid fa-download"></i> Exportar <i class="fa-solid fa-chevron-down ms-1" style="font-size: 0.65rem; opacity: 0.7;"></i>
+                    </button>
+                    <div class="escala-dropdown-menu">
+                        <a href="#" onclick="openMonthlySummaryModal(); return false;"><i class="fa-solid fa-list-check" style="color: #0ea5e9;"></i> Resumo Mensal</a>
+                        <a href="#" onclick="openExportModal(); return false;"><i class="fa-solid fa-file-export" style="color: #64748b;"></i> Baixar PDF / Excel</a>
+                    </div>
+                </div>
+
+                <!-- Botão Trocas -->
+                <div style="position:relative; display:inline-flex;">
+                    <button class="btn-escala teal" onclick="abrirModalTrocas()" id="btnTrocaFolga">
+                        <i class="fa-solid fa-right-left"></i> Trocas de Folga
+                    </button>
+                    <span id="badgeTrocasPendentes" class="badge-analistas-alerta" style="display:none;">0</span>
                 </div>
             </div>
-            {% endif %}
-
-            <!-- Menu Dropdown de Exportação -->
-            <div class="escala-dropdown">
-                <button class="btn-escala" style="background: #475569; color: white;">
-                    <i class="fa-solid fa-download me-1"></i> Exportar <i class="fa-solid fa-chevron-down ms-1" style="font-size: 0.7rem; opacity: 0.8;"></i>
-                </button>
-                <div class="escala-dropdown-menu">
-                    <a href="#" onclick="openMonthlySummaryModal(); return false;"><i class="fa-solid fa-list-check" style="color: #0ea5e9;"></i> Resumo Mensal</a>
-                    <a href="#" onclick="openExportModal(); return false;"><i class="fa-solid fa-file-export" style="color: #64748b;"></i> Baixar PDF / Excel</a>
-                </div>
-            </div>
-
-            <!-- Botão Trocas de Folga -->
-            <span style="position:relative; display:inline-flex;">
-                <button class="btn-escala" onclick="abrirModalTrocas()" id="btnTrocaFolga" style="background: linear-gradient(135deg, #0891b2, #0e7490); color:white;">
-                    <i class="fa-solid fa-right-left"></i> Trocas de Folga
-                </button>
-                <span id="badgeTrocasPendentes" class="badge-analistas-alerta" style="display:none;">0</span>
-            </span>
         </div>
     </div>
+
     {% endif %}
 
     <!-- Loading -->
