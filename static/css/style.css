@@ -3111,6 +3111,15 @@ body.dark-theme .btn-dept-select:focus {
     transition: all 0.4s ease;
 }
 
+/* Logo Toggling based on Theme */
+body.dark-theme .logo-light {
+    display: none !important;
+}
+body.dark-theme .logo-dark {
+    display: block !important;
+}
+
+
 .main-content {
     padding: 100px 2rem 2rem;
     width: 100%;
