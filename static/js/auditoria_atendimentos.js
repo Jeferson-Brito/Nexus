@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', function () {
         config: null,
         editingId: null,
         currentAnalystId: null,
+        currentAnalystFilter: '',
         charts: {
             evolucao: null,
             radar: null,
@@ -2047,10 +2048,12 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     window.filterAnalystList = function (classificacao) {
+        console.log('Filtrando analista por:', classificacao);
         const cards = document.querySelectorAll('.card-dashboard');
         
         // Se clicar no que já está selecionado, desseleciona (mostra todos)
         if (state.currentAnalystFilter === classificacao) {
+            console.log('Limpando filtro');
             state.currentAnalystFilter = '';
             cards.forEach(c => c.classList.remove('selected'));
         } else {
@@ -2058,8 +2061,12 @@ document.addEventListener('DOMContentLoaded', function () {
             cards.forEach(c => c.classList.remove('selected'));
             
             // Adicionar classe selected ao card clicado
-            const targetCard = document.querySelector(`.card-dashboard[onclick*="'${classificacao}'"]`);
-            if (targetCard) targetCard.classList.add('selected');
+            cards.forEach(card => {
+                const attr = card.getAttribute('onclick');
+                if (attr && attr.includes(`'${classificacao}'`)) {
+                    card.classList.add('selected');
+                }
+            });
         }
 
         // Atualizar label
@@ -2079,12 +2086,17 @@ document.addEventListener('DOMContentLoaded', function () {
             container.style.display = 'block';
         }
 
+        console.log('Chamando loadAnalystAudits com:', state.currentAnalystFilter);
         loadAnalystAudits(state.currentAnalystFilter);
     }
 
     function loadAnalystAudits(classificacao) {
+        console.log('Iniciando loadAnalystAudits:', classificacao);
         const tbody = document.getElementById('lista-auditorias-analista');
-        if (!tbody) return;
+        if (!tbody) {
+            console.error('tbody não encontrado!');
+            return;
+        }
         tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4"><div class="spinner-border text-primary"></div></td></tr>';
 
         const params = new URLSearchParams({
@@ -2098,15 +2110,21 @@ document.addEventListener('DOMContentLoaded', function () {
         if (dataInicio) params.append('data_inicio', dataInicio);
         if (dataFim) params.append('data_fim', dataFim);
 
-        fetch(`/api/auditoria/list/?${params}`, { credentials: 'include' })
+        const url = `/api/auditoria/list/?${params}`;
+        console.log('Fetching URL:', url);
+
+        fetch(url, { credentials: 'include' })
             .then(response => response.json())
             .then(data => {
+                console.log('Data received:', data);
                 if (data.success) {
                     renderAnalystAudits(data.auditorias, tbody);
+                } else {
+                    console.error('API Error:', data.error);
                 }
             })
             .catch(error => {
-                console.error('Erro:', error);
+                console.error('Fetch Error:', error);
                 tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Erro ao carregar auditorias</td></tr>';
             });
     }
