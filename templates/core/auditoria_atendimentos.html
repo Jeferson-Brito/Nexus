@@ -161,7 +161,17 @@
                     <h4 class="fw-bold text-dark mb-0"><i class="bi bi-speedometer2 text-primary me-2"></i>Meu Desempenho</h4>
                     <p class="text-muted small mb-0">Acompanhe as avaliações dos seus atendimentos</p>
                 </div>
-                <div class="text-end">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="d-none d-md-flex align-items-center gap-2 p-1 bg-light rounded-pill border shadow-sm">
+                        <div class="input-group input-group-sm px-2">
+                            <input type="date" class="form-control border-0 bg-transparent" id="filtro_analista_data_inicio" style="max-width: 130px;">
+                            <span class="input-group-text border-0 bg-transparent text-muted small">até</span>
+                            <input type="date" class="form-control border-0 bg-transparent" id="filtro_analista_data_fim" style="max-width: 130px;">
+                        </div>
+                        <button class="btn btn-sm btn-primary rounded-pill px-3 fw-bold" id="btnFiltrarAnalista">
+                            <i class="bi bi-search me-1"></i>Filtrar
+                        </button>
+                    </div>
                     <button class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" id="btnGerarInsightAnalista">
                         <i class="bi bi-magic me-2"></i>Feedback da IA
                     </button>
@@ -289,30 +299,8 @@
                 </h5>
                 <p class="text-muted small mb-0 mt-1">Detalhes e pontuação de cada atendimento avaliado.</p>
             </div>
-            <button class="btn btn-light rounded-pill px-4 shadow-sm border fw-bold text-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#filtrosAnalistaPanel">
-                <i class="bi bi-funnel me-2"></i>Filtros
-            </button>
         </div>
 
-        <div class="collapse bg-light border-top border-bottom" id="filtrosAnalistaPanel">
-            <div class="p-4">
-                <div class="row g-3 align-items-center">
-                    <div class="col-md-5">
-                        <label class="small fw-bold text-muted mb-2 text-uppercase">Período da Auditoria</label>
-                        <div class="input-group shadow-sm" style="border-radius: 99px;">
-                            <input type="date" class="form-control border-end-0 py-2 px-3" style="border-top-left-radius: 99px; border-bottom-left-radius: 99px;" id="filtro_analista_data_inicio">
-                            <span class="input-group-text bg-white border-start-0 border-end-0 text-muted px-2">até</span>
-                            <input type="date" class="form-control border-start-0 py-2 px-3" style="border-top-right-radius: 99px; border-bottom-right-radius: 99px;" id="filtro_analista_data_fim">
-                        </div>
-                    </div>
-                    <div class="col-md-3 mt-auto">
-                        <button class="btn btn-primary w-100 rounded-pill fw-bold shadow-sm py-2" id="btnFiltrarAnalista">
-                            <i class="bi bi-search me-2"></i>Buscar
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
 
         <div class="card-body p-0">
             <div class="table-responsive">

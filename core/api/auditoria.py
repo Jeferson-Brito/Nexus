@@ -680,7 +680,7 @@ def api_estatisticas_analista(request, analista_id):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
-def _get_analista_ia_insight(request, analista, data_inicio=None, data_fim=None):
+def _get_analista_ia_insight(request, analista, data_inicio=None, data_fim=None, destinatario='gestor'):
     """Lógica compartilhada para gerar insight de IA para um analista"""
     from ..services.ia_service import gerar_avaliacao_auditoria
     try:
@@ -759,7 +759,7 @@ def _get_analista_ia_insight(request, analista, data_inicio=None, data_fim=None)
         analista_nome = analista.get_full_name() or analista.username
         
         # Chamar o serviço do Gemini
-        resultado_ia = gerar_avaliacao_auditoria(analista_nome, historico_auditorias, metricas)
+        resultado_ia = gerar_avaliacao_auditoria(analista_nome, historico_auditorias, metricas, destinatario=destinatario)
         
         return {
             'success': True,
@@ -780,7 +780,7 @@ def api_ia_insight_self(request):
         data_inicio = data.get('data_inicio')
         data_fim = data.get('data_fim')
         
-        resultado = _get_analista_ia_insight(request, request.user, data_inicio, data_fim)
+        resultado = _get_analista_ia_insight(request, request.user, data_inicio, data_fim, destinatario='analista')
         if 'error' in resultado:
             return JsonResponse({'error': resultado['error']}, status=400 if 'Nenhuma auditoria' in resultado['error'] else 500)
         

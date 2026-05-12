@@ -233,7 +233,7 @@ RESPONDA APENAS COM O JSON:"""
         return {'urgencia': 'media', 'sentimento': 'neutro', 'erro': str(e)}
 
 
-def gerar_avaliacao_auditoria(analista_nome: str, historico_auditorias: list, metricas: dict) -> dict:
+def gerar_avaliacao_auditoria(analista_nome: str, historico_auditorias: list, metricas: dict, destinatario: str = 'gestor') -> dict:
     """Avalia o histórico de auditorias de um analista e gera um feedback humanizado."""
     try:
         client = _get_client()
@@ -251,8 +251,13 @@ def gerar_avaliacao_auditoria(analista_nome: str, historico_auditorias: list, me
             if not falhas: falhas = "Nenhuma falha"
             detalhes_historico += f"Data: {aud['data'][:10]} | Nota: {aud['nota']} | Classificação: {aud['classificacao']} | Observações: {falhas}\n"
 
+        if destinatario == 'analista':
+            instrucao_destinatario = f"gere um relatório de feedback DIRETAMENTE para o analista '{analista_nome}'. Use a segunda pessoa (você), seja motivador e mentor."
+        else:
+            instrucao_destinatario = f"gere um relatório de feedback estruturado sobre o analista '{analista_nome}' para o GESTOR repassar ao Analista no One-on-One. Use a terceira pessoa."
+
         prompt = f"""Você é o Nexus IA, atuando como um Mentor de Qualidade e Desempenho Senior.
-Sua tarefa é analisar os dados de auditoria recentes do analista '{analista_nome}' e gerar um relatório de feedback estruturado para o Gestor repassar ao Analista no One-on-One.
+Sua tarefa é analisar os dados de auditoria recentes e {instrucao_destinatario}
 
 DADOS DA ANÁLISE:
 - Total de Auditorias no Período: {metricas.get('total_avaliado')}
