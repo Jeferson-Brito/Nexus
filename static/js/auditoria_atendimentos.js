@@ -104,6 +104,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const btnIAAnalista = document.getElementById('btnGerarInsightAnalista');
         if (btnIAAnalista) {
             btnIAAnalista.addEventListener('click', handleGerarInsightAnalyst);
+            checkPersistedFeedback();
         }
 
         const btnAplicarFiltros = document.getElementById('btnAplicarFiltros');
@@ -1950,18 +1951,17 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function handleGerarInsightAnalyst() {
-        const block = document.getElementById('ia-block-analista');
+        const modalEl = document.getElementById('modalIAAnalista');
         const loading = document.getElementById('ia-loading-analista');
         const result = document.getElementById('ia-result-analista');
         
-        if (!block) return;
+        if (!modalEl) return;
         
-        block.style.display = 'block';
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+        
         loading.style.display = 'block';
         result.style.display = 'none';
-        
-        // Scroll para o bloco
-        block.scrollIntoView({ behavior: 'smooth', block: 'center' });
         
         // Obter datas do filtro
         const dataInicio = document.getElementById('filtro_analista_data_inicio')?.value;
@@ -1983,23 +1983,64 @@ document.addEventListener('DOMContentLoaded', function () {
             loading.style.display = 'none';
             if (data.success) {
                 result.style.display = 'block';
+                const markdown = data.insight_markdown;
+                
+                // Salvar no sessionStorage para persistência
+                sessionStorage.setItem('nexus_analyst_feedback', markdown);
+                
                 if (window.marked) {
-                    result.innerHTML = marked.parse(data.insight_markdown);
+                    result.innerHTML = marked.parse(markdown);
                 } else {
-                    result.innerText = data.insight_markdown;
+                    result.innerText = markdown;
                 }
+                
+                checkPersistedFeedback();
             } else {
                 Swal.fire('Aviso', data.error || 'Erro ao gerar feedback', 'warning');
-                block.style.display = 'none';
+                modal.hide();
             }
         })
         .catch(err => {
             console.error(err);
             loading.style.display = 'none';
             Swal.fire('Erro', 'Erro de conexão com o servidor', 'error');
-            block.style.display = 'none';
+            modal.hide();
         });
     }
+
+    function checkPersistedFeedback() {
+        const savedFeedback = sessionStorage.getItem('nexus_analyst_feedback');
+        const btnContainer = document.querySelector('#btnGerarInsightAnalyst')?.parentElement;
+        
+        if (savedFeedback && btnContainer) {
+            // Se já existe o botão de ver feedback, não duplica
+            if (document.getElementById('btnVerFeedbackSalvo')) return;
+            
+            const btnVer = document.createElement('button');
+            btnVer.id = 'btnVerFeedbackSalvo';
+            btnVer.className = 'btn btn-outline-primary rounded-pill px-4 fw-bold ms-2';
+            btnVer.innerHTML = '<i class="bi bi-eye me-2"></i>Ver Feedback Atual';
+            btnVer.onclick = () => {
+                const modalEl = document.getElementById('modalIAAnalista');
+                const result = document.getElementById('ia-result-analista');
+                const loading = document.getElementById('ia-loading-analista');
+                
+                loading.style.display = 'none';
+                result.style.display = 'block';
+                
+                if (window.marked) {
+                    result.innerHTML = marked.parse(savedFeedback);
+                } else {
+                    result.innerText = savedFeedback;
+                }
+                
+                const modal = new bootstrap.Modal(modalEl);
+                modal.show();
+            };
+            btnContainer.appendChild(btnVer);
+        }
+    }
+
 
     window.filterAnalystList = function (classificacao) {
         state.currentAnalystFilter = classificacao; // Guardar filtro atual
