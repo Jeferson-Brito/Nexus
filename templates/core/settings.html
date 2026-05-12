@@ -299,18 +299,6 @@
                 <p class="premium-card-subtitle">Personalize a interface e alertas</p>
                 
                 <div class="d-flex flex-column gap-3">
-                    <div class="premium-switch">
-                        <div class="d-flex gap-3 align-items-center">
-                            <i class="bi bi-moon-stars-fill text-primary fs-4"></i>
-                            <div class="switch-label-area">
-                                <h6>Tema Escuro</h6>
-                                <p>Melhor visualização em ambientes escuros</p>
-                            </div>
-                        </div>
-                        <div class="form-check form-switch">
-                            <input class="form-check-input premium-toggle shadow-none" type="checkbox" id="theme-toggle" onchange="toggleTheme()">
-                        </div>
-                    </div>
 
                     <div class="premium-switch">
                         <div class="d-flex gap-3 align-items-center">
@@ -412,41 +400,7 @@
         <!-- Coluna Direita -->
         <div class="col-lg-6">
             
-            <!-- Segurança - Alterar Senha -->
-            <div class="premium-card mb-4">
-                <div class="card-icon-wrapper icon-purple">
-                    <i class="bi bi-shield-lock-fill"></i>
-                </div>
-                <h3 class="premium-card-title">Segurança</h3>
-                <p class="premium-card-subtitle">Mantenha sua conta protegida atualizando sua senha</p>
-                
-                <form method="post" action="{% url 'settings' %}">
-                    {% csrf_token %}
-                    <input type="hidden" name="change_password" value="true">
-
-                    {% for field in password_form %}
-                    <div class="form-group premium-input-group mb-3">
-                        <label>{{ field.label }}</label>
-                        <div class="input-group">
-                            {{ field }}
-                            <span class="input-group-text border-start-0" onclick="togglePassword(this.previousElementSibling, this.querySelector('i'))">
-                                <i class="bi bi-eye"></i>
-                            </span>
-                        </div>
-                        {% if field.help_text %}
-                        <div class="form-text small mt-1">{{ field.help_text }}</div>
-                        {% endif %}
-                        {% for error in field.errors %}
-                        <div class="text-danger small mt-1 fw-bold"><i class="bi bi-exclamation-circle me-1"></i>{{ error }}</div>
-                        {% endfor %}
-                    </div>
-                    {% endfor %}
-                    
-                    <button type="submit" class="premium-btn mt-4">
-                        <i class="bi bi-check2-circle fs-5"></i> Atualizar Senha
-                    </button>
-                </form>
-            </div>
+            
 
             <!-- Exportação -->
             <div class="premium-card">
@@ -495,31 +449,8 @@
 {% block scripts %}
 <script>
     // Configura inputs do form
-    document.querySelectorAll('input[type="password"]').forEach(input => {
-        input.classList.add('form-control', 'border-end-0');
-    });
-
-    function togglePassword(input, icon) {
-        if (input.type === 'password') {
-            input.type = 'text';
-            icon.classList.remove('bi-eye');
-            icon.classList.add('bi-eye-slash');
-        } else {
-            input.type = 'password';
-            icon.classList.remove('bi-eye-slash');
-            icon.classList.add('bi-eye');
-        }
-    }
 
     document.addEventListener('DOMContentLoaded', function () {
-        // Tema LocalStorage Sync
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme === 'dark') {
-            document.body.classList.add('dark-theme');
-            const toggle = document.getElementById('theme-toggle');
-            if(toggle) toggle.checked = true;
-        }
-
         // Notificações LocalStorage Sync
         const savedNotifications = localStorage.getItem('notifications');
         const notifToggle = document.getElementById('notifications-toggle');
@@ -534,26 +465,6 @@
             });
         }
     });
-
-    // Toggle de tema com animação
-    function toggleTheme() {
-        const body = document.body;
-        const toggle = document.getElementById('theme-toggle');
-
-        body.style.transition = 'background 0.3s ease, color 0.3s ease';
-
-        if (toggle.checked) {
-            body.classList.add('dark-theme');
-            localStorage.setItem('theme', 'dark');
-            showToast('Tema escuro ativado!', 'success');
-        } else {
-            body.classList.remove('dark-theme');
-            localStorage.setItem('theme', 'light');
-            showToast('Tema claro ativado!', 'success');
-        }
-
-        setTimeout(() => { body.style.transition = ''; }, 300);
-    }
 
     // Auditoria Config Logic
     document.addEventListener('DOMContentLoaded', function() {
