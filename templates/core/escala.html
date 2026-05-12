@@ -928,6 +928,24 @@
             transform: translateY(0);
         }
     }
+
+    /* Dark Mode Overrides for Escala Header */
+    html[data-bs-theme="dark"] .page-header-escala {
+        background: #1e293b;
+        border-color: rgba(255, 255, 255, 0.1);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    html[data-bs-theme="dark"] .page-header-escala .page-title {
+        color: #e2e8f0;
+    }
+    html[data-bs-theme="dark"] .input-group-mes {
+        background: #0f172a;
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+    html[data-bs-theme="dark"] .input-group-mes input[type="month"] {
+        color: #e2e8f0;
+        color-scheme: dark;
+    }
 </style>
 {% endblock %}
 

@@ -2834,6 +2834,18 @@ body.dark-theme .dropdown-item:hover {
     color: #2563eb;
 }
 
+body.dark-theme .btn-dept-select {
+    background: #1e293b;
+    border-color: rgba(255, 255, 255, 0.1);
+    color: #e2e8f0;
+}
+
+body.dark-theme .btn-dept-select:hover,
+body.dark-theme .btn-dept-select:focus {
+    background: #2b3035;
+    border-color: var(--primary-color);
+}
+
 .sidebar.collapsed .btn-dept-select {
     padding: 0.6rem;
     justify-content: center;
