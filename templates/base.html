@@ -694,17 +694,7 @@
                 <i class="bi bi-list fs-4"></i>
             </button>
 
-            <!-- Botão Bater Ponto Web -->
-            {% if request.user.is_authenticated and request.user.colaborador_perfil %}
-            {% if request.user.colaborador_perfil.ponto_web_permitido %}
-            <a href="{% url 'ponto_kiosk' %}"
-                class="btn btn-primary btn-sm rounded-pill fw-semibold px-3 shadow-sm d-flex align-items-center gap-1 me-1"
-                style="font-size: 0.85rem;">
-                <i class="bi bi-fingerprint"></i>
-                <span class="d-none d-md-inline" style="margin-top: 1px;">Bater Ponto</span>
-            </a>
-            {% endif %}
-            {% endif %}
+            <!-- Botão Bater Ponto Web (Removido do topo) -->
 
             <!-- Notification Dropdown -->
             <div class="dropdown">
@@ -783,7 +773,7 @@
                         </div>
                     </div>
 
-                    {% if ponto_habilitado %}
+                    {% if user.colaborador_perfil %}
                     <!-- Ponto Widget -->
                     <div class="ponto-widget bg-white border rounded-4 p-3 mb-3 shadow-sm">
                         <div class="d-flex justify-content-between align-items-center mb-3">
@@ -796,29 +786,43 @@
                                     <i class="bi bi-box-arrow-in-right fs-6"></i>
                                 </div>
                                 Entrada
+                                {% if 'entrada' in tipos_hoje %}
+                                <div class="text-success mt-1 fw-bold" style="font-size: 0.65rem;">{{ tipos_hoje.entrada }}</div>
+                                {% endif %}
                             </div>
                             <div class="text-center">
                                 <div class="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-1 {% if 'saida_almoco' in tipos_hoje %}bg-success text-white border-0{% else %}bg-transparent border{% endif %}" style="width: 36px; height: 36px; transition: all 0.2s;">
                                     <i class="bi bi-cup-hot fs-6"></i>
                                 </div>
                                 Almoço
+                                {% if 'saida_almoco' in tipos_hoje %}
+                                <div class="text-success mt-1 fw-bold" style="font-size: 0.65rem;">{{ tipos_hoje.saida_almoco }}</div>
+                                {% endif %}
                             </div>
                             <div class="text-center">
                                 <div class="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-1 {% if 'retorno_almoco' in tipos_hoje %}bg-success text-white border-0{% else %}bg-transparent border{% endif %}" style="width: 36px; height: 36px; transition: all 0.2s;">
                                     <i class="bi bi-box-arrow-in-left fs-6"></i>
                                 </div>
                                 Retorno
+                                {% if 'retorno_almoco' in tipos_hoje %}
+                                <div class="text-success mt-1 fw-bold" style="font-size: 0.65rem;">{{ tipos_hoje.retorno_almoco }}</div>
+                                {% endif %}
                             </div>
                             <div class="text-center">
                                 <div class="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-1 {% if 'saida' in tipos_hoje %}bg-success text-white border-0{% else %}bg-transparent border{% endif %}" style="width: 36px; height: 36px; transition: all 0.2s;">
                                     <i class="bi bi-box-arrow-right fs-6"></i>
                                 </div>
                                 Saída
+                                {% if 'saida' in tipos_hoje %}
+                                <div class="text-success mt-1 fw-bold" style="font-size: 0.65rem;">{{ tipos_hoje.saida }}</div>
+                                {% endif %}
                             </div>
                         </div>
+                        {% if ponto_habilitado %}
                         <a href="{% url 'ponto_kiosk' %}" class="btn btn-primary w-100 rounded-pill fw-semibold py-2 d-flex align-items-center justify-content-center gap-2">
                             <i class="bi bi-fingerprint"></i> Bater Ponto
                         </a>
+                        {% endif %}
                     </div>
                     {% endif %}
 

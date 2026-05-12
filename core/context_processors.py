@@ -51,18 +51,19 @@ def ponto_hoje_status(request):
     
     try:
         colaborador = request.user.colaborador_perfil
-        if not colaborador or not colaborador.ponto_web_permitido:
+        if not colaborador:
             return {}
             
         hoje = timezone.localtime().date()
-        tipos_hoje = list(
-            RegistroPonto.objects.filter(
-                colaborador=colaborador, data=hoje
-            ).values_list('tipo', flat=True)
+        registros = RegistroPonto.objects.filter(
+            colaborador=colaborador, data=hoje
         )
+        
+        tipos_hoje = {r.tipo: r.hora.strftime('%H:%M') for r in registros}
+        
         return {
             'tipos_hoje': tipos_hoje,
-            'ponto_habilitado': True
+            'ponto_habilitado': colaborador.ponto_web_permitido
         }
     except AttributeError:
         return {}
