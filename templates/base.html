@@ -1029,8 +1029,9 @@
                     <!-- Abajour Tema Visual -->
                     <div class="abajour-container mb-3 shadow-sm border" onclick="toggleThemeDropdown()">
                         <div class="d-flex align-items-center gap-2 text-dark" style="font-size: 0.85rem; font-weight: 500;">
-                            <i class="bi bi-moon-stars text-muted transition-all" id="themeIcon" style="font-size: 1.1rem;"></i> Tema Visual
+                            <i class="bi bi-moon-stars text-muted transition-all" id="themeIcon" style="font-size: 1.1rem;"></i> Aparência: <span id="themeName" class="ms-1">Claro</span>
                         </div>
+
                         <!-- Desenho do Abajour CSS -->
                         <div class="abajour-lamp-base"></div>
                         <div class="abajour-lamp-stand"></div>
@@ -1045,32 +1046,44 @@
                             const html = document.documentElement;
                             const currentTheme = html.getAttribute('data-bs-theme');
                             const icon = document.getElementById('themeIcon');
+                            const themeName = document.getElementById('themeName');
+                            
                             if (currentTheme === 'dark') {
                                 html.removeAttribute('data-bs-theme');
                                 document.body.classList.remove('dark-theme');
                                 icon.classList.replace('bi-brightness-high', 'bi-moon-stars');
                                 icon.classList.replace('text-warning', 'text-muted');
+                                if (themeName) themeName.textContent = 'Claro';
                                 localStorage.setItem('theme', 'light');
                             } else {
                                 html.setAttribute('data-bs-theme', 'dark');
                                 document.body.classList.add('dark-theme');
                                 icon.classList.replace('bi-moon-stars', 'bi-brightness-high');
                                 icon.classList.replace('text-muted', 'text-warning');
+                                if (themeName) themeName.textContent = 'Escuro';
                                 localStorage.setItem('theme', 'dark');
                             }
                         }
+
                         // Initialize theme from local storage
                         document.addEventListener('DOMContentLoaded', () => {
-                            if (localStorage.getItem('theme') === 'dark') {
+                            const theme = localStorage.getItem('theme');
+                            const themeName = document.getElementById('themeName');
+                            
+                            if (theme === 'dark') {
                                 document.documentElement.setAttribute('data-bs-theme', 'dark');
                                 document.body.classList.add('dark-theme');
+                                if (themeName) themeName.textContent = 'Escuro';
                                 const icon = document.getElementById('themeIcon');
                                 if (icon) {
                                     icon.classList.replace('bi-moon-stars', 'bi-brightness-high');
                                     icon.classList.replace('text-muted', 'text-warning');
                                 }
+                            } else {
+                                if (themeName) themeName.textContent = 'Claro';
                             }
                         });
+
                     </script>
 
                     <!-- Botão Sair -->
