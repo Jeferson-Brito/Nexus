@@ -1935,7 +1935,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (document.getElementById('analyst-total-geral')) {
                         document.getElementById('analyst-total-geral').textContent = data.total_all_time || 0;
                         document.getElementById('analyst-total-periodo').textContent = data.total_auditorias || 0;
-                        document.getElementById('analyst-media-geral').textContent = data.nota_media_all_time ? (data.nota_media_all_time.toFixed(1) + '/10.0') : '0.0/10.0';
+                        document.getElementById('analyst-media-geral').textContent = data.nota_media_all_time ? (data.nota_media_all_time.toFixed(1) + '/10') : '0.0/10';
                     }
 
                     // Preencher Distribuição (Cards coloridos)
