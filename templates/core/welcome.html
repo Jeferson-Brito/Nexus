@@ -294,6 +294,57 @@
         to   { opacity: 1; }
     }
 
+    /* ─── Dark Mode Overrides ─── */
+    html[data-bs-theme="dark"] .welcome-page {
+        background: transparent;
+    }
+    html[data-bs-theme="dark"] .welcome-hero {
+        box-shadow: 0 20px 60px -10px rgba(0, 0, 0, 0.5);
+    }
+    html[data-bs-theme="dark"] .module-card {
+        background: #1e293b;
+        border-color: rgba(255, 255, 255, 0.05);
+    }
+    html[data-bs-theme="dark"] .module-card:hover {
+        background: #2b3a4d;
+        box-shadow: 0 16px 40px -8px rgba(0,0,0,0.4);
+    }
+    html[data-bs-theme="dark"] .module-title {
+        color: #f8fafc;
+    }
+    html[data-bs-theme="dark"] .module-desc {
+        color: #94a3b8;
+    }
+    html[data-bs-theme="dark"] .module-tag {
+        background: rgba(255, 255, 255, 0.1);
+        color: #cbd5e1;
+    }
+    html[data-bs-theme="dark"] .info-strip {
+        background: #1e293b;
+        border-color: rgba(255, 255, 255, 0.05);
+    }
+    html[data-bs-theme="dark"] .info-item {
+        color: #e2e8f0;
+    }
+    html[data-bs-theme="dark"] .info-divider {
+        background: rgba(255, 255, 255, 0.1);
+    }
+    html[data-bs-theme="dark"] .dept-missing {
+        background: rgba(234, 179, 8, 0.1);
+        border-color: rgba(234, 179, 8, 0.2);
+        color: #fde047;
+    }
+    html[data-bs-theme="dark"] .next-steps-box {
+        background: #1e293b !important;
+        border-color: rgba(255, 255, 255, 0.05) !important;
+    }
+    html[data-bs-theme="dark"] .next-steps-box ol {
+        color: #e2e8f0 !important;
+    }
+    html[data-bs-theme="dark"] .section-label {
+        color: #94a3b8;
+    }
+
     /* ─── Responsive ─── */
     @media (max-width: 768px) {
         .welcome-hero { flex-direction: column; text-align: center; padding: 2rem 1.5rem; }
@@ -478,7 +529,7 @@
     <!-- ── PRÓXIMOS PASSOS ── -->
     {% if not current_department %}
     <p class="section-label">O que fazer agora?</p>
-    <div style="background:#fff; border:1px solid #e9ecef; border-radius:16px; padding:1.5rem 2rem; animation: fadeInUp 0.5s ease both; animation-delay:0.4s;">
+    <div class="next-steps-box" style="background:#fff; border:1px solid #e9ecef; border-radius:16px; padding:1.5rem 2rem; animation: fadeInUp 0.5s ease both; animation-delay:0.4s;">
         <ol style="margin:0; padding-left:1.25rem; display:flex; flex-direction:column; gap:0.75rem; color:#374151; font-size:0.9rem; line-height:1.6;">
             <li>Solicite ao <strong>administrador do sistema</strong> que vincule seu usuário a um departamento.</li>
             <li>Assim que vinculado, o menu lateral ficará disponível com os módulos do seu departamento.</li>

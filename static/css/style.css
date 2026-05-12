@@ -3117,6 +3117,8 @@ body.dark-theme .logo-light {
 }
 body.dark-theme .logo-dark {
     display: block !important;
+    transform: scale(1.38);
+    transform-origin: left center;
 }
 
 
