@@ -114,77 +114,107 @@
             cursor: pointer;
             user-select: none;
             transition: background 0.3s;
+            border: 1px solid #e9ecef;
         }
         .abajour-container:hover {
             background: #f1f3f5;
         }
         
-        /* Lamp CSS drawing */
-        .hanging-lamp-wire {
+        /* Desk Lamp (Abajour) CSS */
+        .abajour-lamp-base {
             position: absolute;
-            top: 0;
-            right: 35px;
-            width: 2px;
-            height: 10px;
-            background: #adb5bd;
-        }
-        .hanging-lamp-shade {
-            position: absolute;
-            top: 10px;
-            right: 20px;
-            width: 32px;
-            height: 16px;
+            bottom: 8px;
+            right: 25px;
+            width: 28px;
+            height: 6px;
             background: #6c757d;
-            border-radius: 3px 3px 0 0;
-            clip-path: polygon(30% 0%, 70% 0%, 100% 100%, 0% 100%);
-            z-index: 2;
+            border-radius: 6px 6px 2px 2px;
+            transition: background 0.3s;
         }
-        .hanging-lamp-bulb {
+        .abajour-lamp-stand {
             position: absolute;
-            top: 26px;
-            right: 28px;
+            bottom: 14px;
+            right: 37px;
+            width: 4px;
+            height: 20px;
+            background: #6c757d;
+            transition: background 0.3s;
+        }
+        .abajour-lamp-shade {
+            position: absolute;
+            bottom: 32px;
+            right: 24px;
+            width: 30px;
+            height: 18px;
+            background: #495057;
+            border-radius: 2px 2px 0 0;
+            clip-path: polygon(25% 0%, 75% 0%, 100% 100%, 0% 100%);
+            z-index: 2;
+            transition: background 0.3s, box-shadow 0.3s;
+        }
+        .abajour-lamp-bulb {
+            position: absolute;
+            bottom: 27px;
+            right: 31px;
             width: 16px;
             height: 8px;
             background: #dee2e6;
-            border-radius: 0 0 16px 16px;
+            border-radius: 0 0 10px 10px;
             z-index: 1;
             transition: all 0.3s;
         }
         .abajour-string {
             position: absolute;
-            top: 20px;
-            right: 35px;
+            bottom: 14px;
+            right: 28px;
             width: 2px;
-            height: 35px;
+            height: 18px;
             background: #adb5bd;
             z-index: 0;
-            transition: height 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform-origin: top;
         }
         .abajour-string::after {
             content: '';
             position: absolute;
-            bottom: -8px;
-            left: -4px;
-            width: 10px;
-            height: 10px;
+            bottom: -6px;
+            left: -3px;
+            width: 8px;
+            height: 8px;
             border-radius: 50%;
             background: #ced4da;
-            border: 2px solid #fff;
+            border: 1px solid #fff;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
             transition: background 0.3s;
         }
-        .abajour-container:active .abajour-string {
+        .abajour-light-beam {
+            position: absolute;
+            bottom: -20px;
+            right: 14px;
+            width: 50px;
             height: 50px;
+            background: linear-gradient(to bottom, rgba(255, 193, 7, 0.5) 0%, rgba(255, 193, 7, 0) 100%);
+            clip-path: polygon(30% 0%, 70% 0%, 100% 100%, 0% 100%);
+            z-index: 0;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        .abajour-container:active .abajour-string {
+            transform: scaleY(1.6);
         }
         
         /* Dark Mode Lamp Active */
-        html[data-bs-theme="dark"] .hanging-lamp-bulb {
+        html[data-bs-theme="dark"] .abajour-lamp-bulb {
             background: #ffc107;
             box-shadow: 0 5px 15px rgba(255, 193, 7, 0.8), 0 0 25px rgba(255, 193, 7, 0.4);
         }
-        html[data-bs-theme="dark"] .hanging-lamp-shade {
+        html[data-bs-theme="dark"] .abajour-lamp-shade {
             background: #343a40;
         }
-        html[data-bs-theme="dark"] .hanging-lamp-wire {
+        html[data-bs-theme="dark"] .abajour-lamp-base,
+        html[data-bs-theme="dark"] .abajour-lamp-stand {
             background: #495057;
         }
         html[data-bs-theme="dark"] .abajour-string::after {
@@ -195,13 +225,16 @@
         html[data-bs-theme="dark"] .abajour-string {
             background: #6c757d;
         }
+        html[data-bs-theme="dark"] .abajour-light-beam {
+            opacity: 1;
+        }
         
         html[data-bs-theme="dark"] .abajour-container {
-            background: #2b3035;
+            background: #212529;
             border-color: #495057 !important;
         }
         html[data-bs-theme="dark"] .abajour-container:hover {
-            background: #343a40;
+            background: #2b3035;
         }
         html[data-bs-theme="dark"] .dropdown-menu {
             background: #212529;
@@ -1011,10 +1044,12 @@
                             <i class="bi bi-moon-stars text-muted transition-all" id="themeIcon" style="font-size: 1.1rem;"></i> Tema Visual
                         </div>
                         <!-- Desenho do Abajour CSS -->
-                        <div class="hanging-lamp-wire"></div>
-                        <div class="hanging-lamp-shade"></div>
-                        <div class="hanging-lamp-bulb"></div>
+                        <div class="abajour-lamp-base"></div>
+                        <div class="abajour-lamp-stand"></div>
+                        <div class="abajour-lamp-shade"></div>
+                        <div class="abajour-lamp-bulb"></div>
                         <div class="abajour-string"></div>
+                        <div class="abajour-light-beam"></div>
                     </div>
                     
                     <script>
@@ -1024,11 +1059,13 @@
                             const icon = document.getElementById('themeIcon');
                             if (currentTheme === 'dark') {
                                 html.removeAttribute('data-bs-theme');
+                                document.body.classList.remove('dark-theme');
                                 icon.classList.replace('bi-brightness-high', 'bi-moon-stars');
                                 icon.classList.replace('text-warning', 'text-muted');
                                 localStorage.setItem('theme', 'light');
                             } else {
                                 html.setAttribute('data-bs-theme', 'dark');
+                                document.body.classList.add('dark-theme');
                                 icon.classList.replace('bi-moon-stars', 'bi-brightness-high');
                                 icon.classList.replace('text-muted', 'text-warning');
                                 localStorage.setItem('theme', 'dark');
@@ -1038,6 +1075,7 @@
                         document.addEventListener('DOMContentLoaded', () => {
                             if (localStorage.getItem('theme') === 'dark') {
                                 document.documentElement.setAttribute('data-bs-theme', 'dark');
+                                document.body.classList.add('dark-theme');
                                 const icon = document.getElementById('themeIcon');
                                 if (icon) {
                                     icon.classList.replace('bi-moon-stars', 'bi-brightness-high');
