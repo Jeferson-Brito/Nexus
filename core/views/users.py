@@ -167,47 +167,56 @@ def user_create(request):
 
 @login_required
 def user_edit(request, pk):
-    """Editar usuário - apenas para gestores e administradores"""
-    if not (request.user.is_gestor() or request.user.is_administrador()):
-        messages.error(request, 'Você não tem permissão para editar usuários.')
-        return redirect('dashboard')
-    
-    departments = Department.objects.all()
+    """Editar usuário - administrador edita tudo, usuário edita apenas si mesmo (foto, nome, senha)"""
     user_to_edit = get_object_or_404(User, pk=pk)
     
-    if request.user.is_gestor():
+    # Validação de Permissão
+    if request.user.is_administrador():
+        pass
+    elif request.user.is_gestor():
         if user_to_edit != request.user:
             if user_to_edit.department != request.user.department or user_to_edit.role != 'analista':
                 messages.error(request, 'Você não tem permissão para editar este usuário.')
                 return redirect('user_list')
+    elif request.user.is_analista() or getattr(request.user, 'role', '') == 'tablet':
+        if user_to_edit != request.user:
+            messages.error(request, 'Você só pode editar seu próprio perfil.')
+            return redirect('dashboard')
+    else:
+        messages.error(request, 'Você não tem permissão para acessar esta página.')
+        return redirect('dashboard')
+    
+    departments = Department.objects.all()
     
     if request.method == 'POST':
-        user_to_edit.email = request.POST.get('email')
-        role = request.POST.get('role')
-        department_id = request.POST.get('department')
-        if department_id:
-            department_id = str(department_id).replace('.', '').replace(',', '').strip()
-            
-        profile_photo = request.FILES.get('profile_photo')
-        
+        # Administrador edita tudo
         if request.user.is_administrador():
-            user_to_edit.role = role
+            user_to_edit.email = request.POST.get('email', user_to_edit.email)
+            user_to_edit.role = request.POST.get('role', user_to_edit.role)
+            
+            department_id = request.POST.get('department')
             if department_id:
+                department_id = str(department_id).replace('.', '').replace(',', '').strip()
                 try:
                     user_to_edit.department = Department.objects.get(id=department_id)
                 except (Department.DoesNotExist, ValueError):
                     user_to_edit.department = None
             else:
                 user_to_edit.department = None
-        elif request.user.is_gestor():
-            user_to_edit.department = request.user.department
+                
+            user_to_edit.ativo = request.POST.get('is_active') == 'on'
         
-        user_to_edit.ativo = request.POST.get('is_active') == 'on'
-        user_to_edit.first_name = request.POST.get('first_name', '')
-        user_to_edit.last_name = request.POST.get('last_name', '')
-        
+        # Gestor editando um analista do seu departamento (mas não a si mesmo)
+        elif request.user.is_gestor() and user_to_edit != request.user:
+            user_to_edit.ativo = request.POST.get('is_active') == 'on'
+
+        # Todos podem editar sua própria foto, nome e senha, e gestor pode editar nome/senha do analista
+        profile_photo = request.FILES.get('profile_photo')
         if profile_photo:
             user_to_edit.profile_photo = profile_photo
+        
+        user_to_edit.first_name = request.POST.get('first_name', user_to_edit.first_name)
+        user_to_edit.last_name = request.POST.get('last_name', user_to_edit.last_name)
         
         password = request.POST.get('password')
         if password:

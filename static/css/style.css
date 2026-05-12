@@ -3098,6 +3098,16 @@ body.dark-theme .btn-dept-select:focus {
     display: none;
 }
 
+.perfil-header-link {
+    transition: background-color 0.2s ease;
+}
+.perfil-header-link:hover {
+    background-color: #f1f5f9;
+}
+html[data-bs-theme="dark"] .perfil-header-link:hover, body.dark-theme .perfil-header-link:hover {
+    background-color: #2b3a4d;
+}
+
 /* ============================================
    HEADER E COMPONENTES TOTAIS
    ============================================ */

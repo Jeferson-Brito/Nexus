@@ -112,7 +112,7 @@
                                 <i class="bi bi-envelope"></i> E-mail <span class="text-danger">*</span>
                             </label>
                             <input type="email" class="form-control" name="email"
-                                value="{{ target_user.email|default:form_data.email|default:'' }}" required>
+                                value="{{ target_user.email|default:form_data.email|default:'' }}" {% if not request.user.is_administrador %}readonly{% endif %} required>
                         </div>
                     </div>
 
@@ -121,7 +121,7 @@
                             <label class="form-label">
                                 <i class="bi bi-person-badge"></i> Perfil <span class="text-danger">*</span>
                             </label>
-                            <select class="form-control" name="role" required>
+                            <select class="form-control" name="role" required {% if not request.user.is_administrador %}disabled{% endif %}>
                                 <option value="">Selecione...</option>
                                 <option value="analista" {% if target_user and target_user.role == 'analista' %}selected{% elif form_data and form_data.role == 'analista' %}selected{% endif %}>Analista</option>
                                 <option value="gestor" {% if target_user and target_user.role == 'gestor' %}selected{% elif form_data and form_data.role == 'gestor' %}selected{% endif %}>Gestor</option>
@@ -130,12 +130,15 @@
                                 <option value="administrador" {% if target_user and target_user.role == 'administrador' %}selected{% elif form_data and form_data.role == 'administrador' %}selected{% endif %}>Administrador</option>
                                 {% endif %}
                             </select>
+                            {% if not request.user.is_administrador %}
+                            <input type="hidden" name="role" value="{{ target_user.role }}">
+                            {% endif %}
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">
                                 <i class="bi bi-diagram-3"></i> Departamento
                             </label>
-                            <select class="form-control" name="department" {% if request.user.is_gestor %}disabled{% endif %}>
+                            <select class="form-control" name="department" {% if not request.user.is_administrador %}disabled{% endif %}>
                                 <option value="">Nenhum</option>
                                 {% for dept in departments %}
                                 {% localize off %}
@@ -145,10 +148,11 @@
                                 {% endlocalize %}
                                 {% endfor %}
                             </select>
-                            {% if request.user.is_gestor %}
+                            {% if request.user.is_gestor and form_type == 'create' %}
                             <input type="hidden" name="department" value="{{ request.user.department_id }}">
-                            <small class="text-muted">Gestores só podem criar usuários no seu próprio
-                                departamento.</small>
+                            <small class="text-muted">Gestores só podem criar usuários no seu próprio departamento.</small>
+                            {% elif not request.user.is_administrador %}
+                            <input type="hidden" name="department" value="{{ target_user.department_id|default:'' }}">
                             {% endif %}
                         </div>
                     </div>
@@ -159,7 +163,7 @@
                                 <i class="bi bi-toggle-on"></i> Status
                             </label>
                             <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" name="is_active" id="isActive" {% if target_user.is_active or form_type == 'create' %}checked{% endif %}>
+                                <input class="form-check-input" type="checkbox" name="is_active" id="isActive" {% if target_user.is_active or form_type == 'create' %}checked{% endif %} {% if not request.user.is_administrador and not request.user.is_gestor %}disabled{% elif request.user.is_gestor and target_user == request.user %}disabled{% endif %}>
                                 <label class="form-check-label" for="isActive">Usuário Ativo</label>
                             </div>
                         </div>
