@@ -42,7 +42,10 @@ urlpatterns = [
     path('users/<int:pk>/edit/', views.user_edit, name='user_edit'),
     path('users/<int:pk>/delete/', views.user_delete, name='user_delete'),
     path('users/history/', views.user_access_history, name='user_access_history'),
-    path('settings/', views.settings_view, name='settings'),
+    path('configuracoes/ia/', views.configuracao_ia_view, name='configuracao_ia'),
+    path('alterar-senha/', views.change_password_view, name='change_password'),
+
+
     path('export/complaints/csv/', views.export_complaints_csv, name='export_complaints_csv'),
     path('export/complaints/xlsx/', views.export_complaints_xlsx, name='export_complaints_xlsx'),
     path('export/stores/csv/', views.export_stores_csv, name='export_stores_csv'),
@@ -429,15 +432,12 @@ urlpatterns = [
     path('api/ia/reclamacoes/<int:pk>/classificar/', api_ia.api_classificar_reclamacao, name='api_ia_classificar_reclamacao'),
     path('api/ia/reclamacoes/classificar-lote/', api_ia.api_classificar_lote, name='api_ia_classificar_lote'),
     
-    # Base Nexus IA (Gerenciamento)
-    path('configuracoes/ia-base/', views.nexus_ia_base_view, name='nexus_ia_base'),
+    # Configuração IA (Unificada)
     path('api/ia/base/', api_ia.api_ia_base_list, name='api_ia_base_list'),
     path('api/ia/base/create/', api_ia.api_ia_base_create, name='api_ia_base_create'),
     path('api/ia/base/<int:pk>/update/', api_ia.api_ia_base_update, name='api_ia_base_update'),
     path('api/ia/base/<int:pk>/delete/', api_ia.api_ia_base_delete, name='api_ia_base_delete'),
 
-    # Base de Auditoria IA
-    path('configuracoes/base-auditoria-ia/', views.base_auditoria_ia_view, name='base_auditoria_ia'),
 ]
 
 

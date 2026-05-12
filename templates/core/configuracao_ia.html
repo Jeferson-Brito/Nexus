@@ -1,0 +1,734 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Configuração da IA | Nexus{% endblock %}
+
+{% block content %}
+<style>
+    /* ── Layout & Hero ── */
+    .config-page { width:100%; padding:1.5rem 1.5rem 2rem; font-family:'Inter',sans-serif; }
+    
+    .config-hero {
+        background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 60%, #6366f1 100%);
+        border-radius: 24px;
+        padding: 2.8rem 3rem;
+        color: #fff;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 20px 40px rgba(37, 99, 235, 0.15);
+    }
+    .config-hero::before {
+        content:'';
+        position:absolute; top:-50%; right:-5%;
+        width:450px; height:450px;
+        background: radial-gradient(circle, rgba(255,255,255,0.12) 0%, transparent 70%);
+        border-radius: 50%;
+        pointer-events: none;
+    }
+    .config-hero-title { font-size:2.2rem; font-weight:800; margin-bottom:.5rem; letter-spacing:-0.5px; }
+    .config-hero-sub { font-size:1.1rem; opacity:.9; margin:0; }
+    .config-hero-icon { font-size:5rem; opacity:.15; position:absolute; right:3rem; top:50%; transform:translateY(-50%); }
+
+    /* ── Tabs Customization ── */
+    .nav-pills-custom {
+        background: rgba(255,255,255,0.05);
+        padding: 0.5rem;
+        border-radius: 16px;
+        display: inline-flex;
+        margin-bottom: 2rem;
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+    .nav-pills-custom .nav-link {
+        border-radius: 12px;
+        padding: 0.7rem 1.5rem;
+        font-weight: 600;
+        color: #64748b;
+        transition: all 0.3s;
+    }
+    .nav-pills-custom .nav-link.active {
+        background: #fff;
+        color: #1e3a8a;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    body.dark-theme .nav-pills-custom { background: rgba(0,0,0,0.2); }
+    body.dark-theme .nav-pills-custom .nav-link.active { background: #334155; color: #fff; }
+
+    /* ── Reusing Premium Styles from Audit Base ── */
+    .baia-stats { display:flex; gap:1rem; margin-bottom:1.8rem; flex-wrap:wrap; }
+    .baia-stat {
+        background:#fff; border-radius:16px;
+        padding:1.1rem 1.5rem;
+        display:flex; align-items:center; gap:.9rem;
+        flex:1; min-width:150px;
+        border:1px solid rgba(0,0,0,.04);
+        box-shadow:0 4px 16px rgba(0,0,0,.04);
+    }
+    .baia-stat-icon {
+        width:42px; height:42px; border-radius:12px;
+        display:flex; align-items:center; justify-content:center;
+        font-size:1.2rem; color:#fff;
+    }
+    .baia-stat-num { font-size:1.6rem; font-weight:800; line-height:1; color:#1e293b; }
+    .baia-stat-lbl { font-size:.72rem; color:#94a3b8; font-weight:500; text-transform:uppercase; letter-spacing:.5px; }
+
+    .baia-filters {
+        background:#fff; border-radius:16px;
+        padding:1.2rem 1.5rem;
+        margin-bottom:1.5rem;
+        border:1px solid rgba(0,0,0,.05);
+        box-shadow:0 4px 16px rgba(0,0,0,.04);
+        display:flex; gap:1rem; flex-wrap:wrap; align-items:center;
+    }
+
+    .baia-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(330px, 1fr)); gap:1.2rem; }
+    .baia-card {
+        background:#fff; border-radius:18px;
+        border:1px solid rgba(0,0,0,.05);
+        box-shadow:0 4px 18px rgba(0,0,0,.05);
+        overflow:hidden;
+        transition: transform .25s ease, box-shadow .25s ease;
+        display:flex; flex-direction:column;
+    }
+    .baia-card:hover { transform:translateY(-4px); box-shadow:0 12px 32px rgba(0,0,0,.09); }
+    .baia-card-header { padding:1.1rem 1.3rem .8rem; display:flex; justify-content:space-between; align-items:flex-start; gap:.5rem; }
+    .baia-categoria-badge { font-size:.67rem; font-weight:700; padding:.28rem .7rem; border-radius:20px; text-transform:uppercase; letter-spacing:.4px; white-space:nowrap; }
+    .baia-card-title { font-size:.95rem; font-weight:700; color:#1e293b; line-height:1.35; margin:0 1.3rem .6rem; }
+    .baia-card-preview { font-size:.8rem; color:#64748b; line-height:1.55; margin:0 1.3rem .9rem; flex:1; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+    .baia-card-footer { border-top:1px solid #f1f5f9; padding:.75rem 1.3rem; display:flex; justify-content:space-between; align-items:center; }
+    .baia-card-date { font-size:.72rem; color:#94a3b8; }
+    .baia-card-actions { display:flex; gap:.4rem; }
+
+    /* ── Tab 1 (Chatbot) Table Style ── */
+    .chatbot-table-card { background:#fff; border-radius:20px; border:1px solid rgba(0,0,0,.05); box-shadow:0 10px 30px rgba(0,0,0,0.03); overflow:hidden; }
+    .table thead th { background: #f8fafc; color: #64748b; font-weight: 700; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.5px; padding: 1.2rem 1.5rem; border: 0; }
+    .table tbody td { padding: 1.2rem 1.5rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+
+    /* ── Settings & Export Styles (from settings.html) ── */
+    .premium-card { background: white; border-radius: 20px; border: 1px solid rgba(0,0,0,0.04); box-shadow: 0 10px 30px rgba(0,0,0,0.03); padding: 2rem; position: relative; overflow: hidden; }
+    .card-icon-wrapper { width: 54px; height: 54px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 1.5rem; color: white; }
+    .icon-orange { background: linear-gradient(135deg, #f59e0b, #d97706); }
+    .icon-green { background: linear-gradient(135deg, #10b981, #059669); }
+    .export-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; }
+    .export-item { background: #f8fafc; border-radius: 16px; padding: 1.2rem; text-align: center; border: 1px solid #f1f5f9; transition: all 0.3s; }
+    .export-item:hover { background: white; border-color: #e2e8f0; box-shadow: 0 8px 20px rgba(0,0,0,0.04); transform: translateY(-3px); }
+    .export-icon { font-size: 24px; color: #3b82f6; margin-bottom: 0.5rem; }
+    .btn-badge { font-size: 0.75rem; padding: 0.3rem 0.6rem; border-radius: 8px; font-weight: 600; text-decoration: none; }
+    .badge-csv { background: #e0f2fe; color: #0284c7; }
+    .badge-xlsx { background: #dcfce7; color: #166534; }
+    .premium-btn { background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; border: none; border-radius: 12px; padding: 0.8rem 1.5rem; font-weight: 600; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+
+    /* Dark Mode Global Support */
+    body.dark-theme .baia-stat, body.dark-theme .baia-filters, body.dark-theme .baia-card, body.dark-theme .chatbot-table-card, body.dark-theme .premium-card, body.dark-theme .export-item {
+        background: #1e293b; border-color: #334155; color: #f8fafc;
+    }
+    body.dark-theme .baia-stat-num, body.dark-theme .baia-card-title, body.dark-theme .table tbody td { color: #f8fafc; }
+    body.dark-theme .table thead th { background: #0f172a; color: #94a3b8; }
+    body.dark-theme .table tbody td { border-color: #334155; }
+    body.dark-theme .baia-card-footer { border-color: #334155; }
+
+    /* Cores categorias auditoria */
+    .cat-geral       { background:#f1f5f9; color:#64748b; }
+    .cat-apresentacao{ background:#fef3c7; color:#d97706; }
+    .cat-historico   { background:#d1fae5; color:#059669; }
+    .cat-entendimento{ background:#dbeafe; color:#2563eb; }
+    .cat-informacao  { background:#ede9fe; color:#7c3aed; }
+    .cat-acordo_espera{ background:#fce7f3; color:#be185d; }
+    .cat-respeito    { background:#dcfce7; color:#16a34a; }
+    .cat-portugues   { background:#fff7ed; color:#ea580c; }
+    .cat-finalizacao { background:#e0f2fe; color:#0284c7; }
+    .cat-procedimento{ background:#fef9c3; color:#ca8a04; }
+</style>
+
+<div class="config-page">
+    <!-- Hero -->
+    <div class="config-hero">
+        <div>
+            <h1 class="config-hero-title"><i class="bi bi-robot me-3"></i>Configuração da IA</h1>
+            <p class="config-hero-sub">Central de gerenciamento de conhecimento e inteligência do Nexus</p>
+        </div>
+        <i class="bi bi-cpu config-hero-icon"></i>
+    </div>
+
+    <!-- Tabs Navigation -->
+    <div class="d-flex justify-content-center">
+        <ul class="nav nav-pills nav-pills-custom" id="iaConfigTabs" role="tablist">
+            <li class="nav-item">
+                <button class="nav-link active" id="chatbot-tab" data-bs-toggle="pill" data-bs-target="#chatbot-pane" type="button">
+                    <i class="bi bi-chat-dots me-2"></i>Conhecimento (Chatbot)
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" id="auditoria-tab" data-bs-toggle="pill" data-bs-target="#auditoria-pane" type="button">
+                    <i class="bi bi-shield-check me-2"></i>Regras de Auditoria
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" id="sistema-tab" data-bs-toggle="pill" data-bs-target="#sistema-pane" type="button">
+                    <i class="bi bi-gear-wide-connected me-2"></i>Parâmetros e Exportação
+                </button>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="tab-content" id="iaConfigTabsContent">
+        
+        <!-- PANE 1: CHATBOT (Base Nexus IA) -->
+        <div class="tab-pane fade show active" id="chatbot-pane">
+            <!-- Filtro Administrador -->
+            {% if user.role == 'administrador' %}
+            <div class="baia-filters mb-4">
+                <div class="col-md-auto"><label class="form-label mb-0 fw-bold">Departamento:</label></div>
+                <div class="col-md-4">
+                    <select class="form-select" id="filtroDepartamentoIA" onchange="carregarArtigosIA()">
+                        <option value="">Todos os Departamentos</option>
+                        {% for dept in departments %}
+                            <option value="{{ dept.id }}">{{ dept.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="ms-auto">
+                    <button class="btn premium-btn" onclick="limparFormularioIA()" data-bs-toggle="modal" data-bs-target="#modalArtigoIA">
+                        <i class="bi bi-plus-lg me-2"></i>Novo Artigo Chatbot
+                    </button>
+                </div>
+            </div>
+            {% else %}
+            <div class="d-flex justify-content-end mb-4">
+                <button class="btn premium-btn" onclick="limparFormularioIA()" data-bs-toggle="modal" data-bs-target="#modalArtigoIA">
+                    <i class="bi bi-plus-lg me-2"></i>Novo Artigo Chatbot
+                </button>
+            </div>
+            {% endif %}
+
+            <div class="chatbot-table-card">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0" id="tabelaArtigosIA">
+                        <thead>
+                            <tr>
+                                <th>Título</th>
+                                {% if user.role == 'administrador' %}<th>Departamento</th>{% endif %}
+                                <th>Criado em</th>
+                                <th class="text-end">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td colspan="4" class="text-center py-4"><div class="spinner-border text-primary"></div></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- PANE 2: AUDITORIA (Base Auditoria IA) -->
+        <div class="tab-pane fade" id="auditoria-pane">
+            <!-- Stats Bar -->
+            <div class="baia-stats" id="baiaStats">
+                <div class="baia-stat">
+                    <div class="baia-stat-icon" style="background:linear-gradient(135deg,#4f46e5,#7c3aed)"><i class="bi bi-journal-text"></i></div>
+                    <div><div class="baia-stat-num" id="statTotal">—</div><div class="baia-stat-lbl">Total de artigos</div></div>
+                </div>
+                <div class="baia-stat">
+                    <div class="baia-stat-icon" style="background:linear-gradient(135deg,#0ea5e9,#2563eb)"><i class="bi bi-list-check"></i></div>
+                    <div><div class="baia-stat-num" id="statCriterios">—</div><div class="baia-stat-lbl">Critérios cobertos</div></div>
+                </div>
+                <div class="baia-stat">
+                    <div class="baia-stat-icon" style="background:linear-gradient(135deg,#10b981,#059669)"><i class="bi bi-shield-check"></i></div>
+                    <div><div class="baia-stat-num" id="statCobertos">—</div><div class="baia-stat-lbl">Regras gerais</div></div>
+                </div>
+            </div>
+
+            <!-- Filtros Auditoria -->
+            <div class="baia-filters">
+                <div class="flex-grow-1" style="min-width:200px;">
+                    <input type="text" id="baiaBusca" class="form-control" placeholder="🔍 Buscar regra por título ou conteúdo..." oninput="filtrarLocal()">
+                </div>
+                <div style="min-width:200px;">
+                    <select class="form-select" id="baiaFiltroCategoria" onchange="filtrarLocal()">
+                        <option value="">Todas as categorias</option>
+                    </select>
+                </div>
+                <button class="btn premium-btn" onclick="abrirModalNovo()">
+                    <i class="bi bi-plus-lg me-1"></i> Nova Regra Auditoria
+                </button>
+            </div>
+
+            <!-- Grid Auditoria -->
+            <div id="baiaGrid">
+                <div class="baia-loading"><div class="spinner-border" role="status"></div><p class="text-muted mt-3 mb-0">Carregando base de auditoria...</p></div>
+            </div>
+        </div>
+
+        <!-- PANE 3: SISTEMA (Parâmetros e Exportação) -->
+        <div class="tab-pane fade" id="sistema-pane">
+            <div class="row g-4">
+                <div class="col-lg-6">
+                    <div class="premium-card h-100">
+                        <div class="card-icon-wrapper icon-orange">
+                            <i class="bi bi-gear-fill"></i>
+                        </div>
+                        <h3 class="premium-card-title">Parâmetros de Auditoria</h3>
+                        <p class="premium-card-subtitle">Configure as regras globais de avaliação automática</p>
+                        
+                        <form id="form-audit-config">
+                            <div class="mb-4">
+                                <label class="form-label fw-bold small text-muted text-uppercase">Percentual Mínimo Aceitável (%)</label>
+                                <div class="input-group">
+                                    <input type="number" step="0.1" class="form-control form-control-lg" id="percentual_minimo" required placeholder="Ex: 85" style="border-radius: 12px 0 0 12px;">
+                                    <span class="input-group-text px-4" style="border-radius: 0 12px 12px 0; background: #f8fafc; font-weight: 700;">%</span>
+                                </div>
+                                <div class="form-text mt-2">Notas abaixo deste percentual serão classificadas como "Insatisfatórias".</div>
+                            </div>
+                            <button type="submit" class="premium-btn w-100">
+                                <i class="bi bi-save me-2"></i>Salvar Parâmetros
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="premium-card h-100">
+                        <div class="card-icon-wrapper icon-green">
+                            <i class="bi bi-cloud-download-fill"></i>
+                        </div>
+                        <h3 class="premium-card-title">Exportação de Dados</h3>
+                        <p class="premium-card-subtitle">Baixe planilhas completas do sistema</p>
+
+                        <div class="export-grid">
+                            <div class="export-item">
+                                <div class="export-icon"><i class="bi bi-list-ul"></i></div>
+                                <h6 class="fw-bold">Reclamações</h6>
+                                <div class="d-flex gap-2 justify-content-center">
+                                    <a href="{% url 'export_complaints_csv' %}" class="btn-badge badge-csv">CSV</a>
+                                    <a href="{% url 'export_complaints_xlsx' %}" class="btn-badge badge-xlsx">XLSX</a>
+                                </div>
+                            </div>
+                            <div class="export-item">
+                                <div class="export-icon"><i class="bi bi-shop"></i></div>
+                                <h6 class="fw-bold">Lojas</h6>
+                                <div class="d-flex gap-2 justify-content-center">
+                                    <a href="{% url 'export_stores_csv' %}" class="btn-badge badge-csv">CSV</a>
+                                    <a href="{% url 'export_stores_xlsx' %}" class="btn-badge badge-xlsx">XLSX</a>
+                                </div>
+                            </div>
+                            {% if user.role == 'administrador' %}
+                            <div class="export-item">
+                                <div class="export-icon"><i class="bi bi-people-fill"></i></div>
+                                <h6 class="fw-bold">Usuários</h6>
+                                <div class="d-flex gap-2 justify-content-center">
+                                    <a href="{% url 'export_users_csv' %}" class="btn-badge badge-csv">CSV</a>
+                                    <a href="{% url 'export_users_xlsx' %}" class="btn-badge badge-xlsx">XLSX</a>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- MODAIS CHATBOT -->
+<div class="modal fade baia-modal" id="modalArtigoIA" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title fw-bold mb-0" id="modalArtigoIATitle">Novo Artigo Chatbot</h5>
+                    <p class="text-muted mb-0 small">Conhecimento usado para responder analistas</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formArtigoIA">
+                    <input type="hidden" id="artigoIAId">
+                    {% if user.role == 'administrador' %}
+                    <div class="mb-3">
+                        <label class="form-label">Departamento</label>
+                        <select class="form-select" id="artigoIADepartamento" required>
+                            <option value="">Selecione um departamento</option>
+                            {% for dept in departments %}
+                                <option value="{{ dept.id }}">{{ dept.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
+                    <div class="mb-3">
+                        <label class="form-label">Título</label>
+                        <input type="text" class="form-control" id="artigoIATitulo" required placeholder="Ex: Procedimento para peças sem cheiro">
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label">Conteúdo (Conhecimento da IA)</label>
+                        <textarea class="form-control" id="artigoIAConteudo" rows="8" required placeholder="Escreva como o analista deve resolver este problema."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="premium-btn" onclick="salvarArtigoIA()">Salvar Conhecimento</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade baia-modal" id="modalExcluirArtigoIA" tabindex="-1">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content text-center">
+            <div class="modal-body p-4">
+                <div style="width:60px;height:60px;border-radius:50%;background:#fef2f2;display:flex;align-items:center;justify-content:center;margin:0 auto 1.2rem;"><i class="bi bi-trash3 text-danger fs-4"></i></div>
+                <h5 class="fw-bold mb-2">Excluir artigo chatbot?</h5>
+                <p class="text-muted small mb-4">A IA não terá mais acesso a esta informação.</p>
+                <input type="hidden" id="deleteArtigoIAId">
+                <div class="d-flex gap-2 justify-content-center">
+                    <button class="btn btn-light px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button class="btn btn-danger px-4" onclick="confirmarExclusaoArtigoIA()">Excluir</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAIS AUDITORIA -->
+<div class="modal fade baia-modal" id="modalArtigo" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title fw-bold mb-0" id="modalArtigoTitulo">Novo Artigo Auditoria</h5>
+                    <p class="text-muted mb-0 small">Critérios usados para auditar chats</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="artigoId">
+                <div class="row g-3">
+                    <div class="col-md-8">
+                        <label class="form-label">Título da Regra</label>
+                        <input type="text" class="form-control" id="artigoTituloInput" placeholder="Ex: Como deve ser a saudação inicial">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Categoria / Critério</label>
+                        <select class="form-select" id="artigoCategoriaSelect">
+                            <option value="geral">Regras Gerais</option>
+                            <option value="apresentacao">Critério 1 — Apresentação</option>
+                            <option value="historico">Critério 2 — Análise de Histórico</option>
+                            <option value="entendimento">Critério 3 — Entendimento</option>
+                            <option value="informacao">Critério 4 — Clareza da Informação</option>
+                            <option value="acordo_espera">Critério 5 — Acordo de Espera</option>
+                            <option value="respeito">Critério 6 — Respeito</option>
+                            <option value="portugues">Critério 7 — Português</option>
+                            <option value="finalizacao">Critério 8 — Finalização</option>
+                            <option value="procedimento">Critério 9 — Procedimento</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Conteúdo da Regra</label>
+                        <textarea class="form-control" id="artigoConteudoInput" rows="6" placeholder="Descreva os detalhes da regra..."></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="premium-btn" onclick="salvarArtigo()">Salvar Regra</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade baia-modal" id="modalExcluir" tabindex="-1">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content text-center">
+            <div class="modal-body p-4">
+                <div style="width:60px;height:60px;border-radius:50%;background:#fef2f2;display:flex;align-items:center;justify-content:center;margin:0 auto 1.2rem;"><i class="bi bi-trash3 text-danger fs-4"></i></div>
+                <h5 class="fw-bold mb-2">Excluir regra de auditoria?</h5>
+                <p class="text-muted small mb-4">A IA deixará de considerar esta regra na auditoria.</p>
+                <input type="hidden" id="excluirId">
+                <div class="d-flex gap-2 justify-content-center">
+                    <button class="btn btn-light px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button class="btn btn-danger px-4" onclick="confirmarExcluir()">Excluir</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const CSRF = '{{ csrf_token }}';
+    const isAdmin = "{{ user.role }}" === "administrador";
+
+    // ── CHATBOT LOGIC ──────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', () => {
+        carregarArtigosIA();
+    });
+
+    async function carregarArtigosIA() {
+        let url = "{% url 'api_ia_base_list' %}";
+        if (isAdmin) {
+            const deptId = document.getElementById('filtroDepartamentoIA').value;
+            if (deptId) url += `?department_id=${deptId}`;
+        }
+        try {
+            const res = await fetch(url);
+            const data = await res.json();
+            if (res.ok) renderizarTabelaIA(data.artigos);
+            else showToast(data.erro || 'Erro ao carregar chatbot', 'danger');
+        } catch (e) { console.error(e); }
+    }
+
+    function renderizarTabelaIA(artigos) {
+        const tbody = document.querySelector('#tabelaArtigosIA tbody');
+        if (artigos.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" class="text-center py-5 text-muted"><i class="bi bi-robot fs-1 d-block mb-2"></i>Nenhum conhecimento cadastrado.</td></tr>`;
+            return;
+        }
+        tbody.innerHTML = artigos.map(a => `
+            <tr>
+                <td class="fw-bold text-dark">${a.titulo}</td>
+                ${isAdmin ? `<td><span class="badge bg-light text-dark border">${a.department_name}</span></td>` : ''}
+                <td class="text-muted small">${a.created_at}</td>
+                <td class="text-end">
+                    <button class="btn btn-sm btn-light text-primary me-1" onclick='editarArtigoIA(${JSON.stringify(a).replace(/'/g, "&apos;")})'><i class="bi bi-pencil"></i></button>
+                    <button class="btn btn-sm btn-light text-danger" onclick="excluirArtigoIA(${a.id})"><i class="bi bi-trash"></i></button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function limparFormularioIA() {
+        document.getElementById('formArtigoIA').reset();
+        document.getElementById('artigoIAId').value = '';
+        document.getElementById('modalArtigoIATitle').textContent = 'Novo Artigo Chatbot';
+    }
+
+    function editarArtigoIA(a) {
+        document.getElementById('artigoIAId').value = a.id;
+        document.getElementById('artigoIATitulo').value = a.titulo;
+        document.getElementById('artigoIAConteudo').value = a.conteudo;
+        if (isAdmin) document.getElementById('artigoIADepartamento').value = a.department_id;
+        document.getElementById('modalArtigoIATitle').textContent = 'Editar Artigo Chatbot';
+        new bootstrap.Modal(document.getElementById('modalArtigoIA')).show();
+    }
+
+    async function salvarArtigoIA() {
+        const id = document.getElementById('artigoIAId').value;
+        const titulo = document.getElementById('artigoIATitulo').value.trim();
+        const conteudo = document.getElementById('artigoIAConteudo').value.trim();
+        let deptId = isAdmin ? document.getElementById('artigoIADepartamento').value : null;
+
+        if (!titulo || !conteudo) { showToast('Preencha título e conteúdo', 'warning'); return; }
+
+        const url = id ? `/api/ia/base/${id}/update/` : "{% url 'api_ia_base_create' %}";
+        try {
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+                body: JSON.stringify({ titulo, conteudo, department_id: deptId })
+            });
+            if (res.ok) {
+                bootstrap.Modal.getInstance(document.getElementById('modalArtigoIA')).hide();
+                showToast('Base do Chatbot atualizada!', 'success');
+                carregarArtigosIA();
+            } else {
+                const data = await res.json();
+                showToast(data.erro || 'Erro ao salvar', 'danger');
+            }
+        } catch (e) { showToast('Erro de conexão', 'danger'); }
+    }
+
+    function excluirArtigoIA(id) {
+        document.getElementById('deleteArtigoIAId').value = id;
+        new bootstrap.Modal(document.getElementById('modalExcluirArtigoIA')).show();
+    }
+
+    async function confirmarExclusaoArtigoIA() {
+        const id = document.getElementById('deleteArtigoIAId').value;
+        try {
+            const res = await fetch(`/api/ia/base/${id}/delete/`, {
+                method: 'POST', headers: { 'X-CSRFToken': CSRF }
+            });
+            if (res.ok) {
+                bootstrap.Modal.getInstance(document.getElementById('modalExcluirArtigoIA')).hide();
+                showToast('Artigo removido!', 'success');
+                carregarArtigosIA();
+            }
+        } catch (e) { showToast('Erro de conexão', 'danger'); }
+    }
+
+    // ── AUDITORIA LOGIC ──────────────────────────────────────
+    const API_AUDIT_LIST    = '/api/base-auditoria/';
+    const API_AUDIT_CRIAR   = '/api/base-auditoria/criar/';
+    const API_AUDIT_DETALHE = (id) => `/api/base-auditoria/${id}/`;
+    let todosArtigosAudit = [];
+
+    document.getElementById('auditoria-tab').addEventListener('shown.bs.tab', () => {
+        if (todosArtigosAudit.length === 0) carregarArtigosAudit();
+    });
+
+    async function carregarArtigosAudit() {
+        try {
+            const res = await fetch(API_AUDIT_LIST);
+            const data = await res.json();
+            if (res.ok) {
+                todosArtigosAudit = data.artigos || [];
+                preencherFiltroCategoriaAudit();
+                atualizarStatsAudit();
+                renderizarGridAudit(todosArtigosAudit);
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    function filtrarLocal() {
+        const busca = document.getElementById('baiaBusca').value.toLowerCase();
+        const cat = document.getElementById('baiaFiltroCategoria').value;
+        const filtrados = todosArtigosAudit.filter(a => {
+            const matchBusca = !busca || a.titulo.toLowerCase().includes(busca) || a.conteudo.toLowerCase().includes(busca);
+            const matchCat = !cat || a.categoria === cat;
+            return matchBusca && matchCat;
+        });
+        renderizarGridAudit(filtrados);
+    }
+
+    function preencherFiltroCategoriaAudit() {
+        const sel = document.getElementById('baiaFiltroCategoria');
+        sel.innerHTML = '<option value="">Todas as categorias</option>';
+        const cats = todosArtigosAudit.reduce((acc, a) => { acc[a.categoria] = a.categoria_display; return acc; }, {});
+        Object.keys(cats).forEach(cat => {
+            const opt = document.createElement('option');
+            opt.value = cat; opt.textContent = cats[cat];
+            sel.appendChild(opt);
+        });
+    }
+
+    function atualizarStatsAudit() {
+        document.getElementById('statTotal').textContent = todosArtigosAudit.length;
+        const criterios = new Set(todosArtigosAudit.filter(a => a.categoria !== 'geral').map(a => a.categoria));
+        document.getElementById('statCriterios').textContent = criterios.size + '/9';
+        document.getElementById('statCobertos').textContent = todosArtigosAudit.filter(a => a.categoria === 'geral').length;
+    }
+
+    function renderizarGridAudit(artigos) {
+        const el = document.getElementById('baiaGrid');
+        if (!artigos.length) {
+            el.innerHTML = `<div class="baia-empty py-5"><i class="bi bi-journal-x fs-1 d-block mb-2"></i>Nenhuma regra encontrada.</div>`;
+            return;
+        }
+        el.innerHTML = `<div class="baia-grid">${artigos.map(a => cardAuditHtml(a)).join('')}</div>`;
+    }
+
+    function cardAuditHtml(a) {
+        const CAT_CSS = { geral: 'cat-geral', apresentacao: 'cat-apresentacao', historico: 'cat-historico', entendimento: 'cat-entendimento', informacao: 'cat-informacao', acordo_espera: 'cat-acordo_espera', respeito: 'cat-respeito', portugues: 'cat-portugues', finalizacao: 'cat-finalizacao', procedimento: 'cat-procedimento' };
+        const cssClass = CAT_CSS[a.categoria] || 'cat-geral';
+        const preview = a.conteudo.length > 120 ? a.conteudo.substring(0, 120) + '…' : a.conteudo;
+        return `
+        <div class="baia-card">
+            <div class="baia-card-header"><span class="baia-categoria-badge ${cssClass}">${a.categoria_display}</span></div>
+            <p class="baia-card-title">${escapeHtml(a.titulo)}</p>
+            <p class="baia-card-preview">${escapeHtml(preview)}</p>
+            <div class="baia-card-footer">
+                <span class="baia-card-date"><i class="bi bi-calendar3 me-1"></i>${new Date(a.created_at).toLocaleDateString()}</span>
+                <div class="baia-card-actions">
+                    <button class="btn btn-sm btn-outline-primary" onclick='editarArtigoAudit(${JSON.stringify(a).replace(/'/g, "&apos;")})'><i class="bi bi-pencil"></i></button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="excluirArtigoAudit(${a.id})"><i class="bi bi-trash"></i></button>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    function escapeHtml(t) { return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;'); }
+
+    function abrirModalNovo() {
+        document.getElementById('artigoId').value = '';
+        document.getElementById('artigoTituloInput').value = '';
+        document.getElementById('artigoConteudoInput').value = '';
+        document.getElementById('artigoCategoriaSelect').value = 'geral';
+        document.getElementById('modalArtigoTitulo').textContent = 'Nova Regra Auditoria';
+        new bootstrap.Modal(document.getElementById('modalArtigo')).show();
+    }
+
+    function editarArtigoAudit(a) {
+        document.getElementById('artigoId').value = a.id;
+        document.getElementById('artigoTituloInput').value = a.titulo;
+        document.getElementById('artigoConteudoInput').value = a.conteudo;
+        document.getElementById('artigoCategoriaSelect').value = a.categoria;
+        document.getElementById('modalArtigoTitulo').textContent = 'Editar Regra Auditoria';
+        new bootstrap.Modal(document.getElementById('modalArtigo')).show();
+    }
+
+    async function salvarArtigo() {
+        const id = document.getElementById('artigoId').value;
+        const titulo = document.getElementById('artigoTituloInput').value.trim();
+        const conteudo = document.getElementById('artigoConteudoInput').value.trim();
+        const categoria = document.getElementById('artigoCategoriaSelect').value;
+
+        if (!titulo || !conteudo) { showToast('Preencha título e conteúdo', 'warning'); return; }
+
+        const url = id ? API_AUDIT_DETALHE(id) : API_AUDIT_CRIAR;
+        const method = id ? 'PUT' : 'POST';
+
+        try {
+            const res = await fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+                body: JSON.stringify({ titulo, conteudo, categoria })
+            });
+            if (res.ok) {
+                bootstrap.Modal.getInstance(document.getElementById('modalArtigo')).hide();
+                showToast('Regra de auditoria salva!', 'success');
+                carregarArtigosAudit();
+            }
+        } catch (e) { showToast('Erro de conexão', 'danger'); }
+    }
+
+    function excluirArtigoAudit(id) {
+        document.getElementById('excluirId').value = id;
+        new bootstrap.Modal(document.getElementById('modalExcluir')).show();
+    }
+
+    async function confirmarExcluir() {
+        const id = document.getElementById('excluirId').value;
+        try {
+            const res = await fetch(API_AUDIT_DETALHE(id), { method: 'DELETE', headers: { 'X-CSRFToken': CSRF } });
+            if (res.ok) {
+                bootstrap.Modal.getInstance(document.getElementById('modalExcluir')).hide();
+                showToast('Regra removida!', 'success');
+                carregarArtigosAudit();
+            }
+        } catch (e) { showToast('Erro de conexão', 'danger'); }
+    }
+
+    // ── SISTEMA LOGIC ──────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', () => {
+        // Load Audit Config
+        fetch('/api/auditoria/config/', { credentials: 'include' })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success && data.configuracao) {
+                    document.getElementById('percentual_minimo').value = data.configuracao.percentual_minimo_aceitavel;
+                }
+            });
+
+        // Save Audit Config
+        document.getElementById('form-audit-config').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const valor = document.getElementById('percentual_minimo').value;
+            fetch('/api/auditoria/config/update/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+                body: JSON.stringify({ percentual_minimo: valor })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) showToast('Parâmetros salvos!', 'success');
+                else showToast(data.error || 'Erro ao salvar', 'danger');
+            });
+        });
+    });
+
+</script>
+{% endblock %}

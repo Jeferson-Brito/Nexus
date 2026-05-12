@@ -7,32 +7,19 @@ from django.contrib import messages
 from ..models import Department
 
 @login_required
-def nexus_ia_base_view(request):
+def configuracao_ia_view(request):
     """
-    Renderiza a tela de gerenciamento da Base de Conhecimento do Nexus IA.
-    Apenas Gestores e Administradores têm acesso.
+    Painel Unificado de Configuração da IA e Sistema.
+    Consolida: Base Nexus IA, Base de Auditoria IA, Parâmetros e Exportação.
     """
     if not (request.user.is_gestor() or request.user.is_administrador()):
         messages.error(request, "Você não tem permissão para acessar esta área.")
         return redirect('dashboard')
-        
+
     departments = Department.objects.all().order_by('name')
     
     context = {
         'departments': departments,
     }
-    return render(request, 'core/nexus_ia_base.html', context)
+    return render(request, 'core/configuracao_ia.html', context)
 
-
-@login_required
-def base_auditoria_ia_view(request):
-    """
-    Renderiza a tela de gestão da Base de Conhecimento da IA Auditora.
-    Apenas Gestores e Administradores têm acesso.
-    """
-    if not (request.user.is_gestor() or request.user.is_administrador()):
-        messages.error(request, "Você não tem permissão para acessar esta área.")
-        return redirect('dashboard')
-
-    context = {}
-    return render(request, 'core/base_auditoria_ia.html', context)
