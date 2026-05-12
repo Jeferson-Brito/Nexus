@@ -41,3 +41,28 @@ def departments(request):
         'all_departments': all_depts,
         'current_department': selected_dept
     }
+
+from django.utils import timezone
+from .models import RegistroPonto
+
+def ponto_hoje_status(request):
+    if not request.user.is_authenticated:
+        return {}
+    
+    try:
+        colaborador = request.user.colaborador_perfil
+        if not colaborador or not colaborador.ponto_web_permitido:
+            return {}
+            
+        hoje = timezone.localtime().date()
+        tipos_hoje = list(
+            RegistroPonto.objects.filter(
+                colaborador=colaborador, data=hoje
+            ).values_list('tipo', flat=True)
+        )
+        return {
+            'tipos_hoje': tipos_hoje,
+            'ponto_habilitado': True
+        }
+    except AttributeError:
+        return {}

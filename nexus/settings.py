@@ -108,6 +108,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "core.context_processors.departments",
+                "core.context_processors.ponto_hoje_status",
             ],
             "loaders": _template_loaders,
         },
