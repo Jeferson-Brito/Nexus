@@ -137,113 +137,141 @@
 
     <!-- Visão Exclusiva do Analista -->
     {% if is_analista and not is_gestor and not is_admin %}
+    <style>
+        .card-dashboard { transition: all 0.3s ease; cursor: pointer; border: 1px solid rgba(0,0,0,0.05); }
+        .card-dashboard:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,0,0,0.08) !important; }
+        
+        /* Dark Mode Fixes para a visão do analista */
+        body.dark-theme .card-dashboard { background: #1e293b; border-color: #334155; }
+        body.dark-theme .card-dashboard .text-dark { color: #f8fafc !important; }
+        body.dark-theme #analyst-list-container .card-header { background: #1e293b !important; border-bottom: 1px solid #334155 !important; }
+        body.dark-theme #filtrosAnalistaPanel { background: #0f172a !important; border-color: #334155 !important; }
+        body.dark-theme #analyst-list-container table { color: #e2e8f0; }
+        body.dark-theme #analyst-list-container .table-light { background: #0f172a !important; color: #94a3b8 !important; border-bottom: 1px solid #334155; }
+        body.dark-theme #analyst-list-container .input-group .form-control, body.dark-theme #analyst-list-container .input-group-text {
+            background: #1e293b; border-color: #334155; color: #e2e8f0;
+        }
+    </style>
+
     <div class="row mb-4">
         <!-- Dashboard Cards -->
-        <h4 class="mb-3 text-muted">Meu Desempenho</h4>
+        <div class="col-12 mb-3">
+            <h4 class="fw-bold text-dark mb-0"><i class="bi bi-speedometer2 text-primary me-2"></i>Meu Desempenho</h4>
+            <p class="text-muted small">Acompanhe as avaliações dos seus atendimentos</p>
+        </div>
 
         <div class="col-md-3 mb-3">
-            <div class="card shadow-sm border-left-excelente h-100 card-dashboard cursor-pointer"
-                onclick="filterAnalystList('excelente')">
-                <div class="card-body text-center">
-                    <h5 class="text-success mb-0 fw-bold">Excelente</h5>
-                    <h2 class="display-4 fw-bold my-2" id="count-excelente">0</h2>
-                    <small class="text-muted">Auditorias</small>
+            <div class="card border-0 shadow-sm rounded-4 h-100 card-dashboard position-relative overflow-hidden" onclick="filterAnalystList('excelente')">
+                <div class="card-body p-4 text-center">
+                    <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3" style="width: 60px; height: 60px; background: rgba(16, 185, 129, 0.1); color: #10b981;">
+                        <i class="bi bi-star-fill fs-3"></i>
+                    </div>
+                    <h5 class="text-success mb-1 fw-bold">Excelente</h5>
+                    <h2 class="display-4 fw-bolder mb-0 text-dark" id="count-excelente">0</h2>
+                    <p class="text-muted small mt-1 mb-0 text-uppercase fw-semibold" style="letter-spacing: 1px;">Auditorias</p>
                 </div>
+                <div class="position-absolute bottom-0 start-0 w-100" style="height: 4px; background: #10b981;"></div>
             </div>
         </div>
+        
         <div class="col-md-3 mb-3">
-            <div class="card shadow-sm border-left-bom h-100 card-dashboard cursor-pointer"
-                onclick="filterAnalystList('bom')">
-                <div class="card-body text-center">
-                    <h5 class="text-primary mb-0 fw-bold">Bom</h5>
-                    <h2 class="display-4 fw-bold my-2" id="count-bom">0</h2>
-                    <small class="text-muted">Auditorias</small>
+            <div class="card border-0 shadow-sm rounded-4 h-100 card-dashboard position-relative overflow-hidden" onclick="filterAnalystList('bom')">
+                <div class="card-body p-4 text-center">
+                    <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3" style="width: 60px; height: 60px; background: rgba(59, 130, 246, 0.1); color: #3b82f6;">
+                        <i class="bi bi-hand-thumbs-up-fill fs-3"></i>
+                    </div>
+                    <h5 class="text-primary mb-1 fw-bold">Bom</h5>
+                    <h2 class="display-4 fw-bolder mb-0 text-dark" id="count-bom">0</h2>
+                    <p class="text-muted small mt-1 mb-0 text-uppercase fw-semibold" style="letter-spacing: 1px;">Auditorias</p>
                 </div>
+                <div class="position-absolute bottom-0 start-0 w-100" style="height: 4px; background: #3b82f6;"></div>
             </div>
         </div>
+        
         <div class="col-md-3 mb-3">
-            <div class="card shadow-sm border-left-regular h-100 card-dashboard cursor-pointer"
-                onclick="filterAnalystList('regular')">
-                <div class="card-body text-center">
-                    <h5 class="text-warning mb-0 fw-bold">Regular</h5>
-                    <h2 class="display-4 fw-bold my-2" id="count-regular">0</h2>
-                    <small class="text-muted">Auditorias</small>
+            <div class="card border-0 shadow-sm rounded-4 h-100 card-dashboard position-relative overflow-hidden" onclick="filterAnalystList('regular')">
+                <div class="card-body p-4 text-center">
+                    <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3" style="width: 60px; height: 60px; background: rgba(245, 158, 11, 0.1); color: #f59e0b;">
+                        <i class="bi bi-exclamation-triangle-fill fs-3"></i>
+                    </div>
+                    <h5 class="text-warning mb-1 fw-bold">Regular</h5>
+                    <h2 class="display-4 fw-bolder mb-0 text-dark" id="count-regular">0</h2>
+                    <p class="text-muted small mt-1 mb-0 text-uppercase fw-semibold" style="letter-spacing: 1px;">Auditorias</p>
                 </div>
+                <div class="position-absolute bottom-0 start-0 w-100" style="height: 4px; background: #f59e0b;"></div>
             </div>
         </div>
+        
         <div class="col-md-3 mb-3">
-            <div class="card shadow-sm border-left-insatisfatorio h-100 card-dashboard cursor-pointer"
-                onclick="filterAnalystList('insatisfatorio')">
-                <div class="card-body text-center">
-                    <h5 class="text-danger mb-0 fw-bold">Insatisfatório</h5>
-                    <h2 class="display-4 fw-bold my-2" id="count-insatisfatorio">0</h2>
-                    <small class="text-muted">Auditorias</small>
+            <div class="card border-0 shadow-sm rounded-4 h-100 card-dashboard position-relative overflow-hidden" onclick="filterAnalystList('insatisfatorio')">
+                <div class="card-body p-4 text-center">
+                    <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3" style="width: 60px; height: 60px; background: rgba(239, 68, 68, 0.1); color: #ef4444;">
+                        <i class="bi bi-x-octagon-fill fs-3"></i>
+                    </div>
+                    <h5 class="text-danger mb-1 fw-bold">Insatisfatório</h5>
+                    <h2 class="display-4 fw-bolder mb-0 text-dark" id="count-insatisfatorio">0</h2>
+                    <p class="text-muted small mt-1 mb-0 text-uppercase fw-semibold" style="letter-spacing: 1px;">Auditorias</p>
                 </div>
+                <div class="position-absolute bottom-0 start-0 w-100" style="height: 4px; background: #ef4444;"></div>
             </div>
         </div>
     </div>
 
     <!-- Lista de Auditorias do Analista -->
-    <div class="card shadow-sm" id="analyst-list-container" style="display: none;">
-        <div class="card-header bg-primary text-white">
-            <div class="row align-items-center">
-                <div class="col-md-6">
-                    <div class="card-header bg-primary text-white">
-                        <div class="row align-items-center">
-                            <div class="col-md-6">
-                                <h5 class="mb-0">
-                                    <i class="bi bi-list-ul me-2"></i>Minhas Auditorias - <span
-                                        id="current-filter-label">Todos</span>
-                                </h5>
-                            </div>
-                        </div>
-                        <div class="col-md-6 text-end">
-                            <button class="btn btn-sm btn-outline-light" type="button" data-bs-toggle="collapse"
-                                data-bs-target="#filtrosAnalistaPanel">
-                                <i class="bi bi-filter me-1"></i>Filtros
-                            </button>
-                        </div>
-                    </div>
+    <div class="card border-0 shadow-sm rounded-4 mt-2 mb-5" id="analyst-list-container" style="display: none; overflow: hidden;">
+        <div class="card-header bg-white border-0 py-4 d-flex justify-content-between align-items-center">
+            <div>
+                <h5 class="mb-0 fw-bold text-dark">
+                    <i class="bi bi-card-checklist text-primary me-2"></i>Minhas Auditorias - <span id="current-filter-label" class="text-primary">Todos</span>
+                </h5>
+                <p class="text-muted small mb-0 mt-1">Detalhes e pontuação de cada atendimento avaliado.</p>
+            </div>
+            <button class="btn btn-light rounded-pill px-4 shadow-sm border fw-bold text-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#filtrosAnalistaPanel">
+                <i class="bi bi-funnel me-2"></i>Filtros
+            </button>
+        </div>
 
-                    <div class="collapse mt-3" id="filtrosAnalistaPanel">
-                        <div class="row g-2">
-                            <div class="col-md-3">
-                                <input type="date" class="form-control form-control-sm" id="filtro_analista_data_inicio"
-                                    placeholder="Data início">
-                            </div>
-                            <div class="col-md-3">
-                                <input type="date" class="form-control form-control-sm" id="filtro_analista_data_fim"
-                                    placeholder="Data fim">
-                            </div>
-                            <div class="col-md-2">
-                                <button class="btn btn-sm btn-primary w-100" id="btnFiltrarAnalista">
-                                    <i class="bi bi-search me-1"></i>Filtrar
-                                </button>
-                            </div>
+        <div class="collapse bg-light border-top border-bottom" id="filtrosAnalistaPanel">
+            <div class="p-4">
+                <div class="row g-3 align-items-center">
+                    <div class="col-md-5">
+                        <label class="small fw-bold text-muted mb-2 text-uppercase">Período da Auditoria</label>
+                        <div class="input-group shadow-sm" style="border-radius: 99px;">
+                            <input type="date" class="form-control border-end-0 py-2 px-3" style="border-top-left-radius: 99px; border-bottom-left-radius: 99px;" id="filtro_analista_data_inicio">
+                            <span class="input-group-text bg-white border-start-0 border-end-0 text-muted px-2">até</span>
+                            <input type="date" class="form-control border-start-0 py-2 px-3" style="border-top-right-radius: 99px; border-bottom-right-radius: 99px;" id="filtro_analista_data_fim">
                         </div>
                     </div>
-                </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Data</th>
-                                    <th>ID Conversa</th>
-                                    <th>Tipo</th>
-                                    <th>Pontuação</th>
-                                    <th>Nota</th>
-                                    <th>Classificação</th>
-                                    <th>Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody id="lista-auditorias-analista">
-                                <!-- Preenchido via JS -->
-                            </tbody>
-                        </table>
+                    <div class="col-md-3 mt-auto">
+                        <button class="btn btn-primary w-100 rounded-pill fw-bold shadow-sm py-2" id="btnFiltrarAnalista">
+                            <i class="bi bi-search me-2"></i>Buscar
+                        </button>
                     </div>
                 </div>
             </div>
+        </div>
+
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light text-muted small text-uppercase fw-bold" style="letter-spacing: 0.5px;">
+                        <tr>
+                            <th class="ps-4 py-3 border-0">Data</th>
+                            <th class="py-3 border-0">ID Conversa</th>
+                            <th class="py-3 border-0">Tipo</th>
+                            <th class="py-3 border-0">Pontuação</th>
+                            <th class="py-3 border-0">Nota</th>
+                            <th class="py-3 border-0">Classificação</th>
+                            <th class="pe-4 py-3 border-0 text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="lista-auditorias-analista" class="border-top-0">
+                        <!-- Preenchido via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 
             {% else %}
             <!-- Tabs de Navegação (Visão Gestor/Admin) -->
