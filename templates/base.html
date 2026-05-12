@@ -100,10 +100,10 @@
             background-color: #fff !important;
         }
 
-        /* Abajour theme toggle */
+        /* Abajour theme toggle (Real Lamp CSS) */
         .abajour-container {
             position: relative;
-            height: 52px;
+            height: 60px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -118,43 +118,90 @@
         .abajour-container:hover {
             background: #f1f3f5;
         }
+        
+        /* Lamp CSS drawing */
+        .hanging-lamp-wire {
+            position: absolute;
+            top: 0;
+            right: 35px;
+            width: 2px;
+            height: 10px;
+            background: #adb5bd;
+        }
+        .hanging-lamp-shade {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            width: 32px;
+            height: 16px;
+            background: #6c757d;
+            border-radius: 3px 3px 0 0;
+            clip-path: polygon(30% 0%, 70% 0%, 100% 100%, 0% 100%);
+            z-index: 2;
+        }
+        .hanging-lamp-bulb {
+            position: absolute;
+            top: 26px;
+            right: 28px;
+            width: 16px;
+            height: 8px;
+            background: #dee2e6;
+            border-radius: 0 0 16px 16px;
+            z-index: 1;
+            transition: all 0.3s;
+        }
         .abajour-string {
             position: absolute;
-            top: -20px;
-            right: 32px;
+            top: 20px;
+            right: 35px;
             width: 2px;
-            height: 40px;
+            height: 35px;
             background: #adb5bd;
+            z-index: 0;
             transition: height 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
         .abajour-string::after {
             content: '';
             position: absolute;
-            bottom: -12px;
-            left: -5px;
-            width: 12px;
-            height: 12px;
+            bottom: -8px;
+            left: -4px;
+            width: 10px;
+            height: 10px;
             border-radius: 50%;
-            background: #ffc107;
-            box-shadow: 0 2px 6px rgba(255, 193, 7, 0.4);
+            background: #ced4da;
             border: 2px solid #fff;
+            transition: background 0.3s;
         }
         .abajour-container:active .abajour-string {
-            height: 60px;
+            height: 50px;
         }
-        .abajour-icon {
-            font-size: 1.3rem;
-            transition: color 0.3s, text-shadow 0.3s;
+        
+        /* Dark Mode Lamp Active */
+        html[data-bs-theme="dark"] .hanging-lamp-bulb {
+            background: #ffc107;
+            box-shadow: 0 5px 15px rgba(255, 193, 7, 0.8), 0 0 25px rgba(255, 193, 7, 0.4);
         }
+        html[data-bs-theme="dark"] .hanging-lamp-shade {
+            background: #343a40;
+        }
+        html[data-bs-theme="dark"] .hanging-lamp-wire {
+            background: #495057;
+        }
+        html[data-bs-theme="dark"] .abajour-string::after {
+            background: #ffc107;
+            border-color: #343a40;
+            box-shadow: 0 2px 6px rgba(255, 193, 7, 0.4);
+        }
+        html[data-bs-theme="dark"] .abajour-string {
+            background: #6c757d;
+        }
+        
         html[data-bs-theme="dark"] .abajour-container {
             background: #2b3035;
             border-color: #495057 !important;
         }
         html[data-bs-theme="dark"] .abajour-container:hover {
             background: #343a40;
-        }
-        html[data-bs-theme="dark"] .abajour-string {
-            background: #6c757d;
         }
         html[data-bs-theme="dark"] .dropdown-menu {
             background: #212529;
@@ -961,8 +1008,12 @@
                     <!-- Abajour Tema Visual -->
                     <div class="abajour-container mb-3 shadow-sm border" onclick="toggleThemeDropdown()">
                         <div class="d-flex align-items-center gap-2 text-dark" style="font-size: 0.85rem; font-weight: 500;">
-                            <i class="bi bi-lightbulb abajour-icon text-muted" id="themeIcon"></i> Tema Visual
+                            <i class="bi bi-moon-stars text-muted transition-all" id="themeIcon" style="font-size: 1.1rem;"></i> Tema Visual
                         </div>
+                        <!-- Desenho do Abajour CSS -->
+                        <div class="hanging-lamp-wire"></div>
+                        <div class="hanging-lamp-shade"></div>
+                        <div class="hanging-lamp-bulb"></div>
                         <div class="abajour-string"></div>
                     </div>
                     
@@ -973,12 +1024,12 @@
                             const icon = document.getElementById('themeIcon');
                             if (currentTheme === 'dark') {
                                 html.removeAttribute('data-bs-theme');
-                                icon.classList.replace('bi-lightbulb-fill', 'bi-lightbulb');
+                                icon.classList.replace('bi-brightness-high', 'bi-moon-stars');
                                 icon.classList.replace('text-warning', 'text-muted');
                                 localStorage.setItem('theme', 'light');
                             } else {
                                 html.setAttribute('data-bs-theme', 'dark');
-                                icon.classList.replace('bi-lightbulb', 'bi-lightbulb-fill');
+                                icon.classList.replace('bi-moon-stars', 'bi-brightness-high');
                                 icon.classList.replace('text-muted', 'text-warning');
                                 localStorage.setItem('theme', 'dark');
                             }
@@ -989,7 +1040,7 @@
                                 document.documentElement.setAttribute('data-bs-theme', 'dark');
                                 const icon = document.getElementById('themeIcon');
                                 if (icon) {
-                                    icon.classList.replace('bi-lightbulb', 'bi-lightbulb-fill');
+                                    icon.classList.replace('bi-moon-stars', 'bi-brightness-high');
                                     icon.classList.replace('text-muted', 'text-warning');
                                 }
                             }
