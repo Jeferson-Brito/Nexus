@@ -5,6 +5,13 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/auditoria_atendimentos.css' %}">
+<style>
+    /* Fix imediato para evitar empilhamento invisível de abas devido a cache do CSS */
+    .tab-content .tab-pane:not(.active),
+    #auditoriaTabsContent .tab-pane:not(.active) {
+        display: none !important;
+    }
+</style>
 {% endblock %}
 
 {% block content %}
