@@ -1017,6 +1017,48 @@
         color: #e2e8f0;
         color-scheme: dark;
     }
+
+    /* ============================================
+       STICKY HEADER (via JS – contorna overflow-x:hidden)
+       ============================================ */
+    /* Espaço reservado para evitar salto de layout quando o header fixar */
+    .page-header-escala-placeholder {
+        display: none;
+        height: 0;
+        margin-bottom: 25px;
+    }
+
+    /* Estado fixo: o header sai do fluxo e fica grudado no topo */
+    .page-header-escala.is-fixed {
+        position: fixed;
+        top: 56px;           /* altura exata da navbar */
+        z-index: 500;
+        border-radius: 0 0 14px 14px;
+        border-top: none;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        backdrop-filter: blur(12px);
+        background: rgba(255, 255, 255, 0.96);
+        /* Alinha com a margem esquerda do conteúdo */
+        left: auto;
+        right: auto;
+        animation: slideDownHeader 0.2s ease-out;
+    }
+
+    /* Quando sidebar está expandida */
+    body:not(.sidebar-collapsed) .page-header-escala.is-fixed {
+        /* left e width são controlados pelo JS */
+    }
+
+    @keyframes slideDownHeader {
+        from { transform: translateY(-8px); opacity: 0.8; }
+        to   { transform: translateY(0);    opacity: 1; }
+    }
+
+    /* Ativa o placeholder para manter o espaço quando o header fixa */
+    .page-header-escala.is-fixed ~ .page-header-escala-placeholder,
+    .page-header-escala-placeholder.active {
+        display: block;
+    }
 </style>
 {% endblock %}
 
@@ -5884,5 +5926,89 @@
             return [{ left: 0, width: 100 }];
         }
     }
+
+    // ============================================
+    // STICKY HEADER (contorna overflow-x:hidden no .main-content)
+    // O CSS position:sticky não funciona quando qualquer ancestral tem
+    // overflow diferente de 'visible'. A solução é usar JS para alternar
+    // entre position:relative (normal) e position:fixed (sticky simulado).
+    // ============================================
+    (function initStickyHeader() {
+        const header = document.querySelector('.page-header-escala');
+        if (!header) return;
+
+        // Só ativa no modo normal (não em config/planejamento)
+        const isNormalMode = !header.closest('[id="configContainer"]');
+        if (!isNormalMode && header.style.background && header.style.background.includes('1e293b')) return;
+
+        // Cria o placeholder para preservar o espaço no layout
+        const placeholder = document.createElement('div');
+        placeholder.className = 'page-header-escala-placeholder';
+        header.parentNode.insertBefore(placeholder, header.nextSibling);
+
+        const NAVBAR_HEIGHT = 56; // altura da navbar fixa
+        let headerOffsetTop = 0;
+        let headerHeight = 0;
+        let isFixed = false;
+
+        function recalculate() {
+            if (isFixed) {
+                // Temporariamente desfixar para medir a posição real
+                header.classList.remove('is-fixed');
+                placeholder.classList.remove('active');
+                placeholder.style.height = '0';
+            }
+            headerOffsetTop = header.getBoundingClientRect().top + window.scrollY;
+            headerHeight = header.offsetHeight;
+        }
+
+        function updateHeader() {
+            const scrollY = window.scrollY;
+            const triggerPoint = headerOffsetTop - NAVBAR_HEIGHT;
+
+            if (scrollY > triggerPoint && !isFixed) {
+                // Fixar o header
+                isFixed = true;
+
+                // Calcula largura e posição esquerda do header no layout
+                const rect = header.getBoundingClientRect();
+                // Já que o header vai sair do fluxo, guarda a largura/posição atual
+                const parentLeft = header.parentElement.getBoundingClientRect().left;
+                const parentWidth = header.parentElement.getBoundingClientRect().width;
+
+                header.style.width = parentWidth + 'px';
+                header.style.left = parentLeft + 'px';
+
+                header.classList.add('is-fixed');
+                placeholder.style.height = headerHeight + 'px';
+                placeholder.classList.add('active');
+
+            } else if (scrollY <= triggerPoint && isFixed) {
+                // Desfixar o header
+                isFixed = false;
+                header.classList.remove('is-fixed');
+                header.style.width = '';
+                header.style.left = '';
+                placeholder.style.height = '0';
+                placeholder.classList.remove('active');
+
+                // Recalibra após desfixar
+                headerOffsetTop = header.getBoundingClientRect().top + window.scrollY;
+            }
+        }
+
+        // Inicializa medições
+        recalculate();
+
+        // Ouve eventos
+        window.addEventListener('scroll', updateHeader, { passive: true });
+        window.addEventListener('resize', () => { recalculate(); updateHeader(); }, { passive: true });
+
+        // Recalibra quando sidebar collapsa/expande
+        document.addEventListener('sidebarToggled', () => {
+            setTimeout(() => { recalculate(); updateHeader(); }, 450);
+        });
+    })();
+
 </script>
 {% endblock %}
