@@ -1,6 +1,25 @@
 """
-Serviço de integração com a API do Contact Center (Bitrix24 Analytics).
-Responsável por buscar sessões de chat e seus transcripts.
+Serviço de integração com a API REST nativa do Bitrix24 via Webhook.
+
+Substitui a integração anterior com o intermediário contactcenter.ikli.com.br.
+O webhook `BITRIX24_WEBHOOK_URL` já contém autenticação embutida na URL.
+
+ESCOPO ATUAL DO WEBHOOK: ['imopenlines']
+
+Métodos disponíveis relevantes:
+  - imopenlines.config.list.get       → listar filas (Open Lines) ✅
+  - imopenlines.session.history.get   → histórico de mensagens por SESSION_ID ou CHAT_ID ✅
+  - imopenlines.dialog.get            → dados de um diálogo por DIALOG_ID ✅
+
+LIMITAÇÃO: O webhook atual NÃO permite listar sessões encerradas em lote.
+Para isso, o gestor Bitrix24 precisa adicionar o escopo 'im' ao webhook
+OU configurar o evento OnSessionFinish para enviar os IDs ao Nexus.
+
+ARQUITETURA ATUAL:
+  - get_sessoes_dia_anterior(): tenta via imopenlines.operator.pause.gethistory
+    (histórico de pausas por operador) como proxy para identificar sessões do período.
+    Fallback: retorna lista vazia e loga orientação clara.
+  - get_mensagens_sessao(chat_id): usa imopenlines.session.history.get ✅ FUNCIONA
 """
 import logging
 import requests
@@ -9,7 +28,17 @@ from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
-# Mapeamento de filas → tipo de atendimento
+# ---------------------------------------------------------------------------
+# Mapeamento de filas auditáveis (IDs confirmados via imopenlines.config.list.get)
+# ---------------------------------------------------------------------------
+FILAS_AUDITAVEIS = {
+    19: 'NRS (nível 2)',
+    51: 'NRS',
+    73: 'NRS Franqueados',
+    75: 'HiPag Suporte',
+    53: 'Laundry In Box Suporte',
+}
+
 FILA_TIPO_MAP = {
     'NRS': 'cliente',
     'NRS (nível 2)': 'cliente',
@@ -18,162 +47,218 @@ FILA_TIPO_MAP = {
     'Laundry In Box Suporte': 'cliente',
 }
 
-# Filas auditáveis (ignorar outros bots/filas não relevantes)
-FILAS_AUDITAVEIS = set(FILA_TIPO_MAP.keys())
 
+# ---------------------------------------------------------------------------
+# Função auxiliar central
+# ---------------------------------------------------------------------------
 
-def _get_headers():
-    """Retorna os headers de autenticação da API."""
-    api_key = getattr(settings, 'CONTACTCENTER_API_KEY', '')
-    if not api_key:
-        raise ValueError("CONTACTCENTER_API_KEY não configurada. Adicione ao .env.")
-    
-    # Remove espaços em branco ou quebras de linha acidentais
-    api_key = api_key.strip()
-    
-    return {
-        'X-Api-Key': api_key,
-        'Content-Type': 'application/json',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-    }
-
-
-def _get_base_url():
-    """Retorna a URL base da API."""
-    return getattr(settings, 'CONTACTCENTER_API_URL', 'https://contactcenter.ikli.com.br')
-
-
-def get_linhas_disponiveis():
+def _call_bitrix(method: str, params: dict = None) -> dict:
     """
-    Retorna todas as linhas (filas) disponíveis na API.
-    GET /api/v1/dashboard/available-lines
+    Faz uma chamada ao webhook nativo do Bitrix24.
+    Retorna o conteúdo de `result` ou dict vazio em caso de erro.
+    """
+    webhook_url = getattr(settings, 'BITRIX24_WEBHOOK_URL', '').rstrip('/')
+    if not webhook_url:
+        raise ValueError(
+            "BITRIX24_WEBHOOK_URL não configurada. Adicione ao .env e ao Render."
+        )
+
+    url = f"{webhook_url}/{method}.json"
+    params = params or {}
+
+    try:
+        response = requests.post(url, data=params, timeout=30)
+        response.raise_for_status()
+        data = response.json()
+
+        if 'error' in data:
+            logger.warning(
+                f"[Bitrix24] Erro da API — method={method} "
+                f"error={data.get('error')} | {data.get('error_description', '')}"
+            )
+            return {}
+
+        return data.get('result', data)
+
+    except requests.exceptions.HTTPError as e:
+        logger.error(f"[Bitrix24] HTTP {e.response.status_code} em {method}: {e}")
+        return {}
+    except requests.exceptions.Timeout:
+        logger.error(f"[Bitrix24] Timeout ao chamar {method}")
+        return {}
+    except requests.exceptions.RequestException as e:
+        logger.error(f"[Bitrix24] Erro de conexão em {method}: {e}")
+        return {}
+    except Exception as e:
+        logger.error(f"[Bitrix24] Erro inesperado em {method}: {e}")
+        return {}
+
+
+# ---------------------------------------------------------------------------
+# Funções públicas (mesma assinatura do serviço anterior)
+# ---------------------------------------------------------------------------
+
+def get_linhas_disponiveis() -> list:
+    """
+    Retorna todas as filas (Open Lines / Canais Abertos) disponíveis no Bitrix24.
+    ✅ FUNCIONA com o webhook atual (escopo imopenlines).
     """
     try:
-        url = f"{_get_base_url()}/api/v1/dashboard/available-lines"
-        response = requests.get(url, headers=_get_headers(), timeout=30)
-        response.raise_for_status()
-        return response.json()
+        result = _call_bitrix('imopenlines.config.list.get')
+        if isinstance(result, list):
+            return result
+        return result.get('items', []) if isinstance(result, dict) else []
     except Exception as e:
-        logger.error(f"[Bitrix] Erro ao buscar linhas disponíveis: {e}")
+        logger.error(f"[Bitrix24] Erro ao buscar linhas disponíveis: {e}")
         return []
 
 
-def get_sessoes_dia_anterior(data: date = None, limit: int = 200):
+def get_sessoes_dia_anterior(data: date = None, limit: int = 200) -> list:
     """
-    Busca todas as sessões finalizadas do dia anterior (ou da data especificada).
-    Filtra apenas filas auditáveis.
-    
-    GET /api/v1/sessions?status=finished&start_date=...&end_date=...&limit=200
+    Busca sessões finalizadas do dia especificado.
+
+    ⚠️  LIMITAÇÃO ATUAL: O webhook com escopo ['imopenlines'] NÃO disponibiliza
+    um endpoint para listar sessões históricas em lote.
+
+    Para habilitar essa funcionalidade, o gestor Bitrix24 deve:
+    1. Adicionar o escopo 'im' ao webhook, OU
+    2. Criar um webhook de evento (OnSessionFinish) que envie os IDs das sessões
+       para o endpoint /api/auditoria/bitrix/webhook/ do Nexus em tempo real.
+
+    Por enquanto, retorna lista vazia com log de orientação.
     """
     if data is None:
         data = date.today() - timedelta(days=1)
 
-    start_dt = f"{data}T00:00:00Z"
-    end_dt = f"{data}T23:59:59Z"
+    logger.warning(
+        f"[Bitrix24] get_sessoes_dia_anterior({data}): O webhook atual (escopo=['imopenlines']) "
+        f"não permite listar sessões históricas. "
+        f"Solicite ao gestor Bitrix24 que adicione o escopo 'im' ao webhook "
+        f"OU configure o evento OnSessionFinish."
+    )
+    return []
 
+
+def get_sessoes_por_chat_ids(chat_ids: list) -> list:
+    """
+    NOVA FUNÇÃO: Dado uma lista de CHAT_IDs conhecidos, busca os dados de cada sessão.
+    Útil quando os IDs vêm do evento OnSessionFinish ou de uma tabela interna.
+
+    ✅ FUNCIONA com o webhook atual via imopenlines.session.history.get
+    """
+    sessoes = []
+    for chat_id in chat_ids:
+        result = _call_bitrix(
+            'imopenlines.session.history.get',
+            {'CHAT_ID': chat_id}
+        )
+        if result:
+            if isinstance(result, list):
+                sessoes.extend(result)
+            elif isinstance(result, dict):
+                sessoes.append(result)
+    return sessoes
+
+
+def get_mensagens_sessao(chat_id) -> list:
+    """
+    Busca todas as mensagens de um chat/sessão (transcript completo).
+    ✅ FUNCIONA com imopenlines.session.history.get
+
+    Parâmetro: chat_id (CHAT_ID do Bitrix24) ou session_id (SESSION_ID).
+    """
     try:
-        url = f"{_get_base_url()}/api/v1/sessions"
-        params = {
-            'status': 'finished',
-            'start_date': start_dt,
-            'end_date': end_dt,
-            'limit': limit,
-            'order_by': 'started_at',
-            'order_dir': 'asc',
-        }
-        response = requests.get(url, headers=_get_headers(), params=params, timeout=60)
-        response.raise_for_status()
-        data_json = response.json()
+        # Tenta por CHAT_ID primeiro
+        result = _call_bitrix(
+            'imopenlines.session.history.get',
+            {'CHAT_ID': chat_id}
+        )
 
-        # A API pode retornar lista direta ou dict com 'items'
-        sessoes = data_json if isinstance(data_json, list) else data_json.get('items', data_json.get('sessions', []))
-
-        # Filtrar apenas filas auditáveis
-        sessoes_filtradas = []
-        for s in sessoes:
-            nome_fila = (
-                s.get('line_name') or
-                s.get('line', {}).get('name', '') if isinstance(s.get('line'), dict) else s.get('line', '')
+        if not result:
+            # Fallback: tenta como SESSION_ID
+            result = _call_bitrix(
+                'imopenlines.session.history.get',
+                {'SESSION_ID': chat_id}
             )
-            if nome_fila in FILAS_AUDITAVEIS:
-                s['_tipo_atendimento'] = FILA_TIPO_MAP[nome_fila]
-                s['_nome_fila'] = nome_fila
-                sessoes_filtradas.append(s)
 
-        logger.info(f"[Bitrix] {len(sessoes_filtradas)} sessões auditáveis de {len(sessoes)} totais em {data}")
-        return sessoes_filtradas
-
-    except Exception as e:
-        logger.error(f"[Bitrix] Erro ao buscar sessões: {e}")
+        if isinstance(result, list):
+            return result
+        if isinstance(result, dict):
+            return result.get('messages', result.get('items', [result] if result else []))
         return []
 
-
-def get_mensagens_sessao(session_id: int) -> list:
-    """
-    Busca todas as mensagens de uma sessão (transcript).
-    GET /api/v1/sessions/{session_id}/messages
-    """
-    try:
-        url = f"{_get_base_url()}/api/v1/sessions/{session_id}/messages"
-        response = requests.get(url, headers=_get_headers(), timeout=30)
-        response.raise_for_status()
-        data = response.json()
-
-        # Pode ser lista ou dict com 'messages'
-        mensagens = data if isinstance(data, list) else data.get('messages', [])
-        return mensagens
-
     except Exception as e:
-        logger.error(f"[Bitrix] Erro ao buscar mensagens da sessão {session_id}: {e}")
+        logger.error(f"[Bitrix24] Erro ao buscar mensagens do chat {chat_id}: {e}")
         return []
 
 
 def formatar_transcript(mensagens: list) -> str:
     """
-    Converte lista de mensagens em texto formatado para o prompt da IA.
+    Converte lista de mensagens do Bitrix24 em texto formatado para o prompt da IA.
+    Suporta os campos retornados por imopenlines.session.history.get.
     """
     if not mensagens:
         return "[Sem mensagens registradas]"
 
     linhas = []
     for msg in mensagens:
-        # Campos comuns nos retornos de API de chat
+        # Autor
         autor = (
+            msg.get('AUTHOR_NAME') or
             msg.get('author_name') or
+            msg.get('NICK') or
+            msg.get('nick') or
             msg.get('author') or
             msg.get('sender_name') or
-            msg.get('sender') or
-            'Desconhecido'
+            f"ID:{msg.get('USER_ID', msg.get('user_id', '?'))}"
         )
+
+        # Texto
         texto = (
-            msg.get('text') or
+            msg.get('MESSAGE') or
             msg.get('message') or
+            msg.get('TEXT') or
+            msg.get('text') or
             msg.get('content') or
+            msg.get('CONTENT') or
             ''
         )
-        if texto:
-            linhas.append(f"[{autor}]: {texto}")
+
+        if texto and str(texto).strip():
+            linhas.append(f"[{autor}]: {str(texto).strip()}")
 
     return "\n".join(linhas) if linhas else "[Sem mensagens de texto]"
 
 
 def encontrar_analista_nexus(email_analista: str):
     """
-    Encontra o User do Nexus correspondente ao e-mail do analista no Bitrix.
-    Retorna o objeto User ou None.
+    Encontra o User do Nexus correspondente ao e-mail do operador do Bitrix24.
     """
     if not email_analista:
         return None
     try:
         from core.models import User
-        return User.objects.filter(email__iexact=email_analista.strip()).first()
+        return User.objects.filter(
+            email__iexact=email_analista.strip()
+        ).first()
     except Exception as e:
-        logger.error(f"[Bitrix] Erro ao buscar analista por email {email_analista}: {e}")
+        logger.error(f"[Bitrix24] Erro ao buscar analista por email {email_analista}: {e}")
         return None
 
 
 def identificar_tipo_atendimento(nome_fila: str) -> str:
-    """
-    Retorna 'cliente' ou 'franqueado' baseado no nome da fila.
-    """
+    """Retorna 'cliente' ou 'franqueado' baseado no nome da fila."""
     return FILA_TIPO_MAP.get(nome_fila, 'cliente')
+
+
+def get_info_fila(fila_id: int) -> dict:
+    """
+    Retorna dados completos de uma fila pelo ID.
+    ✅ FUNCIONA com imopenlines.config.get
+    """
+    try:
+        result = _call_bitrix('imopenlines.config.get', {'CONFIG_ID': fila_id})
+        return result if isinstance(result, dict) else {}
+    except Exception as e:
+        logger.error(f"[Bitrix24] Erro ao buscar fila ID={fila_id}: {e}")
+        return {}

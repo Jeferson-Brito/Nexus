@@ -332,7 +332,13 @@ LOGGING = {
 GEMINI_API_KEY = get_env("GEMINI_API_KEY", "")
 
 # ==============================
-# CONTACT CENTER (BITRIX ANALYTICS API)
+# BITRIX24 REST API (Webhook Nativo)
+# ==============================
+BITRIX24_WEBHOOK_URL = get_env("BITRIX24_WEBHOOK_URL", "")
+
+# ==============================
+# CONTACT CENTER (ikli - DEPRECADO, substituído pelo webhook nativo)
 # ==============================
 CONTACTCENTER_API_URL = get_env("CONTACTCENTER_API_URL", "https://contactcenter.ikli.com.br")
 CONTACTCENTER_API_KEY = get_env("CONTACTCENTER_API_KEY", "")
+
