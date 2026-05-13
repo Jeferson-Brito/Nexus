@@ -301,6 +301,153 @@
     }
 
     /* ============================================
+       CONTROLES DE VISUALIZAÇÃO E MODO HORIZONTAL
+       ============================================ */
+    .view-controls-bar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 12px 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+        gap: 15px;
+    }
+
+    .column-filters {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        background: #f8fafc;
+        padding: 8px 16px;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .column-filters label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #475569;
+        cursor: pointer;
+        margin: 0;
+        user-select: none;
+    }
+
+    .filter-switch {
+        appearance: none;
+        width: 36px;
+        height: 20px;
+        background: #cbd5e1;
+        border-radius: 20px;
+        position: relative;
+        cursor: pointer;
+        outline: none;
+        transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .filter-switch::after {
+        content: '';
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 16px;
+        height: 16px;
+        background: #fff;
+        border-radius: 50%;
+        transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+
+    .filter-switch:checked {
+        background: #2563eb;
+    }
+
+    .filter-switch:checked::after {
+        left: calc(100% - 18px);
+    }
+
+    /* CSS para a Tabela Horizontal com Sticky Columns */
+    .tabela-horizontal-container {
+        overflow-x: auto;
+        white-space: nowrap;
+        max-width: 100%;
+        margin-top: 20px;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        background: #fff;
+        border: 1px solid #e2e8f0;
+    }
+    
+    .tabela-horizontal-container table {
+        border-collapse: separate;
+        border-spacing: 0;
+        width: max-content;
+    }
+
+    .tabela-horizontal-container th {
+        background-color: #1e293b !important;
+        color: white !important;
+        position: sticky;
+        top: 0;
+        z-index: 15;
+    }
+
+    /* Turno (Esquerda 1) */
+    .tabela-horizontal-container th.col-turno,
+    .tabela-horizontal-container td.turno {
+        position: sticky !important;
+        left: 0;
+        z-index: 12 !important;
+        min-width: 140px;
+        box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+    }
+    
+    /* Analista (Esquerda 2) */
+    .tabela-horizontal-container th.col-analista,
+    .tabela-horizontal-container td.analista {
+        position: sticky !important;
+        left: 140px; /* Largura do Turno */
+        z-index: 12 !important;
+        min-width: 180px;
+        border-right: 2px solid #cbd5e1 !important;
+    }
+    
+    /* Pausa (Direita 1) */
+    .tabela-horizontal-container th.col-pausa,
+    .tabela-horizontal-container td.pausa {
+        position: sticky !important;
+        right: 0;
+        z-index: 12 !important;
+        min-width: 130px;
+        border-left: 2px solid #cbd5e1 !important;
+        background: #f8fafc;
+        box-shadow: -2px 0 5px rgba(0,0,0,0.05);
+    }
+    
+    .tabela-horizontal-container th.col-turno { z-index: 16 !important; }
+    .tabela-horizontal-container th.col-analista { z-index: 16 !important; }
+    .tabela-horizontal-container th.col-pausa { z-index: 16 !important; }
+
+    /* Lógica de Hiding via classes no container */
+    .hide-turno .col-turno, 
+    .hide-turno td.turno { display: none !important; }
+    
+    .hide-turno .col-analista, 
+    .hide-turno td.analista { left: 0 !important; }
+
+    .hide-analista .col-analista, 
+    .hide-analista td.analista { display: none !important; }
+
+    .hide-pausa .col-pausa, 
+    .hide-pausa td.pausa { display: none !important; }
+
+    /* ============================================
        CONTROLE DE VISUALIZAÇÃO (Completa / Semana)
        ============================================ */
     .view-mode-toggle {
@@ -1569,15 +1716,7 @@
                 <input type="month" id="mesInput">
             </div>
 
-            <!-- Toggle Modo de Visualização -->
-            <div class="view-mode-toggle" id="viewModeToggle" title="Alternar modo de visualização">
-                <button class="vm-btn active" id="btnViewFull" onclick="setViewMode('full')">
-                    <i class="fa-solid fa-table-cells-large"></i> Completa
-                </button>
-                <button class="vm-btn" id="btnViewWeek" onclick="setViewMode('week')">
-                    <i class="fa-solid fa-calendar-week"></i> Por Semana
-                </button>
-            </div>
+            <!-- O Toggle Modo de Visualização foi movido para a barra dedicada acima da tabela -->
 
             <!-- Grupo de Ações Coeso -->
             <div class="action-button-group">
@@ -1652,6 +1791,36 @@
             <i class="fa-solid fa-plus"></i> Cadastrar Analista
         </button>
         {% endif %}
+    </div>
+
+    <!-- BARRA DE CONTROLES DE VISUALIZAÇÃO -->
+    <div class="view-controls-bar">
+        <div class="view-mode-toggle" id="viewModeToggle" title="Alternar modo de visualização">
+            <button class="vm-btn active" id="btnViewFull" onclick="setViewMode('full')">
+                <i class="fa-solid fa-table-cells-large"></i> Completa
+            </button>
+            <button class="vm-btn" id="btnViewWeek" onclick="setViewMode('week')">
+                <i class="fa-solid fa-calendar-week"></i> Por Semana
+            </button>
+            <button class="vm-btn" id="btnViewHorizontal" onclick="setViewMode('horizontal')">
+                <i class="fa-solid fa-text-width"></i> Horizontal
+            </button>
+        </div>
+
+        <div class="column-filters" id="horizontalFilters" style="display: none;">
+            <label title="Mostrar/Ocultar coluna Turno">
+                <input type="checkbox" class="filter-switch" id="checkShowTurno" checked onchange="toggleColumn('turno')">
+                Turno
+            </label>
+            <label title="Mostrar/Ocultar coluna Analista">
+                <input type="checkbox" class="filter-switch" id="checkShowAnalista" checked onchange="toggleColumn('analista')">
+                Analista
+            </label>
+            <label title="Mostrar/Ocultar coluna Pausa">
+                <input type="checkbox" class="filter-switch" id="checkShowPausa" checked onchange="toggleColumn('pausa')">
+                Pausa
+            </label>
+        </div>
     </div>
 
     <!-- Barra de Navegação Semanal -->
@@ -2916,25 +3085,30 @@
 
         setTimeout(() => {
             let html = '';
-            let dataCorrente = new Date(dataInicio);
-            let semana = 1;
+            
+            if (viewMode === 'horizontal') {
+                html = createHorizontalTableBlock(ano, monthIndex);
+            } else {
+                let dataCorrente = new Date(dataInicio);
+                let semana = 1;
 
-            // Resetar datas de início de semana para o novo mês
-            weekStartDates = [];
+                // Resetar datas de início de semana para o novo mês
+                weekStartDates = [];
 
-            // Gerar semanas enquanto houver dias do mês alvo
-            while (dataCorrente < new Date(ano, monthIndex + 1, 1)) {
-                // Se a semana inteira começar em outro mês e for APÓS o mês alvo, paramos
-                if (dataCorrente.getMonth() !== monthIndex && dataCorrente > primeiroDia) {
-                    break;
+                // Gerar semanas enquanto houver dias do mês alvo
+                while (dataCorrente < new Date(ano, monthIndex + 1, 1)) {
+                    // Se a semana inteira começar em outro mês e for APÓS o mês alvo, paramos
+                    if (dataCorrente.getMonth() !== monthIndex && dataCorrente > primeiroDia) {
+                        break;
+                    }
+
+                    // Registrar data de início de cada semana
+                    weekStartDates.push(new Date(dataCorrente));
+
+                    html += createTableBlockByWeek(ano, monthIndex, new Date(dataCorrente), semana);
+                    dataCorrente.setDate(dataCorrente.getDate() + 7);
+                    semana++;
                 }
-
-                // Registrar data de início de cada semana
-                weekStartDates.push(new Date(dataCorrente));
-
-                html += createTableBlockByWeek(ano, monthIndex, new Date(dataCorrente), semana);
-                dataCorrente.setDate(dataCorrente.getDate() + 7);
-                semana++;
             }
 
 
@@ -2963,26 +3137,47 @@
     let weekStartDates = [];
 
     function setViewMode(mode) {
+        // Se estiver trocando de formato e já houver tabela renderizada, força re-render para reconstruir a estrutura
+        const requiresReRender = (viewMode === 'horizontal' && mode !== 'horizontal') || (viewMode !== 'horizontal' && mode === 'horizontal');
         viewMode = mode;
+        
         const btnFull = document.getElementById('btnViewFull');
         const btnWeek = document.getElementById('btnViewWeek');
+        const btnHoriz = document.getElementById('btnViewHorizontal');
         const navBar  = document.getElementById('weekNavBar');
+        const horizontalFilters = document.getElementById('horizontalFilters');
+
+        // Reset states
+        if (btnFull) btnFull.classList.remove('active');
+        if (btnWeek) btnWeek.classList.remove('active');
+        if (btnHoriz) btnHoriz.classList.remove('active');
+        
+        if (navBar) navBar.style.display = 'none';
+        if (horizontalFilters) horizontalFilters.style.display = 'none';
 
         if (mode === 'full') {
-            if (btnFull) { btnFull.classList.add('active'); }
-            if (btnWeek) { btnWeek.classList.remove('active'); }
-            if (navBar)  { navBar.style.display = 'none'; }
-            // Mostrar todas as semanas
-            document.querySelectorAll('#tabelas .table-wrap').forEach(el => {
-                el.style.display = '';
-            });
-        } else {
-            if (btnFull) { btnFull.classList.remove('active'); }
-            if (btnWeek) { btnWeek.classList.add('active'); }
-            if (navBar)  { navBar.style.display = 'flex'; }
-            // Ir para semana atual (ou semana 1 se mês futuro/passado)
-            goToCurrentWeek();
+            if (btnFull) btnFull.classList.add('active');
+            if (!requiresReRender) {
+                document.querySelectorAll('#tabelas .table-wrap').forEach(el => el.style.display = '');
+            }
+        } else if (mode === 'week') {
+            if (btnWeek) btnWeek.classList.add('active');
+            if (navBar) navBar.style.display = 'flex';
+            if (!requiresReRender) goToCurrentWeek();
+        } else if (mode === 'horizontal') {
+            if (btnHoriz) btnHoriz.classList.add('active');
+            if (horizontalFilters) horizontalFilters.style.display = 'flex';
         }
+
+        if (requiresReRender) {
+            generateTables();
+        }
+    }
+
+    function toggleColumn(colName) {
+        const tabelas = document.getElementById('tabelas');
+        if (!tabelas) return;
+        tabelas.classList.toggle(`hide-${colName}`);
     }
 
     function goToCurrentWeek() {
@@ -3220,6 +3415,135 @@
             </table>
         </div>
     `;
+    }
+
+    // ============================================
+    // GERAÇÃO DE TABELA HORIZONTAL (MÊS INTEIRO)
+    // ============================================
+    function createHorizontalTableBlock(anoTarget, mesTarget) {
+        const diasSemanaNomes = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB'];
+        const totalDiasMes = new Date(anoTarget, mesTarget + 1, 0).getDate();
+
+        // Calcular todos os dias do mês alvo
+        const diasDoMes = [];
+        for (let i = 1; i <= totalDiasMes; i++) {
+            diasDoMes.push(new Date(anoTarget, mesTarget, i));
+        }
+
+        // Headers
+        let headers = `
+            <th class="col-turno">Turno</th>
+            <th class="col-analista">Analista</th>
+        `;
+        diasDoMes.forEach(d => {
+            const diaSemanaIndex = d.getDay();
+            const dStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            const feriadoNome = feriadosNacionais[dStr];
+            
+            // Finais de semana (Sáb/Dom) com destaque leve no header opcional
+            const isFds = (diaSemanaIndex === 0 || diaSemanaIndex === 6) ? 'background-color: #334155 !important;' : '';
+
+            if (feriadoNome) {
+                headers += `
+                    <th class="header-feriado" title="${feriadoNome}" style="${isFds}">
+                        <div>${diasSemanaNomes[diaSemanaIndex]} (${String(d.getDate()).padStart(2, '0')})</div>
+                        <span class="feriado-badge">🎉 ${feriadoNome}</span>
+                    </th>`;
+            } else {
+                headers += `<th style="${isFds}">${diasSemanaNomes[diaSemanaIndex]} (${String(d.getDate()).padStart(2, '0')})</th>`;
+            }
+        });
+        headers += '<th class="col-pausa">PAUSA</th>';
+
+        // Rows
+        let rows = '';
+        const turnosOrdenados = [...turnos].sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
+
+        turnosOrdenados.forEach((turno, turnoIndex) => {
+            const analistasDoTurno = analistas.filter(a => a.turno === turno.nome);
+
+            if (analistasDoTurno.length > 0) {
+                analistasDoTurno.forEach((analista, idx) => {
+                    rows += '<tr>';
+
+                    // Célula de turno (só na primeira linha do turno)
+                    if (idx === 0) {
+                        rows += `<td class="turno" rowspan="${analistasDoTurno.length}" style="background-color: ${turno.cor};">
+                        <div style="font-weight: bold; margin-bottom: 4px; text-transform: uppercase;">${turno.nome}</div>
+                        <div style="font-size: 10px; background: rgba(0,0,0,0.3); padding: 2px 4px; border-radius: 3px;">${turno.horario}</div>
+                    </td>`;
+                    }
+
+                    // Célula de analista
+                    rows += `<td class="analista" style="background-color: ${turno.cor}; border-left: 1px solid #1e293b;">${analista.nome}</td>`;
+
+                    // Células de dias
+                    diasDoMes.forEach(d => {
+                        const dia = d.getDate();
+                        const diaSemanaIndex = d.getDay();
+                        const dStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                        const isFeriado = !!feriadosNacionais[dStr];
+                        
+                        const cellData = getCellData(analista, turno, d.getFullYear(), d.getMonth(), dia);
+
+                        // Verificar troca aprovada
+                        const swapObj = trocasAprovadasCache[`${analista.id}-${dStr}`];
+                        const isTroca = !!swapObj;
+
+                        let clickHandler = '';
+                        let extraClass = '';
+                        let swapIcon = '';
+
+                        // Destacar final de semana para guiar a leitura horizontal
+                        if (diaSemanaIndex === 0 || diaSemanaIndex === 6) {
+                            extraClass += ' fds-col';
+                        }
+
+                        if (isTroca) {
+                            extraClass += ' cell-folga-alterada';
+                            const title = `Folga alterada via troca aprovada — clique para detalhes`;
+                            swapIcon = `<span class="cell-swap-indicator" title="${title}"><i class="fa-solid fa-right-left"></i></span>`;
+                            clickHandler = `onclick="onSwapCellClick(${swapObj.id})"`;
+                        } else if (isAdmin) {
+                            clickHandler = `onclick="openEditCellModal('${analista.id}', ${dia}, ${d.getMonth() + 1}, ${d.getFullYear()})"`;
+                        }
+
+                        rows += `<td class="${cellData.class} ${extraClass} ${isFeriado ? 'cell-feriado' : ''}" ${clickHandler}>${swapIcon}${cellData.text}</td>`;
+                    });
+
+                    // Célula de pausa
+                    rows += `<td class="pausa">${analista.pausa || ''}</td>`;
+                    rows += '</tr>';
+                });
+            } else {
+                rows += `<tr>
+                <td class="turno" style="background-color: ${turno.cor}; border: 1px solid #1e293b; color: #fff; font-weight: bold;">${turno.nome}</td>
+                <td class="analista" style="background-color: ${turno.cor}; border: 1px solid #1e293b; color: #fff; font-weight: bold;">(Nenhum analista)</td>
+                ${diasDoMes.map(() => '<td class="dia-vazio"></td>').join('')}
+                <td class="pausa"></td>
+            </tr>`;
+            }
+
+            // Separador entre turnos
+            if (turnoIndex < turnosOrdenados.length - 1) {
+                // +3 para considerar Turno, Analista e Pausa
+                rows += `<tr class="separator-row"><td colspan="${diasDoMes.length + 3}"></td></tr>`;
+            }
+        });
+
+        // Adiciona a classe hide-X conforme o estado dos checkboxes
+        const checkTurno = document.getElementById('checkShowTurno') && !document.getElementById('checkShowTurno').checked ? 'hide-turno' : '';
+        const checkAnalista = document.getElementById('checkShowAnalista') && !document.getElementById('checkShowAnalista').checked ? 'hide-analista' : '';
+        const checkPausa = document.getElementById('checkShowPausa') && !document.getElementById('checkShowPausa').checked ? 'hide-pausa' : '';
+
+        return `
+        <div class="tabela-horizontal-container ${checkTurno} ${checkAnalista} ${checkPausa}">
+            <table class="escala-table horizontal-mode">
+                <thead><tr>${headers}</tr></thead>
+                <tbody>${rows}</tbody>
+            </table>
+        </div>
+        `;
     }
 
     function getCellData(analista, turno, ano, mes, dia) {
