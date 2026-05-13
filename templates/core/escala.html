@@ -343,24 +343,111 @@
     .week-nav-bar {
         display: flex;
         align-items: center;
-        justify-content: center;
+        justify-content: space-between;
         gap: 1rem;
         background: #fff;
         border: 1px solid #e2e8f0;
-        border-radius: 14px;
-        padding: 10px 20px;
+        border-radius: 16px;
+        padding: 12px 20px;
         margin-bottom: 24px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-        animation: fadeInNav 0.25s ease;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+        position: relative;
     }
 
-    @keyframes fadeInNav {
-        from { opacity: 0; transform: translateY(-6px); }
-        to   { opacity: 1; transform: translateY(0); }
+    .week-nav-side {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .week-nav-center {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        flex: 1;
+    }
+
+    .week-nav-top-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .wn-main {
+        font-size: 1rem;
+        font-weight: 800;
+        color: #1e293b;
+        letter-spacing: -0.01em;
+    }
+
+    .wn-dates {
+        font-size: 0.8rem;
+        color: #64748b;
+        font-weight: 500;
+    }
+
+    .wn-hoje-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        background: linear-gradient(135deg, #22c55e, #16a34a);
+        color: #fff;
+        border-radius: 999px;
+        font-size: 0.68rem;
+        font-weight: 700;
+        padding: 2px 10px;
+        letter-spacing: 0.5px;
+        box-shadow: 0 2px 6px rgba(34,197,94,0.35);
+        animation: pulseBadge 2s ease-in-out infinite;
+    }
+
+    @keyframes pulseBadge {
+        0%, 100% { box-shadow: 0 2px 6px rgba(34,197,94,0.35); }
+        50%       { box-shadow: 0 2px 14px rgba(34,197,94,0.6); }
+    }
+
+    /* Dots de progresso */
+    .week-dots {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .week-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #e2e8f0;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+    }
+
+    .week-dot:hover {
+        background: #93c5fd;
+        transform: scale(1.2);
+    }
+
+    .week-dot.active {
+        background: #2563eb;
+        width: 22px;
+        border-radius: 999px;
+        box-shadow: 0 2px 6px rgba(37,99,235,0.4);
+    }
+
+    .week-dot.hoje-dot {
+        border: 2px solid #22c55e;
+        background: #dcfce7;
+    }
+
+    .week-dot.hoje-dot.active {
+        background: #22c55e;
+        border-color: #22c55e;
+        box-shadow: 0 2px 6px rgba(34,197,94,0.45);
     }
 
     .week-nav-btn {
-        padding: 8px 18px;
+        padding: 9px 20px;
         border: 1.5px solid #e2e8f0;
         border-radius: 10px;
         background: #f8fafc;
@@ -372,6 +459,7 @@
         align-items: center;
         gap: 7px;
         transition: all 0.2s ease;
+        white-space: nowrap;
     }
 
     .week-nav-btn:hover:not(:disabled) {
@@ -383,42 +471,34 @@
     }
 
     .week-nav-btn:disabled {
-        opacity: 0.35;
+        opacity: 0.3;
         cursor: not-allowed;
+        transform: none;
     }
 
-    .week-nav-label {
-        font-size: 0.92rem;
+    .btn-hoje {
+        padding: 6px 14px;
+        border: 1.5px solid #22c55e;
+        border-radius: 8px;
+        background: #f0fdf4;
+        color: #16a34a;
         font-weight: 700;
-        color: #1e293b;
-        min-width: 260px;
-        text-align: center;
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-    }
-
-    .week-nav-label .wn-main {
-        font-size: 1rem;
-        color: #1e293b;
-    }
-
-    .week-nav-label .wn-dates {
         font-size: 0.78rem;
-        color: #64748b;
-        font-weight: 500;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        transition: all 0.2s ease;
     }
 
-    .week-nav-label .wn-hoje {
-        display: inline-block;
-        background: #dcfce7;
-        color: #166534;
-        border-radius: 999px;
-        font-size: 0.68rem;
-        font-weight: 700;
-        padding: 1px 8px;
-        margin-top: 2px;
-        letter-spacing: 0.5px;
+    .btn-hoje:hover {
+        background: #22c55e;
+        color: #fff;
+        box-shadow: 0 3px 10px rgba(34,197,94,0.3);
+    }
+
+    .btn-hoje.hidden {
+        display: none;
     }
 
     .semana-title {
@@ -1576,17 +1656,35 @@
 
     <!-- Barra de Navegação Semanal -->
     <div id="weekNavBar" class="week-nav-bar" style="display:none;">
-        <button class="week-nav-btn" id="btnPrevWeek" onclick="navigateWeek(-1)">
-            <i class="fa-solid fa-chevron-left"></i> Anterior
-        </button>
-        <div class="week-nav-label">
-            <span class="wn-main" id="weekNavMain">Semana 1 de 5</span>
-            <span class="wn-dates" id="weekNavDates"></span>
-            <span class="wn-hoje" id="weekNavHoje" style="display:none;">📍 Semana Atual</span>
+        <!-- Lado esquerdo -->
+        <div class="week-nav-side">
+            <button class="week-nav-btn" id="btnPrevWeek" onclick="navigateWeek(-1)">
+                <i class="fa-solid fa-chevron-left"></i> Anterior
+            </button>
         </div>
-        <button class="week-nav-btn" id="btnNextWeek" onclick="navigateWeek(+1)">
-            Próxima <i class="fa-solid fa-chevron-right"></i>
-        </button>
+
+        <!-- Centro -->
+        <div class="week-nav-center">
+            <div class="week-nav-top-row">
+                <span class="wn-main" id="weekNavMain">Semana 1 de 5</span>
+                <span class="wn-hoje-badge" id="weekNavHoje" style="display:none;">
+                    <i class="fa-solid fa-circle-dot" style="font-size:0.6rem;"></i> Semana Atual
+                </span>
+            </div>
+            <div class="wn-dates" id="weekNavDates"></div>
+            <!-- Dots de progress -->
+            <div class="week-dots" id="weekDots"></div>
+        </div>
+
+        <!-- Lado direito -->
+        <div class="week-nav-side">
+            <button class="btn-hoje" id="btnHoje" onclick="goToCurrentWeek()" title="Ir para semana atual">
+                <i class="fa-solid fa-location-crosshairs"></i> Hoje
+            </button>
+            <button class="week-nav-btn" id="btnNextWeek" onclick="navigateWeek(+1)">
+                Próxima <i class="fa-solid fa-chevron-right"></i>
+            </button>
+        </div>
     </div>
 
     <!-- Tabelas da Escala -->
@@ -2927,34 +3025,43 @@
             el.style.display = (i === currentWeekIndex) ? '' : 'none';
         });
 
-        // Atualizar labels da barra
+        // --- Labels ---
         const lblMain  = document.getElementById('weekNavMain');
         const lblDates = document.getElementById('weekNavDates');
         const lblHoje  = document.getElementById('weekNavHoje');
         const btnPrev  = document.getElementById('btnPrevWeek');
         const btnNext  = document.getElementById('btnNextWeek');
+        const btnHoje  = document.getElementById('btnHoje');
+        const dotsEl   = document.getElementById('weekDots');
 
-        if (lblMain)  lblMain.textContent = `Semana ${currentWeekIndex + 1} de ${totalWeeks}`;
+        if (lblMain) lblMain.textContent = `Semana ${currentWeekIndex + 1} de ${totalWeeks}`;
 
-        // Calcular datas de início e fim da semana atual a partir dos headers da tabela
+        // Datas reais do cabeçalho da semana ativa
         const activeWrap = wraps[currentWeekIndex];
         if (activeWrap && lblDates) {
             const ths = activeWrap.querySelectorAll('thead th');
             const diasComData = [];
             ths.forEach(th => {
                 const txt = th.textContent.trim();
-                // Formato: "SEG (01)" — extrai o número
                 const m = txt.match(/(\d{2})/);
                 if (m) diasComData.push(m[1]);
             });
+            // Pegar nome do mês pelo input
+            const mesInputVal = document.getElementById('mesInput')?.value || '';
+            const nomesMes = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+            let nomeMes = '';
+            if (mesInputVal) {
+                const mNum = parseInt(mesInputVal.split('-')[1]) - 1;
+                nomeMes = nomesMes[mNum] || '';
+            }
             if (diasComData.length >= 2) {
-                lblDates.textContent = `${diasComData[0]} a ${diasComData[diasComData.length - 1]} do mês`;
+                lblDates.textContent = `${diasComData[0]} a ${diasComData[diasComData.length - 1]} de ${nomeMes}`;
             } else {
                 lblDates.textContent = '';
             }
         }
 
-        // Verificar se é a semana atual
+        // Verificar semana atual
         const hoje = new Date();
         hoje.setHours(0, 0, 0, 0);
         let isSemanaAtual = false;
@@ -2966,15 +3073,36 @@
         }
         if (lblHoje) lblHoje.style.display = isSemanaAtual ? '' : 'none';
 
+        // Botão "Hoje" só oculto se já estiver na semana atual
+        if (btnHoje) btnHoje.classList.toggle('hidden', isSemanaAtual);
+
+        // Dots de progresso
+        if (dotsEl) {
+            dotsEl.innerHTML = '';
+            // Calcular qual semana contém hoje
+            let hojeIndex = -1;
+            weekStartDates.forEach((dt, i) => {
+                const ini = new Date(dt);
+                const fim = new Date(ini);
+                fim.setDate(fim.getDate() + 6);
+                if (hoje >= ini && hoje <= fim) hojeIndex = i;
+            });
+            for (let i = 0; i < totalWeeks; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'week-dot' +
+                    (i === currentWeekIndex ? ' active' : '') +
+                    (i === hojeIndex ? ' hoje-dot' : '');
+                dot.title = `Semana ${i + 1}`;
+                dot.onclick = () => { currentWeekIndex = i; applyWeekView(); };
+                dotsEl.appendChild(dot);
+            }
+        }
+
         // Botões prev/next
         if (btnPrev) btnPrev.disabled = currentWeekIndex === 0;
         if (btnNext) btnNext.disabled = currentWeekIndex === totalWeeks - 1;
 
-        // Scroll suave para o topo da tabela
-        const tabelasEl = document.getElementById('tabelas');
-        if (tabelasEl) {
-            tabelasEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
+        // --- SEM SCROLL: a página permanece onde está ao navegar entre semanas ---
     }
 
     function createTableBlockByWeek(anoTarget, mesTarget, dataInicioSemana, semana) {
