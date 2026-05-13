@@ -260,6 +260,198 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // ========================================
+    // VISAO DO ANALISTA
+    // ========================================
+
+    function initAnalystView() {
+        var elInicio = document.getElementById('filtro_analista_data_inicio');
+        var elFim    = document.getElementById('filtro_analista_data_fim');
+        var dataInicio = elInicio ? elInicio.value : '';
+        var dataFim    = elFim    ? elFim.value    : '';
+
+        var params = new URLSearchParams({ page: 1, per_page: 200 });
+        if (dataInicio) params.set('data_inicio', dataInicio);
+        if (dataFim)    params.set('data_fim', dataFim);
+
+        fetch('/api/auditoria/dashboard/?' + params.toString(), { credentials: 'include' })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (!data.success) return;
+
+                function setEl(id, val) {
+                    var el = document.getElementById(id);
+                    if (el) el.textContent = val;
+                }
+                var dist = data.distribuicao || {};
+                setEl('analyst-total-geral',   data.total_all_time  != null ? data.total_all_time  : 0);
+                setEl('analyst-total-periodo', data.total_auditorias != null ? data.total_auditorias : 0);
+                setEl('analyst-media-geral',   parseFloat(data.nota_media_geral || 0).toFixed(1) + '/10');
+                setEl('count-excelente',       dist.excelente      || 0);
+                setEl('count-bom',             dist.bom            || 0);
+                setEl('count-regular',         dist.regular        || 0);
+                setEl('count-insatisfatorio',  dist.insatisfatorio || 0);
+
+                loadAnalystAudits('');
+            })
+            .catch(function(err) { console.error('[Analyst View] Erro:', err); });
+    }
+
+    function loadAnalystAudits(classificacaoFiltro) {
+        var elInicio = document.getElementById('filtro_analista_data_inicio');
+        var elFim    = document.getElementById('filtro_analista_data_fim');
+        var dataInicio = elInicio ? elInicio.value : '';
+        var dataFim    = elFim    ? elFim.value    : '';
+
+        var params = new URLSearchParams({ page: 1, per_page: 100 });
+        if (dataInicio)         params.set('data_inicio',   dataInicio);
+        if (dataFim)            params.set('data_fim',      dataFim);
+        if (classificacaoFiltro) params.set('classificacao', classificacaoFiltro);
+
+        var tbody    = document.getElementById('lista-auditorias-analista');
+        var container = document.getElementById('analyst-list-container');
+
+        if (!tbody) return;
+        if (container) container.style.display = 'block';
+
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4">'
+            + '<div class="spinner-border text-primary" role="status"></div></td></tr>';
+
+        fetch('/api/auditoria/list/?' + params.toString(), { credentials: 'include' })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (!data.success || !data.auditorias || data.auditorias.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">'
+                        + 'Nenhuma auditoria encontrada no periodo.</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = '';
+                data.auditorias.forEach(function(aud) {
+                    var badgeClass = 'badge-' + aud.classificacao;
+                    var dataFmt   = formatDate(aud.data_atendimento);
+                    var cienteHtml = '';
+                    if (aud.requer_acao) {
+                        cienteHtml = aud.ciente_analista
+                            ? '<span class="badge bg-success-subtle text-success border border-success'
+                              + ' border-opacity-25 ms-1"><i class="bi bi-person-check-fill me-1"></i>Ciente</span>'
+                            : '<span class="badge bg-secondary-subtle text-secondary border ms-1">'
+                              + '<i class="bi bi-hourglass-split me-1"></i>Pendente</span>';
+                    }
+
+                    var tr = document.createElement('tr');
+                    tr.style.cursor = 'pointer';
+                    (function(audId) {
+                        tr.onclick = function(e) { viewDetails(audId, e); };
+                    }(aud.id));
+
+                    tr.innerHTML =
+                        '<td class="ps-4">' + dataFmt + '</td>'
+                        + '<td><code class="text-muted">' + aud.id_conversa + '</code></td>'
+                        + '<td><span class="badge bg-secondary">' + aud.tipo_atendimento + '</span></td>'
+                        + '<td class="fw-semibold">' + aud.pontuacao + '/9</td>'
+                        + '<td class="fw-bold">'     + Number(aud.nota).toFixed(1) + '</td>'
+                        + '<td><span class="badge ' + badgeClass + '">' + aud.classificacao_display + '</span>'
+                        + cienteHtml + '</td>'
+                        + '<td class="text-center pe-4">'
+                        + '<button class="btn btn-sm btn-outline-primary" title="Ver detalhes">'
+                        + '<i class="bi bi-eye"></i></button></td>';
+
+                    var trDetails = document.createElement('tr');
+                    trDetails.id        = 'details-' + aud.id;
+                    trDetails.style.display = 'none';
+                    trDetails.className = 'details-row';
+                    trDetails.innerHTML = '<td colspan="7" class="p-0 border-0">'
+                        + '<div class="details-container p-4 bg-light border-bottom shadow-inner"></div></td>';
+
+                    tbody.appendChild(tr);
+                    tbody.appendChild(trDetails);
+                });
+            })
+            .catch(function(err) {
+                console.error('[Analyst Audits] Erro:', err);
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">'
+                    + 'Erro ao carregar auditorias.</td></tr>';
+            });
+    }
+
+    window.filterAnalystList = function(classificacao) {
+        var labelMap = { excelente: 'Excelente', bom: 'Bom', regular: 'Regular', insatisfatorio: 'Insatisfatorio' };
+        var label = document.getElementById('current-filter-label');
+        if (label) label.textContent = labelMap[classificacao] || 'Todos';
+        state.currentAnalystFilter = classificacao;
+        loadAnalystAudits(classificacao);
+    };
+
+    function handleGerarInsightAnalyst() {
+        var modal = document.getElementById('modalIAAnalista');
+        if (!modal) {
+            console.error('[IA Insight] Modal #modalIAAnalista nao encontrado.');
+            return;
+        }
+        var bsModal   = new bootstrap.Modal(modal);
+        var loadingEl = document.getElementById('ia-loading-analista');
+        var resultEl  = document.getElementById('ia-result-analista');
+
+        bsModal.show();
+        if (loadingEl) loadingEl.style.display = 'block';
+        if (resultEl)  { resultEl.style.display = 'none'; resultEl.innerHTML = ''; }
+
+        var elInicio = document.getElementById('filtro_analista_data_inicio');
+        var elFim    = document.getElementById('filtro_analista_data_fim');
+        var dataInicio = elInicio ? elInicio.value : '';
+        var dataFim    = elFim    ? elFim.value    : '';
+
+        fetch('/api/auditoria/analista/self/ia-insight/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ data_inicio: dataInicio, data_fim: dataFim })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (loadingEl) loadingEl.style.display = 'none';
+            if (resultEl)  resultEl.style.display  = 'block';
+
+            if (data.error) {
+                resultEl.innerHTML = '<div class="alert alert-warning">'
+                    + '<i class="bi bi-exclamation-triangle me-2"></i>' + data.error + '</div>';
+                return;
+            }
+
+            var markdown = data.insight_markdown || '';
+            if (typeof marked !== 'undefined') {
+                resultEl.innerHTML = marked.parse(markdown);
+            } else {
+                var safe = markdown.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                resultEl.innerHTML = '<pre style="white-space:pre-wrap;font-family:inherit;">' + safe + '</pre>';
+            }
+
+            try { sessionStorage.setItem('nexus_ia_feedback_analista', markdown); } catch(e) {}
+        })
+        .catch(function(err) {
+            console.error('[IA Insight] Erro:', err);
+            if (loadingEl) loadingEl.style.display = 'none';
+            if (resultEl) {
+                resultEl.style.display = 'block';
+                resultEl.innerHTML = '<div class="alert alert-danger">'
+                    + '<i class="bi bi-wifi-off me-2"></i>'
+                    + 'Erro de conexao ao gerar o feedback. Tente novamente.</div>';
+            }
+        });
+    }
+
+    function checkPersistedFeedback() {
+        try {
+            var persisted = sessionStorage.getItem('nexus_ia_feedback_analista');
+            var btn = document.getElementById('btnGerarInsightAnalista');
+            if (persisted && btn) {
+                btn.title = 'Gerar novo feedback (ultimo disponivel na sessao)';
+            }
+        } catch(e) {}
+    }
+
+        // ========================================
     // NAVEGAÇÃO ENTRE ABAS
     // ========================================
 
