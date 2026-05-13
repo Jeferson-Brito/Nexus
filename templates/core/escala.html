@@ -300,6 +300,127 @@
         margin-top: 30px;
     }
 
+    /* ============================================
+       CONTROLE DE VISUALIZAÇÃO (Completa / Semana)
+       ============================================ */
+    .view-mode-toggle {
+        display: flex;
+        align-items: center;
+        background: #f1f5f9;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 4px;
+        gap: 4px;
+    }
+
+    .vm-btn {
+        padding: 8px 14px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.82rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        background: transparent;
+        color: #64748b;
+    }
+
+    .vm-btn:hover {
+        background: #e2e8f0;
+        color: #334155;
+    }
+
+    .vm-btn.active {
+        background: #2563eb;
+        color: #ffffff;
+        box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+    }
+
+    /* Barra de navegação semanal */
+    .week-nav-bar {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 10px 20px;
+        margin-bottom: 24px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        animation: fadeInNav 0.25s ease;
+    }
+
+    @keyframes fadeInNav {
+        from { opacity: 0; transform: translateY(-6px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .week-nav-btn {
+        padding: 8px 18px;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 10px;
+        background: #f8fafc;
+        color: #334155;
+        font-weight: 700;
+        font-size: 0.85rem;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        transition: all 0.2s ease;
+    }
+
+    .week-nav-btn:hover:not(:disabled) {
+        background: #2563eb;
+        color: #fff;
+        border-color: #2563eb;
+        box-shadow: 0 4px 12px rgba(37,99,235,0.25);
+        transform: translateY(-1px);
+    }
+
+    .week-nav-btn:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+    }
+
+    .week-nav-label {
+        font-size: 0.92rem;
+        font-weight: 700;
+        color: #1e293b;
+        min-width: 260px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .week-nav-label .wn-main {
+        font-size: 1rem;
+        color: #1e293b;
+    }
+
+    .week-nav-label .wn-dates {
+        font-size: 0.78rem;
+        color: #64748b;
+        font-weight: 500;
+    }
+
+    .week-nav-label .wn-hoje {
+        display: inline-block;
+        background: #dcfce7;
+        color: #166534;
+        border-radius: 999px;
+        font-size: 0.68rem;
+        font-weight: 700;
+        padding: 1px 8px;
+        margin-top: 2px;
+        letter-spacing: 0.5px;
+    }
+
     .semana-title {
         text-align: center;
         font-size: 1.1rem;
@@ -1368,6 +1489,16 @@
                 <input type="month" id="mesInput">
             </div>
 
+            <!-- Toggle Modo de Visualização -->
+            <div class="view-mode-toggle" id="viewModeToggle" title="Alternar modo de visualização">
+                <button class="vm-btn active" id="btnViewFull" onclick="setViewMode('full')">
+                    <i class="fa-solid fa-table-cells-large"></i> Completa
+                </button>
+                <button class="vm-btn" id="btnViewWeek" onclick="setViewMode('week')">
+                    <i class="fa-solid fa-calendar-week"></i> Por Semana
+                </button>
+            </div>
+
             <!-- Grupo de Ações Coeso -->
             <div class="action-button-group">
                 {% if is_admin %}
@@ -1441,6 +1572,21 @@
             <i class="fa-solid fa-plus"></i> Cadastrar Analista
         </button>
         {% endif %}
+    </div>
+
+    <!-- Barra de Navegação Semanal -->
+    <div id="weekNavBar" class="week-nav-bar" style="display:none;">
+        <button class="week-nav-btn" id="btnPrevWeek" onclick="navigateWeek(-1)">
+            <i class="fa-solid fa-chevron-left"></i> Anterior
+        </button>
+        <div class="week-nav-label">
+            <span class="wn-main" id="weekNavMain">Semana 1 de 5</span>
+            <span class="wn-dates" id="weekNavDates"></span>
+            <span class="wn-hoje" id="weekNavHoje" style="display:none;">📍 Semana Atual</span>
+        </div>
+        <button class="week-nav-btn" id="btnNextWeek" onclick="navigateWeek(+1)">
+            Próxima <i class="fa-solid fa-chevron-right"></i>
+        </button>
     </div>
 
     <!-- Tabelas da Escala -->
@@ -2675,6 +2821,9 @@
             let dataCorrente = new Date(dataInicio);
             let semana = 1;
 
+            // Resetar datas de início de semana para o novo mês
+            weekStartDates = [];
+
             // Gerar semanas enquanto houver dias do mês alvo
             while (dataCorrente < new Date(ano, monthIndex + 1, 1)) {
                 // Se a semana inteira começar em outro mês e for APÓS o mês alvo, paramos
@@ -2682,17 +2831,150 @@
                     break;
                 }
 
+                // Registrar data de início de cada semana
+                weekStartDates.push(new Date(dataCorrente));
+
                 html += createTableBlockByWeek(ano, monthIndex, new Date(dataCorrente), semana);
                 dataCorrente.setDate(dataCorrente.getDate() + 7);
                 semana++;
             }
 
+
             document.getElementById('tabelas').innerHTML = html;
             document.getElementById('loadingContainer').style.display = 'none';
-            
+
+            // Atualizar total de semanas e aplicar modo de visualização ativo
+            const tableWraps = document.querySelectorAll('#tabelas .table-wrap');
+            totalWeeks = tableWraps.length;
+            if (viewMode === 'week') {
+                goToCurrentWeek();
+            }
+
             // Recarregar contadores de trocas pendentes para o badge no header
             atualizarBadgeTrocasPendentes();
         }, 100);
+    }
+
+    // ============================================
+    // NAVEGAÇÃO POR SEMANA
+    // ============================================
+    let viewMode = 'full';       // 'full' | 'week'
+    let currentWeekIndex = 0;   // 0-based
+    let totalWeeks = 0;
+    // Armazena data de início de cada semana para cálculo da semana atual
+    let weekStartDates = [];
+
+    function setViewMode(mode) {
+        viewMode = mode;
+        const btnFull = document.getElementById('btnViewFull');
+        const btnWeek = document.getElementById('btnViewWeek');
+        const navBar  = document.getElementById('weekNavBar');
+
+        if (mode === 'full') {
+            if (btnFull) { btnFull.classList.add('active'); }
+            if (btnWeek) { btnWeek.classList.remove('active'); }
+            if (navBar)  { navBar.style.display = 'none'; }
+            // Mostrar todas as semanas
+            document.querySelectorAll('#tabelas .table-wrap').forEach(el => {
+                el.style.display = '';
+            });
+        } else {
+            if (btnFull) { btnFull.classList.remove('active'); }
+            if (btnWeek) { btnWeek.classList.add('active'); }
+            if (navBar)  { navBar.style.display = 'flex'; }
+            // Ir para semana atual (ou semana 1 se mês futuro/passado)
+            goToCurrentWeek();
+        }
+    }
+
+    function goToCurrentWeek() {
+        const wraps = document.querySelectorAll('#tabelas .table-wrap');
+        if (!wraps.length) return;
+        totalWeeks = wraps.length;
+
+        // Tentar encontrar a semana que contém hoje
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0);
+        let targetIndex = 0;
+
+        // weekStartDates é preenchido ao gerar as tabelas; se não disponível, usar index 0
+        for (let i = 0; i < weekStartDates.length; i++) {
+            const inicioSem = new Date(weekStartDates[i]);
+            const fimSem   = new Date(inicioSem);
+            fimSem.setDate(fimSem.getDate() + 6);
+            if (hoje >= inicioSem && hoje <= fimSem) {
+                targetIndex = i;
+                break;
+            }
+        }
+        currentWeekIndex = targetIndex;
+        applyWeekView();
+    }
+
+    function navigateWeek(delta) {
+        const wraps = document.querySelectorAll('#tabelas .table-wrap');
+        totalWeeks = wraps.length;
+        currentWeekIndex = Math.max(0, Math.min(totalWeeks - 1, currentWeekIndex + delta));
+        applyWeekView();
+    }
+
+    function applyWeekView() {
+        const wraps = document.querySelectorAll('#tabelas .table-wrap');
+        totalWeeks = wraps.length;
+        if (!totalWeeks) return;
+
+        wraps.forEach((el, i) => {
+            el.style.display = (i === currentWeekIndex) ? '' : 'none';
+        });
+
+        // Atualizar labels da barra
+        const lblMain  = document.getElementById('weekNavMain');
+        const lblDates = document.getElementById('weekNavDates');
+        const lblHoje  = document.getElementById('weekNavHoje');
+        const btnPrev  = document.getElementById('btnPrevWeek');
+        const btnNext  = document.getElementById('btnNextWeek');
+
+        if (lblMain)  lblMain.textContent = `Semana ${currentWeekIndex + 1} de ${totalWeeks}`;
+
+        // Calcular datas de início e fim da semana atual a partir dos headers da tabela
+        const activeWrap = wraps[currentWeekIndex];
+        if (activeWrap && lblDates) {
+            const ths = activeWrap.querySelectorAll('thead th');
+            const diasComData = [];
+            ths.forEach(th => {
+                const txt = th.textContent.trim();
+                // Formato: "SEG (01)" — extrai o número
+                const m = txt.match(/(\d{2})/);
+                if (m) diasComData.push(m[1]);
+            });
+            if (diasComData.length >= 2) {
+                lblDates.textContent = `${diasComData[0]} a ${diasComData[diasComData.length - 1]} do mês`;
+            } else {
+                lblDates.textContent = '';
+            }
+        }
+
+        // Verificar se é a semana atual
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0);
+        let isSemanaAtual = false;
+        if (weekStartDates[currentWeekIndex]) {
+            const ini = new Date(weekStartDates[currentWeekIndex]);
+            const fim = new Date(ini);
+            fim.setDate(fim.getDate() + 6);
+            isSemanaAtual = (hoje >= ini && hoje <= fim);
+        }
+        if (lblHoje) lblHoje.style.display = isSemanaAtual ? '' : 'none';
+
+        // Botões prev/next
+        if (btnPrev) btnPrev.disabled = currentWeekIndex === 0;
+        if (btnNext) btnNext.disabled = currentWeekIndex === totalWeeks - 1;
+
+        // Scroll suave para o topo da tabela
+        const tabelasEl = document.getElementById('tabelas');
+        if (tabelasEl) {
+            tabelasEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
     }
 
     function createTableBlockByWeek(anoTarget, mesTarget, dataInicioSemana, semana) {
