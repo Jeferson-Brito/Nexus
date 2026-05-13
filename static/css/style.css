@@ -90,6 +90,30 @@ body {
 }
 
 /* ============================================
+   PERSONALIZAÇÃO DE SCROLLBAR (BARRAS DE ROLAGEM)
+   ============================================ */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 8px;
+    border: 2px solid #f1f5f9;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* ============================================
    TELA DE LOGIN
    ============================================ */
 .login-container {
