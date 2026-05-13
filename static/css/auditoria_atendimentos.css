@@ -95,6 +95,11 @@
     height: auto !important;
     flex: none !important;
 }
+
+/* Fix para abas do Bootstrap empilhando e criando espaço em branco */
+.tab-pane:not(.active) {
+    display: none !important;
+}
 .aa-card {
     background: #fff; border-radius: 16px;
     border: 1.5px solid #e2e8f0;
