@@ -6227,6 +6227,14 @@
                         confirmButtonText: 'Entendido',
                         confirmButtonColor: '#e11d48'
                     });
+                } else if (data.tipo === 'excesso_trabalho_consecutivo') {
+                    Swal.fire({
+                        title: '⚠️ Limite de Dias Consecutivos',
+                        text: data.error,
+                        icon: 'warning',
+                        confirmButtonText: 'Entendido',
+                        confirmButtonColor: '#f59e0b'
+                    });
                 } else {
                     showToast(data.error, 'error');
                 }
@@ -6342,6 +6350,14 @@
                                 icon: 'warning',
                                 confirmButtonText: 'Entendido',
                                 confirmButtonColor: '#e11d48'
+                            });
+                        } else if (data.error && data.tipo === 'excesso_trabalho_consecutivo') {
+                            Swal.fire({
+                                title: '⚠️ Limite de Dias Consecutivos',
+                                text: data.error,
+                                icon: 'warning',
+                                confirmButtonText: 'Entendido',
+                                confirmButtonColor: '#f59e0b'
                             });
                         } else {
                             showToast(data.error || 'Erro ao aprovar troca.', 'error');

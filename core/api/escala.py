@@ -755,10 +755,78 @@ def calcular_analistas_ativos(turno, data_alvo, rascunho=None):
     return ativos
 
 
+def _is_analista_trabalhando(analista, data_ref, rascunho=None, modifications=None):
+    """
+    Determina se um analista está trabalhando em uma data específica.
+    Permite passar um dicionário de modificações para simular estados futuros.
+    modifications: {date: 'folga' | 'trabalho'}
+    """
+    # 1. Verificar modificações simuladas (para validação de troca)
+    if modifications and data_ref in modifications:
+        return modifications[data_ref] == 'trabalho'
+
+    # 2. Verificar folga manual explícita no banco
+    folga_manual = FolgaManual.objects.filter(
+        analista=analista, data=data_ref, rascunho=rascunho
+    ).first()
+    if folga_manual:
+        return folga_manual.tipo == 'trabalho'
+
+    # 3. Calcular pelo ciclo do modelo
+    trab, folga = _get_modelo_ciclo(analista)
+    ciclo_total = trab + folga
+
+    primeira_folga = analista.data_primeira_folga
+    if not primeira_folga:
+        return True # Se não tem data de folga, assume-se que trabalha
+
+    diff_days = (data_ref - primeira_folga).days
+    pos = ((diff_days % ciclo_total) + ciclo_total) % ciclo_total
+
+    return pos >= folga
+
+
+def _check_excesso_dias_consecutivos(analista, rascunho, modifications):
+    """
+    Verifica se o analista excede 6 dias consecutivos de trabalho 
+    considerando as modificações propostas.
+    """
+    # Para cada data modificada, verificamos uma janela ao redor
+    datas_para_checar = sorted(modifications.keys())
+    if not datas_para_checar:
+        return False, None
+
+    # Determinamos o range total para checar: precisamos de uma margem segura
+    # Para detectar uma sequência de 7, precisamos olhar pelo menos 6 dias para trás do início
+    # e 6 dias para frente do fim das modificações.
+    start_check = datas_para_checar[0] - timedelta(days=6)
+    end_check = datas_para_checar[-1] + timedelta(days=6)
+    
+    current_date = start_check
+    consecutive_work = 0
+    
+    while current_date <= end_check:
+        if _is_analista_trabalhando(analista, current_date, rascunho, modifications):
+            consecutive_work += 1
+        else:
+            consecutive_work = 0
+        
+        if consecutive_work > 6:
+            return True, (
+                f"Atenção: Esta troca faria com que {analista.nome} trabalhasse por mais de 6 dias "
+                f"consecutivos sem folga. Por favor, escolha outro dia."
+            )
+        
+        current_date += timedelta(days=1)
+        
+    return False, None
+
+
 def validar_regras_troca(solicitante, receptor, data_solicitante, data_receptor, tipo, rascunho=None):
     """
-    Verifica se a troca deixaria algum turno abaixo do mínimo de analistas.
-    Retorna (True, None) se válida ou (False, mensagem_de_erro) se inválida.
+    Verifica se a troca deixaria algum turno abaixo do mínimo de analistas
+    ou se alguém trabalharia mais de 6 dias consecutivos.
+    Retorna (True, None, None) se válida ou (False, mensagem_de_erro, tipo_erro) se inválida.
     """
     # Converter strings de data para date se necessário
     if isinstance(data_solicitante, str):
@@ -782,21 +850,39 @@ def validar_regras_troca(solicitante, receptor, data_solicitante, data_receptor,
             )
         return True, None
 
-    # Cenário 1 (folga própria): solicitante sai no dia atual e entra no dia desejado
-    # Cenário 2 (troca mútua): solicitante sai no dia atual, receptor sai no seu dia
+    # 1. Verificar excesso de dias consecutivos
+    if tipo == 'propria':
+        # Solicitante trabalha em data_solicitante e folga em data_receptor
+        mod_sol = {data_solicitante: 'trabalho', data_receptor: 'folga'}
+        erro, msg = _check_excesso_dias_consecutivos(solicitante, rascunho, mod_sol)
+        if erro:
+            return False, msg, 'excesso_trabalho_consecutivo'
+    else:
+        # Solicitante trabalha em data_solicitante e folga em data_receptor
+        mod_sol = {data_solicitante: 'trabalho', data_receptor: 'folga'}
+        erro, msg = _check_excesso_dias_consecutivos(solicitante, rascunho, mod_sol)
+        if erro:
+            return False, msg, 'excesso_trabalho_consecutivo'
+        
+        # Receptor trabalha em data_receptor e folga em data_solicitante
+        if receptor and data_receptor:
+            mod_rec = {data_receptor: 'trabalho', data_solicitante: 'folga'}
+            erro, msg = _check_excesso_dias_consecutivos(receptor, rascunho, mod_rec)
+            if erro:
+                return False, msg, 'excesso_trabalho_consecutivo'
 
-    # Verificar saída do solicitante do seu dia de folga (ele vai trabalhar nesse dia)
+    # 2. Verificar cobertura mínima
     ok, msg = checar_saida(solicitante, data_solicitante)
     if not ok:
-        return False, msg
+        return False, msg, 'cobertura_insuficiente'
 
     # Verificar saída do receptor do seu dia (apenas para troca entre analistas)
     if tipo == 'analista' and receptor and data_receptor:
         ok, msg = checar_saida(receptor, data_receptor)
         if not ok:
-            return False, msg
+            return False, msg, 'cobertura_insuficiente'
 
-    return True, None
+    return True, None, None
 
 
 def _serializar_troca(t):
@@ -886,8 +972,8 @@ def api_troca_create(request):
         if conflito:
             return JsonResponse({'error': 'Já existe uma solicitação pendente para esta folga.'}, status=400)
 
-        # Validar regras de cobertura mínima de turno
-        ok, erro_cobertura = validar_regras_troca(
+        # Validar regras de cobertura mínima e dias consecutivos
+        ok, erro_msg, erro_tipo = validar_regras_troca(
             solicitante=solicitante,
             receptor=receptor,
             data_solicitante=data_solicitante,
@@ -896,7 +982,7 @@ def api_troca_create(request):
             rascunho=rascunho
         )
         if not ok:
-            return JsonResponse({'error': erro_cobertura, 'tipo': 'cobertura_insuficiente'}, status=400)
+            return JsonResponse({'error': erro_msg, 'tipo': erro_tipo}, status=400)
 
         status_inicial = 'pendente_analista' if tipo == 'analista' else 'pendente_gestor'
 
@@ -960,8 +1046,8 @@ def api_troca_aprovar_gestor(request, pk):
 
         rascunho = troca.rascunho
 
-        # Re-validar regras de cobertura mínima no momento da aprovação final
-        ok, motivo = validar_regras_troca(
+        # Re-validar regras no momento da aprovação final
+        ok, msg_erro, tipo_erro = validar_regras_troca(
             solicitante=troca.solicitante,
             receptor=troca.receptor,
             data_solicitante=troca.data_solicitante,
@@ -970,7 +1056,7 @@ def api_troca_aprovar_gestor(request, pk):
             rascunho=rascunho
         )
         if not ok:
-            return JsonResponse({'error': motivo, 'tipo': 'cobertura_insuficiente'}, status=400)
+            return JsonResponse({'error': msg_erro, 'tipo': tipo_erro}, status=400)
 
         def _aplicar_folga(analista, data_trabalho, data_folga):
             """Remove folga no dia de trabalho e insere folga no novo dia."""
