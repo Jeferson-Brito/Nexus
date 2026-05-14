@@ -526,7 +526,8 @@ def api_rascunho_create(request):
                     horario=t.horario,
                     cor=t.cor,
                     ordem=t.ordem,
-                    ativo=t.ativo
+                    ativo=t.ativo,
+                    min_analistas=t.min_analistas
                 )
                 turno_map[t.id] = novo_t
 
@@ -539,6 +540,7 @@ def api_rascunho_create(request):
                     user=a.user,
                     nome=a.nome,
                     turno=novo_turno,
+                    modelo_escala=a.modelo_escala,
                     pausa=a.pausa,
                     data_primeira_folga=a.data_primeira_folga,
                     ordem=a.ordem,
@@ -597,7 +599,8 @@ def api_rascunho_copiar_turnos(request, pk):
                     horario=t.horario,
                     cor=t.cor,
                     ordem=t.ordem,
-                    ativo=t.ativo
+                    ativo=t.ativo,
+                    min_analistas=t.min_analistas
                 )
             
             mapa_turnos_id[t.id] = novo_t

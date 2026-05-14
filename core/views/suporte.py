@@ -63,7 +63,8 @@ def escala_view(request):
         'nome': t.nome,
         'horario': t.horario,
         'cor': t.cor,
-        'ordem': t.ordem
+        'ordem': t.ordem,
+        'min_analistas': t.min_analistas
     } for t in turnos]
     
     analistas_data = [{

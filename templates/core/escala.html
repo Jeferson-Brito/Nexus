@@ -2890,7 +2890,7 @@
     let analistas = {{ analistas_json| safe }};
     let folgasManuais = {{ folgas_json| safe }};
     let modelos = {{ modelos_json| default:"[]"|safe }};
-    const isAdmin = {{ is_admin_json }};
+    const isAdmin = {% if is_admin %}true{% else %}false{% endif %};
     const loggedInAnalistaId = {% if user_analista_id %}'{{ user_analista_id }}'{% else %}null{% endif %};
     const isConfigMode = {{ is_config_mode|yesno:"true,false" }};
     const csrfToken = '{{ csrf_token }}';
