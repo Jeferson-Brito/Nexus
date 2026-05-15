@@ -15,11 +15,12 @@ class CameraSignalingConsumer(AsyncWebsocketConsumer):
 
     Tipos de mensagem suportados:
       - camera_request : gestor solicita câmera do analista
+      - screen_request : gestor solicita compartilhamento de tela
       - offer          : analista envia oferta SDP ao gestor
       - answer         : gestor envia resposta SDP ao analista
       - ice_candidate  : troca de candidatos ICE (ambos os lados)
       - camera_stop    : gestor encerra a sessão
-      - camera_denied  : analista informa que câmera não está disponível
+      - camera_denied  : analista recusou ou não tem mídia disponível
     """
 
     async def connect(self):
@@ -58,11 +59,24 @@ class CameraSignalingConsumer(AsyncWebsocketConsumer):
                 return
             if not target_user_id:
                 return
-            # Envia solicitação ao analista alvo
             await self.channel_layer.group_send(
                 f"camera_user_{target_user_id}",
                 {
                     "type": "camera.request",
+                    "from_user_id": self.user.id,
+                    "from_user_name": self.user.get_full_name() or self.user.username,
+                }
+            )
+
+        elif msg_type == "screen_request":
+            if not is_gestor:
+                return
+            if not target_user_id:
+                return
+            await self.channel_layer.group_send(
+                f"camera_user_{target_user_id}",
+                {
+                    "type": "screen.request",
                     "from_user_id": self.user.id,
                     "from_user_name": self.user.get_full_name() or self.user.username,
                 }
@@ -134,6 +148,14 @@ class CameraSignalingConsumer(AsyncWebsocketConsumer):
         """Entrega ao analista a solicitação de câmera do gestor."""
         await self.send(text_data=json.dumps({
             "type": "camera_request",
+            "from_user_id": event["from_user_id"],
+            "from_user_name": event["from_user_name"],
+        }))
+
+    async def screen_request(self, event):
+        """Entrega ao analista a solicitação de compartilhamento de tela."""
+        await self.send(text_data=json.dumps({
+            "type": "screen_request",
             "from_user_id": event["from_user_id"],
             "from_user_name": event["from_user_name"],
         }))

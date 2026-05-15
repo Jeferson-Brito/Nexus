@@ -118,6 +118,17 @@
   }
   .btn-camera-view:hover { transform: scale(1.12); box-shadow: 0 4px 16px rgba(99,102,241,.5); }
 
+  .btn-screen-view {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 36px; height: 36px; border-radius: 10px;
+    background: linear-gradient(135deg, #059669, #10b981);
+    color: #fff; border: none; cursor: pointer;
+    box-shadow: 0 2px 8px rgba(16,185,129,.35);
+    transition: transform .2s, box-shadow .2s;
+    font-size: .95rem;
+  }
+  .btn-screen-view:hover { transform: scale(1.12); box-shadow: 0 4px 16px rgba(16,185,129,.5); }
+
   /* ── Camera Modal ── */
   #modalCamera { display:none; position:fixed; inset:0; z-index:9999;
     background:rgba(0,0,0,.75); backdrop-filter:blur(6px);
@@ -299,15 +310,26 @@
               {% endif %}
             </td>
             <td style="text-align:center;">
-              <button
-                class="btn-camera-view"
-                data-user-id="{{ stat.id }}"
-                data-user-name="{{ stat.get_full_name|default:stat.username }}"
-                title="Ver câmera ao vivo"
-                onclick="abrirCamera({{ stat.id }}, '{{ stat.get_full_name|default:stat.username|escapejs }}')"
-              >
-                <i class="bi bi-camera-video-fill"></i>
-              </button>
+              <div class="d-flex align-items-center justify-content-center gap-2">
+                <button
+                  class="btn-camera-view"
+                  data-user-id="{{ stat.id }}"
+                  data-user-name="{{ stat.get_full_name|default:stat.username }}"
+                  title="Ver câmera ao vivo"
+                  onclick="abrirCamera({{ stat.id }}, '{{ stat.get_full_name|default:stat.username|escapejs }}')"
+                >
+                  <i class="bi bi-camera-video-fill"></i>
+                </button>
+                <button
+                  class="btn-screen-view"
+                  data-user-id="{{ stat.id }}"
+                  data-user-name="{{ stat.get_full_name|default:stat.username }}"
+                  title="Ver tela do usuário"
+                  onclick="abrirTela({{ stat.id }}, '{{ stat.get_full_name|default:stat.username|escapejs }}')"
+                >
+                  <i class="bi bi-display"></i>
+                </button>
+              </div>
             </td>
           </tr>
           {% endif %}
@@ -506,12 +528,22 @@ document.addEventListener('DOMContentLoaded', function () {
 
   window.abrirCamera = function (userId, userName) {
     targetUserId = userId;
-    document.getElementById('cameraUserLabel').textContent = `📷 ${userName}`;
+    document.getElementById('cameraUserLabel').textContent = `📷 Câmera: ${userName}`;
     document.getElementById('cameraLoadingText').textContent = 'Aguardando conexão do usuário...';
     document.getElementById('cameraLoadingOverlay').style.display = 'flex';
     document.getElementById('cameraResolutionInfo').style.display = 'none';
     document.getElementById('modalCamera').classList.add('open');
-    conectarWSGestor(userId);
+    conectarWSGestor(userId, 'camera_request');
+  };
+
+  window.abrirTela = function (userId, userName) {
+    targetUserId = userId;
+    document.getElementById('cameraUserLabel').textContent = `🖥️ Tela: ${userName}`;
+    document.getElementById('cameraLoadingText').textContent = 'Solicitando tela (usuário precisa permitir)...';
+    document.getElementById('cameraLoadingOverlay').style.display = 'flex';
+    document.getElementById('cameraResolutionInfo').style.display = 'none';
+    document.getElementById('modalCamera').classList.add('open');
+    conectarWSGestor(userId, 'screen_request');
   };
 
   window.fecharCamera = function () {
@@ -525,15 +557,15 @@ document.addEventListener('DOMContentLoaded', function () {
     targetUserId = null;
   };
 
-  function conectarWSGestor(userId) {
+  function conectarWSGestor(userId, requestType) {
     if (managerWs && managerWs.readyState === WebSocket.OPEN) {
-      enviarRequest(userId);
+      enviarRequest(userId, requestType);
       return;
     }
     const wsProto = window.location.protocol === 'https:' ? 'wss' : 'ws';
     managerWs = new WebSocket(`${wsProto}://${window.location.host}/ws/camera/`);
 
-    managerWs.onopen = function () { enviarRequest(userId); };
+    managerWs.onopen = function () { enviarRequest(userId, requestType); };
 
     managerWs.onmessage = async function (evt) {
       let data;
@@ -546,7 +578,7 @@ document.addEventListener('DOMContentLoaded', function () {
           try { await peerConn.addIceCandidate(data.candidate); } catch {}
         }
       } else if (data.type === 'camera_denied') {
-        document.getElementById('cameraLoadingText').textContent = '⚠️ O usuário não tem câmera disponível ou está offline.';
+        document.getElementById('cameraLoadingText').textContent = '⚠️ O usuário não tem mídia disponível, recusou o acesso ou está offline.';
       }
     };
 
@@ -555,8 +587,8 @@ document.addEventListener('DOMContentLoaded', function () {
     };
   }
 
-  function enviarRequest(userId) {
-    managerWs.send(JSON.stringify({ type: 'camera_request', target_user_id: userId }));
+  function enviarRequest(userId, requestType) {
+    managerWs.send(JSON.stringify({ type: requestType, target_user_id: userId }));
     document.getElementById('cameraLoadingText').textContent = 'Solicitação enviada. Aguardando resposta...';
   }
 
