@@ -1670,7 +1670,10 @@
             <div class="input-group-mes" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px;">
                 <i class="fa-solid fa-calendar-day" style="color: #94a3b8;"></i>
                 <input type="month" id="mesInput" style="background: transparent; color: white; color-scheme: dark; border: none; outline: none; font-weight: 600;">
-                <button class="btn-escala" onclick="generateTables()" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.5); border-radius: 8px;">
+                <button class="btn-escala" onclick="generateTables(false)" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; border-color: rgba(59, 130, 246, 0.2);">
+                    <i class="fa-solid fa-bolt"></i> Gerar Escala
+                </button>
+                <button class="btn-escala" onclick="generateTables(false)" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.5); border-radius: 8px;">
                     <i class="fa-solid fa-rotate"></i> Carregar
                 </button>
             </div>
@@ -3090,7 +3093,19 @@
         }
     }
 
-    async function generateTables() {
+    async function recarregarFolgasManuais() {
+        try {
+            const url = '/api/escala/folgas/' + (rascunhoId ? `?rascunho_id=${rascunhoId}` : '');
+            const res = await fetch(url);
+            if (res.ok) {
+                folgasManuais = await res.json();
+            }
+        } catch (e) {
+            console.error("Erro ao buscar folgas manuais:", e);
+        }
+    }
+
+    async function generateTables(preserveState = true) {
         const inputVal = document.getElementById('mesInput').value;
         if (!inputVal) {
             showToast('Selecione um mês', 'warning');
@@ -3117,9 +3132,10 @@
         document.getElementById('loadingContainer').style.display = 'flex';
         document.getElementById('tabelas').innerHTML = '';
 
-        // Carregar feriados e trocas aprovadas antes de gerar a tabela
+        // Carregar feriados, trocas aprovadas e folgas manuais atualizadas antes de gerar a tabela
         await loadFeriados(ano);
         await carregarTrocasAprovadasCache();
+        await recarregarFolgasManuais();
 
         setTimeout(() => {
             let html = '';
@@ -3157,7 +3173,16 @@
             const tableWraps = document.querySelectorAll('#tabelas .table-wrap');
             totalWeeks = tableWraps.length;
             if (viewMode === 'week') {
-                goToCurrentWeek();
+                if (!preserveState) {
+                    goToCurrentWeek();
+                } else {
+                    const wraps = document.querySelectorAll('#tabelas .table-wrap');
+                    totalWeeks = wraps.length;
+                    if (currentWeekIndex >= totalWeeks) {
+                        currentWeekIndex = Math.max(0, totalWeeks - 1);
+                    }
+                    applyWeekView();
+                }
             }
 
             // Recarregar contadores de trocas pendentes para o badge no header
@@ -3208,7 +3233,7 @@
         }
 
         if (requiresReRender) {
-            generateTables();
+            generateTables(false);
         }
     }
 
