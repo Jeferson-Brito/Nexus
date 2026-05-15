@@ -3129,6 +3129,22 @@
         let dataInicio = new Date(primeiroDia);
         dataInicio.setDate(primeiroDia.getDate() - diff);
 
+        // Capturar scroll antes de limpar a tela para não perder a posição
+        let currentScrollY = 0;
+        let currentScrollX = 0;
+        let currentHorizScrollLeft = 0;
+        let currentHorizScrollTop = 0;
+
+        if (preserveState) {
+            currentScrollY = window.scrollY;
+            currentScrollX = window.scrollX;
+            const hc = document.querySelector('.tabela-horizontal-container');
+            if (hc) {
+                currentHorizScrollLeft = hc.scrollLeft;
+                currentHorizScrollTop = hc.scrollTop;
+            }
+        }
+
         document.getElementById('loadingContainer').style.display = 'flex';
         document.getElementById('tabelas').innerHTML = '';
 
@@ -3187,6 +3203,19 @@
 
             // Recarregar contadores de trocas pendentes para o badge no header
             atualizarBadgeTrocasPendentes();
+
+            // Restaurar scroll position se estiver preservando o estado
+            if (preserveState) {
+                // Aguarda o próximo frame para o navegador reconhecer o novo DOM e altura
+                requestAnimationFrame(() => {
+                    window.scrollTo(currentScrollX, currentScrollY);
+                    const newHc = document.querySelector('.tabela-horizontal-container');
+                    if (newHc) {
+                        newHc.scrollLeft = currentHorizScrollLeft;
+                        newHc.scrollTop = currentHorizScrollTop;
+                    }
+                });
+            }
         }, 100);
     }
 
