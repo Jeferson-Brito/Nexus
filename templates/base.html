@@ -1668,7 +1668,7 @@
 
         async function handleCameraRequest(fromManagerId) {
             try {
-                localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
             } catch (err) {
                 // Câmera não disponível — informa ao gestor
                 send({ type: 'camera_denied', target_user_id: fromManagerId });
