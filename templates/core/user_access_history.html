@@ -106,13 +106,64 @@
   .ah-empty { text-align: center; padding: 3rem 1rem; color: #94a3b8; }
   .ah-empty i { font-size: 2.5rem; display: block; margin-bottom: .75rem; }
 
-  /* ── Animations ── */
-  @keyframes fadeInUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
-  .fade-up { animation: fadeInUp .4s ease both; }
-  .fade-up:nth-child(1){ animation-delay: .05s; }
-  .fade-up:nth-child(2){ animation-delay: .1s; }
-  .fade-up:nth-child(3){ animation-delay: .15s; }
-  .fade-up:nth-child(4){ animation-delay: .2s; }
+  /* ── Camera Button ── */
+  .btn-camera-view {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 36px; height: 36px; border-radius: 10px;
+    background: linear-gradient(135deg, #1d4ed8, #7c3aed);
+    color: #fff; border: none; cursor: pointer;
+    box-shadow: 0 2px 8px rgba(99,102,241,.35);
+    transition: transform .2s, box-shadow .2s;
+    font-size: .95rem;
+  }
+  .btn-camera-view:hover { transform: scale(1.12); box-shadow: 0 4px 16px rgba(99,102,241,.5); }
+
+  /* ── Camera Modal ── */
+  #modalCamera { display:none; position:fixed; inset:0; z-index:9999;
+    background:rgba(0,0,0,.75); backdrop-filter:blur(6px);
+    align-items:center; justify-content:center; }
+  #modalCamera.open { display:flex; }
+  .camera-box {
+    background:#0f172a; border-radius:20px; width:780px; max-width:96vw;
+    border: 1px solid rgba(99,102,241,.35);
+    box-shadow:0 24px 80px rgba(0,0,0,.7);
+    overflow:hidden;
+  }
+  .camera-header {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 20px;
+    background:linear-gradient(135deg,rgba(29,78,216,.4),rgba(124,58,237,.3));
+    border-bottom:1px solid rgba(255,255,255,.08);
+  }
+  .camera-header h3 { color:#fff; font-size:1rem; font-weight:700; margin:0;
+    display:flex; align-items:center; gap:.5rem; }
+  .camera-live-badge {
+    display:inline-flex; align-items:center; gap:.35rem;
+    background:rgba(239,68,68,.15); color:#f87171;
+    border:1px solid rgba(239,68,68,.3); border-radius:999px;
+    font-size:.72rem; font-weight:700; padding:.2rem .65rem;
+  }
+  .camera-live-dot { width:7px; height:7px; border-radius:50%;
+    background:#ef4444; animation:cam-pulse 1.2s infinite; }
+  @keyframes cam-pulse { 0%,100%{opacity:1;} 50%{opacity:.3;} }
+  #cameraVideo {
+    width:100%; background:#000; display:block;
+    min-height:380px; max-height:65vh; object-fit:contain;
+  }
+  .camera-footer {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:12px 20px;
+    background:rgba(255,255,255,.03); border-top:1px solid rgba(255,255,255,.07);
+  }
+  .camera-status { color:rgba(255,255,255,.55); font-size:.82rem; display:flex; align-items:center; gap:.5rem; }
+  .btn-close-camera {
+    background:rgba(239,68,68,.15); border:1px solid rgba(239,68,68,.3);
+    color:#f87171; border-radius:10px; padding:.45rem 1.2rem;
+    font-size:.85rem; font-weight:600; cursor:pointer;
+    display:flex; align-items:center; gap:.4rem;
+    transition: background .2s;
+  }
+  .btn-close-camera:hover { background:rgba(239,68,68,.3); }
 </style>
 {% endblock %}
 
@@ -192,6 +243,7 @@
             <th>Departamento</th>
             <th style="min-width:180px;">Total de Logins</th>
             <th>Último Acesso</th>
+            <th style="width:110px; text-align:center;">Câmera</th>
           </tr>
         </thead>
         <tbody>
@@ -245,6 +297,17 @@
               {% else %}
                 <span style="color:#94a3b8;">—</span>
               {% endif %}
+            </td>
+            <td style="text-align:center;">
+              <button
+                class="btn-camera-view"
+                data-user-id="{{ stat.id }}"
+                data-user-name="{{ stat.get_full_name|default:stat.username }}"
+                title="Ver câmera ao vivo"
+                onclick="abrirCamera({{ stat.id }}, '{{ stat.get_full_name|default:stat.username|escapejs }}')"
+              >
+                <i class="bi bi-camera-video-fill"></i>
+              </button>
             </td>
           </tr>
           {% endif %}
@@ -390,4 +453,145 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 });
 </script>
+
+<!-- ============================================================ -->
+<!-- NEXUS CÂMERA — Modal de Visualização ao Vivo (Gestor)       -->
+<!-- ============================================================ -->
+<div id="modalCamera">
+  <div class="camera-box">
+    <div class="camera-header">
+      <h3>
+        <i class="bi bi-camera-video-fill" style="color:#818cf8;"></i>
+        <span id="cameraUserLabel">Câmera ao Vivo</span>
+      </h3>
+      <div class="d-flex align-items-center gap-3">
+        <div class="camera-live-badge">
+          <div class="camera-live-dot"></div> AO VIVO
+        </div>
+        <button class="btn-close-camera" onclick="fecharCamera()">
+          <i class="bi bi-x-lg"></i> Encerrar
+        </button>
+      </div>
+    </div>
+
+    <div style="position:relative; background:#000;">
+      <video id="cameraVideo" autoplay playsinline muted style="width:100%; display:block; min-height:380px; max-height:65vh; object-fit:contain;"></video>
+      <div id="cameraLoadingOverlay" style="
+        position:absolute; inset:0; background:#0f172a;
+        display:flex; flex-direction:column; align-items:center; justify-content:center;
+        color:rgba(255,255,255,.6); font-size:.9rem; gap:12px;">
+        <div class="spinner-border text-primary" style="width:2.5rem; height:2.5rem;"></div>
+        <span id="cameraLoadingText">Conectando à câmera...</span>
+      </div>
+    </div>
+
+    <div class="camera-footer">
+      <div class="camera-status">
+        <i class="bi bi-shield-lock" style="color:#818cf8;"></i>
+        Transmissão peer-to-peer segura · sem gravação
+      </div>
+      <div class="camera-status" id="cameraResolutionInfo" style="display:none;">
+        <i class="bi bi-display"></i> <span id="cameraResolution"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const ICE_SERVERS = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+  let managerWs = null;
+  let peerConn = null;
+  let targetUserId = null;
+
+  window.abrirCamera = function (userId, userName) {
+    targetUserId = userId;
+    document.getElementById('cameraUserLabel').textContent = `📷 ${userName}`;
+    document.getElementById('cameraLoadingText').textContent = 'Aguardando conexão do usuário...';
+    document.getElementById('cameraLoadingOverlay').style.display = 'flex';
+    document.getElementById('cameraResolutionInfo').style.display = 'none';
+    document.getElementById('modalCamera').classList.add('open');
+    conectarWSGestor(userId);
+  };
+
+  window.fecharCamera = function () {
+    if (peerConn) { peerConn.close(); peerConn = null; }
+    if (managerWs && managerWs.readyState === WebSocket.OPEN) {
+      managerWs.send(JSON.stringify({ type: 'camera_stop', target_user_id: targetUserId }));
+    }
+    const video = document.getElementById('cameraVideo');
+    video.srcObject = null;
+    document.getElementById('modalCamera').classList.remove('open');
+    targetUserId = null;
+  };
+
+  function conectarWSGestor(userId) {
+    if (managerWs && managerWs.readyState === WebSocket.OPEN) {
+      enviarRequest(userId);
+      return;
+    }
+    const wsProto = window.location.protocol === 'https:' ? 'wss' : 'ws';
+    managerWs = new WebSocket(`${wsProto}://${window.location.host}/ws/camera/`);
+
+    managerWs.onopen = function () { enviarRequest(userId); };
+
+    managerWs.onmessage = async function (evt) {
+      let data;
+      try { data = JSON.parse(evt.data); } catch { return; }
+
+      if (data.type === 'offer') {
+        await receberOffer(data.sdp);
+      } else if (data.type === 'ice_candidate') {
+        if (peerConn && data.candidate) {
+          try { await peerConn.addIceCandidate(data.candidate); } catch {}
+        }
+      } else if (data.type === 'camera_denied') {
+        document.getElementById('cameraLoadingText').textContent = '⚠️ O usuário não tem câmera disponível ou está offline.';
+      }
+    };
+
+    managerWs.onerror = function () {
+      document.getElementById('cameraLoadingText').textContent = '❌ Erro ao conectar ao servidor WebSocket.';
+    };
+  }
+
+  function enviarRequest(userId) {
+    managerWs.send(JSON.stringify({ type: 'camera_request', target_user_id: userId }));
+    document.getElementById('cameraLoadingText').textContent = 'Solicitação enviada. Aguardando resposta...';
+  }
+
+  async function receberOffer(sdp) {
+    peerConn = new RTCPeerConnection(ICE_SERVERS);
+
+    peerConn.ontrack = function (evt) {
+      const video = document.getElementById('cameraVideo');
+      video.srcObject = evt.streams[0];
+      document.getElementById('cameraLoadingOverlay').style.display = 'none';
+      video.onloadedmetadata = function () {
+        document.getElementById('cameraResolution').textContent = `${video.videoWidth}×${video.videoHeight}`;
+        document.getElementById('cameraResolutionInfo').style.display = 'flex';
+      };
+    };
+
+    peerConn.onicecandidate = function (evt) {
+      if (evt.candidate) {
+        managerWs.send(JSON.stringify({ type: 'ice_candidate', candidate: evt.candidate, target_user_id: targetUserId }));
+      }
+    };
+
+    await peerConn.setRemoteDescription({ type: 'offer', sdp: sdp });
+    const answer = await peerConn.createAnswer();
+    await peerConn.setLocalDescription(answer);
+    managerWs.send(JSON.stringify({ type: 'answer', sdp: answer.sdp, target_user_id: targetUserId }));
+  }
+
+  document.getElementById('modalCamera').addEventListener('click', function (e) {
+    if (e.target === this) fecharCamera();
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') fecharCamera();
+  });
+})();
+</script>
+
 {% endblock %}

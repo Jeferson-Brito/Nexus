@@ -1611,7 +1611,111 @@
 
 
 {% if user.is_authenticated %}
-<!-- NEXUS IA — WIDGET CHATBOT FLUTUANTE -->
+    <!-- NEXUS IA — WIDGET CHATBOT FLUTUANTE -->
+
+    <!-- ============================================================ -->
+    <!-- NEXUS CÂMERA — Listener WebRTC (roda em todas as páginas)    -->
+    <!-- Permite que o gestor solicite a câmera via WebSocket         -->
+    <!-- ============================================================ -->
+    <script>
+    (function () {
+        // Só executa para usuários autenticados
+        const NEXUS_USER_ID = {{ user.id }};
+        const NEXUS_USER_NAME = "{{ user.get_full_name|default:user.username|escapejs }}";
+        let cameraWs = null;
+        let localStream = null;
+        let peerConn = null;
+        let cameraManagerId = null;
+
+        const ICE_SERVERS = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+
+        function connectCameraWS() {
+            const wsProto = window.location.protocol === 'https:' ? 'wss' : 'ws';
+            const wsUrl = `${wsProto}://${window.location.host}/ws/camera/`;
+            cameraWs = new WebSocket(wsUrl);
+
+            cameraWs.onmessage = async function (evt) {
+                let data;
+                try { data = JSON.parse(evt.data); } catch { return; }
+
+                if (data.type === 'camera_request') {
+                    cameraManagerId = data.from_user_id;
+                    await handleCameraRequest(data.from_user_id);
+
+                } else if (data.type === 'answer') {
+                    // Caso o analista também seja gestor (não esperado no fluxo normal)
+                    if (peerConn) await peerConn.setRemoteDescription({ type: 'answer', sdp: data.sdp });
+
+                } else if (data.type === 'ice_candidate') {
+                    if (peerConn && data.candidate) {
+                        try { await peerConn.addIceCandidate(data.candidate); } catch {}
+                    }
+
+                } else if (data.type === 'camera_stop') {
+                    stopCamera();
+                }
+            };
+
+            cameraWs.onclose = function () {
+                // Reconecta após 10s se a página ainda estiver aberta
+                setTimeout(connectCameraWS, 10000);
+            };
+
+            cameraWs.onerror = function () {
+                cameraWs.close();
+            };
+        }
+
+        async function handleCameraRequest(fromManagerId) {
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+            } catch (err) {
+                // Câmera não disponível — informa ao gestor
+                send({ type: 'camera_denied', target_user_id: fromManagerId });
+                return;
+            }
+
+            peerConn = new RTCPeerConnection(ICE_SERVERS);
+
+            localStream.getTracks().forEach(track => peerConn.addTrack(track, localStream));
+
+            peerConn.onicecandidate = function (evt) {
+                if (evt.candidate) {
+                    send({ type: 'ice_candidate', candidate: evt.candidate, target_user_id: fromManagerId });
+                }
+            };
+
+            const offer = await peerConn.createOffer();
+            await peerConn.setLocalDescription(offer);
+
+            send({ type: 'offer', sdp: offer.sdp, target_user_id: fromManagerId });
+        }
+
+        function stopCamera() {
+            if (localStream) {
+                localStream.getTracks().forEach(t => t.stop());
+                localStream = null;
+            }
+            if (peerConn) {
+                peerConn.close();
+                peerConn = null;
+            }
+            cameraManagerId = null;
+        }
+
+        function send(obj) {
+            if (cameraWs && cameraWs.readyState === WebSocket.OPEN) {
+                cameraWs.send(JSON.stringify(obj));
+            }
+        }
+
+        // Inicia conexão quando a página carrega
+        document.addEventListener('DOMContentLoaded', connectCameraWS);
+        // Limpa ao sair
+        window.addEventListener('beforeunload', stopCamera);
+    })();
+    </script>
+
 <style>
     #nexus-ia-fab{position:fixed;bottom:28px;right:28px;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 24px rgba(99,102,241,.5);z-index:9998;color:#fff;font-size:22px;transition:transform .25s cubic-bezier(.34,1.56,.64,1),box-shadow .25s;}
     #nexus-ia-fab:hover{transform:scale(1.1) translateY(-2px);box-shadow:0 8px 32px rgba(99,102,241,.65);}

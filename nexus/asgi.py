@@ -1,11 +1,21 @@
 """
 ASGI config for nexus project.
-Simple ASGI application (no channels/websockets).
+Handles both HTTP and WebSocket (via Django Channels).
 """
 import os
 
 from django.core.asgi import get_asgi_application
+from channels.routing import ProtocolTypeRouter, URLRouter
+from channels.auth import AuthMiddlewareStack
+import core.routing
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'nexus.settings')
 
-application = get_asgi_application()
+application = ProtocolTypeRouter({
+    "http": get_asgi_application(),
+    "websocket": AuthMiddlewareStack(
+        URLRouter(
+            core.routing.websocket_urlpatterns
+        )
+    ),
+})

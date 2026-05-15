@@ -44,7 +44,7 @@ CSRF_TRUSTED_ORIGINS = [
 # APPLICATIONS
 # ==============================
 INSTALLED_APPS = [
-    # "daphne",  # Removed
+    "daphne",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -53,7 +53,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "storages",
 
-    # "channels",  # Removed
+    "channels",
     "crispy_forms",
     "crispy_bootstrap5",
     "django_filters",
@@ -316,15 +316,25 @@ LOGGING = {
     },
 }
 # ==============================
-# CHANNELS (WEBSOCKETS) - REMOVED
+# CHANNELS (WEBSOCKETS)
 # ==============================
-# ASGI_APPLICATION = "nexus.asgi.application"
+ASGI_APPLICATION = "nexus.asgi.application"
 
-# CHANNEL_LAYERS = {
-#     "default": {
-#         "BACKEND": "channels.layers.InMemoryChannelLayer"
-#     }
-# }
+if REDIS_URL:
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels_redis.core.RedisChannelLayer",
+            "CONFIG": {
+                "hosts": [REDIS_URL],
+            },
+        }
+    }
+else:
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels.layers.InMemoryChannelLayer"
+        }
+    }
 
 # ==============================
 # INTELIGÊNCIA ARTIFICIAL
