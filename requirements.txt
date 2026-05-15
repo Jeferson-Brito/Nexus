@@ -107,6 +107,7 @@ python-multipart==0.0.22
 pytz==2025.2
 realtime==2.27.3
 redis==7.1.0
+django-redis==5.4.0
 referencing==0.36.2
 requests==2.32.5
 rich==14.3.2
