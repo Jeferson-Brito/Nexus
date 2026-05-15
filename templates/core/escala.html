@@ -5668,6 +5668,13 @@
                                 <div class="d-flex gap-2 justify-content-end mt-2">
                                     <button class="btn btn-sm btn-outline-secondary" onclick="cancelarSolicitacaoFolga(${t.id})"><i class="fa-solid fa-ban"></i> Cancelar</button>
                                 </div>`;
+                        } else if (t.status === 'aprovada' && (isAdmin || t.analista_id == loggedInAnalistaId)) {
+                            actionButtons = `
+                                <div class="d-flex gap-2 justify-content-end mt-2">
+                                    <button class="btn btn-sm btn-outline-danger d-flex align-items-center gap-1" onclick="cancelarSolicitacaoAprovada(${t.id})">
+                                        <i class="fa-solid fa-rotate-left"></i> Cancelar e Reverter
+                                    </button>
+                                </div>`;
                         }
                     } else {
                         // Ações para Troca de Folga
@@ -5692,6 +5699,13 @@
                                         <button class="btn btn-sm btn-outline-secondary" onclick="cancelarTroca(${t.id})"><i class="fa-solid fa-ban"></i> Cancelar Solicitação</button>
                                     </div>`;
                             }
+                        } else if (t.status === 'aprovada' && isAdmin) {
+                            actionButtons = `
+                                <div class="d-flex gap-2 justify-content-end mt-2">
+                                    <button class="btn btn-sm btn-outline-danger d-flex align-items-center gap-1" onclick="cancelarTrocaAprovada(${t.id})">
+                                        <i class="fa-solid fa-rotate-left"></i> Cancelar e Reverter
+                                    </button>
+                                </div>`;
                         }
                     }
 
@@ -6440,6 +6454,44 @@
         });
     }
 
+    function cancelarTrocaAprovada(id) {
+        Swal.fire({
+            title: 'Cancelar e Reverter Troca?',
+            html: `
+                <p style="color:#475569; font-size:0.95rem;">Esta ação irá <strong>reverter a troca na escala</strong>.</p>
+                <p style="color:#475569; font-size:0.9rem; margin-top:8px;">
+                    Os dias que foram alterados na escala voltarão ao estado original. Esta ação não pode ser desfeita.
+                </p>
+            `,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: '<i class="fa-solid fa-rotate-left"></i> Sim, reverter',
+            cancelButtonText: 'Voltar'
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                try {
+                    const res = await fetch(`/api/escala/trocas/${id}/cancelar-aprovada/`, {
+                        method: 'POST',
+                        headers: { 'X-CSRFToken': csrfToken }
+                    });
+                    if (res.ok) {
+                        showToast('Troca revertida com sucesso. A escala foi restaurada.', 'success');
+                        carregarTrocas();
+                        if (typeof generateTables === 'function') generateTables();
+                        await carregarTrocasAprovadasCache();
+                    } else {
+                        const data = await res.json();
+                        showToast(data.error || 'Erro ao reverter troca.', 'error');
+                    }
+                } catch(e) {
+                    showToast('Erro de conexão.', 'error');
+                }
+            }
+        });
+    }
+
     // ========================================
     // AÇÕES PARA SOLICITAÇÃO DE FOLGA EXTRA
     // ========================================
@@ -6538,6 +6590,44 @@
                     } else {
                         const data = await res.json();
                         showToast(data.error || 'Erro ao cancelar.', 'error');
+                    }
+                } catch(e) {
+                    showToast('Erro de conexão.', 'error');
+                }
+            }
+        });
+    }
+
+    function cancelarSolicitacaoAprovada(id) {
+        Swal.fire({
+            title: 'Cancelar e Reverter Folga?',
+            html: `
+                <p style="color:#475569; font-size:0.95rem;">Esta ação irá <strong>remover a folga aprovada da escala</strong>.</p>
+                <p style="color:#475569; font-size:0.9rem; margin-top:8px;">
+                    O dia voltará ao status original calculado pela escala. Esta ação não pode ser desfeita.
+                </p>
+            `,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: '<i class="fa-solid fa-rotate-left"></i> Sim, reverter',
+            cancelButtonText: 'Voltar'
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                try {
+                    const res = await fetch(`/api/escala/solicitacoes-folga/${id}/cancelar-aprovada/`, {
+                        method: 'POST',
+                        headers: { 'X-CSRFToken': csrfToken }
+                    });
+                    if (res.ok) {
+                        showToast('Folga revertida com sucesso. A escala foi restaurada.', 'success');
+                        carregarTrocas();
+                        if (typeof generateTables === 'function') generateTables();
+                        await carregarTrocasAprovadasCache();
+                    } else {
+                        const data = await res.json();
+                        showToast(data.error || 'Erro ao reverter folga.', 'error');
                     }
                 } catch(e) {
                     showToast('Erro de conexão.', 'error');

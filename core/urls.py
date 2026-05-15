@@ -206,6 +206,7 @@ urlpatterns = [
     path('api/escala/trocas/<int:pk>/aprovar-gestor/', api_escala.api_troca_aprovar_gestor, name='api_troca_aprovar_gestor'),
     path('api/escala/trocas/<int:pk>/rejeitar-gestor/', api_escala.api_troca_rejeitar_gestor, name='api_troca_rejeitar_gestor'),
     path('api/escala/trocas/<int:pk>/cancelar/', api_escala.api_troca_delete, name='api_troca_cancelar'),
+    path('api/escala/trocas/<int:pk>/cancelar-aprovada/', api_escala.api_troca_cancelar_aprovada, name='api_troca_cancelar_aprovada'),
     
     # API Solicitações de Folga
     path('api/escala/solicitacoes-folga/', api_escala.api_solicitacoes_folga_list, name='api_solicitacoes_folga_list'),
@@ -213,6 +214,7 @@ urlpatterns = [
     path('api/escala/solicitacoes-folga/<int:pk>/aprovar/', api_escala.api_solicitacao_folga_aprovar, name='api_solicitacao_folga_aprovar'),
     path('api/escala/solicitacoes-folga/<int:pk>/rejeitar/', api_escala.api_solicitacao_folga_rejeitar, name='api_solicitacao_folga_rejeitar'),
     path('api/escala/solicitacoes-folga/<int:pk>/cancelar/', api_escala.api_solicitacao_folga_delete, name='api_solicitacao_folga_delete'),
+    path('api/escala/solicitacoes-folga/<int:pk>/cancelar-aprovada/', api_escala.api_solicitacao_folga_cancelar_aprovada, name='api_solicitacao_folga_cancelar_aprovada'),
     path('api/escala/coverage-details/', api_escala.api_escala_coverage_details, name='api_escala_coverage_details'),
 
     path('api/escala/analistas/<int:pk>/schedule/', api_escala.api_analista_schedule, name='api_analista_schedule'),

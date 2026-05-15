@@ -1132,6 +1132,58 @@ def api_troca_delete(request, pk):
 
 
 @login_required
+@require_http_methods(['POST'])
+@check_nrs_permission
+def api_troca_cancelar_aprovada(request, pk):
+    """Gestor/admin cancela uma troca já aprovada e reverte as FolgaManual na escala."""
+    try:
+        troca = get_object_or_404(TrocaFolga, pk=pk)
+
+        if troca.status != 'aprovada':
+            return JsonResponse({'error': 'Somente trocas aprovadas podem ser revertidas.'}, status=400)
+
+        # Apenas gestores e administradores podem reverter
+        if not (request.user.is_gestor() or request.user.is_administrador()):
+            return JsonResponse({'error': 'Permissão negada. Apenas gestores podem reverter trocas aprovadas.'}, status=403)
+
+        rascunho = troca.rascunho
+        motivo_ref = f'Troca de folga aprovada (ID #{troca.id})'
+
+        def _reverter_folga(analista, data_trabalho, data_folga):
+            """Reverte as FolgaManual criadas pela aprovação desta troca."""
+            # Remove o registro de "trabalho" forçado no dia que era folga original
+            FolgaManual.objects.filter(
+                analista=analista,
+                data=data_trabalho,
+                rascunho=rascunho,
+                motivo=motivo_ref
+            ).delete()
+            # Remove o registro de "folga" no novo dia de folga
+            FolgaManual.objects.filter(
+                analista=analista,
+                data=data_folga,
+                rascunho=rascunho,
+                motivo=motivo_ref
+            ).delete()
+
+        if troca.tipo == 'propria':
+            # Cenário 1: reverter folga do solicitante
+            _reverter_folga(troca.solicitante, troca.data_solicitante, troca.data_receptor)
+        else:
+            # Cenário 2: reverter troca mútua
+            _reverter_folga(troca.solicitante, troca.data_solicitante, troca.data_receptor)
+            if troca.receptor and troca.data_receptor:
+                _reverter_folga(troca.receptor, troca.data_receptor, troca.data_solicitante)
+
+        troca.status = 'cancelada'
+        troca.save()
+
+        return JsonResponse({'success': True, 'troca': _serializar_troca(troca)})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+
+@login_required
 def api_analista_schedule(request, pk):
     """Retorna as folgas manuais de um analista (para preview no Cenário 2)."""
     analista = get_object_or_404(AnalistaEscala, pk=pk)
@@ -1316,6 +1368,47 @@ def api_solicitacao_folga_delete(request, pk):
         solicitacao.status = 'cancelada'
         solicitacao.save()
         return JsonResponse({'success': True})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+
+@login_required
+@require_http_methods(['POST'])
+def api_solicitacao_folga_cancelar_aprovada(request, pk):
+    """Cancela uma solicitação de folga já aprovada e reverte a FolgaManual na escala.
+    
+    Permissões:
+    - Gestores e administradores podem cancelar qualquer solicitação aprovada.
+    - O próprio analista pode cancelar sua solicitação aprovada.
+    """
+    try:
+        solicitacao = get_object_or_404(SolicitacaoFolga, pk=pk)
+
+        if solicitacao.status != 'aprovada':
+            return JsonResponse({'error': 'Somente solicitações aprovadas podem ser revertidas.'}, status=400)
+
+        # Verificar permissão: gestor/admin OU próprio analista
+        is_gestor_ou_admin = request.user.is_gestor() or request.user.is_administrador()
+        if not is_gestor_ou_admin:
+            analista_perfis = AnalistaEscala.objects.filter(user=request.user).values_list('id', flat=True)
+            if solicitacao.analista.id not in analista_perfis:
+                return JsonResponse({'error': 'Permissão negada.'}, status=403)
+
+        rascunho = solicitacao.rascunho
+
+        # Reverter a FolgaManual criada pela aprovação desta solicitação
+        motivo_ref = f'Folga solicitada ({solicitacao.get_tipo_display()}) aprovada por'
+        FolgaManual.objects.filter(
+            analista=solicitacao.analista,
+            data=solicitacao.data,
+            rascunho=rascunho,
+            motivo__startswith=motivo_ref
+        ).delete()
+
+        solicitacao.status = 'cancelada'
+        solicitacao.save()
+
+        return JsonResponse({'success': True, 'solicitacao': _serializar_solicitacao(solicitacao)})
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
 
