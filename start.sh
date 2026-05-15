@@ -20,16 +20,11 @@ python manage.py fix_permissions
 # 5. Inicializar dados de produção (admin)
 python manage.py init_production
 
-echo "==> Sistema inicializado. Iniciando Gunicorn..."
+echo "==> Sistema inicializado. Iniciando Daphne (ASGI + WebSocket)..."
 
-# Iniciar o servidor de aplicação
-exec gunicorn nexus.wsgi:application \
-    --bind 0.0.0.0:8000 \
-    --workers 2 \
-    --threads 2 \
-    --worker-class gthread \
-    --worker-tmp-dir /dev/shm \
-    --timeout 120 \
-    --graceful-timeout 30 \
-    --max-requests 1000 \
-    --max-requests-jitter 100
+# Daphne: suporta HTTP e WebSocket (necessário para Django Channels)
+exec daphne \
+    -b 0.0.0.0 \
+    -p 8000 \
+    --proxy-headers \
+    nexus.asgi:application
