@@ -390,3 +390,29 @@ AXES_COOLOFF_TIME = 1  # horas
 AXES_RESET_ON_SUCCESS = True
 AXES_LOCKOUT_TEMPLATE = 'core/lockout.html'
 
+# ==============================
+# SENTRY
+# ==============================
+SENTRY_DSN = get_env("SENTRY_DSN")
+if SENTRY_DSN:
+    import sentry_sdk
+    from sentry_sdk.integrations.django import DjangoIntegration
+    from sentry_sdk.integrations.celery import CeleryIntegration
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[DjangoIntegration(), CeleryIntegration()],
+        traces_sample_rate=1.0,
+        send_default_pii=True,
+    )
+
+# ==============================
+# CELERY
+# ==============================
+CELERY_BROKER_URL = get_env("REDIS_URL")
+if not CELERY_BROKER_URL:
+    CELERY_TASK_ALWAYS_EAGER = True
+    CELERY_TASK_STORE_EAGERS = True
+
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'

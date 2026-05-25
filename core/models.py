@@ -269,10 +269,18 @@ class AuditLog(models.Model):
         ('logout', 'Logout'),
         ('password_reset', 'Reset de Senha'),
         ('status_change', 'Mudança de Status'),
+        ('admin_action', 'Ação Administrativa'),
+        ('financial_action', 'Ação Financeira'),
+        ('permission_change', 'Alteração de Permissões'),
+        ('export_data', 'Exportação de Dados'),
+        ('ai_usage', 'Uso de IA'),
     ]
     
     usuario = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='audit_logs')
-    action = models.CharField(max_length=20, choices=ACTION_CHOICES)
+    tenant = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True, blank=True, related_name='audit_logs')
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    
+    action = models.CharField(max_length=50, choices=ACTION_CHOICES)
     target_type = models.CharField(max_length=100, blank=True)
     target_id = models.IntegerField(null=True, blank=True)
     detalhes_json = models.JSONField(default=dict, blank=True)
@@ -3083,3 +3091,22 @@ class NexusIABase(models.Model):
         return f"[{self.department.name}] {self.titulo}"
 
 
+class IAQuota(models.Model):
+    tenant = models.OneToOneField(Department, on_delete=models.CASCADE, related_name='ia_quota')
+    daily_limit = models.IntegerField(default=100)
+    monthly_limit = models.IntegerField(default=3000)
+    alert_threshold_percent = models.IntegerField(default=80)
+    
+    def __str__(self):
+        return f"Quota IA: {self.tenant.name} (Dia: {self.daily_limit} / Mês: {self.monthly_limit})"
+
+class IAConsumptionLog(models.Model):
+    tenant = models.ForeignKey(Department, on_delete=models.CASCADE, related_name='ia_consumptions')
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    endpoint = models.CharField(max_length=100)
+    tokens_used = models.IntegerField(default=0)
+    cost = models.DecimalField(max_digits=10, decimal_places=6, default=0.0)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"{self.tenant.name} - {self.endpoint} em {self.timestamp.strftime('%d/%m/%Y')}"

@@ -139,6 +139,19 @@ def api_classificar_reclamacao(request, pk):
         return JsonResponse({'erro': 'Acesso negado.'}, status=403)
 
     try:
+        from .models import IAQuota, IAConsumptionLog
+        
+        tenant_id = request.user.department_id if hasattr(request.user, 'department') else None
+        if tenant_id:
+            quota, _ = IAQuota.objects.get_or_create(tenant_id=tenant_id)
+            hoje = timezone.now().date()
+            consumo_diario = IAConsumptionLog.objects.filter(
+                tenant_id=tenant_id,
+                timestamp__date=hoje
+            ).count()
+            if consumo_diario >= quota.daily_limit:
+                return JsonResponse({'erro': 'Limite diário de IA excedido.'}, status=429)
+
         complaint = Complaint.objects.get(pk=pk)
         resultado = classificar_reclamacao(
             descricao=complaint.descricao or complaint.feedback_text or '',
@@ -150,6 +163,14 @@ def api_classificar_reclamacao(request, pk):
             complaint.ia_sentimento = resultado['sentimento']
             complaint.ia_classificado_em = timezone.now()
             complaint.save(update_fields=['ia_urgencia', 'ia_sentimento', 'ia_classificado_em'])
+            
+            if tenant_id:
+                IAConsumptionLog.objects.create(
+                    tenant_id=tenant_id,
+                    user=request.user,
+                    endpoint='api_classificar_reclamacao',
+                    tokens_used=resultado.get('tokens', 0)
+                )
 
         return JsonResponse({
             'status': 'ok',
@@ -170,47 +191,41 @@ def api_classificar_reclamacao(request, pk):
 @ratelimit(key='ip', rate='10/m', block=True)
 def api_classificar_lote(request):
     """
-    Classifica em lote todas as reclamações sem classificação IA.
-    Limita a 50 por chamada para não travar o servidor.
+    Classifica em lote todas as reclamações sem classificação IA (Assíncrono).
+    Envia para o Celery processar em background.
     """
     if not (request.user.is_gestor() or request.user.is_administrador()):
         return JsonResponse({'erro': 'Acesso negado.'}, status=403)
 
     try:
+        from ..tasks import task_classificar_reclamacao
+        
         qs = Complaint.objects.filter(ia_urgencia__isnull=True)
         if not request.user.is_administrador():
             qs = qs.filter(department=request.user.department)
 
         pendentes = qs.order_by('-created_at')[:50]
-        classificadas = 0
-        erros = 0
+        enviadas = 0
 
         for complaint in pendentes:
             descricao = complaint.descricao or complaint.feedback_text or ''
             if not descricao.strip():
                 continue
 
-            resultado = classificar_reclamacao(
+            task_classificar_reclamacao.delay(
+                complaint_id=complaint.id,
                 descricao=descricao,
-                tipo_reclamacao=complaint.get_tipo_reclamacao_display()
+                tipo_reclamacao=complaint.get_tipo_reclamacao_display(),
+                user_id=request.user.id,
+                tenant_id=request.user.department_id if hasattr(request.user, 'department') else None
             )
-
-            if 'erro' not in resultado or resultado.get('erro') != 'api_key_missing':
-                complaint.ia_urgencia = resultado['urgencia']
-                complaint.ia_sentimento = resultado['sentimento']
-                complaint.ia_classificado_em = timezone.now()
-                complaint.save(update_fields=['ia_urgencia', 'ia_sentimento', 'ia_classificado_em'])
-                classificadas += 1
-            else:
-                erros += 1
-                break
+            enviadas += 1
 
         total_restante = Complaint.objects.filter(ia_urgencia__isnull=True).count()
         return JsonResponse({
             'status': 'ok',
-            'classificadas': classificadas,
-            'erros': erros,
-            'restante': total_restante
+            'enviadas_para_fila': enviadas,
+            'restante_total': total_restante
         })
 
     except Exception as e:

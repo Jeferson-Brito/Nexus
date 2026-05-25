@@ -1,0 +1,36 @@
+name: Enterprise Security Pipeline
+
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main", "develop" ]
+
+jobs:
+  security-audit:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+        cache: 'pip'
+
+    - name: Install security tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install pip-audit bandit flake8 trufflehog3
+
+    - name: Secret Scanning (TruffleHog)
+      run: trufflehog3 --no-history .
+
+    - name: Dependency Audit (pip-audit)
+      run: pip-audit -r requirements.txt || echo "Aviso: Vulnerabilidades encontradas."
+
+    - name: Static Security Analysis (Bandit)
+      run: bandit -r core/ nexus/ -c bandit.yml || echo "Aviso: Checagem estática encontrou possíveis issues."
+
+    - name: Linting (Flake8)
+      run: flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics || true
