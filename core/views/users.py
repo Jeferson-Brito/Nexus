@@ -78,6 +78,15 @@ def user_create(request):
         last_name = request.POST.get('last_name', '')
         profile_photo = request.FILES.get('profile_photo')
         
+        # Validation for file upload
+        if profile_photo:
+            if profile_photo.size > 2 * 1024 * 1024:
+                messages.error(request, 'A foto de perfil deve ter no máximo 2MB.')
+                return redirect('user_list')
+            if profile_photo.content_type not in ['image/jpeg', 'image/png', 'image/webp']:
+                messages.error(request, 'Formato de imagem inválido. Use JPG, PNG ou WEBP.')
+                return redirect('user_list')
+
         # Restrições de Gestor
         if request.user.is_gestor() and not request.user.is_administrador():
             role = 'analista'

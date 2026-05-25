@@ -62,6 +62,7 @@ INSTALLED_APPS = [
 
     # apps locais
     "core",
+    "axes",
 ]
 
 # ==============================
@@ -78,6 +79,8 @@ MIDDLEWARE = [
     "core.middleware_ponto.TabletRedirectMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "csp.middleware.CSPMiddleware",
+    "axes.middleware.AxesMiddleware",
 ]
 
 ROOT_URLCONF = "nexus.urls"
@@ -242,16 +245,28 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 # ==============================
-# SECURITY HEADERS
+# ==============================
+# SECURITY HEADERS & HSTS
 # ==============================
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = "DENY"
 
+SECURE_SSL_REDIRECT = not DEBUG
+if not DEBUG:
+    SECURE_HSTS_SECONDS = 31536000  # 1 ano
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+
+SECURE_REFERRER_POLICY = "same-origin"
+
 SESSION_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_SECURE = not DEBUG
 SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_HTTPONLY = False  # MUST be False to allow JavaScript to read CSRF token
+
+SESSION_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SAMESITE = 'Lax'
 
 # ==============================
 # SESSION
@@ -351,4 +366,27 @@ BITRIX24_WEBHOOK_URL = get_env("BITRIX24_WEBHOOK_URL", "")
 # ==============================
 CONTACTCENTER_API_URL = get_env("CONTACTCENTER_API_URL", "https://contactcenter.ikli.com.br")
 CONTACTCENTER_API_KEY = get_env("CONTACTCENTER_API_KEY", "")
+
+# ==============================
+# CSP (Content Security Policy)
+# ==============================
+CSP_REPORT_ONLY = True
+CSP_DEFAULT_SRC = ("'self'",)
+CSP_STYLE_SRC = ("'self'", "'unsafe-inline'", "https:", "http:")
+CSP_SCRIPT_SRC = ("'self'", "'unsafe-inline'", "'unsafe-eval'", "https:", "http:")
+CSP_IMG_SRC = ("'self'", "data:", "https:", "http:")
+CSP_FONT_SRC = ("'self'", "data:", "https:", "http:")
+CSP_FRAME_ANCESTORS = ("'self'",)
+
+# ==============================
+# AXES (Brute Force Protection)
+# ==============================
+AUTHENTICATION_BACKENDS = [
+    'axes.backends.AxesStandaloneBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+AXES_FAILURE_LIMIT = 6
+AXES_COOLOFF_TIME = 1  # horas
+AXES_RESET_ON_SUCCESS = True
+AXES_LOCKOUT_TEMPLATE = 'core/lockout.html'
 

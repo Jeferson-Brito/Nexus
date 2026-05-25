@@ -10,11 +10,14 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 from ..models import ArtigoBaseConhecimento, Complaint, NexusIABase, Department
 from ..services.ia_service import chatbot_kb, classificar_reclamacao
+from django_ratelimit.decorators import ratelimit
 
 
 @csrf_exempt
 @login_required
 @require_http_methods(["POST"])
+@ratelimit(key='user', rate='20/m', block=True)
+@ratelimit(key='ip', rate='50/m', block=True)
 def api_chatbot_kb(request):
     """
     Endpoint do chatbot da Base de Conhecimento.
@@ -126,6 +129,8 @@ def api_chatbot_kb(request):
 @csrf_exempt
 @login_required
 @require_http_methods(["POST"])
+@ratelimit(key='user', rate='30/m', block=True)
+@ratelimit(key='ip', rate='60/m', block=True)
 def api_classificar_reclamacao(request, pk):
     """
     Classifica uma reclamação específica com IA.
@@ -161,6 +166,8 @@ def api_classificar_reclamacao(request, pk):
 @csrf_exempt
 @login_required
 @require_http_methods(["POST"])
+@ratelimit(key='user', rate='5/m', block=True)
+@ratelimit(key='ip', rate='10/m', block=True)
 def api_classificar_lote(request):
     """
     Classifica em lote todas as reclamações sem classificação IA.

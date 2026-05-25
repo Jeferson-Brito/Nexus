@@ -85,3 +85,7 @@ node_modules/
 
 # Environment variables
 .env
+
+# Secrets
+.env
+.env.*
