@@ -1846,6 +1846,7 @@
 
     {% endif %}
 
+    {% if not is_config_mode %}
     <!-- Loading -->
     <div class="loading-container" id="loadingContainer" style="display: none;">
         <div class="loading-spinner">
@@ -1959,6 +1960,7 @@
 
     <!-- Tabelas da Escala -->
     <div id="tabelas" class="tabelas"></div>
+    {% endif %}
 </div>
 
 <!-- Modal de Gerenciamento de Turnos -->
@@ -3187,6 +3189,8 @@
             showToast('Selecione um mês', 'warning');
             return;
         }
+
+        checkEmptyStates();
 
         if (turnos.length === 0 || analistas.length === 0) {
             checkEmptyStates();
