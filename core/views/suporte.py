@@ -54,9 +54,10 @@ def escala_view(request):
         analistas = AnalistaEscala.objects.filter(ativo=True, rascunho=rascunho_obj).select_related('turno', 'modelo_escala').order_by('turno__ordem', 'ordem', 'nome')
         folgas = FolgaManual.objects.filter(rascunho=rascunho_obj).select_related('analista')
     else:
-        turnos = Turno.objects.filter(ativo=True, rascunho__isnull=True).order_by('ordem', 'nome')
-        analistas = AnalistaEscala.objects.filter(ativo=True, rascunho__isnull=True).select_related('turno', 'modelo_escala').order_by('turno__ordem', 'ordem', 'nome')
-        folgas = FolgaManual.objects.filter(rascunho__isnull=True).select_related('analista')
+        # Carrega apenas operacional por padrão. A troca para gestão é feita via JS/API.
+        turnos = Turno.objects.filter(ativo=True, rascunho__isnull=True, escala_tipo='operacional').order_by('ordem', 'nome')
+        analistas = AnalistaEscala.objects.filter(ativo=True, rascunho__isnull=True, escala_tipo='operacional').select_related('turno', 'modelo_escala').order_by('turno__ordem', 'ordem', 'nome')
+        folgas = FolgaManual.objects.filter(rascunho__isnull=True, analista__escala_tipo='operacional').select_related('analista')
     
     turnos_data = [{
         'id': str(t.id),
