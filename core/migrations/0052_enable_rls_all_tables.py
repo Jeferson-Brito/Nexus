@@ -112,6 +112,8 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("core", "0051_systemnotification"),
+        ("sessions", "0001_initial"),
+        ("auth", "0012_alter_user_first_name_max_length"),
     ]
 
     operations = [
