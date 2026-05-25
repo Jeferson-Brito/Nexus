@@ -316,7 +316,15 @@ class ModeloEscala(models.Model):
 
 class ConfiguracaoEscala(models.Model):
     """Singleton para armazenar configurações da Escala Principal"""
-    modelo_escala_principal = models.ForeignKey(ModeloEscala, on_delete=models.SET_NULL, null=True, blank=True)
+    modelo_escala_principal = models.ForeignKey(
+        ModeloEscala, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='configuracoes_operacional'
+    )
+    modelo_escala_principal_gestao = models.ForeignKey(
+        ModeloEscala, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='configuracoes_gestao',
+        verbose_name='Modelo Principal (Gestão)'
+    )
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -329,9 +337,17 @@ class ConfiguracaoEscala(models.Model):
 
 class EscalaRascunho(models.Model):
     """Rascunhos/Simulações de escala independentes da escala principal"""
+    ESCALA_TIPO_CHOICES = [
+        ('operacional', 'Operacional'),
+        ('gestao', 'Gestão'),
+    ]
     nome = models.CharField(max_length=100)
     autor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='rascunhos_escala')
     modelo_escala = models.ForeignKey(ModeloEscala, on_delete=models.SET_NULL, null=True, blank=True, related_name='rascunhos')
+    escala_tipo = models.CharField(
+        max_length=20, choices=ESCALA_TIPO_CHOICES, default='operacional',
+        verbose_name='Tipo de Escala'
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -341,16 +357,24 @@ class EscalaRascunho(models.Model):
         verbose_name_plural = 'Rascunhos de Escala'
     
     def __str__(self):
-        return f"{self.nome} ({self.autor.username})"
+        return f"{self.nome} ({self.autor.username}) [{self.get_escala_tipo_display()}]"
 
 class Turno(models.Model):
     """Turnos de trabalho para a escala"""
+    ESCALA_TIPO_CHOICES = [
+        ('operacional', 'Operacional'),
+        ('gestao', 'Gestão'),
+    ]
     rascunho = models.ForeignKey(EscalaRascunho, on_delete=models.CASCADE, null=True, blank=True, related_name='turnos')
     nome = models.CharField(max_length=100)
     horario = models.CharField(max_length=50)  # Ex: "22:00 - 06:00"
     cor = models.CharField(max_length=20, default='#2563eb')  # Cor hexadecimal
     ordem = models.IntegerField(default=0)
     min_analistas = models.IntegerField(default=0, help_text='Número mínimo de analistas ativos exigido no turno. 0 = sem restrição.')
+    escala_tipo = models.CharField(
+        max_length=20, choices=ESCALA_TIPO_CHOICES, default='operacional',
+        verbose_name='Tipo de Escala'
+    )
     ativo = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -363,7 +387,11 @@ class Turno(models.Model):
 
 
 class AnalistaEscala(models.Model):
-    """Analistas específicos para a escala NRS (separado do User para flexibilidade)"""
+    """Analistas/Supervisores específicos para a escala NRS (separado do User para flexibilidade)"""
+    ESCALA_TIPO_CHOICES = [
+        ('operacional', 'Operacional'),
+        ('gestao', 'Gestão'),
+    ]
     rascunho = models.ForeignKey(EscalaRascunho, on_delete=models.CASCADE, null=True, blank=True, related_name='analistas')
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='escala_perfis')
     nome = models.CharField(max_length=200)
@@ -371,6 +399,10 @@ class AnalistaEscala(models.Model):
     modelo_escala = models.ForeignKey(ModeloEscala, on_delete=models.SET_NULL, null=True, blank=True, related_name='analistas', help_text="Override do modelo de escala do rascunho/principal")
     pausa = models.CharField(max_length=50, blank=True)  # Ex: "01:00 - 02:00"
     data_primeira_folga = models.DateField(null=True, blank=True)  # Data da primeira folga no ciclo 6x2
+    escala_tipo = models.CharField(
+        max_length=20, choices=ESCALA_TIPO_CHOICES, default='operacional',
+        verbose_name='Tipo de Escala'
+    )
     ordem = models.IntegerField(default=0)
     ativo = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)

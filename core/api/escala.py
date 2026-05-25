@@ -101,11 +101,50 @@ def api_modelo_escala_delete(request, pk):
     """Exclui um modelo de escala"""
     modelo = get_object_or_404(ModeloEscala, pk=pk)
     # Check if it is being used
-    if modelo.rascunhos.exists() or modelo.analistas.exists() or ConfiguracaoEscala.objects.filter(modelo_escala_principal=modelo).exists():
+    em_uso = (
+        modelo.rascunhos.exists()
+        or modelo.analistas.exists()
+        or ConfiguracaoEscala.objects.filter(modelo_escala_principal=modelo).exists()
+        or ConfiguracaoEscala.objects.filter(modelo_escala_principal_gestao=modelo).exists()
+    )
+    if em_uso:
         return JsonResponse({'error': 'Não é possível excluir um modelo que está em uso por uma escala ou analista.'}, status=400)
     
     modelo.delete()
     return JsonResponse({'success': True})
+
+@login_required
+@require_http_methods(["POST"])
+@check_nrs_permission
+def api_escala_config_save(request):
+    """Salva a configuração de modelo principal para um tipo de escala (operacional ou gestão)"""
+    try:
+        data = json.loads(request.body)
+        escala_tipo = data.get('escala_tipo', 'operacional')
+        modelo_id = data.get('modelo_escala_id')
+
+        config, _ = ConfiguracaoEscala.objects.get_or_create(id=1)
+
+        if modelo_id:
+            modelo = get_object_or_404(ModeloEscala, pk=modelo_id)
+            if escala_tipo == 'gestao':
+                config.modelo_escala_principal_gestao = modelo
+            else:
+                config.modelo_escala_principal = modelo
+        else:
+            if escala_tipo == 'gestao':
+                config.modelo_escala_principal_gestao = None
+            else:
+                config.modelo_escala_principal = None
+
+        config.save()
+        return JsonResponse({
+            'success': True,
+            'modelo_principal_id': config.modelo_escala_principal_id,
+            'modelo_principal_id_gestao': config.modelo_escala_principal_gestao_id,
+        })
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
 
 # ========================================
 # API VIEWS PARA ESCALA NRS
@@ -116,10 +155,11 @@ def api_modelo_escala_delete(request, pk):
 def api_turnos_list(request):
     """Lista todos os turnos"""
     rascunho_id = request.GET.get('rascunho_id')
+    escala_tipo = request.GET.get('escala_tipo', 'operacional')
     if rascunho_id:
         turnos = Turno.objects.filter(ativo=True, rascunho_id=rascunho_id).order_by('ordem', 'nome')
     else:
-        turnos = Turno.objects.filter(ativo=True, rascunho__isnull=True).order_by('ordem', 'nome')
+        turnos = Turno.objects.filter(ativo=True, rascunho__isnull=True, escala_tipo=escala_tipo).order_by('ordem', 'nome')
         
     data = [{
         'id': str(t.id),
@@ -128,6 +168,7 @@ def api_turnos_list(request):
         'cor': t.cor,
         'ordem': t.ordem,
         'min_analistas': t.min_analistas,
+        'escala_tipo': t.escala_tipo,
     } for t in turnos]
     return JsonResponse(data, safe=False)
 
@@ -141,6 +182,8 @@ def api_turno_create(request):
         data = json.loads(request.body)
         rascunho_id = data.get('rascunho_id')
         rascunho = EscalaRascunho.objects.get(id=rascunho_id) if rascunho_id else None
+        # Herdar tipo do rascunho; se não houver, usar o tipo enviado (padrão: operacional)
+        escala_tipo = rascunho.escala_tipo if rascunho else data.get('escala_tipo', 'operacional')
         
         turno = Turno.objects.create(
             nome=data.get('nome', ''),
@@ -148,7 +191,8 @@ def api_turno_create(request):
             cor=data.get('cor', '#2563eb'),
             ordem=data.get('ordem', 0),
             min_analistas=int(data.get('min_analistas', 0)),
-            rascunho=rascunho
+            rascunho=rascunho,
+            escala_tipo=escala_tipo,
         )
         return JsonResponse({
             'id': str(turno.id),
@@ -157,6 +201,7 @@ def api_turno_create(request):
             'cor': turno.cor,
             'ordem': turno.ordem,
             'min_analistas': turno.min_analistas,
+            'escala_tipo': turno.escala_tipo,
         })
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
@@ -198,12 +243,13 @@ def api_turno_detail(request, pk):
 @login_required
 @check_nrs_permission
 def api_analistas_list(request):
-    """Lista todos os analistas da escala"""
+    """Lista todos os analistas/supervisores da escala"""
     rascunho_id = request.GET.get('rascunho_id')
+    escala_tipo = request.GET.get('escala_tipo', 'operacional')
     if rascunho_id:
         queryset = AnalistaEscala.objects.filter(ativo=True, rascunho_id=rascunho_id).select_related('turno')
     else:
-        queryset = AnalistaEscala.objects.filter(ativo=True, rascunho__isnull=True).select_related('turno')
+        queryset = AnalistaEscala.objects.filter(ativo=True, rascunho__isnull=True, escala_tipo=escala_tipo).select_related('turno')
     
     # Se for RH, filtrar apenas analistas que PERTENCEM ao NRS Suporte
     if not request.user.is_administrador() and request.user.department and request.user.department.name == 'RH':
@@ -218,7 +264,8 @@ def api_analistas_list(request):
         'modelo_escala_id': str(a.modelo_escala.id) if a.modelo_escala else None,
         'pausa': a.pausa,
         'data_primeira_folga': a.data_primeira_folga.isoformat() if a.data_primeira_folga else None,
-        'ordem': a.ordem
+        'ordem': a.ordem,
+        'escala_tipo': a.escala_tipo,
     } for a in analistas]
     return JsonResponse(data, safe=False)
 
@@ -227,11 +274,13 @@ def api_analistas_list(request):
 @require_http_methods(["POST"])
 @check_nrs_permission
 def api_analista_create(request):
-    """Cria um novo analista"""
+    """Cria um novo analista/supervisor na escala"""
     try:
         data = json.loads(request.body)
         rascunho_id = data.get('rascunho_id')
         rascunho = EscalaRascunho.objects.get(id=rascunho_id) if rascunho_id else None
+        # Herdar tipo do rascunho; se não houver, usar o tipo enviado (padrão: operacional)
+        escala_tipo = rascunho.escala_tipo if rascunho else data.get('escala_tipo', 'operacional')
         
         turno = None
         if data.get('turno_id'):
@@ -254,7 +303,8 @@ def api_analista_create(request):
             pausa=data.get('pausa', ''),
             data_primeira_folga=data_folga,
             ordem=data.get('ordem', 0),
-            rascunho=rascunho
+            rascunho=rascunho,
+            escala_tipo=escala_tipo,
         )
         return JsonResponse({
             'id': str(analista.id),
@@ -264,7 +314,8 @@ def api_analista_create(request):
             'modelo_escala_id': str(analista.modelo_escala.id) if analista.modelo_escala else None,
             'pausa': analista.pausa,
             'data_primeira_folga': analista.data_primeira_folga.isoformat() if analista.data_primeira_folga else None,
-            'ordem': analista.ordem
+            'ordem': analista.ordem,
+            'escala_tipo': analista.escala_tipo,
         })
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
@@ -323,10 +374,14 @@ def api_analista_detail(request, pk):
 def api_folgas_list(request):
     """Lista todas as folgas manuais"""
     rascunho_id = request.GET.get('rascunho_id')
+    escala_tipo = request.GET.get('escala_tipo', 'operacional')
     if rascunho_id:
         queryset = FolgaManual.objects.filter(rascunho_id=rascunho_id).select_related('analista')
     else:
-        queryset = FolgaManual.objects.filter(rascunho__isnull=True).select_related('analista')
+        queryset = FolgaManual.objects.filter(
+            rascunho__isnull=True,
+            analista__escala_tipo=escala_tipo
+        ).select_related('analista')
     
     # Se for RH, filtrar apenas folgas de analistas que PERTENCEM ao NRS Suporte
     if not request.user.is_administrador() and request.user.department and request.user.department.name == 'RH':
@@ -456,13 +511,15 @@ def api_auditar_escala_ia(request):
 @login_required
 @check_nrs_permission
 def api_rascunhos_list(request):
-    """Lista os rascunhos do usuário/sistema"""
-    rascunhos = EscalaRascunho.objects.all().order_by('-updated_at')
+    """Lista os rascunhos do usuário/sistema, filtrados pelo tipo de escala"""
+    escala_tipo = request.GET.get('escala_tipo', 'operacional')
+    rascunhos = EscalaRascunho.objects.filter(escala_tipo=escala_tipo).order_by('-updated_at')
     data = [{
         'id': r.id,
         'nome': r.nome,
         'autor': r.autor.get_full_name() or r.autor.username,
-        'data_atualizacao': r.updated_at.strftime('%d/%m/%Y %H:%M')
+        'data_atualizacao': r.updated_at.strftime('%d/%m/%Y %H:%M'),
+        'escala_tipo': r.escala_tipo,
     } for r in rascunhos]
     return JsonResponse(data, safe=False)
 
@@ -472,10 +529,14 @@ def api_rascunhos_list(request):
 def api_rascunho_create(request):
     """Cria um novo rascunho: em branco (sem turnos, analistas sem turno) ou cópia de uma fonte."""
     try:
-        if EscalaRascunho.objects.count() >= 3:
-            return JsonResponse({'error': 'Limite de 3 rascunhos atingido. Exclua um rascunho para criar outro.'}, status=400)
-
         data = json.loads(request.body)
+        escala_tipo = data.get('escala_tipo', 'operacional')
+
+        # Limite de 3 rascunhos POR TIPO
+        if EscalaRascunho.objects.filter(escala_tipo=escala_tipo).count() >= 3:
+            tipo_label = 'Gestão' if escala_tipo == 'gestao' else 'Operacional'
+            return JsonResponse({'error': f'Limite de 3 rascunhos de {tipo_label} atingido. Exclua um rascunho para criar outro.'}, status=400)
+
         nome = data.get('nome', f'Rascunho {datetime.now().strftime("%d/%m %H:%M")}')
         tipo = data.get('tipo', 'copia')        # 'em_branco' ou 'copia'
         fonte_id = data.get('fonte_id', 'principal')  # 'principal' ou ID numérico de um rascunho
@@ -485,32 +546,38 @@ def api_rascunho_create(request):
         if modelo_escala_id:
             modelo_escala = get_object_or_404(ModeloEscala, pk=modelo_escala_id)
 
-        rascunho = EscalaRascunho.objects.create(nome=nome, autor=request.user, modelo_escala=modelo_escala)
+        rascunho = EscalaRascunho.objects.create(
+            nome=nome,
+            autor=request.user,
+            modelo_escala=modelo_escala,
+            escala_tipo=escala_tipo,
+        )
 
         if tipo == 'em_branco':
             # --- MODO EM BRANCO ---
-            # Sem turnos, sem folgas. Apenas copia os analistas da escala principal
+            # Sem turnos, sem folgas. Apenas copia os membros da escala principal do mesmo tipo
             # sem vínculo de turno, para que possam ser atribuídos manualmente depois.
-            analistas_ativos = AnalistaEscala.objects.filter(ativo=True, rascunho__isnull=True)
+            analistas_ativos = AnalistaEscala.objects.filter(ativo=True, rascunho__isnull=True, escala_tipo=escala_tipo)
             for a in analistas_ativos:
                 AnalistaEscala.objects.create(
                     rascunho=rascunho,
                     user=a.user,
                     nome=a.nome,
-                    turno=None,          # Sem turno - será definido na simulação
+                    turno=None,
                     pausa='',
                     data_primeira_folga=None,
                     ordem=a.ordem,
-                    ativo=a.ativo
+                    ativo=a.ativo,
+                    escala_tipo=escala_tipo,
                 )
 
         else:
             # --- MODO CÓPIA ---
             # Determinar a fonte: escala principal ou um rascunho existente
             if fonte_id == 'principal' or not fonte_id:
-                turnos_fonte = Turno.objects.filter(ativo=True, rascunho__isnull=True)
-                analistas_fonte = AnalistaEscala.objects.filter(ativo=True, rascunho__isnull=True)
-                folgas_fonte = FolgaManual.objects.filter(rascunho__isnull=True)
+                turnos_fonte = Turno.objects.filter(ativo=True, rascunho__isnull=True, escala_tipo=escala_tipo)
+                analistas_fonte = AnalistaEscala.objects.filter(ativo=True, rascunho__isnull=True, escala_tipo=escala_tipo)
+                folgas_fonte = FolgaManual.objects.filter(rascunho__isnull=True, analista__escala_tipo=escala_tipo)
             else:
                 fonte_rascunho = get_object_or_404(EscalaRascunho, pk=fonte_id)
                 turnos_fonte = Turno.objects.filter(ativo=True, rascunho=fonte_rascunho)
@@ -527,11 +594,12 @@ def api_rascunho_create(request):
                     cor=t.cor,
                     ordem=t.ordem,
                     ativo=t.ativo,
-                    min_analistas=t.min_analistas
+                    min_analistas=t.min_analistas,
+                    escala_tipo=escala_tipo,
                 )
                 turno_map[t.id] = novo_t
 
-            # Copiar Analistas
+            # Copiar Analistas/Supervisores
             analista_map = {}
             for a in analistas_fonte:
                 novo_turno = turno_map.get(a.turno_id) if a.turno_id else None
@@ -544,7 +612,8 @@ def api_rascunho_create(request):
                     pausa=a.pausa,
                     data_primeira_folga=a.data_primeira_folga,
                     ordem=a.ordem,
-                    ativo=a.ativo
+                    ativo=a.ativo,
+                    escala_tipo=escala_tipo,
                 )
                 analista_map[a.id] = novo_a
 
@@ -559,7 +628,7 @@ def api_rascunho_create(request):
                         motivo=f.motivo
                     )
 
-        return JsonResponse({'success': True, 'id': rascunho.id, 'nome': rascunho.nome})
+        return JsonResponse({'success': True, 'id': rascunho.id, 'nome': rascunho.nome, 'escala_tipo': rascunho.escala_tipo})
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
 
@@ -570,12 +639,13 @@ def api_rascunho_copiar_turnos(request, pk):
     """Copia turnos e analistas de uma escala fonte para o rascunho atual"""
     try:
         rascunho_destino = get_object_or_404(EscalaRascunho, pk=pk)
+        escala_tipo = rascunho_destino.escala_tipo
         data = json.loads(request.body)
         fonte_id = data.get('fonte_id', 'principal')
 
         if fonte_id == 'principal' or not fonte_id:
-            turnos_fonte = Turno.objects.filter(ativo=True, rascunho__isnull=True)
-            analistas_fonte = AnalistaEscala.objects.filter(ativo=True, rascunho__isnull=True)
+            turnos_fonte = Turno.objects.filter(ativo=True, rascunho__isnull=True, escala_tipo=escala_tipo)
+            analistas_fonte = AnalistaEscala.objects.filter(ativo=True, rascunho__isnull=True, escala_tipo=escala_tipo)
         else:
             fonte_rascunho = get_object_or_404(EscalaRascunho, pk=fonte_id)
             turnos_fonte = Turno.objects.filter(ativo=True, rascunho=fonte_rascunho)
@@ -584,13 +654,11 @@ def api_rascunho_copiar_turnos(request, pk):
         if not turnos_fonte.exists():
             return JsonResponse({'error': 'A escala fonte não possui turnos para copiar.'}, status=400)
 
-        # Mapeamento para associar analistas aos novos turnos (por ID e por NOME)
         mapa_turnos_id = {}
         mapa_turnos_nome = {}
         
         turnos_criados = []
         for t in turnos_fonte:
-            # Tenta encontrar turno existente com mesmo nome no destino para não duplicar se já existir
             novo_t = Turno.objects.filter(rascunho=rascunho_destino, nome=t.nome).first()
             if not novo_t:
                 novo_t = Turno.objects.create(
@@ -600,7 +668,8 @@ def api_rascunho_copiar_turnos(request, pk):
                     cor=t.cor,
                     ordem=t.ordem,
                     ativo=t.ativo,
-                    min_analistas=t.min_analistas
+                    min_analistas=t.min_analistas,
+                    escala_tipo=escala_tipo,
                 )
             
             mapa_turnos_id[t.id] = novo_t
@@ -613,15 +682,11 @@ def api_rascunho_copiar_turnos(request, pk):
                 'cor': novo_t.cor
             })
 
-        # Copiar/Atualizar Analistas
         for a in analistas_fonte:
             novo_turno = mapa_turnos_id.get(a.turno_id) if a.turno else None
-            
-            # Tenta encontrar analista existente no destino pelo nome
             analista_destino = AnalistaEscala.objects.filter(rascunho=rascunho_destino, nome=a.nome).first()
             
             if analista_destino:
-                # Atualiza analista existente
                 analista_destino.turno = novo_turno
                 analista_destino.user = a.user
                 analista_destino.modelo_escala = a.modelo_escala
@@ -631,7 +696,6 @@ def api_rascunho_copiar_turnos(request, pk):
                 analista_destino.ativo = a.ativo
                 analista_destino.save()
             else:
-                # Cria novo analista
                 AnalistaEscala.objects.create(
                     rascunho=rascunho_destino,
                     user=a.user,
@@ -641,7 +705,8 @@ def api_rascunho_copiar_turnos(request, pk):
                     pausa=a.pausa,
                     data_primeira_folga=a.data_primeira_folga,
                     ordem=a.ordem,
-                    ativo=a.ativo
+                    ativo=a.ativo,
+                    escala_tipo=escala_tipo,
                 )
 
         return JsonResponse({'success': True, 'turnos': turnos_criados})
@@ -661,7 +726,7 @@ def api_rascunho_delete(request, pk):
 @require_http_methods(["POST"])
 @check_nrs_permission
 def api_rascunho_publish(request, pk):
-    """Substitui a escala principal pelo rascunho, exigindo senha de admin"""
+    """Substitui a escala principal (do mesmo tipo) pelo rascunho, exigindo senha de admin"""
     try:
         data = json.loads(request.body)
         password = data.get('password')
@@ -673,20 +738,25 @@ def api_rascunho_publish(request, pk):
             return JsonResponse({'error': 'Senha incorreta.'}, status=403)
             
         rascunho = get_object_or_404(EscalaRascunho, pk=pk)
+        escala_tipo = rascunho.escala_tipo
         
-        # Excluir escala principal atual
-        Turno.objects.filter(rascunho__isnull=True).delete()
-        AnalistaEscala.objects.filter(rascunho__isnull=True).delete()
-        FolgaManual.objects.filter(rascunho__isnull=True).delete()
+        # Excluir SOMENTE a escala principal do mesmo tipo
+        Turno.objects.filter(rascunho__isnull=True, escala_tipo=escala_tipo).delete()
+        AnalistaEscala.objects.filter(rascunho__isnull=True, escala_tipo=escala_tipo).delete()
+        # Folgas orphans (analista já deletado) serão limpas via CASCADE
+        FolgaManual.objects.filter(rascunho__isnull=True, analista__isnull=True).delete()
         
-        # Promover rascunho para principal
+        # Promover rascunho para principal (rascunho=None)
         Turno.objects.filter(rascunho=rascunho).update(rascunho=None)
         AnalistaEscala.objects.filter(rascunho=rascunho).update(rascunho=None)
         FolgaManual.objects.filter(rascunho=rascunho).update(rascunho=None)
 
-        # Salvar o modelo_escala do rascunho na configuração principal
-        config, created = ConfiguracaoEscala.objects.get_or_create(id=1)
-        config.modelo_escala_principal = rascunho.modelo_escala
+        # Salvar o modelo_escala do rascunho na configuração correta
+        config, _ = ConfiguracaoEscala.objects.get_or_create(id=1)
+        if escala_tipo == 'gestao':
+            config.modelo_escala_principal_gestao = rascunho.modelo_escala
+        else:
+            config.modelo_escala_principal = rascunho.modelo_escala
         config.save()
         
         # Excluir o objeto rascunho (que agora está vazio)
@@ -1422,6 +1492,7 @@ def api_escala_coverage_details(request):
     """
     data_str = request.GET.get('data')
     rascunho_id = request.GET.get('rascunho_id')
+    escala_tipo = request.GET.get('escala_tipo', 'operacional')
     
     if not data_str:
         return JsonResponse({'error': 'Data é obrigatória (formato YYYY-MM-DD).'}, status=400)
@@ -1435,11 +1506,15 @@ def api_escala_coverage_details(request):
             rascunho = EscalaRascunho.objects.filter(id=rascunho_id).select_related('modelo_escala').first()
             if rascunho:
                 default_modelo = rascunho.modelo_escala
+                escala_tipo = rascunho.escala_tipo  # Herdar tipo do rascunho
         
         if not default_modelo:
             config = ConfiguracaoEscala.objects.first()
             if config:
-                default_modelo = config.modelo_escala_principal
+                if escala_tipo == 'gestao':
+                    default_modelo = config.modelo_escala_principal_gestao
+                else:
+                    default_modelo = config.modelo_escala_principal
         
         # Fallback caso não haja nenhuma configuração
         if not default_modelo:
@@ -1450,8 +1525,8 @@ def api_escala_coverage_details(request):
             analistas = AnalistaEscala.objects.filter(ativo=True, rascunho_id=rascunho_id).select_related('turno', 'modelo_escala')
             folgas_manuais = FolgaManual.objects.filter(data=data_ref, rascunho_id=rascunho_id)
         else:
-            analistas = AnalistaEscala.objects.filter(ativo=True, rascunho__isnull=True).select_related('turno', 'modelo_escala')
-            folgas_manuais = FolgaManual.objects.filter(data=data_ref, rascunho__isnull=True)
+            analistas = AnalistaEscala.objects.filter(ativo=True, rascunho__isnull=True, escala_tipo=escala_tipo).select_related('turno', 'modelo_escala')
+            folgas_manuais = FolgaManual.objects.filter(data=data_ref, rascunho__isnull=True, analista__escala_tipo=escala_tipo)
             
         folgas_map = {f.analista_id: f.tipo for f in folgas_manuais}
         

@@ -176,6 +176,7 @@ urlpatterns = [
     path('api/escala/modelos/', api_escala.api_modelos_escala_list, name='api_modelos_escala_list'),
     path('api/escala/modelos/save/', api_escala.api_modelo_escala_save, name='api_modelo_escala_save'),
     path('api/escala/modelos/<int:pk>/delete/', api_escala.api_modelo_escala_delete, name='api_modelo_escala_delete'),
+    path('api/escala/config/save/', api_escala.api_escala_config_save, name='api_escala_config_save'),
     
     # API Escala NRS
     path('api/escala/turnos/', api_escala.api_turnos_list, name='api_turnos_list'),

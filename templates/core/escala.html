@@ -524,6 +524,53 @@
         box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
     }
 
+    /* ============================================
+       TOGGLE TIPO DE ESCALA (Operacional / Gestão)
+       ============================================ */
+    .escala-tipo-toggle {
+        display: flex;
+        align-items: center;
+        background: #f8fafc;
+        border: 2px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 4px;
+        gap: 4px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    .et-btn {
+        padding: 8px 18px;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: 700;
+        font-size: 0.83rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        background: transparent;
+        color: #64748b;
+        letter-spacing: 0.01em;
+    }
+
+    .et-btn:hover {
+        background: #e2e8f0;
+        color: #334155;
+        transform: translateY(-1px);
+    }
+
+    .et-btn.active {
+        background: linear-gradient(135deg, #0ea5e9, #0284c7);
+        color: #ffffff;
+        box-shadow: 0 3px 10px rgba(14, 165, 233, 0.35);
+    }
+
+    .et-btn.active[id="btnEscalaGestao"] {
+        background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+        box-shadow: 0 3px 10px rgba(139, 92, 246, 0.35);
+    }
+
     /* Barra de navegação semanal */
     .week-nav-bar {
         display: flex;
@@ -1836,6 +1883,19 @@
 
     <!-- BARRA DE CONTROLES DE VISUALIZAÇÃO -->
     <div class="view-controls-bar">
+
+        <!-- Toggle Tipo de Escala (Operacional / Gestão) -->
+        {% if has_operacional and has_gestao %}
+        <div class="escala-tipo-toggle" id="escalaTipoToggle" title="Alternar entre Escala Operacional e Escala da Gestão">
+            <button class="et-btn active" id="btnEscalaOperacional" onclick="setEscalaTipo('operacional')">
+                <i class="fa-solid fa-headset"></i> Operacional
+            </button>
+            <button class="et-btn" id="btnEscalaGestao" onclick="setEscalaTipo('gestao')">
+                <i class="fa-solid fa-user-tie"></i> Gestão
+            </button>
+        </div>
+        {% endif %}
+
         <div class="view-mode-toggle" id="viewModeToggle" title="Alternar modo de visualização">
             <button class="vm-btn active" id="btnViewFull" onclick="setViewMode('full')">
                 <i class="fa-solid fa-table-cells-large"></i> Completa
@@ -2324,6 +2384,14 @@
                             <!-- Preenchido via JS -->
                         </select>
                         <small style="display:block; margin-top:8px; color:#64748b; font-size:0.75rem; line-height: 1.4;">Define a regra automática (5x2, 6x1, etc) que servirá de base para esta simulação.</small>
+                    </div>
+
+                    <div style="margin-bottom:25px; padding-right: 15px;">
+                        <label style="display:block; font-weight:700; color:#334155; margin-bottom:10px; font-size:0.85rem; text-transform:uppercase; letter-spacing:0.8px;">Para qual Escala?</label>
+                        <select id="draftEscalaTipoSelect" style="width:100%; padding:14px 18px; border-radius:12px; border:2px solid #e2e8f0; font-size:15px; background:#f8fafc; box-sizing:border-box; cursor:pointer;" onchange="atualizarFontesRascunho()">
+                            <option value="operacional">🎧 Escala Operacional (Analistas)</option>
+                            <option value="gestao">👔 Escala da Gestão (Supervisores)</option>
+                        </select>
                     </div>
 
                     <div id="draftFonteGroup" style="overflow:hidden; transition:all 0.4s ease; padding-right: 15px;">
@@ -2905,6 +2973,9 @@
     const rascunhoId = {% if rascunho_id %}'{{ rascunho_id }}'{% else %}null{% endif %};
     const rascunhoModeloId = {% if rascunho_modelo_id %}'{{ rascunho_modelo_id }}'{% else %}null{% endif %};
     const modeloPrincipalId = {% if modelo_principal_id %}'{{ modelo_principal_id }}'{% else %}null{% endif %};
+    const modeloPrincipalIdGestao = {% if modelo_principal_id_gestao %}'{{ modelo_principal_id_gestao }}'{% else %}null{% endif %};
+    // Tipo de escala ativo: 'operacional' | 'gestao'
+    let escalaTipo = 'operacional';
 
     // ========================================
     // INICIALIZAÇÃO
@@ -3269,6 +3340,81 @@
         if (requiresReRender) {
             generateTables(false);
         }
+    }
+
+    // ========================================
+    // TOGGLE: ESCALA OPERACIONAL vs GESTÃO
+    // ========================================
+    async function setEscalaTipo(tipo) {
+        if (escalaTipo === tipo) return;
+        escalaTipo = tipo;
+
+        // Atualizar botões de toggle
+        const btnOp  = document.getElementById('btnEscalaOperacional');
+        const btnGes = document.getElementById('btnEscalaGestao');
+        if (btnOp)  btnOp.classList.toggle('active',  tipo === 'operacional');
+        if (btnGes) btnGes.classList.toggle('active', tipo === 'gestao');
+
+        // Atualizar título do header
+        const pageTitle = document.querySelector('.page-title');
+        if (pageTitle) {
+            if (tipo === 'gestao') {
+                pageTitle.innerHTML = '<i class="fa-solid fa-user-tie" style="color:#8b5cf6;"></i> Escala da Gestão';
+            } else {
+                pageTitle.innerHTML = '<i class="fa-solid fa-calendar-alt"></i> Escala de Operação';
+            }
+        }
+
+        // Mensagens dinâmicas nos empty states
+        const emptyAnalysts = document.getElementById('emptyAnalysts');
+        if (emptyAnalysts) {
+            const h3 = emptyAnalysts.querySelector('h3');
+            const p  = emptyAnalysts.querySelector('p');
+            if (tipo === 'gestao') {
+                if (h3) h3.textContent = 'Nenhum supervisor cadastrado';
+                if (p)  p.textContent  = 'Para gerar a escala da gestão, você precisa cadastrar pelo menos um supervisor.';
+            } else {
+                if (h3) h3.textContent = 'Nenhum analista cadastrado';
+                if (p)  p.textContent  = 'Para gerar a escala, você precisa cadastrar pelo menos um analista.';
+            }
+        }
+
+        // Mostrar loading e recarregar dados via AJAX
+        const loading = document.getElementById('loadingContainer');
+        if (loading) loading.style.display = 'flex';
+
+        try {
+            const params = rascunhoId ? `?rascunho_id=${rascunhoId}` : `?escala_tipo=${tipo}`;
+
+            const [resTurnos, resAnalistas, resFolgas] = await Promise.all([
+                fetch(`/api/escala/turnos/${params}`),
+                fetch(`/api/escala/analistas/${params}`),
+                fetch(`/api/escala/folgas/${params}`),
+            ]);
+
+            turnos        = await resTurnos.json();
+            analistas     = await resAnalistas.json();
+            folgasManuais = await resFolgas.json();
+        } catch(e) {
+            console.error('Erro ao recarregar dados da escala:', e);
+            showToast('Erro ao carregar dados da escala.', 'error');
+        } finally {
+            if (loading) loading.style.display = 'none';
+        }
+
+        // Recarregar rascunhos filtrados pelo tipo
+        carregarRascunhos();
+
+        // Limpar e re-renderizar tabelas
+        const tabelasEl = document.getElementById('tabelas');
+        if (tabelasEl) tabelasEl.innerHTML = '';
+
+        if (turnos.length > 0 && analistas.length > 0) {
+            generateTables(false);
+        } else {
+            checkEmptyStates();
+        }
+        atualizarBadgeAnalistas();
     }
 
     function toggleColumn(colName) {
@@ -3668,7 +3814,11 @@
         // Identificar o modelo aplicável
         let modeloId = analista.modelo_escala_id;
         if (!modeloId) {
-            modeloId = rascunhoId ? rascunhoModeloId : modeloPrincipalId;
+            if (rascunhoId) {
+                modeloId = rascunhoModeloId;
+            } else {
+                modeloId = escalaTipo === 'gestao' ? modeloPrincipalIdGestao : modeloPrincipalId;
+            }
         }
 
         const modelo = modelos.find(m => m.id == modeloId);
@@ -4361,7 +4511,8 @@
             cor: document.getElementById('shiftColor').value,
             min_analistas: parseInt(document.getElementById('shiftMinAnalistas').value || 0),
             ordem: turnos.length,
-            rascunho_id: rascunhoId
+            rascunho_id: rascunhoId,
+            escala_tipo: escalaTipo,
         };
 
         try {
@@ -4709,7 +4860,8 @@
             data_primeira_folga: document.getElementById('analystStartDate').value || null,
             modelo_escala_id: document.getElementById('analystModeloEscala') ? document.getElementById('analystModeloEscala').value : '',
             ordem: analistas.length,
-            rascunho_id: rascunhoId
+            rascunho_id: rascunhoId,
+            escala_tipo: escalaTipo,
         };
 
         try {
@@ -5406,7 +5558,7 @@
     // ========================================
     async function carregarRascunhos() {
         try {
-            const res = await fetch('/api/escala/rascunhos/');
+            const res = await fetch(`/api/escala/rascunhos/?escala_tipo=${escalaTipo}`);
             const rascunhos = await res.json();
             const select = document.getElementById('rascunhoSelect');
             if(select) {
@@ -5463,19 +5615,14 @@
         // Resetar para modo cópia
         selecionarTipoDraft('copia');
 
+        // Pre-selecionar o tipo de escala atual no modal
+        const selectTipo = document.getElementById('draftEscalaTipoSelect');
+        if (selectTipo) {
+            selectTipo.value = escalaTipo;
+        }
+
         // Carregar rascunhos existentes no dropdown de fonte
-        const select = document.getElementById('draftFonteSelect');
-        select.innerHTML = '<option value="principal">⭐ Escala Principal (ativa)</option>';
-        try {
-            const res = await fetch('/api/escala/rascunhos/');
-            const lista = await res.json();
-            lista.forEach(r => {
-                // Não incluir o próprio rascunho atual como opção de fonte
-                if (r.id !== rascunhoId) {
-                    select.innerHTML += `<option value="${r.id}">📋 ${r.nome} (${r.data_atualizacao})</option>`;
-                }
-            });
-        } catch(e) { /* ignora erro silencioso */ }
+        atualizarFontesRascunho();
 
         // Carregar Modelos de Jornada
         const selectModelo = document.getElementById('draftModeloSelect');
@@ -5493,6 +5640,24 @@
         document.getElementById('createDraftModal').classList.remove('show');
     }
 
+    async function atualizarFontesRascunho() {
+        const selectTipo = document.getElementById('draftEscalaTipoSelect');
+        const tipoSelecionado = selectTipo ? selectTipo.value : escalaTipo;
+
+        const select = document.getElementById('draftFonteSelect');
+        if (!select) return;
+        select.innerHTML = '<option value="principal">⭐ Escala Principal (ativa)</option>';
+        try {
+            const res = await fetch(`/api/escala/rascunhos/?escala_tipo=${tipoSelecionado}`);
+            const lista = await res.json();
+            lista.forEach(r => {
+                if (r.id !== rascunhoId) {
+                    select.innerHTML += `<option value="${r.id}">📋 ${r.nome} (${r.data_atualizacao})</option>`;
+                }
+            });
+        } catch(e) { /* ignora erro silencioso */ }
+    }
+
     async function confirmarCriarRascunho() {
         const nomeInput = document.getElementById('draftNameInput');
         const nome = nomeInput.value.trim();
@@ -5505,6 +5670,8 @@
         const tipo    = _draftTipoSelecionado;
         const fonteId = tipo === 'copia' ? (document.getElementById('draftFonteSelect').value || 'principal') : null;
         const modeloId = document.getElementById('draftModeloSelect').value;
+        const selectTipo = document.getElementById('draftEscalaTipoSelect');
+        const tipoEscalaDraft = selectTipo ? selectTipo.value : escalaTipo;
 
         const btn = document.getElementById('btnConfirmDraft');
         const oldText = btn.innerHTML;
@@ -5512,7 +5679,7 @@
         btn.disabled = true;
 
         try {
-            const payload = { nome, tipo };
+            const payload = { nome, tipo, escala_tipo: tipoEscalaDraft };
             if (fonteId) payload.fonte_id = fonteId;
             if (modeloId) payload.modelo_escala_id = modeloId;
 
@@ -6269,7 +6436,7 @@
 
         let modeloId = dados.modelo_escala_id;
         if (!modeloId) {
-            modeloId = rascunhoId ? rascunhoModeloId : modeloPrincipalId;
+            modeloId = rascunhoId ? rascunhoModeloId : (escalaTipo === 'gestao' ? modeloPrincipalIdGestao : modeloPrincipalId);
         }
 
         const modelo = modelos.find(m => m.id == modeloId);

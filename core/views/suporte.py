@@ -113,10 +113,14 @@ def escala_view(request):
     
     config = ConfiguracaoEscala.objects.first()
     modelo_principal_id = config.modelo_escala_principal.id if config and config.modelo_escala_principal else None
+    modelo_principal_id_gestao = config.modelo_escala_principal_gestao.id if config and config.modelo_escala_principal_gestao else None
 
     user_analista = None
     if user.is_authenticated:
         user_analista = AnalistaEscala.objects.filter(user=user, rascunho__isnull=True, ativo=True).first()
+
+    has_operacional = Turno.objects.filter(escala_tipo='operacional').exists() or AnalistaEscala.objects.filter(escala_tipo='operacional').exists() or EscalaRascunho.objects.filter(escala_tipo='operacional').exists()
+    has_gestao = Turno.objects.filter(escala_tipo='gestao').exists() or AnalistaEscala.objects.filter(escala_tipo='gestao').exists() or EscalaRascunho.objects.filter(escala_tipo='gestao').exists()
 
     context = {
         'turnos_json': json.dumps(turnos_data),
@@ -124,6 +128,9 @@ def escala_view(request):
         'folgas_json': json.dumps(folgas_data),
         'modelos_json': json.dumps(modelos_data),
         'modelo_principal_id': modelo_principal_id,
+        'modelo_principal_id_gestao': modelo_principal_id_gestao,
+        'has_operacional': has_operacional,
+        'has_gestao': has_gestao,
         'is_admin': is_admin,
         'is_admin_json': 'true' if is_admin else 'false',
         'can_export': can_export,
