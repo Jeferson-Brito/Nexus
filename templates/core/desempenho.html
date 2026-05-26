@@ -111,6 +111,69 @@
         .podium-step.second{order:2 !important}
         .podium-step.third{order:3 !important}
     }
+    /* ============================================
+       LISTA COMPLETA ABAIXO DO PÓDIO
+       ============================================ */
+    .podium-full-list {
+        margin-top: 1.25rem;
+        border-top: 1.5px solid #f1f5f9;
+        padding-top: 1rem;
+    }
+    .podium-full-list-title {
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 0.625rem;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .podium-ranking-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 7px 10px;
+        border-radius: 10px;
+        transition: background 0.15s;
+        cursor: default;
+    }
+    .podium-ranking-row:hover {
+        background: #f8fafc;
+    }
+    .podium-ranking-pos {
+        flex-shrink: 0;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        font-weight: 700;
+        background: #f1f5f9;
+        color: #475569;
+    }
+    .podium-ranking-name {
+        flex: 1;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #334155;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .podium-ranking-value {
+        flex-shrink: 0;
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: #64748b;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 7px;
+        padding: 2px 8px;
+    }
 </style>
 {% endblock %}
 
@@ -1302,18 +1365,18 @@
         let html = '';
 
         // TME Podium
-        html += renderPodiumCard('TME - Tempo Médio de Espera', data.tme_top3, 'tme', 'bi-clock-history', '#f59e0b');
+        html += renderPodiumCard('TME - Tempo Médio de Espera', data.tme_top3, data.tme_all || [], 'tme', 'bi-clock-history', '#f59e0b');
 
         // NPS Podium
-        html += renderPodiumCard('NPS - Avaliação', data.nps_top3, 'nps', 'bi-star-fill', '#10b981');
+        html += renderPodiumCard('NPS - Avaliação', data.nps_top3, data.nps_all || [], 'nps', 'bi-star-fill', '#10b981');
 
         // Chats Podium
-        html += renderPodiumCard('Quantidade de Chats', data.chats_top3, 'chats', 'bi-chat-dots-fill', '#8b5cf6');
+        html += renderPodiumCard('Quantidade de Chats', data.chats_top3, data.chats_all || [], 'chats', 'bi-chat-dots-fill', '#8b5cf6');
 
         container.innerHTML = html;
     }
 
-    function renderPodiumCard(title, topList, metricType, iconClass, iconColor) {
+    function renderPodiumCard(title, topList, allList, metricType, iconClass, iconColor) {
         if (!topList || topList.length === 0) {
             return `
                 <div class="podium-card">
@@ -1358,6 +1421,40 @@
             `;
         });
 
+        // --- Lista completa (posições 4+) ---
+        const restList = (allList || []).slice(3); // após o top 3
+        let demaisHtml = '';
+        if (restList.length > 0) {
+            let rowsHtml = '';
+            restList.forEach(item => {
+                let valueDisplay = '';
+                if (metricType === 'tme') {
+                    valueDisplay = secondsToHms(item.value);
+                } else if (metricType === 'nps') {
+                    valueDisplay = parseFloat(item.value).toFixed(2);
+                } else {
+                    valueDisplay = item.value;
+                }
+
+                rowsHtml += `
+                    <div class="podium-ranking-row">
+                        <div class="podium-ranking-pos">${item.posicao}º</div>
+                        <div class="podium-ranking-name" title="${item.analista_nome}">${item.analista_nome}</div>
+                        <div class="podium-ranking-value">${valueDisplay}</div>
+                    </div>
+                `;
+            });
+
+            demaisHtml = `
+                <div class="podium-full-list">
+                    <div class="podium-full-list-title">
+                        <i class="bi bi-list-ol"></i> Demais Analistas
+                    </div>
+                    ${rowsHtml}
+                </div>
+            `;
+        }
+
         return `
             <div class="podium-card">
                 <div class="podium-card-header">
@@ -1367,6 +1464,7 @@
                 <div class="podium-steps">
                     ${stepsHtml}
                 </div>
+                ${demaisHtml}
             </div>
         `;
     }

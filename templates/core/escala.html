@@ -525,6 +525,88 @@
     }
 
     /* ============================================
+       BUSCA/FILTRO DE ANALISTAS NA ESCALA
+       ============================================ */
+    .escala-search-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: #f8fafc;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 6px 14px;
+        transition: all 0.2s ease;
+        min-width: 230px;
+    }
+
+    .escala-search-wrapper:focus-within {
+        border-color: #2563eb;
+        background: #eff6ff;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    .escala-search-wrapper i {
+        color: #94a3b8;
+        font-size: 0.85rem;
+        flex-shrink: 0;
+        transition: color 0.2s ease;
+    }
+
+    .escala-search-wrapper:focus-within i {
+        color: #2563eb;
+    }
+
+    .escala-search-input {
+        border: none;
+        background: transparent;
+        outline: none;
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: #334155;
+        width: 100%;
+        min-width: 0;
+    }
+
+    .escala-search-input::placeholder {
+        color: #94a3b8;
+        font-weight: 400;
+    }
+
+    .escala-search-clear {
+        background: none;
+        border: none;
+        padding: 0;
+        cursor: pointer;
+        color: #94a3b8;
+        font-size: 0.8rem;
+        display: none;
+        line-height: 1;
+        transition: color 0.15s ease;
+        flex-shrink: 0;
+    }
+
+    .escala-search-clear:hover {
+        color: #ef4444;
+    }
+
+    .escala-search-results-badge {
+        background: #2563eb;
+        color: white;
+        border-radius: 999px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        padding: 1px 7px;
+        display: none;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    /* Linhas ocultas pelo filtro */
+    tr.escala-row-hidden {
+        display: none !important;
+    }
+
+    /* ============================================
        TOGGLE TIPO DE ESCALA (Operacional / Gestão)
        ============================================ */
     .escala-tipo-toggle {
@@ -1909,6 +1991,23 @@
             </button>
         </div>
 
+        <!-- Campo de Busca por Analista / Gestor -->
+        <div class="escala-search-wrapper" id="escalaSearchWrapper">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input
+                type="text"
+                id="escalaSearchInput"
+                class="escala-search-input"
+                placeholder="Buscar analista ou gestor..."
+                oninput="filtrarEscala(this.value)"
+                autocomplete="off"
+            >
+            <span class="escala-search-results-badge" id="escalaSearchBadge"></span>
+            <button class="escala-search-clear" id="escalaSearchClear" onclick="limparFiltroEscala()" title="Limpar busca">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
         <div class="column-filters" id="horizontalFilters" style="display: none;">
             <label title="Mostrar/Ocultar coluna Turno">
                 <input type="checkbox" class="filter-switch" id="checkShowTurno" checked onchange="toggleColumn('turno')">
@@ -3265,6 +3364,10 @@
             document.getElementById('tabelas').innerHTML = html;
             document.getElementById('loadingContainer').style.display = 'none';
 
+            // Reaplicar filtro de busca se houver texto digitado
+            const searchVal = document.getElementById('escalaSearchInput')?.value || '';
+            if (searchVal.trim()) filtrarEscala(searchVal);
+
             // Atualizar total de semanas e aplicar modo de visualização ativo
             const tableWraps = document.querySelectorAll('#tabelas .table-wrap');
             totalWeeks = tableWraps.length;
@@ -3588,7 +3691,7 @@
 
             if (analistasDoTurno.length > 0) {
                 analistasDoTurno.forEach((analista, idx) => {
-                    rows += '<tr>';
+                    rows += `<tr data-analista="${analista.nome.toLowerCase()}" data-turno-nome="${turno.nome.toLowerCase()}">`;
 
                     // Célula de turno (só na primeira linha do turno)
                     if (idx === 0) {
@@ -3711,7 +3814,7 @@
 
             if (analistasDoTurno.length > 0) {
                 analistasDoTurno.forEach((analista, idx) => {
-                    rows += '<tr>';
+                    rows += `<tr data-analista="${analista.nome.toLowerCase()}" data-turno-nome="${turno.nome.toLowerCase()}">`;
 
                     // Célula de turno (só na primeira linha do turno)
                     if (idx === 0) {
@@ -3862,6 +3965,76 @@
         }
 
         return { class: 'trabalho', text: turno.horario };
+    }
+
+    // ========================================
+    // FILTRO / BUSCA POR ANALISTA NA ESCALA
+    // ========================================
+    function filtrarEscala(query) {
+        const q = (query || '').trim().toLowerCase();
+        const clearBtn  = document.getElementById('escalaSearchClear');
+        const badge     = document.getElementById('escalaSearchBadge');
+
+        // Mostrar/ocultar botão limpar
+        if (clearBtn) clearBtn.style.display = q ? 'inline-flex' : 'none';
+
+        // Obter todas as linhas de analistas nas tabelas geradas
+        const tabelasEl = document.getElementById('tabelas');
+        if (!tabelasEl) return;
+
+        const allRows = tabelasEl.querySelectorAll('tr[data-analista]');
+        const separatorRows = tabelasEl.querySelectorAll('tr.separator-row');
+
+        if (!q) {
+            // Sem filtro: mostrar tudo
+            allRows.forEach(row => row.classList.remove('escala-row-hidden'));
+            separatorRows.forEach(sep => sep.classList.remove('escala-row-hidden'));
+            if (badge) badge.style.display = 'none';
+
+            // No modo semana: reexibir as table-wraps conforme o estado atual
+            if (viewMode === 'week') applyWeekView();
+            return;
+        }
+
+        // Filtrar: ocultar linhas que não correspondem
+        let found = 0;
+        allRows.forEach(row => {
+            const nome   = row.dataset.analista  || '';
+            const turno  = row.dataset.turnoNome || '';
+            const match  = nome.includes(q) || turno.includes(q);
+            row.classList.toggle('escala-row-hidden', !match);
+            if (match) found++;
+        });
+
+        // Mostrar/ocultar linhas separadoras com base nos vizinhos visíveis
+        separatorRows.forEach(sep => {
+            // Verificar se há alguma linha visível antes E depois do separador dentro do mesmo tbody
+            const tbody = sep.closest('tbody');
+            if (!tbody) return;
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            const idx  = rows.indexOf(sep);
+            const hasVisibleBefore = rows.slice(0, idx).some(r => r.dataset.analista && !r.classList.contains('escala-row-hidden'));
+            const hasVisibleAfter  = rows.slice(idx + 1).some(r => r.dataset.analista && !r.classList.contains('escala-row-hidden'));
+            sep.classList.toggle('escala-row-hidden', !(hasVisibleBefore && hasVisibleAfter));
+        });
+
+        // Badge com contagem
+        if (badge) {
+            badge.textContent = `${found} encontrado${found !== 1 ? 's' : ''}`;
+            badge.style.display = found >= 0 ? 'inline-flex' : 'none';
+        }
+
+        // No modo semana: garantir que a semana ativa seja exibida (as outras continuam ocultas)
+        if (viewMode === 'week') applyWeekView();
+    }
+
+    function limparFiltroEscala() {
+        const input = document.getElementById('escalaSearchInput');
+        if (input) {
+            input.value = '';
+            input.focus();
+        }
+        filtrarEscala('');
     }
 
     function onSwapCellClick(swapId) {

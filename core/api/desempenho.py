@@ -1,4 +1,4 @@
-﻿from django.http import JsonResponse
+from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth.decorators import login_required
 import json
@@ -398,23 +398,29 @@ def api_podium(request):
                 'value': kpi.chats
             })
     
-    # Ordenar e pegar top 3
+    # Ordenar e pegar top 3 + lista completa com posições
     # TME: menor é melhor (ordem crescente)
     tme_list.sort(key=lambda x: x['value'])
     tme_top3 = tme_list[:3]
-    
+    tme_all = [dict(item, posicao=i + 1) for i, item in enumerate(tme_list)]
+
     # NPS: maior é melhor (ordem decrescente)
     nps_list.sort(key=lambda x: x['value'], reverse=True)
     nps_top3 = nps_list[:3]
-    
+    nps_all = [dict(item, posicao=i + 1) for i, item in enumerate(nps_list)]
+
     # Chats: maior é melhor (ordem decrescente)
     chats_list.sort(key=lambda x: x['value'], reverse=True)
     chats_top3 = chats_list[:3]
-    
+    chats_all = [dict(item, posicao=i + 1) for i, item in enumerate(chats_list)]
+
     return JsonResponse({
         'tme_top3': tme_top3,
         'nps_top3': nps_top3,
         'chats_top3': chats_top3,
+        'tme_all': tme_all,
+        'nps_all': nps_all,
+        'chats_all': chats_all,
         'mes': mes,
         'ano': ano
     })
