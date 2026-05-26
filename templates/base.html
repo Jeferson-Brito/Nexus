@@ -382,15 +382,15 @@
             <!-- RH -->
             <div class="nav-group-title">Recursos Humanos</div>
             <a href="#escalaSubmenuRH"
-                class="nav-link dropdown-toggle-custom {% if request.resolver_match.url_name == 'escala' or request.resolver_match.url_name == 'planejamento_escala' or request.resolver_match.url_name == 'configuracao_escalas' %}active{% endif %}"
+                class="nav-link dropdown-toggle-custom {% if request.resolver_match.url_name == 'escala' or request.resolver_match.url_name == 'planejamento_escala' or request.resolver_match.url_name == 'configuracao_escalas' or request.resolver_match.url_name == 'escala_jornadas' %}active{% endif %}"
                 data-bs-toggle="collapse"
-                aria-expanded="{% if request.resolver_match.url_name == 'escala' or request.resolver_match.url_name == 'planejamento_escala' or request.resolver_match.url_name == 'configuracao_escalas' %}true{% else %}false{% endif %}"
+                aria-expanded="{% if request.resolver_match.url_name == 'escala' or request.resolver_match.url_name == 'planejamento_escala' or request.resolver_match.url_name == 'configuracao_escalas' or request.resolver_match.url_name == 'escala_jornadas' %}true{% else %}false{% endif %}"
                 aria-controls="escalaSubmenuRH">
                 <i class="bi bi-calendar-event"></i>
                 <span class="link-text">Escala</span>
                 <i class="bi bi-chevron-down ms-auto arrow-icon"></i>
             </a>
-            <div class="collapse nav-submenu-container {% if request.resolver_match.url_name == 'escala' or request.resolver_match.url_name == 'planejamento_escala' or request.resolver_match.url_name == 'configuracao_escalas' %}show{% endif %}"
+            <div class="collapse nav-submenu-container {% if request.resolver_match.url_name == 'escala' or request.resolver_match.url_name == 'planejamento_escala' or request.resolver_match.url_name == 'configuracao_escalas' or request.resolver_match.url_name == 'escala_jornadas' %}show{% endif %}"
                 id="escalaSubmenuRH">
                 <div class="nav-submenu">
                     <a href="{% url 'escala' %}"
@@ -407,12 +407,18 @@
                         <span class="link-text">Planejamento de Escala</span>
                     </a>
                     <a href="{% url 'configuracao_escalas' %}"
-                        class="nav-link sub-link {% if request.resolver_match.url_name == 'configuracao_escalas' %}active{% endif %}"
+                        class="nav-link sub-link {% if request.resolver_match.url_name == 'configuracao_escalas' or request.resolver_match.url_name == 'escala_jornadas' %}active{% endif %}"
                         title="Configuração de Jornadas">
                         <i class="bi bi-gear"></i>
                         <span class="link-text">Configuração de Jornadas</span>
                     </a>
-                    {% endif %}
+                                        <a href="{% url 'escala_jornadas' %}"
+                        class="nav-link sub-link {% if request.resolver_match.url_name == 'escala_jornadas' %}active{% endif %}"
+                        title="Jornadas Temporárias">
+                        <i class="bi bi-arrow-repeat"></i>
+                        <span class="link-text">Jornadas Temporárias</span>
+                    </a>
+{% endif %}
                 </div>
             </div>
 
@@ -603,15 +609,15 @@
             <!-- NRS Suporte / NRP -->
             <div class="nav-group-title">Operação</div>
             <a href="#escalaSubmenuSuporte"
-                class="nav-link dropdown-toggle-custom {% if request.resolver_match.url_name == 'escala' or request.resolver_match.url_name == 'planejamento_escala' or request.resolver_match.url_name == 'configuracao_escalas' %}active{% endif %}"
+                class="nav-link dropdown-toggle-custom {% if request.resolver_match.url_name == 'escala' or request.resolver_match.url_name == 'planejamento_escala' or request.resolver_match.url_name == 'configuracao_escalas' or request.resolver_match.url_name == 'escala_jornadas' %}active{% endif %}"
                 data-bs-toggle="collapse"
-                aria-expanded="{% if request.resolver_match.url_name == 'escala' or request.resolver_match.url_name == 'planejamento_escala' or request.resolver_match.url_name == 'configuracao_escalas' %}true{% else %}false{% endif %}"
+                aria-expanded="{% if request.resolver_match.url_name == 'escala' or request.resolver_match.url_name == 'planejamento_escala' or request.resolver_match.url_name == 'configuracao_escalas' or request.resolver_match.url_name == 'escala_jornadas' %}true{% else %}false{% endif %}"
                 aria-controls="escalaSubmenuSuporte">
                 <i class="bi bi-calendar-event"></i>
                 <span class="link-text">Escala</span>
                 <i class="bi bi-chevron-down ms-auto arrow-icon"></i>
             </a>
-            <div class="collapse nav-submenu-container {% if request.resolver_match.url_name == 'escala' or request.resolver_match.url_name == 'planejamento_escala' or request.resolver_match.url_name == 'configuracao_escalas' %}show{% endif %}"
+            <div class="collapse nav-submenu-container {% if request.resolver_match.url_name == 'escala' or request.resolver_match.url_name == 'planejamento_escala' or request.resolver_match.url_name == 'configuracao_escalas' or request.resolver_match.url_name == 'escala_jornadas' %}show{% endif %}"
                 id="escalaSubmenuSuporte">
                 <div class="nav-submenu">
                     <a href="{% url 'escala' %}"
@@ -628,12 +634,18 @@
                         <span class="link-text">Planejamento de Escala</span>
                     </a>
                     <a href="{% url 'configuracao_escalas' %}"
-                        class="nav-link sub-link {% if request.resolver_match.url_name == 'configuracao_escalas' %}active{% endif %}"
+                        class="nav-link sub-link {% if request.resolver_match.url_name == 'configuracao_escalas' or request.resolver_match.url_name == 'escala_jornadas' %}active{% endif %}"
                         title="Configuração de Jornadas">
                         <i class="bi bi-gear"></i>
                         <span class="link-text">Configuração de Jornadas</span>
                     </a>
-                    {% endif %}
+                                        <a href="{% url 'escala_jornadas' %}"
+                        class="nav-link sub-link {% if request.resolver_match.url_name == 'escala_jornadas' %}active{% endif %}"
+                        title="Jornadas Temporárias">
+                        <i class="bi bi-arrow-repeat"></i>
+                        <span class="link-text">Jornadas Temporárias</span>
+                    </a>
+{% endif %}
                 </div>
             </div>
 
@@ -782,15 +794,15 @@
             <!-- Logística -->
             <div class="nav-group-title">Logística</div>
             <a href="#escalaSubmenuLog"
-                class="nav-link dropdown-toggle-custom {% if request.resolver_match.url_name == 'escala' or request.resolver_match.url_name == 'planejamento_escala' or request.resolver_match.url_name == 'configuracao_escalas' %}active{% endif %}"
+                class="nav-link dropdown-toggle-custom {% if request.resolver_match.url_name == 'escala' or request.resolver_match.url_name == 'planejamento_escala' or request.resolver_match.url_name == 'configuracao_escalas' or request.resolver_match.url_name == 'escala_jornadas' %}active{% endif %}"
                 data-bs-toggle="collapse"
-                aria-expanded="{% if request.resolver_match.url_name == 'escala' or request.resolver_match.url_name == 'planejamento_escala' or request.resolver_match.url_name == 'configuracao_escalas' %}true{% else %}false{% endif %}"
+                aria-expanded="{% if request.resolver_match.url_name == 'escala' or request.resolver_match.url_name == 'planejamento_escala' or request.resolver_match.url_name == 'configuracao_escalas' or request.resolver_match.url_name == 'escala_jornadas' %}true{% else %}false{% endif %}"
                 aria-controls="escalaSubmenuLog">
                 <i class="bi bi-calendar-event"></i>
                 <span class="link-text">Escala</span>
                 <i class="bi bi-chevron-down ms-auto arrow-icon"></i>
             </a>
-            <div class="collapse nav-submenu-container {% if request.resolver_match.url_name == 'escala' or request.resolver_match.url_name == 'planejamento_escala' or request.resolver_match.url_name == 'configuracao_escalas' %}show{% endif %}"
+            <div class="collapse nav-submenu-container {% if request.resolver_match.url_name == 'escala' or request.resolver_match.url_name == 'planejamento_escala' or request.resolver_match.url_name == 'configuracao_escalas' or request.resolver_match.url_name == 'escala_jornadas' %}show{% endif %}"
                 id="escalaSubmenuLog">
                 <div class="nav-submenu">
                     <a href="{% url 'escala' %}"
@@ -807,12 +819,18 @@
                         <span class="link-text">Planejamento de Escala</span>
                     </a>
                     <a href="{% url 'configuracao_escalas' %}"
-                        class="nav-link sub-link {% if request.resolver_match.url_name == 'configuracao_escalas' %}active{% endif %}"
+                        class="nav-link sub-link {% if request.resolver_match.url_name == 'configuracao_escalas' or request.resolver_match.url_name == 'escala_jornadas' %}active{% endif %}"
                         title="Configuração de Jornadas">
                         <i class="bi bi-gear"></i>
                         <span class="link-text">Configuração de Jornadas</span>
                     </a>
-                    {% endif %}
+                                        <a href="{% url 'escala_jornadas' %}"
+                        class="nav-link sub-link {% if request.resolver_match.url_name == 'escala_jornadas' %}active{% endif %}"
+                        title="Jornadas Temporárias">
+                        <i class="bi bi-arrow-repeat"></i>
+                        <span class="link-text">Jornadas Temporárias</span>
+                    </a>
+{% endif %}
                 </div>
             </div>
             <a href="{% url 'tasks_view' %}"

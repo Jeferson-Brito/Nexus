@@ -62,6 +62,7 @@ urlpatterns = [
     
     # NRS Suporte - Abas implementadas
     path('escala/', views.escala_view, name='escala'),
+    path('escala/jornadas/', views.escala_jornadas_view, name='escala_jornadas'),
     path('planejamento-escala/', views.escala_view, name='planejamento_escala'),
     path('configuracao-escalas/', views.escala_view, name='configuracao_escalas'),
     path('sites/', views.sites_view, name='sites'),
@@ -191,6 +192,11 @@ urlpatterns = [
     path('api/escala/folgas/save/', api_escala.api_folga_save, name='api_folga_save'),
     path('api/escala/folgas/<int:pk>/delete/', api_escala.api_folga_delete, name='api_folga_delete'),
     path('api/escala/auditoria-ia/', api_escala.api_auditar_escala_ia, name='api_auditar_escala_ia'),
+    
+    # API Jornadas Temporárias
+    path('api/escala/jornadas-temp/', api_escala.api_jornadas_temp_list, name='api_jornadas_temp_list'),
+    path('api/escala/jornadas-temp/save/', api_escala.api_jornada_temp_save, name='api_jornada_temp_save'),
+    path('api/escala/jornadas-temp/<int:pk>/delete/', api_escala.api_jornada_temp_delete, name='api_jornada_temp_delete'),
     
     # API Escala Rascunhos
     path('api/escala/rascunhos/', api_escala.api_rascunhos_list, name='api_rascunhos_list'),

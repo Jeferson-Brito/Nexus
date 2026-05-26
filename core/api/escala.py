@@ -6,7 +6,7 @@ from django.shortcuts import get_object_or_404
 import json
 from datetime import datetime
 
-from ..models import Turno, AnalistaEscala, FolgaManual, EscalaRascunho, ModeloEscala, ConfiguracaoEscala, TrocaFolga, SolicitacaoFolga
+from ..models import Turno, AnalistaEscala, FolgaManual, EscalaRascunho, ModeloEscala, ConfiguracaoEscala, TrocaFolga, SolicitacaoFolga, TurnoTemporario
 from django.utils import timezone
 from django.contrib.auth import authenticate
 
@@ -247,9 +247,9 @@ def api_analistas_list(request):
     rascunho_id = request.GET.get('rascunho_id')
     escala_tipo = request.GET.get('escala_tipo', 'operacional')
     if rascunho_id:
-        queryset = AnalistaEscala.objects.filter(ativo=True, rascunho_id=rascunho_id).select_related('turno')
+        queryset = AnalistaEscala.objects.filter(ativo=True, rascunho_id=rascunho_id).select_related('turno').prefetch_related('turnos_temporarios', 'turnos_temporarios__turno_temp')
     else:
-        queryset = AnalistaEscala.objects.filter(ativo=True, rascunho__isnull=True, escala_tipo=escala_tipo).select_related('turno')
+        queryset = AnalistaEscala.objects.filter(ativo=True, rascunho__isnull=True, escala_tipo=escala_tipo).select_related('turno').prefetch_related('turnos_temporarios', 'turnos_temporarios__turno_temp')
     
     # Se for RH, filtrar apenas analistas que PERTENCEM ao NRS Suporte
     if not request.user.is_administrador() and request.user.department and request.user.department.name == 'RH':
@@ -266,6 +266,20 @@ def api_analistas_list(request):
         'data_primeira_folga': a.data_primeira_folga.isoformat() if a.data_primeira_folga else None,
         'ordem': a.ordem,
         'escala_tipo': a.escala_tipo,
+        'turnos_temporarios': [
+            {
+                'id': str(tt.id),
+                'turno_temp_id': str(tt.turno_temp.id),
+                'turno_temp_nome': tt.turno_temp.nome,
+                'turno_temp_cor': tt.turno_temp.cor,
+                'turno_temp_horario': tt.turno_temp.horario,
+                'data_inicio': tt.data_inicio.isoformat(),
+                'data_fim': tt.data_fim.isoformat(),
+                'motivo': tt.motivo,
+                'status': tt.status
+            }
+            for tt in (a.turnos_temporarios.filter(status='ativo', rascunho_id=rascunho_id) if rascunho_id else a.turnos_temporarios.filter(status='ativo', rascunho__isnull=True))
+        ]
     } for a in analistas]
     return JsonResponse(data, safe=False)
 
@@ -367,6 +381,100 @@ def api_analista_detail(request, pk):
         analista.ativo = False
         analista.save()
         return JsonResponse({'success': True})
+
+
+# ========================================
+# API VIEWS PARA JORNADAS TEMPORÁRIAS
+# ========================================
+
+@login_required
+@check_nrs_permission
+def api_jornadas_temp_list(request):
+    """Lista as jornadas temporárias"""
+    rascunho_id = request.GET.get('rascunho_id')
+    escala_tipo = request.GET.get('escala_tipo', 'operacional')
+    if rascunho_id:
+        queryset = TurnoTemporario.objects.filter(rascunho_id=rascunho_id).select_related('analista', 'turno_temp')
+    else:
+        queryset = TurnoTemporario.objects.filter(
+            rascunho__isnull=True,
+            analista__escala_tipo=escala_tipo
+        ).select_related('analista', 'turno_temp')
+
+    jornadas = queryset.all()
+    data = [{
+        'id': str(j.id),
+        'analista_id': str(j.analista.id),
+        'analista_nome': j.analista.nome,
+        'turno_temp_id': str(j.turno_temp.id),
+        'turno_temp_nome': j.turno_temp.nome,
+        'turno_temp_cor': j.turno_temp.cor,
+        'data_inicio': j.data_inicio.isoformat(),
+        'data_fim': j.data_fim.isoformat(),
+        'motivo': j.motivo,
+        'status': j.status,
+    } for j in jornadas]
+    return JsonResponse(data, safe=False)
+
+@login_required
+@require_http_methods(["POST"])
+@check_nrs_permission
+def api_jornada_temp_save(request):
+    """Cria ou atualiza uma jornada temporária"""
+    try:
+        data = json.loads(request.body)
+        jornada_id = data.get('id')
+        
+        analista = get_object_or_404(AnalistaEscala, pk=data['analista_id'])
+        turno_temp = get_object_or_404(Turno, pk=data['turno_temp_id'])
+        rascunho_id = data.get('rascunho_id')
+        rascunho = EscalaRascunho.objects.get(id=rascunho_id) if rascunho_id else None
+        
+        data_inicio = datetime.strptime(data['data_inicio'], '%Y-%m-%d').date()
+        data_fim = datetime.strptime(data['data_fim'], '%Y-%m-%d').date()
+        
+        if data_inicio > data_fim:
+            return JsonResponse({'error': 'A data de início não pode ser posterior à data de fim.'}, status=400)
+            
+        if jornada_id:
+            jornada = get_object_or_404(TurnoTemporario, pk=jornada_id)
+            jornada.analista = analista
+            jornada.turno_temp = turno_temp
+            jornada.data_inicio = data_inicio
+            jornada.data_fim = data_fim
+            jornada.motivo = data.get('motivo', '')
+            jornada.status = data.get('status', jornada.status)
+            jornada.save()
+        else:
+            jornada = TurnoTemporario.objects.create(
+                analista=analista,
+                turno_original=analista.turno,
+                turno_temp=turno_temp,
+                data_inicio=data_inicio,
+                data_fim=data_fim,
+                motivo=data.get('motivo', ''),
+                status=data.get('status', 'ativo'),
+                rascunho=rascunho,
+                aprovado_por=request.user
+            )
+            
+        return JsonResponse({
+            'success': True,
+            'id': str(jornada.id),
+            'analista_nome': jornada.analista.nome,
+            'turno_temp_nome': jornada.turno_temp.nome,
+        })
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+@login_required
+@require_http_methods(["DELETE"])
+@check_nrs_permission
+def api_jornada_temp_delete(request, pk):
+    """Deleta uma jornada temporária (ou marca como cancelada)"""
+    jornada = get_object_or_404(TurnoTemporario, pk=pk)
+    jornada.delete()
+    return JsonResponse({'success': True})
 
 
 @login_required
@@ -746,6 +854,7 @@ def api_rascunho_publish(request, pk):
         turnos_principais = Turno.objects.filter(rascunho__isnull=True, escala_tipo=escala_tipo)
         analistas_principais = AnalistaEscala.objects.filter(rascunho__isnull=True, escala_tipo=escala_tipo)
         folgas_principais = FolgaManual.objects.filter(rascunho__isnull=True, analista__escala_tipo=escala_tipo)
+        jornadas_temporarias_principais = TurnoTemporario.objects.filter(rascunho__isnull=True, analista__escala_tipo=escala_tipo)
 
         if turnos_principais.exists() or analistas_principais.exists():
             modelo_antigo = config.modelo_escala_principal_gestao if escala_tipo == 'gestao' else config.modelo_escala_principal
@@ -760,11 +869,13 @@ def api_rascunho_publish(request, pk):
             folgas_principais.update(rascunho=rascunho_backup)
             analistas_principais.update(rascunho=rascunho_backup)
             turnos_principais.update(rascunho=rascunho_backup)
+            jornadas_temporarias_principais.update(rascunho=rascunho_backup)
 
         # Promover rascunho para principal (rascunho=None)
         Turno.objects.filter(rascunho=rascunho).update(rascunho=None)
         AnalistaEscala.objects.filter(rascunho=rascunho).update(rascunho=None)
         FolgaManual.objects.filter(rascunho=rascunho).update(rascunho=None)
+        TurnoTemporario.objects.filter(rascunho=rascunho).update(rascunho=None)
 
         # Salvar o modelo_escala do rascunho na configuração correta
         if escala_tipo == 'gestao':
@@ -1290,6 +1401,20 @@ def api_analista_schedule(request, pk):
         'turno': analista.turno.nome if analista.turno else None,
         'turno_horario': analista.turno.horario if analista.turno else None,
         'folgas_manuais': data,
+        'turnos_temporarios': [
+            {
+                'id': str(tt.id),
+                'turno_temp_id': str(tt.turno_temp.id),
+                'turno_temp_nome': tt.turno_temp.nome,
+                'turno_temp_cor': tt.turno_temp.cor,
+                'turno_temp_horario': tt.turno_temp.horario,
+                'data_inicio': tt.data_inicio.isoformat(),
+                'data_fim': tt.data_fim.isoformat(),
+                'motivo': tt.motivo,
+                'status': tt.status
+            }
+            for tt in (analista.turnos_temporarios.filter(status='ativo', rascunho_id=rascunho_id) if rascunho_id else analista.turnos_temporarios.filter(status='ativo', rascunho__isnull=True))
+        ]
     })
 
 

@@ -435,6 +435,45 @@ class AnalistaEscala(models.Model):
         return f"{first_name}{initial}"
 
 
+class TurnoTemporario(models.Model):
+    """
+    Substituição temporária de turno para um analista.
+    Sobrepõe o turno original durante o período indicado.
+    """
+    STATUS_CHOICES = [
+        ('ativo', 'Ativo'),
+        ('concluido', 'Concluído'),
+        ('cancelado', 'Cancelado'),
+    ]
+
+    analista = models.ForeignKey(AnalistaEscala, on_delete=models.CASCADE, related_name='turnos_temporarios')
+    turno_original = models.ForeignKey(Turno, on_delete=models.SET_NULL, null=True, blank=True, related_name='turnos_substituidos')
+    turno_temp = models.ForeignKey(Turno, on_delete=models.CASCADE, related_name='turnos_temporarios_aplicados')
+    data_inicio = models.DateField()
+    data_fim = models.DateField()
+    motivo = models.CharField(max_length=255)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='ativo')
+    
+    rascunho = models.ForeignKey(EscalaRascunho, on_delete=models.CASCADE, null=True, blank=True, related_name='turnos_temporarios')
+    aprovado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='turnos_temporarios_aprovados')
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-data_inicio']
+        verbose_name = 'Jornada Temporária'
+        verbose_name_plural = 'Jornadas Temporárias'
+
+    def __str__(self):
+        return f"{self.analista.nome} - {self.turno_temp.nome} ({self.data_inicio} a {self.data_fim})"
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        if self.data_inicio and self.data_fim and self.data_inicio > self.data_fim:
+            raise ValidationError("A data de início não pode ser posterior à data de fim.")
+
+
 class FolgaManual(models.Model):
     """Folgas, férias, atestados manuais que sobrescrevem o cálculo automático"""
     TIPO_CHOICES = [

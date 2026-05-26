@@ -147,6 +147,26 @@ def escala_view(request):
     return render(request, 'core/escala.html', context)
 
 @login_required
+def escala_jornadas_view(request):
+    """Página de Gestão de Jornadas Temporárias - NRS Suporte"""
+    user = request.user
+    if not user.is_administrador():
+        if not user.department or user.department.name not in ['NRS Suporte', 'RH']:
+            messages.error(request, 'Você não tem permissão para acessar esta área.')
+            return redirect('dashboard')
+            
+    is_rh = user.department and user.department.name == 'RH'
+    is_admin = (user.is_gestor() or user.is_administrador()) and not is_rh
+    
+    # Se for RH, ele só pode ver as jornadas. Mas o template rh/horarios_list tem controles, então is_admin controla isso
+    context = {
+        'title': 'Jornadas Temporárias',
+        'is_admin': is_admin,
+        'escala_tipo': 'operacional', # Pode ser alterado no frontend ou pegar dos kwargs
+    }
+    return render(request, 'core/escala_jornadas.html', context)
+
+@login_required
 def calendar_view(request):
     """Visualização do calendário"""
     user = request.user

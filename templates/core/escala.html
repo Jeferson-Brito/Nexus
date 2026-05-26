@@ -3628,7 +3628,13 @@
                                 clickHandler = `onclick="openEditCellModal('${analista.id}', ${dia}, ${d.getMonth() + 1}, ${d.getFullYear()})"`;
                             }
 
-                            rows += `<td class="${cellData.class} ${extraClass} ${isFeriado ? 'cell-feriado' : ''}" ${clickHandler}>${swapIcon}${cellData.text}</td>`;
+                            
+                            let bgColorStyle = '';
+                            if (cellData.bgColor) {
+                                bgColorStyle = `style="background-color: ${cellData.bgColor} !important; border-color: ${cellData.bgColor} !important; color: #fff;"`;
+                            }
+                            rows += `<td class="${cellData.class} ${extraClass} ${isFeriado ? 'cell-feriado' : ''}" ${clickHandler} ${bgColorStyle}>${swapIcon}${cellData.text}</td>`;
+
                         } else {
                             rows += '<td class="dia-vazio"></td>';
                         }
@@ -3755,7 +3761,13 @@
                             clickHandler = `onclick="openEditCellModal('${analista.id}', ${dia}, ${d.getMonth() + 1}, ${d.getFullYear()})"`;
                         }
 
-                        rows += `<td class="${cellData.class} ${extraClass} ${isFeriado ? 'cell-feriado' : ''}" ${clickHandler}>${swapIcon}${cellData.text}</td>`;
+                        
+                            let bgColorStyle = '';
+                            if (cellData.bgColor) {
+                                bgColorStyle = `style="background-color: ${cellData.bgColor} !important; border-color: ${cellData.bgColor} !important; color: #fff;"`;
+                            }
+                            rows += `<td class="${cellData.class} ${extraClass} ${isFeriado ? 'cell-feriado' : ''}" ${clickHandler} ${bgColorStyle}>${swapIcon}${cellData.text}</td>`;
+
                     });
 
                     // Célula de pausa
@@ -3859,6 +3871,24 @@
         // Se a posição está dentro do intervalo de dias de folga (iniciando do anchor)
         if (posicaoNoCiclo < folga) {
             return { class: 'folga', text: 'FOLGA' };
+        }
+
+        // Se é trabalho, verifica se há turno temporário
+        if (analista.turnos_temporarios && analista.turnos_temporarios.length > 0) {
+            const yy = dataAtual.getFullYear();
+            const mm = String(dataAtual.getMonth() + 1).padStart(2, '0');
+            const dd = String(dataAtual.getDate()).padStart(2, '0');
+            const strDataAtual = `${yy}-${mm}-${dd}`;
+
+            for (const tt of analista.turnos_temporarios) {
+                if (strDataAtual >= tt.data_inicio && strDataAtual <= tt.data_fim) {
+                    return { 
+                        class: 'trabalho turno-temporario', 
+                        text: `${tt.turno_temp_horario} <i class="bi bi-arrow-repeat text-white ms-1" title="Jornada Temporária: ${tt.turno_temp_nome}"></i>`,
+                        bgColor: tt.turno_temp_cor
+                    };
+                }
+            }
         }
 
         return { class: 'trabalho', text: turno.horario };
@@ -6467,6 +6497,24 @@
 
         if (posicaoNoCiclo < folga) {
             return { class: 'folga', text: 'FOLGA' };
+        }
+
+        // Se é trabalho, verifica se há turno temporário
+        if (dados.turnos_temporarios && dados.turnos_temporarios.length > 0) {
+            const yy = dataAtual.getFullYear();
+            const mm = String(dataAtual.getMonth() + 1).padStart(2, '0');
+            const dd = String(dataAtual.getDate()).padStart(2, '0');
+            const strDataAtual = `${yy}-${mm}-${dd}`;
+
+            for (const tt of dados.turnos_temporarios) {
+                if (strDataAtual >= tt.data_inicio && strDataAtual <= tt.data_fim) {
+                    return { 
+                        class: 'trabalho turno-temporario', 
+                        text: `${tt.turno_temp_horario} <i class="bi bi-arrow-repeat text-white ms-1" title="Jornada Temporária: ${tt.turno_temp_nome}"></i>`,
+                        bgColor: tt.turno_temp_cor
+                    };
+                }
+            }
         }
         return { class: 'trabalho', text: dados.turno_horario || 'Trabalho' };
     }

@@ -1,0 +1,416 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Tabela de Jornadas Temporárias -->
+    <div id="jornadasListContainer" class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
+        <!-- Header -->
+        <div class="card-header border-0 d-flex align-items-center justify-content-between py-3 px-4"
+            style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
+            <h5 class="fw-bold mb-0 text-white">Gestão de Jornadas Temporárias</h5>
+            {% if is_admin %}
+            <button onclick="openModalEdit(null)" class="btn d-flex align-items-center gap-2"
+                style="background:rgba(255,255,255,0.2); color:#fff; border:1.5px solid rgba(255,255,255,0.6); font-weight:600;">
+                <i class="bi bi-plus-lg"></i> Nova Jornada
+            </button>
+            {% endif %}
+        </div>
+
+        <!-- Toolbar -->
+        <div class="card-body border-bottom py-3 px-4">
+            <div class="d-flex flex-wrap align-items-center gap-3">
+                <div class="d-flex align-items-center gap-2 text-muted small">
+                    Mostrar
+                    <select id="perPageSelect" class="form-select form-select-sm" style="width: auto;">
+                        <option value="10">10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                    </select>
+                    registros
+                </div>
+
+                <div class="ms-auto d-flex align-items-center gap-2">
+                    <label class="text-muted small mb-0">Buscar:</label>
+                    <input type="text" id="searchInput" class="form-control form-control-sm"
+                        placeholder="Buscar analista ou turno..." style="width: 250px;">
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabela -->
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" id="jornadasTable">
+                <thead class="table-light">
+                    <tr>
+                        <th class="px-4 py-3">Analista</th>
+                        <th class="py-3">Turno Temporário</th>
+                        <th class="py-3">Período</th>
+                        <th class="py-3">Motivo</th>
+                        <th class="py-3 text-center">Status</th>
+                        {% if is_admin %}
+                        <th class="py-3 text-end pe-4">Ações</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody id="jornadasTbody">
+                    <tr>
+                        <td colspan="{% if is_admin %}6{% else %}5{% endif %}" class="text-center py-5 text-muted">
+                            <div class="spinner-border spinner-border-sm me-2"></div> Carregando...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Footer -->
+        <div class="card-footer bg-white border-top d-flex align-items-center justify-content-between py-3 px-4">
+            <span class="text-muted small" id="paginacaoInfo">—</span>
+            <nav>
+                <ul class="pagination pagination-sm mb-0 gap-1" id="paginacaoControles"></ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Edit/Create -->
+<div class="modal fade" id="modalJornada" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title fw-bold" id="modalJornadaTitle">Nova Jornada Temporária</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formJornada">
+                    <input type="hidden" id="jornadaId">
+                    <div class="mb-3">
+                        <label class="form-label small text-muted fw-semibold">Analista</label>
+                        <select id="jornadaAnalista" class="form-select" required>
+                            <option value="">Selecione...</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small text-muted fw-semibold">Turno Temporário</label>
+                        <select id="jornadaTurno" class="form-select" required>
+                            <option value="">Selecione...</option>
+                        </select>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small text-muted fw-semibold">Data Início</label>
+                            <input type="date" id="jornadaInicio" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small text-muted fw-semibold">Data Fim</label>
+                            <input type="date" id="jornadaFim" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small text-muted fw-semibold">Status</label>
+                        <select id="jornadaStatus" class="form-select">
+                            <option value="ativo">Ativo</option>
+                            <option value="concluido">Concluído</option>
+                            <option value="cancelado">Cancelado</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small text-muted fw-semibold">Motivo</label>
+                        <input type="text" id="jornadaMotivo" class="form-control" placeholder="Ex: Cobre férias, Projeto X..." required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-top-0 pt-0">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="saveJornada()">Salvar Jornada</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Delete -->
+<div class="modal fade" id="modalDelete" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-body text-center py-4">
+                <div class="mb-3" style="font-size:2rem; color:#ef4444;"><i class="bi bi-trash3"></i></div>
+                <h6 class="fw-bold mb-1">Excluir Jornada?</h6>
+                <p class="text-muted small mb-3" id="deleteJornadaInfo">—</p>
+                <div class="d-flex gap-2 justify-content-center">
+                    <button class="btn btn-sm btn-light px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button class="btn btn-sm btn-danger px-4" id="btnConfirmDelete">Excluir</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .turno-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.75rem;
+        color: #fff;
+    }
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.75rem;
+    }
+    .status-ativo { background: #dcfce7; color: #166534; }
+    .status-concluido { background: #f3f4f6; color: #374151; }
+    .status-cancelado { background: #fee2e2; color: #991b1b; }
+</style>
+
+<script>
+    let allJornadas = [];
+    let allAnalistas = [];
+    let allTurnos = [];
+    let deleteId = null;
+    let currentPage = 1;
+    const isAdmin = {{ is_admin|yesno:"true,false" }};
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadData();
+        if (isAdmin) {
+            loadFormOptions();
+        }
+        document.getElementById('searchInput').addEventListener('input', () => { currentPage = 1; render(); });
+        document.getElementById('perPageSelect').addEventListener('change', () => { currentPage = 1; render(); });
+        document.getElementById('btnConfirmDelete').addEventListener('click', confirmDelete);
+    });
+
+    async function loadData() {
+        try {
+            const response = await fetch('/api/escala/jornadas-temp/?escala_tipo={{ escala_tipo }}');
+            const data = await response.json();
+            allJornadas = data;
+            render();
+        } catch (e) {
+            showError('Erro ao carregar dados.');
+        }
+    }
+
+    async function loadFormOptions() {
+        try {
+            const [resAnalistas, resTurnos] = await Promise.all([
+                fetch('/api/escala/analistas/?escala_tipo={{ escala_tipo }}'),
+                fetch('/api/escala/turnos/?escala_tipo={{ escala_tipo }}')
+            ]);
+            allAnalistas = await resAnalistas.json();
+            allTurnos = await resTurnos.json();
+
+            const selAnalista = document.getElementById('jornadaAnalista');
+            selAnalista.innerHTML = '<option value="">Selecione...</option>' + 
+                allAnalistas.map(a => `<option value="${a.id}">${a.nome}</option>`).join('');
+
+            const selTurno = document.getElementById('jornadaTurno');
+            selTurno.innerHTML = '<option value="">Selecione...</option>' + 
+                allTurnos.map(t => `<option value="${t.id}">${t.nome}</option>`).join('');
+        } catch (e) {
+            console.error('Erro ao carregar opções', e);
+        }
+    }
+
+    function formatDate(dateStr) {
+        if (!dateStr) return '—';
+        const [y, m, d] = dateStr.split('-');
+        return `${d}/${m}/${y}`;
+    }
+
+    function render() {
+        const q = document.getElementById('searchInput').value.toLowerCase();
+        const filtered = allJornadas.filter(j =>
+            (j.analista_nome || '').toLowerCase().includes(q) ||
+            (j.turno_temp_nome || '').toLowerCase().includes(q) ||
+            (j.motivo || '').toLowerCase().includes(q)
+        );
+
+        const pp = parseInt(document.getElementById('perPageSelect').value) || 10;
+        const total = filtered.length;
+        const totalPag = Math.max(1, Math.ceil(total / pp));
+        if (currentPage > totalPag) currentPage = totalPag;
+
+        const inicio = (currentPage - 1) * pp;
+        const pagina = filtered.slice(inicio, inicio + pp);
+
+        const info = document.getElementById('paginacaoInfo');
+        if (info) {
+            if (total === 0) info.textContent = '0 registros';
+            else info.textContent = `${inicio + 1} a ${Math.min(inicio + pp, total)} de ${total}`;
+        }
+
+        renderPaginacao(totalPag);
+
+        const tbody = document.getElementById('jornadasTbody');
+        if (pagina.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="${isAdmin ? 6 : 5}" class="text-center py-5 text-muted">Nenhuma jornada encontrada.</td></tr>`;
+        } else {
+            tbody.innerHTML = pagina.map(j => `
+            <tr>
+                <td class="px-4 fw-semibold">${j.analista_nome}</td>
+                <td>
+                    <div class="turno-badge" style="background-color: ${j.turno_temp_cor || '#2563eb'}">
+                        ${j.turno_temp_nome}
+                    </div>
+                </td>
+                <td class="small text-muted"><i class="bi bi-calendar3 me-1"></i> ${formatDate(j.data_inicio)} a ${formatDate(j.data_fim)}</td>
+                <td class="small">${j.motivo || '—'}</td>
+                <td class="text-center">
+                    <span class="status-badge status-${j.status}">${j.status.toUpperCase()}</span>
+                </td>
+                ${isAdmin ? `
+                <td class="text-end pe-4">
+                    <button class="btn btn-sm btn-light border me-1" onclick="openModalEdit('${j.id}')">
+                        <i class="bi bi-pencil-square text-primary"></i>
+                    </button>
+                    <button class="btn btn-sm btn-light border" onclick="openModalDelete('${j.id}', '${j.analista_nome} para ${j.turno_temp_nome}')">
+                        <i class="bi bi-trash3 text-danger"></i>
+                    </button>
+                </td>
+                ` : ''}
+            </tr>
+        `).join('');
+        }
+    }
+
+    function renderPaginacao(total) {
+        const ul = document.getElementById('paginacaoControles');
+        if (!ul) return;
+        ul.innerHTML = '';
+
+        const prev = document.createElement('li');
+        prev.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+        prev.innerHTML = `<button class="page-link" ${currentPage === 1 ? 'disabled' : ''}>‹</button>`;
+        prev.querySelector('button').onclick = () => { if (currentPage > 1) { currentPage--; render(); } };
+        ul.appendChild(prev);
+
+        for (let p = 1; p <= total; p++) {
+            const li = document.createElement('li');
+            li.className = `page-item ${p === currentPage ? 'active' : ''}`;
+            li.innerHTML = `<button class="page-link">${p}</button>`;
+            const pg = p;
+            li.querySelector('button').onclick = () => { currentPage = pg; render(); };
+            ul.appendChild(li);
+        }
+
+        const next = document.createElement('li');
+        next.className = `page-item ${currentPage === total ? 'disabled' : ''}`;
+        next.innerHTML = `<button class="page-link" ${currentPage === total ? 'disabled' : ''}>›</button>`;
+        next.querySelector('button').onclick = () => { if (currentPage < total) { currentPage++; render(); } };
+        ul.appendChild(next);
+    }
+
+    function openModalEdit(id) {
+        const form = document.getElementById('formJornada');
+        form.reset();
+        
+        if (id) {
+            document.getElementById('modalJornadaTitle').textContent = 'Editar Jornada Temporária';
+            const j = allJornadas.find(x => x.id === id);
+            if (j) {
+                document.getElementById('jornadaId').value = j.id;
+                document.getElementById('jornadaAnalista').value = j.analista_id;
+                document.getElementById('jornadaTurno').value = j.turno_temp_id;
+                document.getElementById('jornadaInicio').value = j.data_inicio;
+                document.getElementById('jornadaFim').value = j.data_fim;
+                document.getElementById('jornadaStatus').value = j.status;
+                document.getElementById('jornadaMotivo').value = j.motivo;
+            }
+        } else {
+            document.getElementById('modalJornadaTitle').textContent = 'Nova Jornada Temporária';
+            document.getElementById('jornadaId').value = '';
+            document.getElementById('jornadaStatus').value = 'ativo';
+        }
+        
+        new bootstrap.Modal(document.getElementById('modalJornada')).show();
+    }
+
+    async function saveJornada() {
+        const id = document.getElementById('jornadaId').value;
+        const analista_id = document.getElementById('jornadaAnalista').value;
+        const turno_temp_id = document.getElementById('jornadaTurno').value;
+        const data_inicio = document.getElementById('jornadaInicio').value;
+        const data_fim = document.getElementById('jornadaFim').value;
+        const status = document.getElementById('jornadaStatus').value;
+        const motivo = document.getElementById('jornadaMotivo').value;
+
+        if (!analista_id || !turno_temp_id || !data_inicio || !data_fim || !motivo) {
+            if (window.showToast) showToast('error', 'Preencha todos os campos obrigatórios.');
+            else alert('Preencha todos os campos obrigatórios.');
+            return;
+        }
+
+        const payload = {
+            id: id || undefined,
+            analista_id,
+            turno_temp_id,
+            data_inicio,
+            data_fim,
+            status,
+            motivo
+        };
+
+        try {
+            const response = await fetch('/api/escala/jornadas-temp/save/', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrf() 
+                },
+                body: JSON.stringify(payload)
+            });
+            const data = await response.json();
+            
+            if (data.success) {
+                bootstrap.Modal.getInstance(document.getElementById('modalJornada')).hide();
+                if (window.showToast) showToast('success', 'Jornada salva com sucesso!');
+                loadData();
+            } else {
+                if (window.showToast) showToast('error', data.error);
+                else alert(data.error);
+            }
+        } catch (e) {
+            console.error(e);
+            if (window.showToast) showToast('error', 'Erro ao salvar a jornada.');
+        }
+    }
+
+    function openModalDelete(id, info) {
+        deleteId = id;
+        document.getElementById('deleteJornadaInfo').textContent = info;
+        new bootstrap.Modal(document.getElementById('modalDelete')).show();
+    }
+
+    function confirmDelete() {
+        if (!deleteId) return;
+        fetch(`/api/escala/jornadas-temp/${deleteId}/delete/`, {
+            method: 'DELETE',
+            headers: { 'X-CSRFToken': getCsrf() }
+        })
+            .then(r => r.json())
+            .then(data => {
+                bootstrap.Modal.getInstance(document.getElementById('modalDelete')).hide();
+                if (data.success) {
+                    if (window.showToast) showToast('success', 'Jornada excluída!');
+                    loadData();
+                } else {
+                    alert(data.error || 'Erro ao excluir.');
+                }
+            });
+    }
+
+    function showError(msg) {
+        const tbody = document.getElementById('jornadasTbody');
+        if (tbody) tbody.innerHTML = `<tr><td colspan="${isAdmin ? 6 : 5}" class="text-center py-5 text-danger">${msg}</td></tr>`;
+    }
+
+    function getCsrf() { return document.cookie.match(/csrftoken=([^;]+)/)?.[1] || ''; }
+</script>
+{% endblock %}
