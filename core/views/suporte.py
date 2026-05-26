@@ -13,7 +13,7 @@ from ..models import (
     IndicadorDesempenho, MetaMensalGlobal, KanbanBoard, 
     KanbanList, CardLabel, Store, StoreAudit, 
     StoreAuditIssue, StoreAuditItem, SystemNotification,
-    User, DailyAuditQuota, ModeloEscala, ConfiguracaoEscala
+    User, DailyAuditQuota, ModeloEscala, ConfiguracaoEscala, TurnoTemporario
 )
 from ..forms import StoreForm
 
@@ -51,12 +51,12 @@ def escala_view(request):
     if rascunho_id:
         rascunho_obj = get_object_or_404(EscalaRascunho, id=rascunho_id)
         turnos = Turno.objects.filter(ativo=True, rascunho=rascunho_obj).order_by('ordem', 'nome')
-        analistas = AnalistaEscala.objects.filter(ativo=True, rascunho=rascunho_obj).select_related('turno', 'modelo_escala').order_by('turno__ordem', 'ordem', 'nome')
+        analistas = AnalistaEscala.objects.filter(ativo=True, rascunho=rascunho_obj).select_related('turno', 'modelo_escala').prefetch_related('turnos_temporarios', 'turnos_temporarios__turno_temp').order_by('turno__ordem', 'ordem', 'nome')
         folgas = FolgaManual.objects.filter(rascunho=rascunho_obj).select_related('analista')
     else:
         # Carrega apenas operacional por padrão. A troca para gestão é feita via JS/API.
         turnos = Turno.objects.filter(ativo=True, rascunho__isnull=True, escala_tipo='operacional').order_by('ordem', 'nome')
-        analistas = AnalistaEscala.objects.filter(ativo=True, rascunho__isnull=True, escala_tipo='operacional').select_related('turno', 'modelo_escala').order_by('turno__ordem', 'ordem', 'nome')
+        analistas = AnalistaEscala.objects.filter(ativo=True, rascunho__isnull=True, escala_tipo='operacional').select_related('turno', 'modelo_escala').prefetch_related('turnos_temporarios', 'turnos_temporarios__turno_temp').order_by('turno__ordem', 'ordem', 'nome')
         folgas = FolgaManual.objects.filter(rascunho__isnull=True, analista__escala_tipo='operacional').select_related('analista')
     
     turnos_data = [{
@@ -72,11 +72,25 @@ def escala_view(request):
         'id': str(a.id),
         'nome': a.nome,
         'turno': a.turno.nome if a.turno else None,
-        'turno_id': a.turno.id if a.turno else None,
+        'turno_id': str(a.turno.id) if a.turno else None,
         'modelo_escala_id': a.modelo_escala.id if a.modelo_escala else None,
         'pausa': a.pausa,
         'data_primeira_folga': a.data_primeira_folga.isoformat() if a.data_primeira_folga else None,
-        'ordem': a.ordem
+        'ordem': a.ordem,
+        'turnos_temporarios': [
+            {
+                'id': str(tt.id),
+                'turno_temp_id': str(tt.turno_temp.id),
+                'turno_temp_nome': tt.turno_temp.nome,
+                'turno_temp_cor': tt.turno_temp.cor,
+                'turno_temp_horario': tt.turno_temp.horario,
+                'data_inicio': tt.data_inicio.isoformat(),
+                'data_fim': tt.data_fim.isoformat(),
+                'motivo': tt.motivo,
+                'status': tt.status
+            }
+            for tt in (a.turnos_temporarios.filter(status='ativo', rascunho_id=rascunho_id) if rascunho_id else a.turnos_temporarios.filter(status='ativo', rascunho__isnull=True))
+        ]
     } for a in analistas]
     
     folgas_data = {}
