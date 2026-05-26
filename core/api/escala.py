@@ -740,19 +740,33 @@ def api_rascunho_publish(request, pk):
         rascunho = get_object_or_404(EscalaRascunho, pk=pk)
         escala_tipo = rascunho.escala_tipo
         
-        # Excluir SOMENTE a escala principal do mesmo tipo
-        Turno.objects.filter(rascunho__isnull=True, escala_tipo=escala_tipo).delete()
-        AnalistaEscala.objects.filter(rascunho__isnull=True, escala_tipo=escala_tipo).delete()
-        # Folgas orphans (analista já deletado) serão limpas via CASCADE
-        FolgaManual.objects.filter(rascunho__isnull=True, analista__isnull=True).delete()
-        
+        config, _ = ConfiguracaoEscala.objects.get_or_create(id=1)
+
+        # Transformar a escala principal atual em um rascunho de backup em vez de excluir
+        turnos_principais = Turno.objects.filter(rascunho__isnull=True, escala_tipo=escala_tipo)
+        analistas_principais = AnalistaEscala.objects.filter(rascunho__isnull=True, escala_tipo=escala_tipo)
+        folgas_principais = FolgaManual.objects.filter(rascunho__isnull=True, analista__escala_tipo=escala_tipo)
+
+        if turnos_principais.exists() or analistas_principais.exists():
+            modelo_antigo = config.modelo_escala_principal_gestao if escala_tipo == 'gestao' else config.modelo_escala_principal
+            
+            rascunho_backup = EscalaRascunho.objects.create(
+                nome=f'Escala Anterior ({datetime.now().strftime("%d/%m %H:%M")})',
+                autor=request.user,
+                modelo_escala=modelo_antigo,
+                escala_tipo=escala_tipo,
+            )
+            
+            folgas_principais.update(rascunho=rascunho_backup)
+            analistas_principais.update(rascunho=rascunho_backup)
+            turnos_principais.update(rascunho=rascunho_backup)
+
         # Promover rascunho para principal (rascunho=None)
         Turno.objects.filter(rascunho=rascunho).update(rascunho=None)
         AnalistaEscala.objects.filter(rascunho=rascunho).update(rascunho=None)
         FolgaManual.objects.filter(rascunho=rascunho).update(rascunho=None)
 
         # Salvar o modelo_escala do rascunho na configuração correta
-        config, _ = ConfiguracaoEscala.objects.get_or_create(id=1)
         if escala_tipo == 'gestao':
             config.modelo_escala_principal_gestao = rascunho.modelo_escala
         else:
