@@ -1826,6 +1826,14 @@
                                         <option value="custom">Personalizado...</option>
                                     </select>
                                 </div>
+                                <div class="col-12" id="infoModeloCustom" style="display: none;">
+                                    <div class="alert alert-primary border shadow-sm mb-0 d-flex align-items-start gap-2" style="border-radius: 10px; background-color: #eff6ff; border-color: #bfdbfe !important;">
+                                        <i class="fa-solid fa-hand-pointer text-primary mt-1" style="font-size: 1.1rem;"></i>
+                                        <div class="small" style="color: #1e40af;">
+                                            <strong>Montagem Livre:</strong> Clique diretamente nos dias do calendário de pré-visualização ao lado para marcar as <strong>Folgas</strong> (em vermelho) e <strong>Trabalho</strong> (em verde).
+                                        </div>
+                                    </div>
+                                </div>
                                 
                                 <div class="col-md-6" id="colTrabalho" style="display: none;">
                                     <label class="form-label fw-bold small text-muted text-uppercase">Dias de Trabalho *</label>
@@ -4577,17 +4585,23 @@
         document.getElementById('formModeloFolga').value = folga;
         
         // Determinar regra no dropdown
-        const regraVal = `${trab}x${folga}`;
         const selectRegra = document.getElementById('formModeloRegra');
-        let found = false;
-        for (let i = 0; i < selectRegra.options.length; i++) {
-            if (selectRegra.options[i].value === regraVal) {
-                selectRegra.value = regraVal;
-                found = true;
-                break;
+        if (modelo && modelo.tipo === 'personalizado') {
+            selectRegra.value = 'custom';
+            window.customCycleDays = (modelo.ciclo_personalizado && modelo.ciclo_personalizado.dias_folga) ? [...modelo.ciclo_personalizado.dias_folga] : [];
+        } else {
+            window.customCycleDays = [];
+            const regraVal = `${trab}x${folga}`;
+            let found = false;
+            for (let i = 0; i < selectRegra.options.length; i++) {
+                if (selectRegra.options[i].value === regraVal) {
+                    selectRegra.value = regraVal;
+                    found = true;
+                    break;
+                }
             }
+            if (!found) selectRegra.value = 'custom';
         }
-        if (!found) selectRegra.value = 'custom';
         
         document.getElementById('formModeloTipo').value = modelo ? modelo.tipo : 'fixa';
         document.getElementById('formModeloFDS').value = modelo ? modelo.permite_fim_de_semana.toString() : 'true';
@@ -4611,13 +4625,21 @@
         const inputTrab = document.getElementById('formModeloTrabalho');
         const inputFolga = document.getElementById('formModeloFolga');
         const selectTipo = document.getElementById('formModeloTipo');
+        const infoCustom = document.getElementById('infoModeloCustom');
 
         if (regra === 'custom') {
-            colTrab.style.display = 'block';
-            colFolga.style.display = 'block';
-        } else {
             colTrab.style.display = 'none';
             colFolga.style.display = 'none';
+            if (infoCustom) infoCustom.style.display = 'block';
+            
+            // Força valores válidos nos inputs internos para o backend
+            inputTrab.value = 1;
+            inputFolga.value = 0;
+            selectTipo.value = 'fixa';
+        } else {
+            colTrab.style.display = 'block';
+            colFolga.style.display = 'block';
+            if (infoCustom) infoCustom.style.display = 'none';
             
             let t, f;
             if (regra === '12x36') {
@@ -4641,6 +4663,24 @@
         updatePreviewCycle();
     }
 
+    window.togglePreviewDay = function(dayNum) {
+        const rule = document.getElementById('formModeloRegra').value;
+        if (rule !== 'custom') return;
+        
+        if (!window.customCycleDays) {
+            window.customCycleDays = [];
+        }
+        
+        const idx = window.customCycleDays.indexOf(dayNum);
+        if (idx > -1) {
+            window.customCycleDays.splice(idx, 1);
+        } else {
+            window.customCycleDays.push(dayNum);
+        }
+        
+        updatePreviewCycle();
+    }
+
     function hideModeloForm() {
         document.getElementById('modelosListState').style.display = 'block';
         document.getElementById('modeloFormState').style.display = 'none';
@@ -4654,7 +4694,6 @@
 
         if (trab === 6 && folga === 1) {
             tipo.value = 'fixa';
-            // tipo.disabled = true; // Removido para permitir flexibilidade se necessário, mas sugerido fixa
         }
         updatePreviewCycle();
     }
@@ -4664,9 +4703,10 @@
         const folga = parseInt(document.getElementById('formModeloFolga').value) || 0;
         const tipo = document.getElementById('formModeloTipo').value; // 'fixa' ou 'rotativa'
         const permiteFDS = document.getElementById('formModeloFDS').value === 'true';
+        const rule = document.getElementById('formModeloRegra').value;
         
         const cycle = trab + folga;
-        if (cycle === 0) return;
+        if (cycle === 0 && rule !== 'custom') return;
 
         const tbody = document.getElementById('cyclePreviewTbody');
         tbody.innerHTML = '';
@@ -4686,27 +4726,33 @@
 
                 let isWork = true;
 
-                // Regra 1: Fins de semana proibidos?
-                if (!permiteFDS && (d === 0 || d === 6)) {
-                    isWork = false;
+                if (rule === 'custom') {
+                    if (!window.customCycleDays) {
+                        window.customCycleDays = [];
+                    }
+                    isWork = !window.customCycleDays.includes(dayCounter);
                 } else {
-                    // Regra 2: Tipo de escala
-                    if (tipo === 'fixa' && cycle === 7) {
-                        // Se for ciclo de 7 dias (ex 5x2, 6x1) e FIXA, as folgas são sempre nos mesmos dias
-                        // Assumindo que o preview começa no Domingo (d=0) e as folgas são no início do ciclo
-                        isWork = (cycleCounter % 7) >= folga;
+                    // Regra 1: Fins de semana proibidos?
+                    if (!permiteFDS && (d === 0 || d === 6)) {
+                        isWork = false;
                     } else {
-                        // Rotativa ou ciclo não-semanal: segue o fluxo contínuo
-                        isWork = (cycleCounter % cycle) < trab;
+                        // Regra 2: Tipo de escala
+                        if (tipo === 'fixa' && cycle === 7) {
+                            isWork = (cycleCounter % 7) >= folga;
+                        } else {
+                            isWork = (cycleCounter % cycle) < trab;
+                        }
                     }
                 }
 
                 const color = isWork ? '#dcfce7' : '#fee2e2';
                 const border = isWork ? '#16a34a' : '#dc2626';
                 const textColor = isWork ? '#166534' : '#991b1b';
+                const cursorStyle = (rule === 'custom') ? 'cursor: pointer;' : '';
+                const hoverStyle = (rule === 'custom') ? 'onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1"' : '';
                 
                 tr.innerHTML += `
-                    <td style="background: ${color}; border: 1px solid ${border}; color: ${textColor}; height: 45px; transition: all 0.2s;">
+                    <td onclick="togglePreviewDay(${dayCounter})" ${hoverStyle} style="${cursorStyle} background: ${color}; border: 1px solid ${border}; color: ${textColor}; height: 45px; transition: all 0.2s;">
                         <div class="fw-bold" style="font-size: 0.8rem;">${dayCounter}</div>
                         <div style="font-size: 0.55rem; font-weight: 800; opacity: 0.8;">${isWork ? 'TRABALHO' : 'FOLGA'}</div>
                     </td>
@@ -4733,11 +4779,9 @@
         
         if (trab === 6 && folga === 1) {
             tipoHelp.classList.remove('d-none');
-            // Se estava rotativa, muda pra fixa
             if (tipoSel.value === 'rotativa') {
                 tipoSel.value = 'fixa';
             }
-            // Desabilita a opção rotativa
             Array.from(tipoSel.options).forEach(opt => {
                 if (opt.value === 'rotativa') opt.disabled = true;
             });
@@ -4757,13 +4801,14 @@
         const tipo = document.getElementById('formModeloTipo').value;
         const fds = document.getElementById('formModeloFDS').value === 'true';
         const obs = document.getElementById('formModeloObs').value.trim();
+        const regra = document.getElementById('formModeloRegra').value;
 
         if (!nome) {
             showToast('O nome do modelo é obrigatório.', 'error');
             return;
         }
         
-        if (trab === 6 && folga === 1 && tipo === 'rotativa') {
+        if (trab === 6 && folga === 1 && tipo === 'rotativa' && regra !== 'custom') {
             showToast('Modelo 6x1 não pode ser rotativo devido às leis trabalhistas.', 'error');
             return;
         }
@@ -4771,11 +4816,15 @@
         const payload = {
             id: id || null,
             nome: nome,
-            dias_trabalhados: trab,
-            dias_folga: folga,
-            tipo: tipo,
+            dias_trabalhados: regra === 'custom' ? 1 : trab,
+            dias_folga: regra === 'custom' ? 0 : folga,
+            tipo: regra === 'custom' ? 'personalizado' : tipo,
             permite_fim_de_semana: fds,
-            observacao: obs
+            observacao: obs,
+            ciclo_personalizado: regra === 'custom' ? {
+                dias_folga: window.customCycleDays || [],
+                ciclo_dias: 31
+            } : null
         };
 
         fetch('/api/escala/modelos/save/', {
@@ -4791,7 +4840,6 @@
             return response.json();
         })
         .then(data => {
-            // Se for edição, atualiza o item existente; se for novo, adiciona à lista
             if (id) {
                 const index = modelos.findIndex(m => m.id == data.id);
                 if (index !== -1) modelos[index] = data;
@@ -4799,7 +4847,6 @@
                 modelos.push(data);
             }
             
-            // Re-ordena e atualiza a interface
             modelos.sort((a, b) => {
                 const nameA = a.nome || "";
                 const nameB = b.nome || "";

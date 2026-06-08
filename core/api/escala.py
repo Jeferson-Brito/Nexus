@@ -45,7 +45,8 @@ def api_modelos_escala_list(request):
         'dias_folga': m.dias_folga,
         'tipo': m.tipo,
         'permite_fim_de_semana': m.permite_fim_de_semana,
-        'observacao': m.observacao
+        'observacao': m.observacao,
+        'ciclo_personalizado': m.ciclo_personalizado
     } for m in modelos]
     return JsonResponse(data, safe=False)
 
@@ -70,6 +71,7 @@ def api_modelo_escala_save(request):
             modelo.tipo = data.get('tipo', modelo.tipo)
             modelo.permite_fim_de_semana = data.get('permite_fim_de_semana', modelo.permite_fim_de_semana)
             modelo.observacao = data.get('observacao', modelo.observacao)
+            modelo.ciclo_personalizado = data.get('ciclo_personalizado', modelo.ciclo_personalizado)
             modelo.save()
         else:
             modelo = ModeloEscala.objects.create(
@@ -78,7 +80,8 @@ def api_modelo_escala_save(request):
                 dias_folga=data.get('dias_folga', 2),
                 tipo=data.get('tipo', 'fixa'),
                 permite_fim_de_semana=data.get('permite_fim_de_semana', True),
-                observacao=data.get('observacao', '')
+                observacao=data.get('observacao', ''),
+                ciclo_personalizado=data.get('ciclo_personalizado')
             )
             
         return JsonResponse({
@@ -89,7 +92,8 @@ def api_modelo_escala_save(request):
             'dias_folga': modelo.dias_folga,
             'tipo': modelo.tipo,
             'permite_fim_de_semana': modelo.permite_fim_de_semana,
-            'observacao': modelo.observacao
+            'observacao': modelo.observacao,
+            'ciclo_personalizado': modelo.ciclo_personalizado
         })
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
@@ -858,8 +862,24 @@ def calcular_analistas_ativos(turno, data_alvo, rascunho=None):
         if _analista_usa_escala_personalizada(analista):
             data_alvo_norm = data_alvo if isinstance(data_alvo, date_type) else data_alvo.date()
             status = _get_status_escala_personalizada(analista, data_alvo_norm, rascunho)
-            if status and status != 'trabalho':
-                continue  # Dia de folga/férias/atestado na grade personalizada
+            if status:
+                if status != 'trabalho':
+                    continue  # Dia de folga/férias/atestado na grade personalizada
+                ativos += 1
+                continue
+            
+            # Se não tem registro na grade mensal, verifica ciclo_personalizado do modelo
+            modelo = analista.modelo_escala
+            if modelo and modelo.ciclo_personalizado:
+                ciclo = modelo.ciclo_personalizado
+                dias_folga = ciclo.get('dias_folga', [])
+                ciclo_dias = ciclo.get('ciclo_dias', 31)
+                primeira_folga = analista.data_primeira_folga
+                if primeira_folga:
+                    diff_days = (data_alvo_norm - primeira_folga).days
+                    pos = (diff_days % ciclo_dias) + 1
+                    if pos in dias_folga:
+                        continue  # Folga cíclica
             ativos += 1
             continue
 
@@ -906,7 +926,20 @@ def _is_analista_trabalhando(analista, data_ref, rascunho=None, modifications=No
         status = _get_status_escala_personalizada(analista, data_ref, rascunho)
         if status:
             return status == 'trabalho'
-        # Sem registro na grade: assume trabalho
+        
+        # Fallback para o ciclo_personalizado do modelo, se existir
+        modelo = analista.modelo_escala
+        if modelo and modelo.ciclo_personalizado:
+            ciclo = modelo.ciclo_personalizado
+            dias_folga = ciclo.get('dias_folga', [])
+            ciclo_dias = ciclo.get('ciclo_dias', 31)
+            primeira_folga = analista.data_primeira_folga
+            if primeira_folga:
+                diff_days = (data_ref - primeira_folga).days
+                pos = (diff_days % ciclo_dias) + 1
+                if pos in dias_folga:
+                    return False  # Folga
+        # Sem registro na grade nem ciclo: assume trabalho
         return True
 
     # 3b. Calcular pelo ciclo do modelo
@@ -1723,7 +1756,21 @@ def api_escala_personalizada_get(request):
             dias_data = {}
             for dia in dias:
                 data_str = dia.strftime('%Y-%m-%d')
-                status = dados.get(data_str, 'trabalho')
+                if data_str in dados:
+                    status = dados[data_str]
+                else:
+                    status = 'trabalho'
+                    modelo = analista.modelo_escala
+                    if modelo and modelo.ciclo_personalizado:
+                        ciclo = modelo.ciclo_personalizado
+                        dias_folga = ciclo.get('dias_folga', [])
+                        ciclo_dias = ciclo.get('ciclo_dias', 31)
+                        primeira_folga = analista.data_primeira_folga
+                        if primeira_folga:
+                            diff_days = (dia - primeira_folga).days
+                            pos = (diff_days % ciclo_dias) + 1
+                            if pos in dias_folga:
+                                status = 'folga'
                 dias_data[data_str] = status
 
             resultado.append({

@@ -109,7 +109,8 @@ def escala_view(request):
         'dias_folga': m.dias_folga,
         'tipo': m.tipo,
         'permite_fim_de_semana': m.permite_fim_de_semana,
-        'observacao': m.observacao
+        'observacao': m.observacao,
+        'ciclo_personalizado': m.ciclo_personalizado
     } for m in modelos]
     
     config = ConfiguracaoEscala.objects.first()
