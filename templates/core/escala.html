@@ -4378,6 +4378,9 @@
                 }
                 dataPrimeiraFolga.setHours(0, 0, 0, 0);
                 
+                // Normalizar para o domingo anterior (âncora)
+                dataPrimeiraFolga.setDate(dataPrimeiraFolga.getDate() - dataPrimeiraFolga.getDay());
+                
                 const diffTime = dataAtual.getTime() - dataPrimeiraFolga.getTime();
                 const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
                 const posicaoNoCiclo = ((diffDays % cicloDias) + cicloDias) % cicloDias + 1;
@@ -7152,6 +7155,53 @@
         }
 
         const modelo = modelos.find(m => m.id == modeloId);
+        if (modelo && modelo.tipo === 'personalizado') {
+            const cacheKey = `${dados.analista_id}-${dKey}`;
+            if (window.escalaPersonalizadaCache && window.escalaPersonalizadaCache[cacheKey] !== undefined) {
+                const status = window.escalaPersonalizadaCache[cacheKey];
+                if (status === 'trabalho') {
+                    return { class: 'trabalho', text: dados.turno_horario || 'Trabalho' };
+                } else {
+                    let text = '';
+                    switch (status) {
+                        case 'folga': text = 'FOLGA'; break;
+                        case 'ferias': text = 'FÉRIAS'; break;
+                        case 'atestado': text = 'ATESTADO'; break;
+                        case 'feriado': text = 'FERIADO'; break;
+                    }
+                    return { class: status, text: text };
+                }
+            }
+            if (modelo.ciclo_personalizado && modelo.ciclo_personalizado.dias_folga) {
+                const diasFolga = modelo.ciclo_personalizado.dias_folga;
+                const cicloDias = modelo.ciclo_personalizado.ciclo_dias || 31;
+                
+                let dataPrimeiraFolga;
+                if (dados.data_primeira_folga) {
+                    const [anoFolga, mesFolga, diaFolga] = dados.data_primeira_folga.split('-').map(Number);
+                    dataPrimeiraFolga = new Date(anoFolga, mesFolga - 1, diaFolga);
+                } else {
+                    const hoje = new Date();
+                    hoje.setHours(0, 0, 0, 0);
+                    dataPrimeiraFolga = new Date(hoje);
+                    dataPrimeiraFolga.setDate(hoje.getDate() + (7 - hoje.getDay()));
+                }
+                dataPrimeiraFolga.setHours(0, 0, 0, 0);
+                
+                // Normalizar para o domingo anterior (âncora)
+                dataPrimeiraFolga.setDate(dataPrimeiraFolga.getDate() - dataPrimeiraFolga.getDay());
+                
+                const diffTime = dataAtual.getTime() - dataPrimeiraFolga.getTime();
+                const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+                const posicaoNoCiclo = ((diffDays % cicloDias) + cicloDias) % cicloDias + 1;
+                
+                if (diasFolga.includes(posicaoNoCiclo)) {
+                    return { class: 'folga', text: 'FOLGA' };
+                }
+            }
+            return { class: 'trabalho', text: dados.turno_horario || 'Trabalho' };
+        }
+
         const trab = modelo ? modelo.dias_trabalhados : 6;
         const folga = modelo ? modelo.dias_folga : 2;
         const cicloTotal = trab + folga;

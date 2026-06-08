@@ -798,6 +798,13 @@ def api_rascunho_publish(request, pk):
 
 from datetime import date as date_type, timedelta
 
+def _get_custom_scale_anchor_date(primeira_folga):
+    """Normaliza a data da primeira folga para o domingo anterior para escala personalizada."""
+    if not primeira_folga:
+        return None
+    dias_para_subtrair = (primeira_folga.weekday() + 1) % 7
+    return primeira_folga - timedelta(days=dias_para_subtrair)
+
 def _resolve_modelo_escala(analista, rascunho=None):
     """Retorna o modelo de escala aplicável ao analista, resolvendo overrides e fallbacks."""
     if analista.modelo_escala:
@@ -900,7 +907,8 @@ def calcular_analistas_ativos(turno, data_alvo, rascunho=None):
                 ciclo_dias = ciclo.get('ciclo_dias', 31)
                 primeira_folga = analista.data_primeira_folga
                 if primeira_folga:
-                    diff_days = (data_alvo_norm - primeira_folga).days
+                    ancora = _get_custom_scale_anchor_date(primeira_folga)
+                    diff_days = (data_alvo_norm - ancora).days
                     pos = (diff_days % ciclo_dias) + 1
                     if pos in dias_folga:
                         continue  # Folga cíclica
@@ -971,7 +979,8 @@ def _is_analista_trabalhando(analista, data_ref, rascunho=None, modifications=No
             ciclo_dias = ciclo.get('ciclo_dias', 31)
             primeira_folga = analista.data_primeira_folga
             if primeira_folga:
-                diff_days = (data_ref - primeira_folga).days
+                ancora = _get_custom_scale_anchor_date(primeira_folga)
+                diff_days = (data_ref - ancora).days
                 pos = (diff_days % ciclo_dias) + 1
                 if pos in dias_folga:
                     return False  # Folga
@@ -1675,33 +1684,17 @@ def api_escala_coverage_details(request):
         de_folga = []
         
         for a in analistas:
-            is_folga = False
-            status_text = "Trabalho"
+            is_working = _is_analista_trabalhando(a, data_ref, rascunho)
+            is_folga = not is_working
             
-            # 1. Verificar sobreposição manual
             if a.id in folgas_map:
                 tipo = folgas_map[a.id]
-                if tipo == 'trabalho':
-                    is_folga = False
-                else:
-                    is_folga = True
-                    status_text = tipo.upper()
+                status_text = tipo.upper() if tipo != 'trabalho' else 'Trabalho'
+            elif _analista_usa_escala_personalizada(a, rascunho):
+                status = _get_status_escala_personalizada(a, data_ref, rascunho)
+                status_text = status.upper() if status else ("Trabalho" if is_working else "Folga")
             else:
-                # 2. Calcular via modelo (usa o do analista ou o padrão)
-                modelo = a.modelo_escala or default_modelo
-                if modelo:
-                    trab = modelo.dias_trabalhados
-                    folga = modelo.dias_folga
-                    ciclo = trab + folga
-                    
-                    if a.data_primeira_folga:
-                        diff_days = (data_ref - a.data_primeira_folga).days
-                        posicao = (diff_days % ciclo + ciclo) % ciclo
-                        if posicao < folga:
-                            is_folga = True
-                            status_text = "Folga"
-                    else:
-                        is_folga = False
+                status_text = "Trabalho" if is_working else "Folga"
                 
             info = {
                 'id': a.id,
@@ -1814,7 +1807,8 @@ def api_escala_personalizada_get(request):
                         ciclo_dias = ciclo.get('ciclo_dias', 31)
                         primeira_folga = analista.data_primeira_folga
                         if primeira_folga:
-                            diff_days = (dia - primeira_folga).days
+                            ancora = _get_custom_scale_anchor_date(primeira_folga)
+                            diff_days = (dia - ancora).days
                             pos = (diff_days % ciclo_dias) + 1
                             if pos in dias_folga:
                                 status = 'folga'
