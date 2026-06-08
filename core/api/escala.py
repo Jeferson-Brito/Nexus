@@ -1667,10 +1667,27 @@ def api_escala_personalizada_get(request):
     Query params: ano, mes, analista_id (opcional), rascunho_id (opcional), escala_tipo
     """
     try:
-        ano = int(request.GET.get('ano', datetime.now().year))
-        mes = int(request.GET.get('mes', datetime.now().month))
+        ano_val = request.GET.get('ano')
+        mes_val = request.GET.get('mes')
+        
+        try:
+            ano = int(ano_val) if ano_val not in (None, '', 'null', 'undefined') else datetime.now().year
+        except (ValueError, TypeError):
+            ano = datetime.now().year
+            
+        try:
+            mes = int(mes_val) if mes_val not in (None, '', 'null', 'undefined') else datetime.now().month
+        except (ValueError, TypeError):
+            mes = datetime.now().month
+
         analista_id = request.GET.get('analista_id')
+        if analista_id in (None, '', 'null', 'undefined'):
+            analista_id = None
+
         rascunho_id = request.GET.get('rascunho_id')
+        if rascunho_id in (None, '', 'null', 'undefined'):
+            rascunho_id = None
+
         escala_tipo = request.GET.get('escala_tipo', 'operacional')
 
         rascunho = EscalaRascunho.objects.get(id=rascunho_id) if rascunho_id else None
