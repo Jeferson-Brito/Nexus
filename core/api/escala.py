@@ -6,7 +6,7 @@ from django.shortcuts import get_object_or_404
 import json
 from datetime import datetime
 
-from ..models import Turno, AnalistaEscala, FolgaManual, EscalaRascunho, ModeloEscala, ConfiguracaoEscala, TrocaFolga, SolicitacaoFolga
+from ..models import Turno, AnalistaEscala, FolgaManual, EscalaRascunho, ModeloEscala, ConfiguracaoEscala, TrocaFolga, SolicitacaoFolga, EscalaPersonalizada, EscalaPersonalizadaTemplate
 from django.utils import timezone
 from django.contrib.auth import authenticate
 
@@ -796,7 +796,34 @@ def _get_modelo_ciclo(analista):
     modelo = analista.modelo_escala
     if not modelo:
         return (6, 2)  # Padrão 6x2
+    if modelo.tipo == 'personalizado':
+        return (1, 0)  # Sinalizador: não usar ciclo, consultar EscalaPersonalizada
     return (modelo.dias_trabalhados, modelo.dias_folga)
+
+
+def _analista_usa_escala_personalizada(analista):
+    """Retorna True se o analista usa modelo do tipo personalizado."""
+    modelo = analista.modelo_escala
+    return modelo is not None and modelo.tipo == 'personalizado'
+
+
+def _get_status_escala_personalizada(analista, data_ref, rascunho=None):
+    """
+    Consulta a EscalaPersonalizada para determinar o status do analista num dia.
+    Retorna: 'trabalho', 'folga', 'ferias', 'atestado', 'feriado', ou None (não definido).
+    """
+    from ..models import EscalaPersonalizada
+    data_str = data_ref.strftime('%Y-%m-%d') if hasattr(data_ref, 'strftime') else str(data_ref)
+    grade = EscalaPersonalizada.objects.filter(
+        analista=analista,
+        rascunho=rascunho,
+        ano=data_ref.year,
+        mes=data_ref.month,
+        modo_teste=False,
+    ).first()
+    if grade and data_str in grade.dados:
+        return grade.dados[data_str]
+    return None
 
 
 def calcular_analistas_ativos(turno, data_alvo, rascunho=None):
@@ -822,7 +849,16 @@ def calcular_analistas_ativos(turno, data_alvo, rascunho=None):
                 ativos += 1
                 continue
 
-        # 2. Calcular pelo ciclo
+        # 2a. Escala personalizada — consultar grade mensal
+        if _analista_usa_escala_personalizada(analista):
+            data_alvo_norm = data_alvo if isinstance(data_alvo, date_type) else data_alvo.date()
+            status = _get_status_escala_personalizada(analista, data_alvo_norm, rascunho)
+            if status and status != 'trabalho':
+                continue  # Dia de folga/férias/atestado na grade personalizada
+            ativos += 1
+            continue
+
+        # 2b. Calcular pelo ciclo do modelo
         trab, folga = _get_modelo_ciclo(analista)
         ciclo_total = trab + folga
 
@@ -847,6 +883,7 @@ def _is_analista_trabalhando(analista, data_ref, rascunho=None, modifications=No
     Determina se um analista está trabalhando em uma data específica.
     Permite passar um dicionário de modificações para simular estados futuros.
     modifications: {date: 'folga' | 'trabalho'}
+    Suporta modelos do tipo 'personalizado' via EscalaPersonalizada.
     """
     # 1. Verificar modificações simuladas (para validação de troca)
     if modifications and data_ref in modifications:
@@ -859,7 +896,15 @@ def _is_analista_trabalhando(analista, data_ref, rascunho=None, modifications=No
     if folga_manual:
         return folga_manual.tipo == 'trabalho'
 
-    # 3. Calcular pelo ciclo do modelo
+    # 3a. Escala personalizada — consultar grade mensal (se modelo for personalizado)
+    if _analista_usa_escala_personalizada(analista):
+        status = _get_status_escala_personalizada(analista, data_ref, rascunho)
+        if status:
+            return status == 'trabalho'
+        # Sem registro na grade: assume trabalho
+        return True
+
+    # 3b. Calcular pelo ciclo do modelo
     trab, folga = _get_modelo_ciclo(analista)
     ciclo_total = trab + folga
 
@@ -1598,6 +1643,427 @@ def api_escala_coverage_details(request):
             'trabalhando': trabalhando,
             'de_folga': de_folga
         })
-        
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+
+# ========================================
+# API VIEWS — ESCALA PERSONALIZADA
+# ========================================
+
+import calendar as cal_module
+
+@login_required
+@check_nrs_permission
+def api_escala_personalizada_get(request):
+    """
+    Retorna a grade mensal de escala personalizada para um ou todos os analistas.
+    Query params: ano, mes, analista_id (opcional), rascunho_id (opcional), escala_tipo
+    """
+    try:
+        ano = int(request.GET.get('ano', datetime.now().year))
+        mes = int(request.GET.get('mes', datetime.now().month))
+        analista_id = request.GET.get('analista_id')
+        rascunho_id = request.GET.get('rascunho_id')
+        escala_tipo = request.GET.get('escala_tipo', 'operacional')
+
+        rascunho = EscalaRascunho.objects.get(id=rascunho_id) if rascunho_id else None
+
+        # Buscar analistas com modelo personalizado
+        if rascunho:
+            analistas_qs = AnalistaEscala.objects.filter(
+                ativo=True, rascunho=rascunho,
+                modelo_escala__tipo='personalizado'
+            ).select_related('modelo_escala', 'turno')
+        else:
+            analistas_qs = AnalistaEscala.objects.filter(
+                ativo=True, rascunho__isnull=True,
+                escala_tipo=escala_tipo,
+                modelo_escala__tipo='personalizado'
+            ).select_related('modelo_escala', 'turno')
+
+        if analista_id:
+            analistas_qs = analistas_qs.filter(id=analista_id)
+
+        # Calcular dias do mês
+        _, num_dias = cal_module.monthrange(ano, mes)
+        dias = [datetime(ano, mes, d).date() for d in range(1, num_dias + 1)]
+
+        resultado = []
+        for analista in analistas_qs:
+            grade = EscalaPersonalizada.objects.filter(
+                analista=analista, rascunho=rascunho, ano=ano, mes=mes
+            ).first()
+            dados = grade.dados if grade else {}
+            modo_teste = grade.modo_teste if grade else False
+
+            dias_data = {}
+            for dia in dias:
+                data_str = dia.strftime('%Y-%m-%d')
+                status = dados.get(data_str, 'trabalho')
+                dias_data[data_str] = status
+
+            resultado.append({
+                'analista_id': analista.id,
+                'analista_nome': analista.nome,
+                'turno': analista.turno.nome if analista.turno else None,
+                'turno_cor': analista.turno.cor if analista.turno else '#64748b',
+                'grade_id': grade.id if grade else None,
+                'modo_teste': modo_teste,
+                'dias': dias_data,
+            })
+
+        return JsonResponse({
+            'ano': ano,
+            'mes': mes,
+            'num_dias': num_dias,
+            'analistas': resultado,
+        })
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+
+@login_required
+@require_http_methods(['POST'])
+@check_nrs_permission
+def api_escala_personalizada_save(request):
+    """
+    Salva/atualiza a grade de dias de um analista num mês.
+    Body: {analista_id, ano, mes, dias: {"YYYY-MM-DD": "status", ...}, rascunho_id?, modo_teste?}
+    """
+    try:
+        data = json.loads(request.body)
+        analista_id = data.get('analista_id')
+        ano = int(data.get('ano'))
+        mes = int(data.get('mes'))
+        dias_novos = data.get('dias', {})
+        rascunho_id = data.get('rascunho_id')
+        modo_teste = data.get('modo_teste', False)
+
+        if not analista_id:
+            return JsonResponse({'error': 'analista_id é obrigatório.'}, status=400)
+
+        analista = get_object_or_404(AnalistaEscala, pk=analista_id)
+        rascunho = EscalaRascunho.objects.get(id=rascunho_id) if rascunho_id else None
+
+        status_validos = {'trabalho', 'folga', 'ferias', 'atestado', 'feriado'}
+        for data_str, status in dias_novos.items():
+            if status not in status_validos:
+                return JsonResponse({'error': f'Status inválido "{status}" para {data_str}.'}, status=400)
+
+        grade, created = EscalaPersonalizada.objects.get_or_create(
+            analista=analista,
+            rascunho=rascunho,
+            ano=ano,
+            mes=mes,
+            defaults={'dados': {}, 'criado_por': request.user, 'modo_teste': modo_teste}
+        )
+
+        grade.dados.update(dias_novos)
+        grade.modo_teste = modo_teste
+        grade.save()
+
+        return JsonResponse({
+            'success': True,
+            'grade_id': grade.id,
+            'analista_id': analista.id,
+            'ano': ano,
+            'mes': mes,
+            'modo_teste': grade.modo_teste,
+            'dias': grade.dados,
+            'created': created,
+        })
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+
+@login_required
+@require_http_methods(['POST'])
+@check_nrs_permission
+def api_escala_personalizada_replicar(request):
+    """
+    Replica a grade de um mês (origem) para um ou mais meses (destino).
+    Body: {analistas_ids, ano_origem, mes_origem, meses_destino, rascunho_id?, modo_teste?, sobrescrever?}
+    """
+    try:
+        data = json.loads(request.body)
+        analistas_ids = data.get('analistas_ids', 'todos')
+        ano_origem = int(data.get('ano_origem'))
+        mes_origem = int(data.get('mes_origem'))
+        meses_destino = data.get('meses_destino', [])
+        rascunho_id = data.get('rascunho_id')
+        modo_teste = data.get('modo_teste', False)
+        sobrescrever = data.get('sobrescrever', True)
+        escala_tipo = data.get('escala_tipo', 'operacional')
+
+        if not meses_destino:
+            return JsonResponse({'error': 'Informe pelo menos um mês destino.'}, status=400)
+
+        rascunho = EscalaRascunho.objects.get(id=rascunho_id) if rascunho_id else None
+
+        if analistas_ids == 'todos':
+            if rascunho:
+                analistas = AnalistaEscala.objects.filter(
+                    ativo=True, rascunho=rascunho,
+                    modelo_escala__tipo='personalizado'
+                )
+            else:
+                analistas = AnalistaEscala.objects.filter(
+                    ativo=True, rascunho__isnull=True,
+                    escala_tipo=escala_tipo,
+                    modelo_escala__tipo='personalizado'
+                )
+        else:
+            analistas = AnalistaEscala.objects.filter(id__in=analistas_ids)
+
+        replicados = 0
+
+        for analista in analistas:
+            grade_origem = EscalaPersonalizada.objects.filter(
+                analista=analista, rascunho=rascunho,
+                ano=ano_origem, mes=mes_origem
+            ).first()
+
+            if not grade_origem:
+                continue
+
+            dados_origem = grade_origem.dados.copy()
+            _, dias_origem = cal_module.monthrange(ano_origem, mes_origem)
+
+            for dest in meses_destino:
+                ano_dest = int(dest.get('ano'))
+                mes_dest = int(dest.get('mes'))
+
+                if ano_dest == ano_origem and mes_dest == mes_origem:
+                    continue
+
+                _, dias_dest = cal_module.monthrange(ano_dest, mes_dest)
+
+                dados_dest = {}
+                for data_str, status in dados_origem.items():
+                    try:
+                        data_orig = datetime.strptime(data_str, '%Y-%m-%d').date()
+                        dia_num = data_orig.day
+                        if dia_num <= dias_dest:
+                            nova_data = datetime(ano_dest, mes_dest, dia_num).date()
+                            dados_dest[nova_data.strftime('%Y-%m-%d')] = status
+                    except (ValueError, TypeError):
+                        continue
+
+                grade_dest, _ = EscalaPersonalizada.objects.get_or_create(
+                    analista=analista,
+                    rascunho=rascunho,
+                    ano=ano_dest,
+                    mes=mes_dest,
+                    defaults={'dados': {}, 'criado_por': request.user, 'modo_teste': modo_teste}
+                )
+
+                if sobrescrever:
+                    grade_dest.dados = dados_dest
+                else:
+                    merged = dados_dest.copy()
+                    merged.update(grade_dest.dados)
+                    grade_dest.dados = merged
+
+                grade_dest.modo_teste = modo_teste
+                grade_dest.save()
+                replicados += 1
+
+        return JsonResponse({'success': True, 'replicados': replicados})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+
+@login_required
+@check_nrs_permission
+def api_escala_personalizada_templates_list(request):
+    """Lista todos os templates de escala personalizada."""
+    templates = EscalaPersonalizadaTemplate.objects.all().select_related('criado_por')
+    data = [{
+        'id': t.id,
+        'nome': t.nome,
+        'descricao': t.descricao,
+        'total_folgas': t.total_folgas,
+        'total_trabalho': t.total_trabalho,
+        'criado_por': t.criado_por.get_full_name() or t.criado_por.username if t.criado_por else None,
+        'created_at': t.created_at.strftime('%d/%m/%Y'),
+    } for t in templates]
+    return JsonResponse(data, safe=False)
+
+
+@login_required
+@require_http_methods(['POST'])
+@check_nrs_permission
+def api_escala_personalizada_template_save(request):
+    """
+    Salva um template a partir de uma grade existente ou de dados fornecidos.
+    Body: {nome, descricao?, analista_id?, ano?, mes?, rascunho_id?, dados_template?}
+    """
+    try:
+        data = json.loads(request.body)
+        nome = data.get('nome', '').strip()
+        if not nome:
+            return JsonResponse({'error': 'Nome do template é obrigatório.'}, status=400)
+
+        dados_template = data.get('dados_template')
+
+        if not dados_template:
+            analista_id = data.get('analista_id')
+            ano = data.get('ano')
+            mes = data.get('mes')
+            rascunho_id = data.get('rascunho_id')
+
+            if not all([analista_id, ano, mes]):
+                return JsonResponse({'error': 'Forneça analista_id+ano+mes ou dados_template diretamente.'}, status=400)
+
+            rascunho = EscalaRascunho.objects.get(id=rascunho_id) if rascunho_id else None
+            grade = EscalaPersonalizada.objects.filter(
+                analista_id=analista_id, rascunho=rascunho, ano=int(ano), mes=int(mes)
+            ).first()
+
+            if not grade:
+                return JsonResponse({'error': 'Grade não encontrada.'}, status=404)
+
+            dados_template = {}
+            for data_str, status in grade.dados.items():
+                try:
+                    d = datetime.strptime(data_str, '%Y-%m-%d')
+                    dados_template[str(d.day)] = status
+                except (ValueError, TypeError):
+                    continue
+
+        total_folgas = sum(1 for s in dados_template.values() if s != 'trabalho')
+        total_trabalho = sum(1 for s in dados_template.values() if s == 'trabalho')
+
+        template_id = data.get('id')
+        if template_id:
+            template = get_object_or_404(EscalaPersonalizadaTemplate, pk=template_id)
+            template.nome = nome
+            template.descricao = data.get('descricao', template.descricao)
+            template.dados_template = dados_template
+            template.total_folgas = total_folgas
+            template.total_trabalho = total_trabalho
+            template.save()
+        else:
+            template = EscalaPersonalizadaTemplate.objects.create(
+                nome=nome,
+                descricao=data.get('descricao', ''),
+                dados_template=dados_template,
+                total_folgas=total_folgas,
+                total_trabalho=total_trabalho,
+                criado_por=request.user,
+            )
+
+        return JsonResponse({
+            'success': True,
+            'id': template.id,
+            'nome': template.nome,
+            'total_folgas': template.total_folgas,
+            'total_trabalho': template.total_trabalho,
+        })
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+
+@login_required
+@require_http_methods(['POST'])
+@check_nrs_permission
+def api_escala_personalizada_template_aplicar(request, pk):
+    """
+    Aplica um template a um ou mais analistas num determinado mês.
+    Body: {analistas_ids, ano, mes, rascunho_id?, modo_teste?, sobrescrever?}
+    """
+    try:
+        template = get_object_or_404(EscalaPersonalizadaTemplate, pk=pk)
+        data = json.loads(request.body)
+        analistas_ids = data.get('analistas_ids', [])
+        ano = int(data.get('ano'))
+        mes = int(data.get('mes'))
+        rascunho_id = data.get('rascunho_id')
+        modo_teste = data.get('modo_teste', False)
+        sobrescrever = data.get('sobrescrever', True)
+
+        if not analistas_ids:
+            return JsonResponse({'error': 'Informe ao menos um analista.'}, status=400)
+
+        rascunho = EscalaRascunho.objects.get(id=rascunho_id) if rascunho_id else None
+        _, num_dias = cal_module.monthrange(ano, mes)
+
+        aplicados = 0
+        for analista_id in analistas_ids:
+            try:
+                analista = AnalistaEscala.objects.get(pk=analista_id)
+            except AnalistaEscala.DoesNotExist:
+                continue
+
+            dados_aplicar = {}
+            for dia_str, status in template.dados_template.items():
+                try:
+                    dia_num = int(dia_str)
+                    if dia_num <= num_dias:
+                        data_abs = datetime(ano, mes, dia_num).date()
+                        dados_aplicar[data_abs.strftime('%Y-%m-%d')] = status
+                except (ValueError, TypeError):
+                    continue
+
+            grade, _ = EscalaPersonalizada.objects.get_or_create(
+                analista=analista,
+                rascunho=rascunho,
+                ano=ano,
+                mes=mes,
+                defaults={'dados': {}, 'criado_por': request.user, 'modo_teste': modo_teste}
+            )
+
+            if sobrescrever:
+                grade.dados = dados_aplicar
+            else:
+                merged = dados_aplicar.copy()
+                merged.update(grade.dados)
+                grade.dados = merged
+
+            grade.modo_teste = modo_teste
+            grade.save()
+            aplicados += 1
+
+        return JsonResponse({'success': True, 'aplicados': aplicados})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+
+@login_required
+@require_http_methods(['DELETE'])
+@check_nrs_permission
+def api_escala_personalizada_template_delete(request, pk):
+    """Exclui um template de escala personalizada."""
+    template = get_object_or_404(EscalaPersonalizadaTemplate, pk=pk)
+    template.delete()
+    return JsonResponse({'success': True})
+
+
+@login_required
+@require_http_methods(['POST'])
+@check_nrs_permission
+def api_escala_personalizada_toggle_teste(request):
+    """
+    Alterna o modo_teste de grades de um mês.
+    Body: {analista_id (opcional), ano, mes, rascunho_id?, modo_teste: bool}
+    """
+    try:
+        data = json.loads(request.body)
+        analista_id = data.get('analista_id')
+        ano = int(data.get('ano'))
+        mes = int(data.get('mes'))
+        modo_teste = bool(data.get('modo_teste', False))
+        rascunho_id = data.get('rascunho_id')
+
+        rascunho = EscalaRascunho.objects.get(id=rascunho_id) if rascunho_id else None
+
+        qs = EscalaPersonalizada.objects.filter(ano=ano, mes=mes, rascunho=rascunho)
+        if analista_id:
+            qs = qs.filter(analista_id=analista_id)
+
+        updated = qs.update(modo_teste=modo_teste)
+        return JsonResponse({'success': True, 'updated': updated, 'modo_teste': modo_teste})
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)

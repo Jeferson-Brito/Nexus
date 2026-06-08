@@ -1922,6 +1922,11 @@
                     </button>
                     <span id="badgeTrocasPendentes" class="badge-analistas-alerta" style="display:none;">0</span>
                 </div>
+
+                <!-- Botão Escala Personalizada -->
+                <button class="btn-escala" onclick="abrirEscalaPersonalizada()" id="btnEscalaPersonalizada" style="background: linear-gradient(135deg, #7c3aed, #6d28d9); color: white; border: none; box-shadow: 0 4px 12px rgba(124,58,237,0.25);">
+                    <i class="fa-solid fa-calendar-pen"></i> Escala Personalizada
+                </button>
             </div>
         </div>
     </div>
@@ -2060,6 +2065,252 @@
     <!-- Tabelas da Escala -->
     <div id="tabelas" class="tabelas"></div>
     {% endif %}
+</div>
+
+<!-- ================================================================
+     SEÇÃO: ESCALA PERSONALIZADA
+     Acessível por qualquer modo via botão flutuante
+     ================================================================ -->
+<div id="secaoEscalaPersonalizada" style="display:none; margin-top: 24px;" class="app-escala">
+    <!-- Header da seção -->
+    <div style="background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%); border-radius: 20px; padding: 1.5rem 2rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 8px 30px rgba(124,58,237,0.25);">
+        <div style="display:flex; align-items:center; gap:14px;">
+            <div style="background: rgba(255,255,255,0.15); width:48px; height:48px; border-radius:14px; display:flex; align-items:center; justify-content:center;">
+                <i class="fa-solid fa-calendar-pen" style="color:white; font-size:1.3rem;"></i>
+            </div>
+            <div>
+                <h2 style="color:white; font-size:1.4rem; font-weight:800; margin:0; letter-spacing:-0.5px;">Escala Personalizada</h2>
+                <p style="color:rgba(255,255,255,0.75); font-size:0.82rem; margin:0; font-weight:500;">Monte a escala do jeito que quiser, dia a dia, mês a mês</p>
+            </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+            <span id="badgeModoTeste" style="display:none; background:rgba(251,191,36,0.2); color:#fbbf24; border: 1.5px solid #fbbf24; border-radius:999px; padding:4px 14px; font-size:0.75rem; font-weight:700; letter-spacing:0.5px;">
+                <i class="fa-solid fa-flask me-1"></i> MODO TESTE
+            </span>
+            <button class="btn-escala" onclick="fecharEscalaPersonalizada()" style="background:rgba(255,255,255,0.15); color:white; border:1.5px solid rgba(255,255,255,0.4); border-radius:12px; padding:10px 18px; font-weight:600;">
+                <i class="fa-solid fa-xmark"></i> Fechar
+            </button>
+        </div>
+    </div>
+
+    <!-- Barra de controles -->
+    <div style="background:white; border-radius:16px; padding:16px 20px; margin-bottom:16px; border:1px solid #e2e8f0; box-shadow: 0 2px 12px rgba(0,0,0,0.05); display:flex; flex-wrap:wrap; gap:14px; align-items:center; justify-content:space-between;">
+        <!-- Navegação mês -->
+        <div style="display:flex; align-items:center; gap:10px;">
+            <button onclick="navMesPersonalizado(-1)" style="border:1.5px solid #e2e8f0; background:#f8fafc; border-radius:10px; padding:8px 14px; cursor:pointer; color:#334155; font-weight:600; transition:all 0.2s;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f8fafc'">
+                <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <div style="text-align:center; min-width:150px;">
+                <div id="mesTituloPersonalizado" style="font-size:1.05rem; font-weight:800; color:#1e293b;"></div>
+                <div id="diasPreenchidos" style="font-size:0.75rem; color:#64748b; font-weight:500;"></div>
+            </div>
+            <button onclick="navMesPersonalizado(1)" style="border:1.5px solid #e2e8f0; background:#f8fafc; border-radius:10px; padding:8px 14px; cursor:pointer; color:#334155; font-weight:600; transition:all 0.2s;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f8fafc'">
+                <i class="fa-solid fa-chevron-right"></i>
+            </button>
+        </div>
+
+        <!-- Legenda -->
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+            <span style="font-size:0.78rem; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; margin-right:4px;">Legenda:</span>
+            <span class="ep-legenda-item" data-status="trabalho" onclick="setModoEdicaoPersonalizada('trabalho')" style="cursor:pointer;">
+                <span style="display:inline-block; width:14px; height:14px; border-radius:4px; background:#3b82f6; margin-right:5px; vertical-align:middle;"></span>Trabalho
+            </span>
+            <span class="ep-legenda-item" data-status="folga" onclick="setModoEdicaoPersonalizada('folga')" style="cursor:pointer;">
+                <span style="display:inline-block; width:14px; height:14px; border-radius:4px; background:#10b981; margin-right:5px; vertical-align:middle;"></span>Folga
+            </span>
+            <span class="ep-legenda-item" data-status="ferias" onclick="setModoEdicaoPersonalizada('ferias')" style="cursor:pointer;">
+                <span style="display:inline-block; width:14px; height:14px; border-radius:4px; background:#f59e0b; margin-right:5px; vertical-align:middle;"></span>Férias
+            </span>
+            <span class="ep-legenda-item" data-status="atestado" onclick="setModoEdicaoPersonalizada('atestado')" style="cursor:pointer;">
+                <span style="display:inline-block; width:14px; height:14px; border-radius:4px; background:#ef4444; margin-right:5px; vertical-align:middle;"></span>Atestado
+            </span>
+            <span class="ep-legenda-item" data-status="feriado" onclick="setModoEdicaoPersonalizada('feriado')" style="cursor:pointer;">
+                <span style="display:inline-block; width:14px; height:14px; border-radius:4px; background:#a855f7; margin-right:5px; vertical-align:middle;"></span>Feriado
+            </span>
+        </div>
+
+        <!-- Modo de edição ativo -->
+        <div style="display:flex; align-items:center; gap:8px; background:#f8fafc; padding:8px 16px; border-radius:12px; border:1.5px solid #e2e8f0;">
+            <i class="fa-solid fa-pen-to-square" style="color:#7c3aed; font-size:0.9rem;"></i>
+            <span style="font-size:0.82rem; font-weight:600; color:#334155;">Clicando: </span>
+            <span id="modoEdicaoLabel" style="font-size:0.82rem; font-weight:700; color:#7c3aed;">Folga</span>
+        </div>
+
+        <!-- Ações -->
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button onclick="abrirModalReplicar()" style="background:#f1f5f9; color:#334155; border:1.5px solid #e2e8f0; border-radius:10px; padding:9px 16px; font-weight:600; font-size:0.83rem; cursor:pointer; display:flex; align-items:center; gap:6px; transition:all 0.2s;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">
+                <i class="fa-solid fa-copy" style="color:#7c3aed;"></i> Replicar
+            </button>
+            <button onclick="abrirModalTemplates()" style="background:#f1f5f9; color:#334155; border:1.5px solid #e2e8f0; border-radius:10px; padding:9px 16px; font-weight:600; font-size:0.83rem; cursor:pointer; display:flex; align-items:center; gap:6px; transition:all 0.2s;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">
+                <i class="fa-solid fa-layer-group" style="color:#6366f1;"></i> Templates
+            </button>
+            <button onclick="toggleModoTestePersonalizado()" id="btnModoTeste" style="background:#fffbeb; color:#92400e; border:1.5px solid #fde68a; border-radius:10px; padding:9px 16px; font-weight:600; font-size:0.83rem; cursor:pointer; display:flex; align-items:center; gap:6px; transition:all 0.2s;">
+                <i class="fa-solid fa-flask"></i> Modo Teste
+            </button>
+            <button onclick="salvarEscalaPersonalizada()" style="background:linear-gradient(135deg,#7c3aed,#6d28d9); color:white; border:none; border-radius:10px; padding:9px 18px; font-weight:700; font-size:0.83rem; cursor:pointer; display:flex; align-items:center; gap:6px; transition:all 0.2s; box-shadow: 0 4px 12px rgba(124,58,237,0.3);">
+                <i class="fa-solid fa-floppy-disk"></i> Salvar
+            </button>
+        </div>
+    </div>
+
+    <!-- Grade de Escala -->
+    <div style="background:white; border-radius:16px; border:1px solid #e2e8f0; box-shadow: 0 2px 12px rgba(0,0,0,0.05); overflow:hidden;">
+        <!-- Loading state -->
+        <div id="epLoading" style="text-align:center; padding: 60px 20px; display:none;">
+            <i class="fa-solid fa-spinner fa-spin" style="font-size:2rem; color:#7c3aed; margin-bottom:16px; display:block;"></i>
+            <p style="color:#64748b; font-weight:500;">Carregando escala personalizada...</p>
+        </div>
+
+        <!-- Empty state -->
+        <div id="epEmpty" style="text-align:center; padding: 60px 20px; display:none;">
+            <div style="background: linear-gradient(135deg, #ede9fe, #ddd6fe); width:80px; height:80px; border-radius:20px; display:inline-flex; align-items:center; justify-content:center; margin-bottom:20px;">
+                <i class="fa-solid fa-calendar-xmark" style="font-size:2rem; color:#7c3aed;"></i>
+            </div>
+            <h4 style="color:#1e293b; font-weight:700; margin-bottom:8px;">Nenhum analista com escala personalizada</h4>
+            <p style="color:#64748b; max-width:400px; margin:0 auto;">Crie um modelo do tipo <strong>Personalizado</strong> na aba de Configuração e atribua-o a um analista para começar.</p>
+        </div>
+
+        <!-- Grade -->
+        <div id="epGrade" style="overflow-x:auto; display:none;">
+            <table id="tabelaEscalaPersonalizada" style="border-collapse: collapse; width: max-content; min-width: 100%;">
+                <thead id="epThead"></thead>
+                <tbody id="epTbody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Resumo estatístico -->
+    <div id="epResumo" style="display:none; margin-top:16px; background:white; border-radius:16px; padding:16px 20px; border:1px solid #e2e8f0; box-shadow: 0 2px 12px rgba(0,0,0,0.04);">
+        <h6 style="font-weight:700; color:#334155; margin-bottom:12px; display:flex; align-items:center; gap:8px;"><i class="fa-solid fa-chart-bar" style="color:#7c3aed;"></i> Resumo do Mês</h6>
+        <div id="epResumoContent" style="display:flex; flex-wrap:wrap; gap:12px;"></div>
+    </div>
+</div>
+
+<!-- ================================================================
+     MODAIS DE ESCALA PERSONALIZADA
+     ================================================================ -->
+
+<!-- Modal Replicar -->
+<div class="modal-escala" id="modalEpReplicar" style="z-index:1060;">
+    <div class="modal-content-escala" style="max-width:560px;">
+        <div class="modal-header-escala" style="background: linear-gradient(135deg,#7c3aed,#6d28d9);">
+            <button class="modal-close" onclick="fecharModal('modalEpReplicar')">&times;</button>
+            <div class="modal-header-top">
+                <div class="modal-icon" style="background:rgba(255,255,255,0.15);"><i class="fa-solid fa-copy"></i></div>
+                <div class="modal-header-text">
+                    <h2>Replicar Escala</h2>
+                    <p>Copie o padrão deste mês para outros meses</p>
+                </div>
+            </div>
+        </div>
+        <div class="modal-body-escala" style="padding:24px;">
+            <div class="mb-3">
+                <label style="font-weight:700; color:#334155; font-size:0.85rem; display:block; margin-bottom:6px;">Mês de Origem</label>
+                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px 16px; color:#1e293b; font-weight:600;" id="epReplicarOrigem"></div>
+            </div>
+            <div class="mb-3">
+                <label style="font-weight:700; color:#334155; font-size:0.85rem; display:block; margin-bottom:6px;">Analistas</label>
+                <select id="epReplicarAnalistas" class="form-select" style="border-radius:10px; border:1.5px solid #e2e8f0; padding:10px 14px; font-size:0.9rem;">
+                    <option value="todos">Todos os analistas com escala personalizada</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label style="font-weight:700; color:#334155; font-size:0.85rem; display:block; margin-bottom:6px;">Meses de Destino <span style="color:#64748b; font-weight:500;">(selecione um ou mais)</span></label>
+                <div id="epReplicarMesesDestino" style="display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; max-height:240px; overflow-y:auto; padding:4px 0;"></div>
+            </div>
+            <div class="mb-3" style="background:#fef3c7; border:1.5px solid #fde68a; border-radius:10px; padding:12px 16px;">
+                <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-weight:600; color:#78350f; margin:0;">
+                    <input type="checkbox" id="epReplicarModoTeste" style="width:16px; height:16px; cursor:pointer;">
+                    <span><i class="fa-solid fa-flask me-1"></i> Replicar como Modo Teste (não afeta a escala publicada)</span>
+                </label>
+            </div>
+            <div class="mb-3">
+                <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-weight:600; color:#334155; margin:0; font-size:0.85rem;">
+                    <input type="checkbox" id="epReplicarSobrescrever" checked style="width:16px; height:16px; cursor:pointer;">
+                    <span>Sobrescrever dados existentes nos meses de destino</span>
+                </label>
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
+                <button onclick="fecharModal('modalEpReplicar')" style="background:#f1f5f9; color:#334155; border:1.5px solid #e2e8f0; border-radius:10px; padding:10px 20px; font-weight:600; cursor:pointer;">Cancelar</button>
+                <button onclick="confirmarReplicar()" style="background:linear-gradient(135deg,#7c3aed,#6d28d9); color:white; border:none; border-radius:10px; padding:10px 20px; font-weight:700; cursor:pointer; box-shadow: 0 4px 12px rgba(124,58,237,0.3);">
+                    <i class="fa-solid fa-copy me-1"></i> Replicar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Templates -->
+<div class="modal-escala" id="modalEpTemplates" style="z-index:1060;">
+    <div class="modal-content-escala" style="max-width:640px;">
+        <div class="modal-header-escala" style="background: linear-gradient(135deg,#6366f1,#4f46e5);">
+            <button class="modal-close" onclick="fecharModal('modalEpTemplates')">&times;</button>
+            <div class="modal-header-top">
+                <div class="modal-icon" style="background:rgba(255,255,255,0.15);"><i class="fa-solid fa-layer-group"></i></div>
+                <div class="modal-header-text">
+                    <h2>Templates de Escala</h2>
+                    <p>Salve e aplique padrões reutilizáveis</p>
+                </div>
+            </div>
+        </div>
+        <div class="modal-body-escala" style="padding:24px;">
+            <!-- Abas internas -->
+            <div style="display:flex; gap:4px; background:#f1f5f9; border-radius:12px; padding:4px; margin-bottom:20px;">
+                <button onclick="switchTabTemplate('aplicar')" id="tabTemplateAplicar" style="flex:1; border:none; border-radius:8px; padding:8px 14px; font-weight:700; font-size:0.82rem; cursor:pointer; background:linear-gradient(135deg,#6366f1,#4f46e5); color:white; transition:all 0.2s;">Aplicar Template</button>
+                <button onclick="switchTabTemplate('salvar')" id="tabTemplateSalvar" style="flex:1; border:none; border-radius:8px; padding:8px 14px; font-weight:600; font-size:0.82rem; cursor:pointer; background:transparent; color:#64748b; transition:all 0.2s;">Salvar como Template</button>
+            </div>
+
+            <!-- Conteúdo: Aplicar -->
+            <div id="tabContentTemplateAplicar">
+                <div id="listaTemplates" style="display:flex; flex-direction:column; gap:10px; max-height:300px; overflow-y:auto; margin-bottom:16px;"></div>
+                <div id="emptyTemplates" style="text-align:center; padding:30px; display:none;">
+                    <i class="fa-solid fa-layer-group" style="font-size:2rem; color:#cbd5e1; margin-bottom:12px; display:block;"></i>
+                    <p style="color:#94a3b8; font-weight:500;">Nenhum template salvo ainda</p>
+                </div>
+                <!-- Configuração de aplicação -->
+                <div id="templateAplicacaoConfig" style="display:none; background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:12px; padding:16px;">
+                    <p style="font-weight:700; color:#334155; margin-bottom:12px;">Aplicar template <strong id="nomeTemplateSelecionado"></strong></p>
+                    <div class="mb-3">
+                        <label style="font-size:0.82rem; font-weight:600; color:#334155; display:block; margin-bottom:6px;">Mês de destino</label>
+                        <input type="month" id="templateMesDestino" class="form-control" style="border-radius:10px; border:1.5px solid #e2e8f0;">
+                    </div>
+                    <div class="mb-3">
+                        <label style="font-size:0.82rem; font-weight:600; color:#334155; display:block; margin-bottom:6px;">Analistas</label>
+                        <select id="templateAnalistasDestino" class="form-select" style="border-radius:10px; border:1.5px solid #e2e8f0;" multiple size="4"></select>
+                        <small style="color:#64748b; font-size:0.75rem;">Ctrl+clique para selecionar múltiplos</small>
+                    </div>
+                    <div style="display:flex; justify-content:flex-end; gap:8px;">
+                        <button onclick="document.getElementById('templateAplicacaoConfig').style.display='none'" style="background:#f1f5f9; color:#334155; border:1.5px solid #e2e8f0; border-radius:10px; padding:8px 16px; font-weight:600; cursor:pointer; font-size:0.85rem;">Cancelar</button>
+                        <button onclick="confirmarAplicarTemplate()" style="background:linear-gradient(135deg,#6366f1,#4f46e5); color:white; border:none; border-radius:10px; padding:8px 16px; font-weight:700; cursor:pointer; font-size:0.85rem;">
+                            <i class="fa-solid fa-check me-1"></i> Aplicar
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Conteúdo: Salvar -->
+            <div id="tabContentTemplateSalvar" style="display:none;">
+                <div class="mb-3">
+                    <label style="font-size:0.82rem; font-weight:600; color:#334155; display:block; margin-bottom:6px;">Nome do Template *</label>
+                    <input type="text" id="templateNome" class="form-control" placeholder="Ex: Escala 2x2 Finais de Semana" style="border-radius:10px; border:1.5px solid #e2e8f0; padding:10px 14px;">
+                </div>
+                <div class="mb-3">
+                    <label style="font-size:0.82rem; font-weight:600; color:#334155; display:block; margin-bottom:6px;">Descrição (opcional)</label>
+                    <textarea id="templateDescricao" class="form-control" rows="2" placeholder="Descreva o padrão deste template..." style="border-radius:10px; border:1.5px solid #e2e8f0; padding:10px 14px; resize:none;"></textarea>
+                </div>
+                <div class="mb-3">
+                    <label style="font-size:0.82rem; font-weight:600; color:#334155; display:block; margin-bottom:6px;">Salvar a partir do mês atual de qual analista?</label>
+                    <select id="templateAnalistaOrigem" class="form-select" style="border-radius:10px; border:1.5px solid #e2e8f0;"></select>
+                </div>
+                <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
+                    <button onclick="fecharModal('modalEpTemplates')" style="background:#f1f5f9; color:#334155; border:1.5px solid #e2e8f0; border-radius:10px; padding:10px 20px; font-weight:600; cursor:pointer;">Cancelar</button>
+                    <button onclick="salvarNovoTemplate()" style="background:linear-gradient(135deg,#6366f1,#4f46e5); color:white; border:none; border-radius:10px; padding:10px 20px; font-weight:700; cursor:pointer;">
+                        <i class="fa-solid fa-floppy-disk me-1"></i> Salvar Template
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Modal de Gerenciamento de Turnos -->

@@ -220,6 +220,16 @@ urlpatterns = [
 
     path('api/escala/analistas/<int:pk>/schedule/', api_escala.api_analista_schedule, name='api_analista_schedule'),
 
+    # API Escala Personalizada
+    path('api/escala/personalizada/', api_escala.api_escala_personalizada_get, name='api_escala_personalizada_get'),
+    path('api/escala/personalizada/save/', api_escala.api_escala_personalizada_save, name='api_escala_personalizada_save'),
+    path('api/escala/personalizada/replicar/', api_escala.api_escala_personalizada_replicar, name='api_escala_personalizada_replicar'),
+    path('api/escala/personalizada/toggle-teste/', api_escala.api_escala_personalizada_toggle_teste, name='api_escala_personalizada_toggle_teste'),
+    path('api/escala/personalizada/templates/', api_escala.api_escala_personalizada_templates_list, name='api_escala_personalizada_templates_list'),
+    path('api/escala/personalizada/templates/save/', api_escala.api_escala_personalizada_template_save, name='api_escala_personalizada_template_save'),
+    path('api/escala/personalizada/templates/<int:pk>/aplicar/', api_escala.api_escala_personalizada_template_aplicar, name='api_escala_personalizada_template_aplicar'),
+    path('api/escala/personalizada/templates/<int:pk>/delete/', api_escala.api_escala_personalizada_template_delete, name='api_escala_personalizada_template_delete'),
+
 
     path('api/eventos/users/', api_eventos.api_eventos_users_list, name='api_eventos_users_list'),
     path('api/eventos/', api_eventos.api_eventos_list, name='api_eventos_list'),

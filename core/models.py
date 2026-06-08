@@ -302,6 +302,7 @@ class ModeloEscala(models.Model):
     TIPO_CHOICES = [
         ('fixa', 'Fixa'),
         ('rotativa', 'Rotativa'),
+        ('personalizado', 'Personalizado'),
     ]
 
     nome = models.CharField(max_length=100)
@@ -310,6 +311,13 @@ class ModeloEscala(models.Model):
     tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, default='fixa')
     permite_fim_de_semana = models.BooleanField(default=True, verbose_name="Permitir Finais de Semana")
     observacao = models.TextField(blank=True, null=True)
+    # Campo exclusivo para tipo='personalizado': armazena o padrão semanal de ciclo
+    # Ex: {"ciclo_semanas": 3, "semanas": [{"dias_folga": [5,6]}, {"dias_folga": [0,1]}, {"dias_folga": [5,6,0]}]}
+    ciclo_personalizado = models.JSONField(
+        null=True, blank=True,
+        verbose_name='Ciclo Personalizado',
+        help_text='Padrão semanal de folgas para escala personalizada (JSON)'
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -319,6 +327,8 @@ class ModeloEscala(models.Model):
         verbose_name_plural = 'Modelos de Escala'
 
     def __str__(self):
+        if self.tipo == 'personalizado':
+            return f"{self.nome} (Personalizado)"
         return f"{self.nome} ({self.dias_trabalhados}x{self.dias_folga} - {self.get_tipo_display()})"
 
 
@@ -569,6 +579,90 @@ class SolicitacaoFolga(models.Model):
 
     def __str__(self):
         return f"{self.analista.nome}: {self.get_tipo_display()} em {self.data} [{self.status}]"
+
+
+# ========================================
+# MODELOS PARA ESCALA PERSONALIZADA
+# ========================================
+
+class EscalaPersonalizada(models.Model):
+    """Grade mensal de folgas/trabalho definida manualmente, dia a dia, por analista.
+    Usada quando o analista tem modelo_escala de tipo='personalizado'.
+    Sobrescreve completamente o cálculo automático de ciclo para o mês referenciado.
+    """
+    analista = models.ForeignKey(
+        'AnalistaEscala', on_delete=models.CASCADE,
+        related_name='escalas_personalizadas'
+    )
+    rascunho = models.ForeignKey(
+        'EscalaRascunho', on_delete=models.CASCADE,
+        null=True, blank=True,
+        related_name='escalas_personalizadas'
+    )
+    ano = models.IntegerField(verbose_name='Ano')
+    mes = models.IntegerField(verbose_name='Mês')  # 1-12
+    # Dicionário com status por data: {"2026-06-01": "folga", "2026-06-02": "trabalho", ...}
+    # Valores possíveis: "trabalho", "folga", "ferias", "atestado", "feriado"
+    dados = models.JSONField(
+        default=dict,
+        verbose_name='Dados do Mês',
+        help_text='Dicionário {"YYYY-MM-DD": "status"} definindo cada dia do mês'
+    )
+    # Flag de modo teste — meses em teste não afetam a escala publicada
+    modo_teste = models.BooleanField(
+        default=False,
+        verbose_name='Modo Teste',
+        help_text='Se marcado, esse mês não afeta a escala publicada e serve apenas para simulação'
+    )
+    criado_por = models.ForeignKey(
+        'User', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='escalas_personalizadas_criadas'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['ano', 'mes', 'analista']
+        unique_together = ['analista', 'rascunho', 'ano', 'mes']
+        verbose_name = 'Escala Personalizada'
+        verbose_name_plural = 'Escalas Personalizadas'
+        indexes = [
+            models.Index(fields=['analista', 'ano', 'mes']),
+            models.Index(fields=['rascunho', 'ano', 'mes']),
+        ]
+
+    def __str__(self):
+        return f"{self.analista.nome} — {self.mes:02d}/{self.ano}"
+
+
+class EscalaPersonalizadaTemplate(models.Model):
+    """Templates reutilizáveis de escalas personalizadas para replicação entre meses/analistas."""
+    nome = models.CharField(max_length=150, verbose_name='Nome do Template')
+    descricao = models.TextField(blank=True, verbose_name='Descrição')
+    # Dados de um mês de referência — as datas são armazenadas como offsets relativos ao dia 1
+    # Ex: {"1": "trabalho", "2": "trabalho", "7": "folga", "8": "folga", ...}
+    # Chave = número do dia do mês ("1" a "31"), valor = status
+    dados_template = models.JSONField(
+        verbose_name='Dados do Template',
+        help_text='Dicionário {"DD": "status"} com padrão de um mês de referência'
+    )
+    # Metadados extras para facilitar a visualização do template
+    total_folgas = models.IntegerField(default=0, verbose_name='Total de Folgas')
+    total_trabalho = models.IntegerField(default=0, verbose_name='Total de Trabalho')
+    criado_por = models.ForeignKey(
+        'User', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='templates_escala_criados'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['nome']
+        verbose_name = 'Template de Escala Personalizada'
+        verbose_name_plural = 'Templates de Escala Personalizada'
+
+    def __str__(self):
+        return f"{self.nome} ({self.total_folgas}F / {self.total_trabalho}T)"
 
 
 class Evento(models.Model):
