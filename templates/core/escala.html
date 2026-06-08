@@ -8025,6 +8025,12 @@
         });
     }
 
+    // FECHAR MODAL PERSONALIZADO
+    window.fecharModal = function(id) {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('show');
+    }
+
     // MODAL REPLICAR
     window.abrirModalReplicar = function() {
         const mesesNomes = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
@@ -8045,7 +8051,8 @@
         const chkSobrescrever = document.getElementById('epReplicarSobrescrever');
         if (chkSobrescrever) chkSobrescrever.checked = true;
 
-        new bootstrap.Modal(document.getElementById('modalEpReplicar')).show();
+        const modal = document.getElementById('modalEpReplicar');
+        if (modal) modal.classList.add('show');
     }
 
     function popReplicarMesesDestino() {
@@ -8118,7 +8125,8 @@
     // MODAL TEMPLATES
     window.abrirModalTemplates = function() {
         switchTabTemplate('aplicar');
-        new bootstrap.Modal(document.getElementById('modalEpTemplates')).show();
+        const modal = document.getElementById('modalEpTemplates');
+        if (modal) modal.classList.add('show');
     }
 
     window.switchTabTemplate = function(tab) {
