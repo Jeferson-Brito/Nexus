@@ -3497,6 +3497,11 @@
 
         // Inicializar badge de alerta de analistas sem turno
         atualizarBadgeAnalistas();
+
+        const selectModeloAnalista = document.getElementById('analystModeloEscala');
+        if (selectModeloAnalista) {
+            selectModeloAnalista.addEventListener('change', updateAnalystStartDateLabel);
+        }
     });
 
     // ========================================
@@ -5469,6 +5474,7 @@
 
         closeAnalystModal();
         document.getElementById('analystFormModal').classList.add('show');
+        updateAnalystStartDateLabel();
     }
 
     function editAnalyst(id) {
@@ -5514,11 +5520,46 @@
 
         closeAnalystModal();
         document.getElementById('analystFormModal').classList.add('show');
+        updateAnalystStartDateLabel();
     }
 
     function closeAnalystFormModal() {
         document.getElementById('analystFormModal').classList.remove('show');
         openAnalystModal();
+    }
+
+    function updateAnalystStartDateLabel() {
+        const selectModelo = document.getElementById('analystModeloEscala');
+        const label = document.querySelector('label[for="analystStartDate"]');
+        if (!selectModelo || !label) return;
+        
+        let modeloId = selectModelo.value;
+        if (!modeloId) {
+            // Usar o modelo padrão do rascunho ou global
+            if (rascunhoId) {
+                modeloId = rascunhoModeloId;
+            } else {
+                modeloId = escalaTipo === 'gestao' ? modeloPrincipalIdGestao : modeloPrincipalId;
+            }
+        }
+        
+        const modelo = modelos.find(m => m.id == modeloId);
+        
+        const oldHelper = document.getElementById('analystStartDateHelper');
+        if (oldHelper) oldHelper.remove();
+        
+        if (modelo && modelo.tipo === 'personalizado') {
+            label.textContent = 'Data de Âncora (Domingo de Início do Ciclo)';
+            const helper = document.createElement('small');
+            helper.id = 'analystStartDateHelper';
+            helper.className = 'text-muted d-block mt-1';
+            helper.style.fontSize = '0.75rem';
+            helper.style.lineHeight = '1.2';
+            helper.innerHTML = '* Selecione a data de um <strong>domingo</strong> para alinhar o ciclo personalizado com os dias da semana corretos (dia 1 = domingo).';
+            label.parentNode.appendChild(helper);
+        } else {
+            label.textContent = 'Data da Primeira Folga';
+        }
     }
 
     async function saveAnalyst() {

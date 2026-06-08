@@ -798,19 +798,43 @@ def api_rascunho_publish(request, pk):
 
 from datetime import date as date_type, timedelta
 
-def _get_modelo_ciclo(analista):
+def _resolve_modelo_escala(analista, rascunho=None):
+    """Retorna o modelo de escala aplicável ao analista, resolvendo overrides e fallbacks."""
+    if analista.modelo_escala:
+        return analista.modelo_escala
+    
+    # Usar o rascunho atual se fornecido ou o rascunho do analista
+    rasc = rascunho or analista.rascunho
+    if rasc and rasc.modelo_escala:
+        return rasc.modelo_escala
+        
+    from ..models import ConfiguracaoEscala
+    config = ConfiguracaoEscala.objects.first()
+    if config:
+        if analista.escala_tipo == 'gestao':
+            modelo = config.modelo_escala_principal_gestao
+        else:
+            modelo = config.modelo_escala_principal
+        if modelo:
+            return modelo
+    
+    from ..models import ModeloEscala
+    return ModeloEscala.objects.first()
+
+
+def _get_modelo_ciclo(analista, rascunho=None):
     """Retorna (dias_trabalhados, dias_folga) do modelo do analista."""
-    modelo = analista.modelo_escala
+    modelo = _resolve_modelo_escala(analista, rascunho)
     if not modelo:
         return (6, 2)  # Padrão 6x2
     if modelo.tipo == 'personalizado':
-        return (1, 0)  # Sinalizador: não usar ciclo, consultar EscalaPersonalizada
+        return (1, 0)  # Sinalizador
     return (modelo.dias_trabalhados, modelo.dias_folga)
 
 
-def _analista_usa_escala_personalizada(analista):
+def _analista_usa_escala_personalizada(analista, rascunho=None):
     """Retorna True se o analista usa modelo do tipo personalizado."""
-    modelo = analista.modelo_escala
+    modelo = _resolve_modelo_escala(analista, rascunho)
     return modelo is not None and modelo.tipo == 'personalizado'
 
 
@@ -859,7 +883,7 @@ def calcular_analistas_ativos(turno, data_alvo, rascunho=None):
                 continue
 
         # 2a. Escala personalizada — consultar grade mensal
-        if _analista_usa_escala_personalizada(analista):
+        if _analista_usa_escala_personalizada(analista, rascunho):
             data_alvo_norm = data_alvo if isinstance(data_alvo, date_type) else data_alvo.date()
             status = _get_status_escala_personalizada(analista, data_alvo_norm, rascunho)
             if status:
@@ -869,7 +893,7 @@ def calcular_analistas_ativos(turno, data_alvo, rascunho=None):
                 continue
             
             # Se não tem registro na grade mensal, verifica ciclo_personalizado do modelo
-            modelo = analista.modelo_escala
+            modelo = _resolve_modelo_escala(analista, rascunho)
             if modelo and modelo.ciclo_personalizado:
                 ciclo = modelo.ciclo_personalizado
                 dias_folga = ciclo.get('dias_folga', [])
@@ -884,7 +908,8 @@ def calcular_analistas_ativos(turno, data_alvo, rascunho=None):
             continue
 
         # 2b. Calcular pelo ciclo do modelo
-        trab, folga = _get_modelo_ciclo(analista)
+        modelo = _resolve_modelo_escala(analista, rascunho)
+        trab, folga = _get_modelo_ciclo(analista, rascunho)
         ciclo_total = trab + folga
 
         primeira_folga = analista.data_primeira_folga
@@ -893,6 +918,17 @@ def calcular_analistas_ativos(turno, data_alvo, rascunho=None):
             continue
 
         data_alvo_norm = data_alvo if isinstance(data_alvo, date_type) else data_alvo.date()
+        
+        # Regra diferenciada para tipo FIXA (dias fixos da semana, ex: 5x2 que folga sempre FDS)
+        if modelo and modelo.tipo == 'fixa' and ciclo_total == 7:
+            dia_semana_folga_inicio = (primeira_folga.weekday() + 1) % 7
+            dia_semana_atual = (data_alvo_norm.weekday() + 1) % 7
+            diff_dia_semana = (dia_semana_atual - dia_semana_folga_inicio + 7) % 7
+            if diff_dia_semana < folga:
+                continue
+            ativos += 1
+            continue
+
         diff_days = (data_alvo_norm - primeira_folga).days
         pos = ((diff_days % ciclo_total) + ciclo_total) % ciclo_total
 
@@ -922,13 +958,13 @@ def _is_analista_trabalhando(analista, data_ref, rascunho=None, modifications=No
         return folga_manual.tipo == 'trabalho'
 
     # 3a. Escala personalizada — consultar grade mensal (se modelo for personalizado)
-    if _analista_usa_escala_personalizada(analista):
+    if _analista_usa_escala_personalizada(analista, rascunho):
         status = _get_status_escala_personalizada(analista, data_ref, rascunho)
         if status:
             return status == 'trabalho'
         
         # Fallback para o ciclo_personalizado do modelo, se existir
-        modelo = analista.modelo_escala
+        modelo = _resolve_modelo_escala(analista, rascunho)
         if modelo and modelo.ciclo_personalizado:
             ciclo = modelo.ciclo_personalizado
             dias_folga = ciclo.get('dias_folga', [])
@@ -943,12 +979,20 @@ def _is_analista_trabalhando(analista, data_ref, rascunho=None, modifications=No
         return True
 
     # 3b. Calcular pelo ciclo do modelo
-    trab, folga = _get_modelo_ciclo(analista)
+    modelo = _resolve_modelo_escala(analista, rascunho)
+    trab, folga = _get_modelo_ciclo(analista, rascunho)
     ciclo_total = trab + folga
 
     primeira_folga = analista.data_primeira_folga
     if not primeira_folga:
         return True # Se não tem data de folga, assume-se que trabalha
+
+    # Regra diferenciada para tipo FIXA (dias fixos da semana, ex: 5x2 que folga sempre FDS)
+    if modelo and modelo.tipo == 'fixa' and ciclo_total == 7:
+        dia_semana_folga_inicio = (primeira_folga.weekday() + 1) % 7
+        dia_semana_atual = (data_ref.weekday() + 1) % 7
+        diff_dia_semana = (dia_semana_atual - dia_semana_folga_inicio + 7) % 7
+        return diff_dia_semana >= folga
 
     diff_days = (data_ref - primeira_folga).days
     pos = ((diff_days % ciclo_total) + ciclo_total) % ciclo_total
@@ -1725,21 +1769,24 @@ def api_escala_personalizada_get(request):
 
         rascunho = EscalaRascunho.objects.get(id=rascunho_id) if rascunho_id else None
 
-        # Buscar analistas com modelo personalizado
+        # Buscar analistas com modelo personalizado (ou herdado)
         if rascunho:
-            analistas_qs = AnalistaEscala.objects.filter(
-                ativo=True, rascunho=rascunho,
-                modelo_escala__tipo='personalizado'
+            analistas_all = AnalistaEscala.objects.filter(
+                ativo=True, rascunho=rascunho
             ).select_related('modelo_escala', 'turno')
         else:
-            analistas_qs = AnalistaEscala.objects.filter(
+            analistas_all = AnalistaEscala.objects.filter(
                 ativo=True, rascunho__isnull=True,
-                escala_tipo=escala_tipo,
-                modelo_escala__tipo='personalizado'
+                escala_tipo=escala_tipo
             ).select_related('modelo_escala', 'turno')
 
         if analista_id:
-            analistas_qs = analistas_qs.filter(id=analista_id)
+            analistas_all = analistas_all.filter(id=analista_id)
+
+        analistas_qs = [
+            a for a in analistas_all
+            if _analista_usa_escala_personalizada(a, rascunho)
+        ]
 
         # Calcular dias do mês
         _, num_dias = cal_module.monthrange(ano, mes)
@@ -1760,7 +1807,7 @@ def api_escala_personalizada_get(request):
                     status = dados[data_str]
                 else:
                     status = 'trabalho'
-                    modelo = analista.modelo_escala
+                    modelo = _resolve_modelo_escala(analista, rascunho)
                     if modelo and modelo.ciclo_personalizado:
                         ciclo = modelo.ciclo_personalizado
                         dias_folga = ciclo.get('dias_folga', [])

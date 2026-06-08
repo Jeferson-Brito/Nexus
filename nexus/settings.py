@@ -31,12 +31,15 @@ SECRET_KEY = get_env("SECRET_KEY", "django-insecure-change-me")
 
 DEBUG = get_env("DEBUG", "False").lower() == "true"
 
-ALLOWED_HOSTS = get_env("ALLOWED_HOSTS", "nexus-deploy.onrender.com,localhost,127.0.0.1,.onrender.com").split(",")
+ALLOWED_HOSTS = get_env("ALLOWED_HOSTS", "nexus-deploy.onrender.com,localhost,127.0.0.1,.onrender.com,brisoft.com.br,www.brisoft.com.br,.brisoft.com.br").split(",")
 
 CSRF_TRUSTED_ORIGINS = [
     "https://nexus-deploy.onrender.com",
     "https://nexus-l8jg.onrender.com",
     "https://*.onrender.com",
+    "https://brisoft.com.br",
+    "https://www.brisoft.com.br",
+    "https://*.brisoft.com.br",
 ]
 
 
