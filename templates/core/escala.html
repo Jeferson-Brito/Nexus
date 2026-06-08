@@ -3646,6 +3646,30 @@
         }
     }
 
+    window.escalaPersonalizadaCache = {};
+
+    async function recarregarEscalaPersonalizadaCache(ano, mes) {
+        try {
+            const url = `/api/escala/personalizada/?ano=${ano}&mes=${mes}` + (rascunhoId ? `&rascunho_id=${rascunhoId}` : '');
+            const res = await fetch(url);
+            if (res.ok) {
+                const data = await res.json();
+                const analistasGrades = data.analistas || [];
+                window.escalaPersonalizadaCache = {};
+                analistasGrades.forEach(a => {
+                    if (a.dias) {
+                        Object.entries(a.dias).forEach(([dateStr, status]) => {
+                            const key = `${a.analista_id}-${dateStr}`;
+                            window.escalaPersonalizadaCache[key] = status;
+                        });
+                    }
+                });
+            }
+        } catch (e) {
+            console.error("Erro ao buscar cache de escala personalizada:", e);
+        }
+    }
+
     async function recarregarFolgasManuais() {
         try {
             const url = '/api/escala/folgas/' + (rascunhoId ? `?rascunho_id=${rascunhoId}` : '');
@@ -3707,6 +3731,7 @@
         await loadFeriados(ano);
         await carregarTrocasAprovadasCache();
         await recarregarFolgasManuais();
+        await recarregarEscalaPersonalizadaCache(ano, mesNum);
 
         setTimeout(() => {
             let html = '';
@@ -4305,6 +4330,60 @@
         }
 
         const modelo = modelos.find(m => m.id == modeloId);
+        
+        if (modelo && modelo.tipo === 'personalizado') {
+            // 1. Verificar na EscalaPersonalizada (grade mensal salva no cache do front)
+            const dateStr = `${ano}-${String(mes + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+            const cacheKey = `${analista.id}-${dateStr}`;
+            
+            if (window.escalaPersonalizadaCache && window.escalaPersonalizadaCache[cacheKey] !== undefined) {
+                const status = window.escalaPersonalizadaCache[cacheKey];
+                if (status === 'trabalho') {
+                    return { class: 'trabalho', text: turno.horario };
+                } else {
+                    let text = '';
+                    switch (status) {
+                        case 'folga': text = 'FOLGA'; break;
+                        case 'ferias': text = 'FÉRIAS'; break;
+                        case 'atestado': text = 'ATESTADO'; break;
+                        case 'feriado': text = 'FERIADO'; break;
+                    }
+                    return { class: status, text: text };
+                }
+            }
+            
+            // 2. Fallback para o ciclo_personalizado do ModeloEscala
+            if (modelo.ciclo_personalizado && modelo.ciclo_personalizado.dias_folga) {
+                const diasFolga = modelo.ciclo_personalizado.dias_folga;
+                const cicloDias = modelo.ciclo_personalizado.ciclo_dias || 31;
+                
+                const dataAtual = new Date(ano, mes, dia);
+                dataAtual.setHours(0, 0, 0, 0);
+                
+                let dataPrimeiraFolga;
+                if (analista.data_primeira_folga) {
+                    const [anoFolga, mesFolga, diaFolga] = analista.data_primeira_folga.split('-').map(Number);
+                    dataPrimeiraFolga = new Date(anoFolga, mesFolga - 1, diaFolga);
+                } else {
+                    // Padrão: próximo domingo
+                    const hoje = new Date();
+                    hoje.setHours(0, 0, 0, 0);
+                    dataPrimeiraFolga = new Date(hoje);
+                    dataPrimeiraFolga.setDate(hoje.getDate() + (7 - hoje.getDay()));
+                }
+                dataPrimeiraFolga.setHours(0, 0, 0, 0);
+                
+                const diffTime = dataAtual.getTime() - dataPrimeiraFolga.getTime();
+                const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+                const posicaoNoCiclo = ((diffDays % cicloDias) + cicloDias) % cicloDias + 1;
+                
+                if (diasFolga.includes(posicaoNoCiclo)) {
+                    return { class: 'folga', text: 'FOLGA' };
+                }
+            }
+            
+            return { class: 'trabalho', text: turno.horario };
+        }
         
         // Se não houver modelo (ex: novo rascunho em branco sem modelo definido ainda),
         // assume o padrão 6x2 para não quebrar a visualização
