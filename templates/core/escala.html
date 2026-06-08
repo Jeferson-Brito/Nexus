@@ -19,6 +19,124 @@
         width: 100%;
     }
 
+    /* Estilos para Escala Personalizada */
+    .ep-legenda-item {
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: #475569;
+        padding: 6px 12px;
+        border-radius: 8px;
+        border: 1.5px solid #e2e8f0;
+        display: inline-flex;
+        align-items: center;
+        transition: all 0.2s ease;
+        user-select: none;
+    }
+    .ep-legenda-item:hover {
+        background: #f1f5f9;
+        border-color: #cbd5e1;
+    }
+    .ep-legenda-item.active {
+        background: #f3e8ff;
+        border-color: #7c3aed;
+        color: #7c3aed;
+        box-shadow: 0 0 0 3px rgba(124,58,237,0.1);
+    }
+    #tabelaEscalaPersonalizada {
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+    #tabelaEscalaPersonalizada th, #tabelaEscalaPersonalizada td {
+        border: 1px solid #e2e8f0;
+        padding: 8px;
+        font-size: 0.8rem;
+        text-align: center;
+        min-width: 38px;
+        height: 38px;
+        box-sizing: border-box;
+    }
+    #tabelaEscalaPersonalizada th {
+        background: #f8fafc;
+        color: #475569;
+        font-weight: 700;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+    #tabelaEscalaPersonalizada th.sticky-col, #tabelaEscalaPersonalizada td.sticky-col {
+        position: sticky;
+        left: 0;
+        background: white;
+        z-index: 12;
+        min-width: 160px;
+        max-width: 160px;
+        text-align: left;
+        font-weight: 700;
+        border-right: 2px solid #cbd5e1 !important;
+        box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+    }
+    #tabelaEscalaPersonalizada th.sticky-col-2, #tabelaEscalaPersonalizada td.sticky-col-2 {
+        position: sticky;
+        left: 160px;
+        background: white;
+        z-index: 12;
+        min-width: 100px;
+        max-width: 100px;
+        text-align: center;
+        border-right: 2px solid #cbd5e1 !important;
+        box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+    }
+    #tabelaEscalaPersonalizada th.sticky-col {
+        z-index: 22;
+        background: #f8fafc;
+    }
+    #tabelaEscalaPersonalizada th.sticky-col-2 {
+        z-index: 22;
+        background: #f8fafc;
+    }
+    #tabelaEscalaPersonalizada td.ep-cell {
+        cursor: pointer;
+        user-select: none;
+        transition: all 0.15s ease;
+        font-weight: 800;
+        font-size: 0.75rem;
+    }
+    #tabelaEscalaPersonalizada td.ep-cell:hover {
+        filter: brightness(0.9);
+        transform: scale(1.02);
+    }
+    #tabelaEscalaPersonalizada td.ep-cell-trabalho {
+        background-color: #eff6ff !important;
+        color: #1d4ed8 !important;
+        border: 1px solid #bfdbfe !important;
+    }
+    #tabelaEscalaPersonalizada td.ep-cell-folga {
+        background-color: #ecfdf5 !important;
+        color: #047857 !important;
+        border: 1px solid #a7f3d0 !important;
+    }
+    #tabelaEscalaPersonalizada td.ep-cell-ferias {
+        background-color: #fffbeb !important;
+        color: #b45309 !important;
+        border: 1px solid #fde68a !important;
+    }
+    #tabelaEscalaPersonalizada td.ep-cell-atestado {
+        background-color: #fef2f2 !important;
+        color: #b91c1c !important;
+        border: 1px solid #fecaca !important;
+    }
+    #tabelaEscalaPersonalizada td.ep-cell-feriado {
+        background-color: #faf5ff !important;
+        color: #6b21a8 !important;
+        border: 1px solid #e9d5ff !important;
+    }
+    #tabelaEscalaPersonalizada th.th-fds {
+        background-color: #f1f5f9 !important;
+    }
+    #tabelaEscalaPersonalizada td.td-fds {
+        background-color: #f8fafc !important;
+    }
+
     /* Header da Página - Redesign Moderno */
     .page-header-escala {
         background: #fff;
@@ -1848,6 +1966,10 @@
                 <button class="btn-escala btn-simulador-action" onclick="openExportModal()">
                     <i class="fa-solid fa-download" style="color: #475569;"></i> Exportar
                 </button>
+                <!-- Botão Escala Personalizada -->
+                <button class="btn-escala btn-simulador-action" onclick="abrirEscalaPersonalizada()" id="btnEscalaPersonalizada" style="background: linear-gradient(135deg, #7c3aed, #6d28d9); color: white; border: none; box-shadow: 0 4px 12px rgba(124,58,237,0.25);">
+                    <i class="fa-solid fa-calendar-pen"></i> Escala Personalizada
+                </button>
             </div>
         </div>
         
@@ -1922,11 +2044,6 @@
                     </button>
                     <span id="badgeTrocasPendentes" class="badge-analistas-alerta" style="display:none;">0</span>
                 </div>
-
-                <!-- Botão Escala Personalizada -->
-                <button class="btn-escala" onclick="abrirEscalaPersonalizada()" id="btnEscalaPersonalizada" style="background: linear-gradient(135deg, #7c3aed, #6d28d9); color: white; border: none; box-shadow: 0 4px 12px rgba(124,58,237,0.25);">
-                    <i class="fa-solid fa-calendar-pen"></i> Escala Personalizada
-                </button>
             </div>
         </div>
     </div>
@@ -7518,6 +7635,717 @@
             }
         } catch(e) {
             return [{ left: 0, width: 100 }];
+        }
+    }
+
+    // ================================================================
+    // LOGICA DA ESCALA PERSONALIZADA
+    // ================================================================
+    let epAno = null;
+    let epMes = null;
+    let epData = [];
+    let epModoEdicao = 'folga';
+    let epModoTesteAtivo = false;
+    let epChangedAnalystIds = new Set();
+    let isEpDragging = false;
+    let epTemplates = [];
+    let selectedTemplateId = null;
+
+    function getAbbreviation(status) {
+        switch (status) {
+            case 'trabalho': return 'T';
+            case 'folga': return 'F';
+            case 'ferias': return 'FER';
+            case 'atestado': return 'ATE';
+            case 'feriado': return 'FRD';
+            default: return '';
+        }
+    }
+
+    function getDiaSemanaNome(ano, mes, dia) {
+        const data = new Date(ano, mes - 1, dia);
+        const dias = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB'];
+        return dias[data.getDay()];
+    }
+
+    window.setModoEdicaoPersonalizada = function(status) {
+        epModoEdicao = status;
+        document.querySelectorAll('.ep-legenda-item').forEach(el => {
+            if (el.getAttribute('data-status') === status) {
+                el.classList.add('active');
+            } else {
+                el.classList.remove('active');
+            }
+        });
+        const labels = { trabalho: 'Trabalho', folga: 'Folga', ferias: 'Férias', atestado: 'Atestado', feriado: 'Feriado' };
+        const lbl = document.getElementById('modoEdicaoLabel');
+        if (lbl) lbl.textContent = labels[status] || status;
+    }
+
+    window.abrirEscalaPersonalizada = function() {
+        const mesInputEl = document.getElementById('mesInput');
+        const mesInputVal = mesInputEl ? mesInputEl.value : '';
+        if (mesInputVal) {
+            const [y, m] = mesInputVal.split('-');
+            epAno = parseInt(y);
+            epMes = parseInt(m);
+        } else {
+            const d = new Date();
+            epAno = d.getFullYear();
+            epMes = d.getMonth() + 1;
+        }
+
+        document.getElementById('tabelas').style.display = 'none';
+        const emptyShifts = document.getElementById('emptyShifts');
+        if (emptyShifts) emptyShifts.style.display = 'none';
+        const emptyAnalysts = document.getElementById('emptyAnalysts');
+        if (emptyAnalysts) emptyAnalysts.style.display = 'none';
+        
+        document.getElementById('secaoEscalaPersonalizada').style.display = 'block';
+
+        window.setModoEdicaoPersonalizada('folga');
+        carregarEscalaPersonalizada();
+    }
+
+    window.fecharEscalaPersonalizada = function() {
+        if (epChangedAnalystIds.size > 0) {
+            Swal.fire({
+                title: 'Alterações não salvas!',
+                text: "Você possui alterações que não foram salvas. Deseja realmente sair?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Sair sem salvar',
+                cancelButtonText: 'Voltar e salvar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('secaoEscalaPersonalizada').style.display = 'none';
+                    document.getElementById('tabelas').style.display = 'block';
+                    if (typeof generateTables === 'function') {
+                        generateTables(false);
+                    }
+                }
+            });
+        } else {
+            document.getElementById('secaoEscalaPersonalizada').style.display = 'none';
+            document.getElementById('tabelas').style.display = 'block';
+            if (typeof generateTables === 'function') {
+                generateTables(false);
+            }
+        }
+    }
+
+    window.navMesPersonalizado = function(dir) {
+        let d = new Date(epAno, epMes - 1 + dir, 1);
+        epAno = d.getFullYear();
+        epMes = d.getMonth() + 1;
+        carregarEscalaPersonalizada();
+    }
+
+    async function carregarEscalaPersonalizada() {
+        document.getElementById('epLoading').style.display = 'block';
+        document.getElementById('epEmpty').style.display = 'none';
+        document.getElementById('epGrade').style.display = 'none';
+        document.getElementById('epResumo').style.display = 'none';
+
+        try {
+            const res = await fetch(`/api/escala/personalizada/?ano=${epAno}&mes=${epMes}&rascunho_id=${rascunhoId || ''}&escala_tipo=${escalaTipo}`);
+            const data = await res.json();
+            
+            document.getElementById('epLoading').style.display = 'none';
+            
+            const mesesNomes = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+            document.getElementById('mesTituloPersonalizado').textContent = `${mesesNomes[epMes - 1]} de ${epAno}`;
+
+            epData = data.analistas || [];
+            epChangedAnalystIds = new Set();
+
+            if (epData.length === 0) {
+                document.getElementById('epEmpty').style.display = 'block';
+                return;
+            }
+
+            epModoTesteAtivo = epData.some(a => a.modo_teste);
+            const testBadge = document.getElementById('badgeModoTeste');
+            const testBtn = document.getElementById('btnModoTeste');
+            if (epModoTesteAtivo) {
+                if (testBadge) testBadge.style.display = 'inline-block';
+                if (testBtn) {
+                    testBtn.style.background = '#fef3c7';
+                    testBtn.style.color = '#d97706';
+                    testBtn.style.borderColor = '#f59e0b';
+                }
+            } else {
+                if (testBadge) testBadge.style.display = 'none';
+                if (testBtn) {
+                    testBtn.style.background = '#fffbeb';
+                    testBtn.style.color = '#92400e';
+                    testBtn.style.borderColor = '#fde68a';
+                }
+            }
+
+            renderEpGrade(data.num_dias);
+            renderEpResumo();
+            document.getElementById('epGrade').style.display = 'block';
+            document.getElementById('epResumo').style.display = 'block';
+            updateDiasPreenchidosGlobal();
+
+        } catch(e) {
+            console.error(e);
+            document.getElementById('epLoading').style.display = 'none';
+            showToast('Erro ao carregar escala personalizada.', 'error');
+        }
+    }
+
+    function renderEpGrade(numDias) {
+        const thead = document.getElementById('epThead');
+        const tbody = document.getElementById('epTbody');
+
+        let headHtml = `
+            <tr>
+                <th class="sticky-col">Analista</th>
+                <th class="sticky-col-2">Turno</th>
+        `;
+        for (let d = 1; d <= numDias; d++) {
+            const diaSemana = getDiaSemanaNome(epAno, epMes, d);
+            const isFds = (diaSemana === 'DOM' || diaSemana === 'SÁB');
+            headHtml += `<th class="${isFds ? 'th-fds' : ''}">${d}<br><small style="font-size:0.68rem;opacity:0.8;">${diaSemana}</small></th>`;
+        }
+        headHtml += `
+                <th style="background:#eff6ff; color:#1d4ed8;">Trab</th>
+                <th style="background:#ecfdf5; color:#047857;">Folg</th>
+                <th style="background:#fffbeb; color:#b45309;">Fér</th>
+                <th style="background:#fef2f2; color:#b91c1c;">Ate</th>
+                <th style="background:#faf5ff; color:#6b21a8;">Fer</th>
+            </tr>
+        `;
+        thead.innerHTML = headHtml;
+
+        let bodyHtml = '';
+        epData.forEach(a => {
+            let rowHtml = `
+                <tr>
+                    <td class="sticky-col" style="font-weight:700; color:#1e293b; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;">${a.analista_nome}</td>
+                    <td class="sticky-col-2" style="white-space:nowrap;">
+                        <span style="background-color: ${a.turno_cor}; color: white; border-radius: 6px; padding: 3px 8px; font-size: 0.72rem; font-weight:700; display:inline-block; max-width:90px; text-overflow:ellipsis; overflow:hidden; text-align:center;">
+                            ${a.turno || '—'}
+                        </span>
+                    </td>
+            `;
+
+            for (let d = 1; d <= numDias; d++) {
+                const dataStr = `${epAno}-${String(epMes).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                const status = a.dias[dataStr] || 'trabalho';
+                const diaSemana = getDiaSemanaNome(epAno, epMes, d);
+                const isFds = (diaSemana === 'DOM' || diaSemana === 'SÁB');
+
+                rowHtml += `
+                    <td class="ep-cell ep-cell-${status} ${isFds ? 'td-fds' : ''}" 
+                        data-analista-id="${a.analista_id}" 
+                        data-date="${dataStr}" 
+                        onmousedown="epOnMouseDown(event, this)" 
+                        onmouseover="epOnMouseOver(event, this)">${getAbbreviation(status)}</td>
+                `;
+            }
+
+            rowHtml += `
+                <td class="ep-stat" data-stat="trabalho" data-analista-id="${a.analista_id}" style="font-weight:700; color:#1d4ed8; background:#eff6ff;">0</td>
+                <td class="ep-stat" data-stat="folga" data-analista-id="${a.analista_id}" style="font-weight:700; color:#047857; background:#ecfdf5;">0</td>
+                <td class="ep-stat" data-stat="ferias" data-analista-id="${a.analista_id}" style="font-weight:700; color:#b45309; background:#fffbeb;">0</td>
+                <td class="ep-stat" data-stat="atestado" data-analista-id="${a.analista_id}" style="font-weight:700; color:#b91c1c; background:#fef2f2;">0</td>
+                <td class="ep-stat" data-stat="feriado" data-analista-id="${a.analista_id}" style="font-weight:700; color:#6b21a8; background:#faf5ff;">0</td>
+            </tr>
+            `;
+            bodyHtml += rowHtml;
+        });
+        tbody.innerHTML = bodyHtml;
+
+        epData.forEach(a => {
+            updateRowStats(a.analista_id);
+        });
+    }
+
+    window.epOnMouseDown = function(event, cell) {
+        if (event.button !== 0) return;
+        isEpDragging = true;
+        epPaintCell(cell);
+        event.preventDefault();
+    }
+
+    window.epOnMouseOver = function(event, cell) {
+        if (isEpDragging) {
+            epPaintCell(cell);
+        }
+    }
+
+    document.addEventListener('mouseup', function() {
+        isEpDragging = false;
+    });
+
+    function epPaintCell(cell) {
+        const analistaId = cell.getAttribute('data-analista-id');
+        const dateStr = cell.getAttribute('data-date');
+        const analista = epData.find(a => String(a.analista_id) === String(analistaId));
+        if (!analista) return;
+
+        if (analista.dias[dateStr] === epModoEdicao) return;
+
+        analista.dias[dateStr] = epModoEdicao;
+        epChangedAnalystIds.add(analistaId);
+
+        cell.className = cell.className.replace(/\bep-cell-\w+/g, '') + ' ep-cell-' + epModoEdicao;
+        cell.textContent = getAbbreviation(epModoEdicao);
+
+        updateRowStats(analistaId);
+        renderEpResumo();
+    }
+
+    function updateRowStats(analistaId) {
+        const analista = epData.find(a => String(a.analista_id) === String(analistaId));
+        if (!analista) return;
+        let counts = { trabalho: 0, folga: 0, ferias: 0, atestado: 0, feriado: 0 };
+        Object.values(analista.dias).forEach(status => {
+            if (counts[status] !== undefined) counts[status]++;
+        });
+        ['trabalho', 'folga', 'ferias', 'atestado', 'feriado'].forEach(status => {
+            const el = document.querySelector(`.ep-stat[data-stat="${status}"][data-analista-id="${analistaId}"]`);
+            if (el) el.textContent = counts[status];
+        });
+        
+        updateDiasPreenchidosGlobal();
+    }
+
+    function updateDiasPreenchidosGlobal() {
+        let totalAnalysts = epData.length;
+        let totalFolgas = 0;
+        epData.forEach(a => {
+            Object.values(a.dias).forEach(s => {
+                if (s === 'folga') totalFolgas++;
+            });
+        });
+        const media = totalAnalysts > 0 ? (totalFolgas / totalAnalysts).toFixed(1) : 0;
+        const labelEl = document.getElementById('diasPreenchidos');
+        if (labelEl) labelEl.textContent = `${totalAnalysts} analistas | Média de ${media} folgas`;
+    }
+
+    window.salvarEscalaPersonalizada = async function() {
+        if (epChangedAnalystIds.size === 0) {
+            showToast('Nenhuma alteração para salvar.', 'info');
+            return;
+        }
+
+        Swal.fire({
+            title: 'Salvando...',
+            html: 'Por favor, aguarde enquanto salvamos a escala personalizada.',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        try {
+            const promises = Array.from(epChangedAnalystIds).map(id => {
+                const analista = epData.find(a => String(a.analista_id) === String(id));
+                return fetch('/api/escala/personalizada/save/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                    body: JSON.stringify({
+                        analista_id: id,
+                        ano: epAno,
+                        mes: epMes,
+                        dias: analista.dias,
+                        rascunho_id: rascunhoId,
+                        modo_teste: epModoTesteAtivo
+                    })
+                });
+            });
+
+            const responses = await Promise.all(promises);
+            const errors = [];
+            for (let r of responses) {
+                if (!r.ok) {
+                    const data = await r.json();
+                    errors.push(data.error || 'Erro desconhecido');
+                }
+            }
+
+            Swal.close();
+
+            if (errors.length > 0) {
+                showToast('Erro ao salvar algumas escalas: ' + errors.join(', '), 'error');
+            } else {
+                showToast('Todas as alterações foram salvas!', 'success');
+                epChangedAnalystIds = new Set();
+                carregarEscalaPersonalizada();
+            }
+        } catch(e) {
+            Swal.close();
+            console.error(e);
+            showToast('Erro de conexão ao salvar a escala.', 'error');
+        }
+    }
+
+    function renderEpResumo() {
+        const content = document.getElementById('epResumoContent');
+        if (!content) return;
+        content.innerHTML = '';
+        let totalTrab = 0, totalFolg = 0, totalFer = 0, totalAte = 0, totalFeri = 0;
+        
+        epData.forEach(a => {
+            Object.values(a.dias).forEach(s => {
+                if (s === 'trabalho') totalTrab++;
+                else if (s === 'folga') totalFolg++;
+                else if (s === 'ferias') totalFer++;
+                else if (s === 'atestado') totalAte++;
+                else if (s === 'feriado') totalFeri++;
+            });
+        });
+
+        const items = [
+            { label: 'Dias de Trabalho', value: totalTrab, icon: 'fa-briefcase', color: '#3b82f6', bg: '#eff6ff' },
+            { label: 'Folgas Concedidas', value: totalFolg, icon: 'fa-mug-hot', color: '#10b981', bg: '#ecfdf5' },
+            { label: 'Dias de Férias', value: totalFer, icon: 'fa-umbrella-beach', color: '#f59e0b', bg: '#fffbeb' },
+            { label: 'Atestados Médicos', value: totalAte, icon: 'fa-heart-pulse', color: '#ef4444', bg: '#fef2f2' },
+            { label: 'Feriados Marcados', value: totalFeri, icon: 'fa-landmark', color: '#a855f7', bg: '#faf5ff' },
+        ];
+
+        items.forEach(item => {
+            content.innerHTML += `
+                <div style="flex:1; min-width:180px; background:${item.bg}; border:1px solid rgba(0,0,0,0.05); border-radius:12px; padding:12px 16px; display:flex; align-items:center; gap:12px;">
+                    <div style="background:${item.color}; color:white; width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1rem;">
+                        <i class="fa-solid ${item.icon}"></i>
+                    </div>
+                    <div>
+                        <span style="font-size:0.75rem; color:#64748b; font-weight:600; display:block; text-transform:uppercase; letter-spacing:0.5px;">${item.label}</span>
+                        <strong style="font-size:1.15rem; color:#1e293b; font-weight:800;">${item.value}</strong>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    // MODAL REPLICAR
+    window.abrirModalReplicar = function() {
+        const mesesNomes = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+        const labelOrigem = document.getElementById('epReplicarOrigem');
+        if (labelOrigem) labelOrigem.textContent = `${mesesNomes[epMes - 1]} de ${epAno}`;
+
+        const sel = document.getElementById('epReplicarAnalistas');
+        if (sel) {
+            sel.innerHTML = '<option value="todos">Todos os analistas com escala personalizada</option>' +
+                epData.map(a => `<option value="${a.analista_id}">${a.analista_nome}</option>`).join('');
+        }
+
+        popReplicarMesesDestino();
+        
+        const chkModoTeste = document.getElementById('epReplicarModoTeste');
+        if (chkModoTeste) chkModoTeste.checked = epModoTesteAtivo;
+        
+        const chkSobrescrever = document.getElementById('epReplicarSobrescrever');
+        if (chkSobrescrever) chkSobrescrever.checked = true;
+
+        new bootstrap.Modal(document.getElementById('modalEpReplicar')).show();
+    }
+
+    function popReplicarMesesDestino() {
+        const container = document.getElementById('epReplicarMesesDestino');
+        if (!container) return;
+        container.innerHTML = '';
+        const mesesNomes = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+        let d = new Date(epAno, epMes - 1, 1);
+        for (let i = 1; i <= 6; i++) {
+            d.setMonth(d.getMonth() + 1);
+            const y = d.getFullYear();
+            const m = d.getMonth() + 1;
+            const label = `${mesesNomes[m-1]}/${y}`;
+            container.innerHTML += `
+                <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:0.85rem; padding:6px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; user-select:none;">
+                    <input type="checkbox" class="ep-replica-mes-chk" data-ano="${y}" data-mes="${m}" style="width:15px; height:15px; cursor:pointer;">
+                    <span>${label}</span>
+                </label>
+            `;
+        }
+    }
+
+    window.confirmarReplicar = async function() {
+        const analistasVal = document.getElementById('epReplicarAnalistas').value;
+        const analistasIds = analistasVal === 'todos' ? 'todos' : [analistasVal];
+
+        const chks = document.querySelectorAll('.ep-replica-mes-chk:checked');
+        if (chks.length === 0) {
+            showToast('Selecione pelo menos um mês de destino.', 'warning');
+            return;
+        }
+
+        const mesesDestino = Array.from(chks).map(c => ({
+            ano: parseInt(c.getAttribute('data-ano')),
+            mes: parseInt(c.getAttribute('data-mes'))
+        }));
+
+        const modoTeste = document.getElementById('epReplicarModoTeste').checked;
+        const sobrescrever = document.getElementById('epReplicarSobrescrever').checked;
+
+        try {
+            const res = await fetch('/api/escala/personalizada/replicar/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify({
+                    analistas_ids: analistasIds,
+                    ano_origem: epAno,
+                    mes_origem: epMes,
+                    meses_destino: mesesDestino,
+                    rascunho_id: rascunhoId,
+                    modo_teste: modoTeste,
+                    sobrescrever: sobrescrever,
+                    escala_tipo: escalaTipo
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                showToast(`Replicado com sucesso para ${data.replicados} meses/analistas.`, 'success');
+                fecharModal('modalEpReplicar');
+                carregarEscalaPersonalizada();
+            } else {
+                showToast(data.error || 'Erro ao replicar.', 'error');
+            }
+        } catch(e) {
+            console.error(e);
+            showToast('Erro de conexão ao replicar.', 'error');
+        }
+    }
+
+    // MODAL TEMPLATES
+    window.abrirModalTemplates = function() {
+        switchTabTemplate('aplicar');
+        new bootstrap.Modal(document.getElementById('modalEpTemplates')).show();
+    }
+
+    window.switchTabTemplate = function(tab) {
+        const btnAplicar = document.getElementById('tabTemplateAplicar');
+        const btnSalvar = document.getElementById('tabTemplateSalvar');
+        const contentAplicar = document.getElementById('tabContentTemplateAplicar');
+        const contentSalvar = document.getElementById('tabContentTemplateSalvar');
+
+        if (!btnAplicar || !btnSalvar || !contentAplicar || !contentSalvar) return;
+
+        if (tab === 'aplicar') {
+            btnAplicar.style.background = 'linear-gradient(135deg,#6366f1,#4f46e5)';
+            btnAplicar.style.color = 'white';
+            btnSalvar.style.background = 'transparent';
+            btnSalvar.style.color = '#64748b';
+            contentAplicar.style.display = 'block';
+            contentSalvar.style.display = 'none';
+            carregarTemplatesList();
+        } else {
+            btnSalvar.style.background = 'linear-gradient(135deg,#6366f1,#4f46e5)';
+            btnSalvar.style.color = 'white';
+            btnAplicar.style.background = 'transparent';
+            btnAplicar.style.color = '#64748b';
+            contentSalvar.style.display = 'block';
+            contentAplicar.style.display = 'none';
+
+            const sel = document.getElementById('templateAnalistaOrigem');
+            if (sel) {
+                sel.innerHTML = epData.map(a => `<option value="${a.analista_id}">${a.analista_nome}</option>`).join('');
+            }
+            const iNome = document.getElementById('templateNome');
+            if (iNome) iNome.value = '';
+            const iDesc = document.getElementById('templateDescricao');
+            if (iDesc) iDesc.value = '';
+        }
+    }
+
+    async function carregarTemplatesList() {
+        const list = document.getElementById('listaTemplates');
+        const empty = document.getElementById('emptyTemplates');
+        if (!list || !empty) return;
+        list.innerHTML = '';
+        empty.style.display = 'none';
+
+        try {
+            const res = await fetch('/api/escala/personalizada/templates/');
+            const data = await res.json();
+            epTemplates = data;
+
+            if (data.length === 0) {
+                empty.style.display = 'block';
+                return;
+            }
+
+            data.forEach(t => {
+                list.innerHTML += `
+                    <div style="background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:12px; padding:12px 16px; display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;">
+                        <div>
+                            <strong style="color:#1e293b; font-size:0.92rem; display:block;">${t.nome}</strong>
+                            <span style="color:#64748b; font-size:0.78rem; display:block; margin:2px 0;">${t.descricao || 'Sem descrição'}</span>
+                            <span style="font-size:0.75rem; color:#8b5cf6; font-weight:600;"><i class="fa-solid fa-calendar-check"></i> ${t.total_folgas} Folgas / ${t.total_trabalho} Trab.</span>
+                        </div>
+                        <div style="display:flex; gap:6px;">
+                            <button onclick="abrirConfiguracaoAplicarTemplate(${t.id}, '${t.nome}')" style="background:linear-gradient(135deg,#6366f1,#4f46e5); color:white; border:none; border-radius:8px; padding:6px 12px; font-weight:700; font-size:0.78rem; cursor:pointer;">
+                                Aplicar
+                            </button>
+                            <button onclick="excluirTemplate(${t.id})" style="background:#fee2e2; color:#ef4444; border:1px solid #fecaca; border-radius:8px; padding:6px 8px; cursor:pointer;">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+        } catch(e) {
+            console.error(e);
+            showToast('Erro ao carregar templates.', 'error');
+        }
+    }
+
+    window.abrirConfiguracaoAplicarTemplate = function(id, nome) {
+        selectedTemplateId = id;
+        document.getElementById('nomeTemplateSelecionado').textContent = nome;
+        document.getElementById('templateAplicacaoConfig').style.display = 'block';
+
+        const mesInputVal = `${epAno}-${String(epMes).padStart(2, '0')}`;
+        document.getElementById('templateMesDestino').value = mesInputVal;
+
+        const sel = document.getElementById('templateAnalistasDestino');
+        if (sel) {
+            sel.innerHTML = epData.map(a => `<option value="${a.analista_id}" selected>${a.analista_nome}</option>`).join('');
+        }
+    }
+
+    window.confirmarAplicarTemplate = async function() {
+        if (!selectedTemplateId) return;
+        const dest = document.getElementById('templateMesDestino').value;
+        if (!dest) {
+            showToast('Selecione o mês de destino.', 'warning');
+            return;
+        }
+        const [y, m] = dest.split('-');
+        const sel = document.getElementById('templateAnalistasDestino');
+        const ids = Array.from(sel.selectedOptions).map(o => o.value);
+
+        if (ids.length === 0) {
+            showToast('Selecione pelo menos um analista.', 'warning');
+            return;
+        }
+
+        try {
+            const res = await fetch(`/api/escala/personalizada/templates/${selectedTemplateId}/aplicar/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify({
+                    analistas_ids: ids,
+                    ano: parseInt(y),
+                    mes: parseInt(m),
+                    rascunho_id: rascunhoId,
+                    modo_teste: epModoTesteAtivo,
+                    sobrescrever: true
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                showToast('Template aplicado com sucesso!', 'success');
+                document.getElementById('templateAplicacaoConfig').style.display = 'none';
+                fecharModal('modalEpTemplates');
+                carregarEscalaPersonalizada();
+            } else {
+                showToast(data.error || 'Erro ao aplicar template.', 'error');
+            }
+        } catch (e) {
+            console.error(e);
+            showToast('Erro ao aplicar template.', 'error');
+        }
+    }
+
+    window.salvarNovoTemplate = async function() {
+        const nome = document.getElementById('templateNome').value.trim();
+        const descricao = document.getElementById('templateDescricao').value.trim();
+        const analistaId = document.getElementById('templateAnalistaOrigem').value;
+
+        if (!nome) {
+            showToast('O nome do template é obrigatório.', 'warning');
+            return;
+        }
+
+        try {
+            const res = await fetch('/api/escala/personalizada/templates/save/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify({
+                    nome: nome,
+                    descricao: descricao,
+                    analista_id: analistaId,
+                    ano: epAno,
+                    mes: epMes,
+                    rascunho_id: rascunhoId
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                showToast('Template saved successfully!', 'success');
+                switchTabTemplate('aplicar');
+            } else {
+                showToast(data.error || 'Erro ao salvar template.', 'error');
+            }
+        } catch(e) {
+            console.error(e);
+            showToast('Erro ao salvar template.', 'error');
+        }
+    }
+
+    window.excluirTemplate = function(id) {
+        Swal.fire({
+            title: 'Excluir Template?',
+            text: "Esta ação não pode ser desfeita.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'Sim, excluir'
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                try {
+                    const res = await fetch(`/api/escala/personalizada/templates/${id}/delete/`, {
+                        method: 'DELETE',
+                        headers: { 'X-CSRFToken': csrfToken }
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        showToast('Template excluído.', 'success');
+                        carregarTemplatesList();
+                    } else {
+                        showToast(data.error || 'Erro ao excluir.', 'error');
+                    }
+                } catch(e) {
+                    showToast('Erro de conexão.', 'error');
+                }
+            }
+        });
+    }
+
+    window.toggleModoTestePersonalizado = async function() {
+        const novoModo = !epModoTesteAtivo;
+        try {
+            const res = await fetch('/api/escala/personalizada/toggle-teste/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify({
+                    ano: epAno,
+                    mes: epMes,
+                    rascunho_id: rascunhoId,
+                    modo_teste: novoModo
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                epModoTesteAtivo = novoModo;
+                showToast(`Modo teste ${novoModo ? 'ativado' : 'desativado'} para este mês.`, 'success');
+                carregarEscalaPersonalizada();
+            } else {
+                showToast(data.error || 'Erro ao alterar modo teste.', 'error');
+            }
+        } catch(e) {
+            console.error(e);
+            showToast('Erro ao alterar modo teste.', 'error');
         }
     }
 

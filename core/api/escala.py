@@ -746,6 +746,7 @@ def api_rascunho_publish(request, pk):
         turnos_principais = Turno.objects.filter(rascunho__isnull=True, escala_tipo=escala_tipo)
         analistas_principais = AnalistaEscala.objects.filter(rascunho__isnull=True, escala_tipo=escala_tipo)
         folgas_principais = FolgaManual.objects.filter(rascunho__isnull=True, analista__escala_tipo=escala_tipo)
+        escalas_personalizadas_principais = EscalaPersonalizada.objects.filter(rascunho__isnull=True, analista__escala_tipo=escala_tipo)
 
         if turnos_principais.exists() or analistas_principais.exists():
             modelo_antigo = config.modelo_escala_principal_gestao if escala_tipo == 'gestao' else config.modelo_escala_principal
@@ -760,11 +761,13 @@ def api_rascunho_publish(request, pk):
             folgas_principais.update(rascunho=rascunho_backup)
             analistas_principais.update(rascunho=rascunho_backup)
             turnos_principais.update(rascunho=rascunho_backup)
+            escalas_personalizadas_principais.update(rascunho=rascunho_backup)
 
         # Promover rascunho para principal (rascunho=None)
         Turno.objects.filter(rascunho=rascunho).update(rascunho=None)
         AnalistaEscala.objects.filter(rascunho=rascunho).update(rascunho=None)
         FolgaManual.objects.filter(rascunho=rascunho).update(rascunho=None)
+        EscalaPersonalizada.objects.filter(rascunho=rascunho).update(rascunho=None)
 
         # Salvar o modelo_escala do rascunho na configuração correta
         if escala_tipo == 'gestao':
@@ -819,8 +822,10 @@ def _get_status_escala_personalizada(analista, data_ref, rascunho=None):
         rascunho=rascunho,
         ano=data_ref.year,
         mes=data_ref.month,
-        modo_teste=False,
-    ).first()
+    )
+    if rascunho is None:
+        grade = grade.filter(modo_teste=False)
+    grade = grade.first()
     if grade and data_str in grade.dados:
         return grade.dados[data_str]
     return None
