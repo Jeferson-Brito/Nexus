@@ -4409,7 +4409,7 @@
             // 2. Fallback para o ciclo_personalizado do ModeloEscala se existir
             if (modelo && modelo.ciclo_personalizado && modelo.ciclo_personalizado.dias_folga) {
                 const diasFolga = modelo.ciclo_personalizado.dias_folga;
-                const cicloDias = modelo.ciclo_personalizado.ciclo_dias || 31;
+                const cicloDias = modelo.ciclo_personalizado.ciclo_dias || 28;
                 
                 const dataAtual = new Date(ano, mes, dia);
                 dataAtual.setHours(0, 0, 0, 0);
@@ -4902,12 +4902,12 @@
                 let isWork = true;
 
                 if (rule === 'custom') {
-                    // Posição no ciclo de 31 dias usando época fixa
+                    // Posição no ciclo de 28 dias usando época fixa
                     const dataCell = new Date(anoAtual, mesAtual, dayNum);
                     dataCell.setHours(0, 0, 0, 0);
                     const diffMs = dataCell - epoch;
                     const diffDias = Math.round(diffMs / (1000 * 60 * 60 * 24));
-                    const cicloPos = ((diffDias % 31) + 31) % 31 + 1;
+                    const cicloPos = ((diffDias % 28) + 28) % 28 + 1;
                     isWork = !window.customCycleDays.includes(cicloPos);
                 } else {
                     // Regra 1: Fins de semana proibidos?
@@ -4934,7 +4934,7 @@
                     dataCell.setHours(0, 0, 0, 0);
                     const diffMs = dataCell - epoch;
                     const diffDias = Math.round(diffMs / (1000 * 60 * 60 * 24));
-                    const cicloPos = ((diffDias % 31) + 31) % 31 + 1;
+                    const cicloPos = ((diffDias % 28) + 28) % 28 + 1;
                     tr.innerHTML += `
                         <td onclick="togglePreviewDay(${cicloPos})"
                             onmouseover="this.style.opacity=0.8"
@@ -5015,7 +5015,7 @@
             observacao: obs,
             ciclo_personalizado: regra === 'custom' ? {
                 dias_folga: window.customCycleDays || [],
-                ciclo_dias: 31  // ciclo de 31 dias com âncora fixa (2024-01-07)
+                ciclo_dias: 28  // ciclo de 28 dias com âncora fixa (2024-01-07)
             } : null
         };
 
@@ -7284,7 +7284,7 @@
             }
             if (modelo && modelo.ciclo_personalizado && modelo.ciclo_personalizado.dias_folga) {
                 const diasFolga = modelo.ciclo_personalizado.dias_folga;
-                const cicloDias = modelo.ciclo_personalizado.ciclo_dias || 31;
+                const cicloDias = modelo.ciclo_personalizado.ciclo_dias || 28;
                 
                 // Âncora fixa universal: 2024-01-07 (domingo)
                 const epoch = new Date(2024, 0, 7);

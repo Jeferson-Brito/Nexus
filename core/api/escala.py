@@ -596,11 +596,13 @@ def api_rascunho_create(request):
                 turnos_fonte = Turno.objects.filter(ativo=True, rascunho__isnull=True, escala_tipo=escala_tipo)
                 analistas_fonte = AnalistaEscala.objects.filter(ativo=True, rascunho__isnull=True, escala_tipo=escala_tipo)
                 folgas_fonte = FolgaManual.objects.filter(rascunho__isnull=True, analista__escala_tipo=escala_tipo)
+                escalas_personalizadas_fonte = EscalaPersonalizada.objects.filter(rascunho__isnull=True, analista__escala_tipo=escala_tipo)
             else:
                 fonte_rascunho = get_object_or_404(EscalaRascunho, pk=fonte_id)
                 turnos_fonte = Turno.objects.filter(ativo=True, rascunho=fonte_rascunho)
                 analistas_fonte = AnalistaEscala.objects.filter(ativo=True, rascunho=fonte_rascunho)
                 folgas_fonte = FolgaManual.objects.filter(rascunho=fonte_rascunho)
+                escalas_personalizadas_fonte = EscalaPersonalizada.objects.filter(rascunho=fonte_rascunho)
 
             # Copiar Turnos
             turno_map = {}
@@ -644,6 +646,19 @@ def api_rascunho_create(request):
                         data=f.data,
                         tipo=f.tipo,
                         motivo=f.motivo
+                    )
+
+            # Copiar Escalas Personalizadas (Manuais)
+            for ep in escalas_personalizadas_fonte:
+                if ep.analista_id in analista_map:
+                    EscalaPersonalizada.objects.create(
+                        analista=analista_map[ep.analista_id],
+                        rascunho=rascunho,
+                        ano=ep.ano,
+                        mes=ep.mes,
+                        dados=ep.dados.copy() if ep.dados else {},
+                        modo_teste=ep.modo_teste,
+                        criado_por=ep.criado_por
                     )
 
         return JsonResponse({'success': True, 'id': rascunho.id, 'nome': rascunho.nome, 'escala_tipo': rascunho.escala_tipo})
@@ -831,7 +846,7 @@ def _get_ciclo_pos(data, ciclo, primeira_folga=None):
     """
     from datetime import date as date_type
     EPOCH = date_type(2024, 1, 7)  # Domingo fixo — âncora universal
-    ciclo_dias = ciclo.get('ciclo_dias', 31)
+    ciclo_dias = ciclo.get('ciclo_dias', 28)
     if isinstance(data, date_type):
         diff = (data - EPOCH).days
     else:
