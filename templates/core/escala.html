@@ -4825,7 +4825,9 @@
                     } else {
                         // Regra 2: Tipo de escala
                         if (tipo === 'fixa' && cycle === 7) {
-                            isWork = (cycleCounter % 7) < trab;
+                            // Escala fixa semanal: trabalho de SEG(d=1) até o Nº dia útil
+                            // Garante que SAB(d=6) e DOM(d=0) sejam as folgas p/ 5x2
+                            isWork = (d >= 1 && d <= trab);
                         } else {
                             isWork = (cycleCounter % cycle) < trab;
                         }
