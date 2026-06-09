@@ -1,5 +1,5 @@
 """
-Django settings for nexus project.
+Django settings for brisoft project.
 """
 
 import os
@@ -31,11 +31,11 @@ SECRET_KEY = get_env("SECRET_KEY", "django-insecure-change-me")
 
 DEBUG = get_env("DEBUG", "False").lower() == "true"
 
-ALLOWED_HOSTS = get_env("ALLOWED_HOSTS", "nexus-deploy.onrender.com,localhost,127.0.0.1,.onrender.com,brisoft.com.br,www.brisoft.com.br,.brisoft.com.br").split(",")
+ALLOWED_HOSTS = get_env("ALLOWED_HOSTS", "brisoft-deploy.onrender.com,localhost,127.0.0.1,.onrender.com,brisoft.com.br,www.brisoft.com.br,.brisoft.com.br").split(",")
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://nexus-deploy.onrender.com",
-    "https://nexus-l8jg.onrender.com",
+    "https://brisoft-deploy.onrender.com",
+    "https://brisoft-l8jg.onrender.com",
     "https://*.onrender.com",
     "https://brisoft.com.br",
     "https://www.brisoft.com.br",
@@ -86,7 +86,7 @@ MIDDLEWARE = [
     "axes.middleware.AxesMiddleware",
 ]
 
-ROOT_URLCONF = "nexus.urls"
+ROOT_URLCONF = "brisoft.urls"
 
 # ==============================
 # TEMPLATES
@@ -121,7 +121,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "nexus.wsgi.application"
+WSGI_APPLICATION = "brisoft.wsgi.application"
 
 # ==============================
 # DATABASE (POSTGRESQL - Render & Supabase Config)
@@ -195,7 +195,7 @@ AWS_ACCESS_KEY_ID = get_env("AWS_ACCESS_KEY_ID")
 
 if AWS_ACCESS_KEY_ID:
     AWS_SECRET_ACCESS_KEY = get_env("AWS_SECRET_ACCESS_KEY")
-    AWS_STORAGE_BUCKET_NAME = get_env("AWS_STORAGE_BUCKET_NAME", "nexus-media")
+    AWS_STORAGE_BUCKET_NAME = get_env("AWS_STORAGE_BUCKET_NAME", "brisoft-media")
     AWS_S3_ENDPOINT_URL = get_env("AWS_S3_ENDPOINT_URL")
     AWS_S3_REGION_NAME = get_env("AWS_S3_REGION_NAME", "sa-east-1")
 
@@ -336,7 +336,7 @@ LOGGING = {
 # ==============================
 # CHANNELS (WEBSOCKETS)
 # ==============================
-ASGI_APPLICATION = "nexus.asgi.application"
+ASGI_APPLICATION = "brisoft.asgi.application"
 
 if REDIS_URL:
     CHANNEL_LAYERS = {
@@ -392,6 +392,8 @@ AXES_FAILURE_LIMIT = 6
 AXES_COOLOFF_TIME = 1  # horas
 AXES_RESET_ON_SUCCESS = True
 AXES_LOCKOUT_TEMPLATE = 'core/lockout.html'
+if DEBUG:
+    AXES_ENABLED = False
 
 # ==============================
 # SENTRY

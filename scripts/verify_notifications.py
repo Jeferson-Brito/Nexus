@@ -7,12 +7,12 @@ from django.test import RequestFactory
 import json
 
 # Setup Django Environment
-project_root = r"c:\Users\jeffe\Documents\Sites\Nexus"
+project_root = r"c:\Users\jeffe\Documents\Sites\Brisoft"
 if project_root not in sys.path:
     sys.path.append(project_root)
 
 # Manually configure settings to bypass storages
-from nexus import settings as app_settings
+from brisoft import settings as app_settings
 
 if not settings.configured:
     settings_dict = {}

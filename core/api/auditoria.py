@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 import json
 
 from ..models import AuditoriaAtendimento, ConfiguracaoAuditoria, User, Department, BaseAuditoria
-from core.services.bitrix_service import get_mensagens_sessao, formatar_transcript, get_sessoes_dia_anterior, encontrar_analista_nexus
+from core.services.bitrix_service import get_mensagens_sessao, formatar_transcript, get_sessoes_dia_anterior, encontrar_analista_brisoft
 from core.services.ia_service import auditar_chat_automatico
 
 
@@ -1146,7 +1146,7 @@ def api_registrar_ciente(request, pk):
 @require_POST
 def api_preencher_ia(request):
     """
-    Busca o transcript de um chat no Bitrix e aciona o Nexus IA Auditor para 
+    Busca o transcript de um chat no Bitrix e aciona o Brisoft IA Auditor para 
     preencher os critérios de auditoria automaticamente.
     """
     try:
@@ -1244,7 +1244,7 @@ def api_forcar_ia(request):
         analista_nome = sessao.get('author_name') or sessao.get('operator_name') or 'Desconhecido'
 
         # Busca o analista real no banco se existir
-        analista_auditado = encontrar_analista_nexus(email_analista)
+        analista_auditado = encontrar_analista_brisoft(email_analista)
         
         # Buscar as mensagens
         mensagens = get_mensagens_sessao(id_conversa)

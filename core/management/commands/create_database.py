@@ -15,7 +15,7 @@ class Command(BaseCommand):
     help = 'Creates the database if it does not exist'
 
     def handle(self, *args, **options):
-        db_name = os.getenv('DB_NAME', 'nexus')
+        db_name = os.getenv('DB_NAME', 'brisoft')
         db_user = os.getenv('DB_USER', 'postgres')
         db_password = os.getenv('DB_PASSWORD', '')
         db_host = os.getenv('DB_HOST', 'localhost')

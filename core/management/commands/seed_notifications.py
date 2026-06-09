@@ -3,12 +3,12 @@ from core.models import SystemNotification
 
 NOTIFICATIONS = [
     {
-        'title': '🤖 Nexus IA — Assistente Inteligente',
+        'title': '🤖 Brisoft IA — Assistente Inteligente',
         'category': 'news',
-        'message': 'O Nexus agora conta com um assistente de IA integrado! Clique no ícone roxo ✨ no canto inferior direito para conversar com ele.',
+        'message': 'O Brisoft agora conta com um assistente de IA integrado! Clique no ícone roxo ✨ no canto inferior direito para conversar com ele.',
         'details': """
-<h5>🤖 Nexus IA chegou!</h5>
-<p>O <strong>Assistente Nexus IA</strong> está disponível em todas as páginas do sistema. Ele usa a Base de Conhecimento do seu departamento para responder dúvidas, orientar processos e até executar ações no sistema.</p>
+<h5>🤖 Brisoft IA chegou!</h5>
+<p>O <strong>Assistente Brisoft IA</strong> está disponível em todas as páginas do sistema. Ele usa a Base de Conhecimento do seu departamento para responder dúvidas, orientar processos e até executar ações no sistema.</p>
 <h6>O que ele pode fazer:</h6>
 <ul>
   <li>Responder perguntas com base na Base de Conhecimento do departamento</li>
@@ -59,7 +59,7 @@ NOTIFICATIONS = [
         'message': 'Reclamações do Reclame Aqui agora podem ser classificadas automaticamente por Urgência e Sentimento usando Inteligência Artificial.',
         'details': """
 <h5>Classificação de Reclamações com IA</h5>
-<p>A Nexus IA agora analisa o texto das reclamações e retorna:</p>
+<p>A Brisoft IA agora analisa o texto das reclamações e retorna:</p>
 <ul>
   <li><strong>Urgência:</strong> Baixa, Média, Alta ou Crítica — baseada no tom e conteúdo</li>
   <li><strong>Sentimento:</strong> Satisfeito, Neutro, Frustrado ou Muito Irritado</li>
@@ -93,14 +93,14 @@ NOTIFICATIONS = [
     {
         'title': '📊 Auditoria de Atendimentos 2.0',
         'category': 'news',
-        'message': 'Nova interface de auditoria com gráficos de evolução, pilares de qualidade e insights automáticos via Nexus IA.',
+        'message': 'Nova interface de auditoria com gráficos de evolução, pilares de qualidade e insights automáticos via Brisoft IA.',
         'details': """
 <h5>Auditoria de Atendimentos 2.0</h5>
 <p>A aba de auditoria foi totalmente modernizada para oferecer uma análise mais profunda do desempenho:</p>
 <ul>
   <li><strong>Gráficos de Evolução:</strong> Acompanhe a média de notas ao longo do tempo.</li>
   <li><strong>Pilares de Qualidade:</strong> Gráfico de radar mostrando pontos fortes e fracos (Cordialidade, Agilidade, etc).</li>
-  <li><strong>Nexus IA Mentor:</strong> Inteligência Artificial que analisa o histórico do analista e gera feedbacks estruturados para reuniões de 1-on-1.</li>
+  <li><strong>Brisoft IA Mentor:</strong> Inteligência Artificial que analisa o histórico do analista e gera feedbacks estruturados para reuniões de 1-on-1.</li>
   <li><strong>Filtros Inteligentes:</strong> Agora o sistema exibe automaticamente os dados do mês atual.</li>
 </ul>
 <p><em>Acesse: NRS Suporte → Auditoria de Atendimentos</em></p>
@@ -109,12 +109,12 @@ NOTIFICATIONS = [
     {
         'title': '↩️ Melhoria na Navegação do Ponto',
         'category': 'system',
-        'message': 'Adicionado botão de retorno ao Nexus na tela de registro de ponto para acessos via computador/celular.',
+        'message': 'Adicionado botão de retorno ao Brisoft na tela de registro de ponto para acessos via computador/celular.',
         'details': """
 <h5>Navegação Facilitada no Ponto</h5>
 <p>Para melhorar a experiência de quem bate ponto pelo próprio cadastro:</p>
 <ul>
-  <li><strong>Botão Voltar:</strong> Agora você pode retornar ao Dashboard do Nexus diretamente da tela de ponto.</li>
+  <li><strong>Botão Voltar:</strong> Agora você pode retornar ao Dashboard do Brisoft diretamente da tela de ponto.</li>
   <li><strong>Segurança Kiosk:</strong> O botão de saída permanece oculto em tablets de recepção para garantir a integridade do terminal.</li>
 </ul>
 """

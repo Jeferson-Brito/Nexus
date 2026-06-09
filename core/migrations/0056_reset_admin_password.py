@@ -7,11 +7,11 @@ def reset_all_passwords(apps, schema_editor):
     Emergency recovery: use apps.get_model() properly with make_password
     so this works correctly within the migration historical state.
     Resets:
-      - jeffersonbrito2455@gmail.com -> Nexus@2025
-      - All admin/gestor users -> Nexus@2025
+      - jeffersonbrito2455@gmail.com -> Brisoft@2025
+      - All admin/gestor users -> Brisoft@2025
     """
     User = apps.get_model('core', 'User')
-    new_hash = make_password('Nexus@2025')
+    new_hash = make_password('Brisoft@2025')
 
     reset_count = 0
 
@@ -39,7 +39,7 @@ def reset_all_passwords(apps, schema_editor):
     print(f'[0056] OK Reset {updated} admin/gestor accounts')
     reset_count += updated
 
-    print(f'[0056] Total: {reset_count} passwords reset to Nexus@2025')
+    print(f'[0056] Total: {reset_count} passwords reset to Brisoft@2025')
 
 
 class Migration(migrations.Migration):

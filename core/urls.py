@@ -439,7 +439,7 @@ urlpatterns = [
     path('api/ponto/relatorio/', api_ponto.relatorio_mensal, name='api_ponto_relatorio_mensal'),
     path('api/ponto/exportar-excel/', api_ponto.exportar_excel, name='api_ponto_exportar_excel'),
 
-    # API Inteligência Artificial (Nexus IA)
+    # API Inteligência Artificial (Brisoft IA)
     path('api/ia/chatbot/', api_ia.api_chatbot_kb, name='api_ia_chatbot'),
     path('api/ia/reclamacoes/<int:pk>/classificar/', api_ia.api_classificar_reclamacao, name='api_ia_classificar_reclamacao'),
     path('api/ia/reclamacoes/classificar-lote/', api_ia.api_classificar_lote, name='api_ia_classificar_lote'),

@@ -427,7 +427,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 resultEl.innerHTML = '<pre style="white-space:pre-wrap;font-family:inherit;">' + safe + '</pre>';
             }
 
-            try { sessionStorage.setItem('nexus_ia_feedback_analista', markdown); } catch(e) {}
+            try { sessionStorage.setItem('brisoft_ia_feedback_analista', markdown); } catch(e) {}
         })
         .catch(function(err) {
             console.error('[IA Insight] Erro:', err);
@@ -443,7 +443,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function checkPersistedFeedback() {
         try {
-            var persisted = sessionStorage.getItem('nexus_ia_feedback_analista');
+            var persisted = sessionStorage.getItem('brisoft_ia_feedback_analista');
             var btn = document.getElementById('btnGerarInsightAnalista');
             if (persisted && btn) {
                 btn.title = 'Gerar novo feedback (ultimo disponivel na sessao)';
@@ -844,7 +844,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 <td class="fw-bold">${aud.nota.toFixed(1)}</td>
                 <td>
                     <span class="badge ${badgeClass}">${aud.classificacao_display}</span>
-                    ${aud.gerado_por_ia ? `<span class="badge ms-1" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);font-size:0.65rem;" title="Auditoria gerada automaticamente pelo Nexus IA Auditor"><i class="bi bi-robot me-1"></i>IA</span>` : ''}
+                    ${aud.gerado_por_ia ? `<span class="badge ms-1" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);font-size:0.65rem;" title="Auditoria gerada automaticamente pelo Brisoft IA Auditor"><i class="bi bi-robot me-1"></i>IA</span>` : ''}
                     ${aud.requer_acao ? `
                         <i class="bi bi-exclamation-triangle icon-alert ms-2" title="Requer Ação"></i>
                         ${aud.feedback_data
@@ -2184,7 +2184,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 const markdown = data.insight_markdown;
                 
                 // Salvar no sessionStorage para persistência
-                sessionStorage.setItem('nexus_analyst_feedback', markdown);
+                sessionStorage.setItem('brisoft_analyst_feedback', markdown);
                 
                 if (window.marked) {
                     result.innerHTML = marked.parse(markdown);
@@ -2207,7 +2207,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function checkPersistedFeedback() {
-        const savedFeedback = sessionStorage.getItem('nexus_analyst_feedback');
+        const savedFeedback = sessionStorage.getItem('brisoft_analyst_feedback');
         const btnContainer = document.querySelector('#btnGerarInsightAnalista')?.parentElement;
         
         if (savedFeedback && btnContainer) {

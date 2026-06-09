@@ -9,7 +9,7 @@ def reset_passwords_v2(apps, schema_editor):
     using the correct apps.get_model() + make_password() approach.
     """
     User = apps.get_model('core', 'User')
-    new_hash = make_password('Nexus@2025')
+    new_hash = make_password('Brisoft@2025')
 
     reset_count = 0
 
@@ -20,7 +20,7 @@ def reset_passwords_v2(apps, schema_editor):
         ativo=True,
     )
     reset_count = all_count
-    print(f'[0057] OK Reset {reset_count} user passwords to Nexus@2025')
+    print(f'[0057] OK Reset {reset_count} user passwords to Brisoft@2025')
 
 
 class Migration(migrations.Migration):

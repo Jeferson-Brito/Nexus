@@ -5,7 +5,7 @@ import django
 # Setup Django
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(BASE_DIR)
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'nexus.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'brisoft.settings')
 django.setup()
 
 from core.models import Department

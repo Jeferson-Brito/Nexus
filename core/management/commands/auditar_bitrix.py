@@ -1,5 +1,5 @@
 """
-Management command para auditoria automática de atendimentos via Nexus IA + Bitrix.
+Management command para auditoria automática de atendimentos via Brisoft IA + Bitrix.
 
 Uso:
     python manage.py auditar_bitrix                 # Audita o dia anterior
@@ -22,7 +22,7 @@ MAX_POR_ANALISTA_DEFAULT = 30
 
 
 class Command(BaseCommand):
-    help = 'Audita automaticamente os atendimentos do dia anterior via Nexus IA + Bitrix API'
+    help = 'Audita automaticamente os atendimentos do dia anterior via Brisoft IA + Bitrix API'
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -69,7 +69,7 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.MIGRATE_HEADING(
             f"\n{'=' * 60}\n"
-            f"  🤖 Nexus IA Auditor — {data_alvo}\n"
+            f"  🤖 Brisoft IA Auditor — {data_alvo}\n"
             f"  Modo: {'DRY-RUN (nada será salvo)' if dry_run else 'PRODUÇÃO'}\n"
             f"  Máx por analista: {max_por_analista}\n"
             f"{'=' * 60}\n"
@@ -111,18 +111,18 @@ class Command(BaseCommand):
             if analista_email_filtro and email_analista.lower() != analista_email_filtro.lower():
                 continue
 
-            # Encontrar User no Nexus
-            user_nexus = bitrix_service.encontrar_analista_nexus(email_analista)
-            if not user_nexus:
+            # Encontrar User no Brisoft
+            user_brisoft = bitrix_service.encontrar_analista_brisoft(email_analista)
+            if not user_brisoft:
                 self.stdout.write(self.style.WARNING(
-                    f"  ⚠️  Analista não encontrado no Nexus: {email_analista or 'sem e-mail'} "
+                    f"  ⚠️  Analista não encontrado no Brisoft: {email_analista or 'sem e-mail'} "
                     f"({len(sessoes_analista)} sessões ignoradas)"
                 ))
                 total_puladas += len(sessoes_analista)
                 continue
 
-            analista_nome = user_nexus.get_full_name() or user_nexus.username
-            department = user_nexus.department
+            analista_nome = user_brisoft.get_full_name() or user_brisoft.username
+            department = user_brisoft.department
 
             if not department:
                 self.stdout.write(self.style.WARNING(f"  ⚠️  {analista_nome} sem departamento. Pulando."))
@@ -203,7 +203,7 @@ class Command(BaseCommand):
                     continue
 
                 # Buscar auditor "sistema" (usuário IA)
-                auditor_ia = User.objects.filter(username='nexus_ia_auditor').first()
+                auditor_ia = User.objects.filter(username='brisoft_ia_auditor').first()
                 if not auditor_ia:
                     # Usar o primeiro admin/gestor do departamento como auditor substituto
                     auditor_ia = User.objects.filter(
@@ -223,7 +223,7 @@ class Command(BaseCommand):
                         id_conversa=str(chat_id),
                         link_conversa=link_chat,
                         tipo_atendimento=tipo_atendimento,
-                        analista_auditado=user_nexus,
+                        analista_auditado=user_brisoft,
                         auditor=auditor_ia,
                         department=department,
                         # Critérios

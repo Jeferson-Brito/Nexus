@@ -97,7 +97,7 @@ def split_night_shift(start_min, end_min, night_start=1320, night_end=300):
 @login_required
 @require_http_methods(["GET"])
 def api_colaboradores_list(request):
-    """Retorna listagem de colaboradores + usuários Nexus que ainda não têm ficha RH"""
+    """Retorna listagem de colaboradores + usuários Brisoft que ainda não têm ficha RH"""
     if not (request.user.is_gestor() or request.user.is_administrador() or getattr(request.user.department, 'name', '') == 'RH'):
         return JsonResponse({'erro': 'Acesso negado'}, status=403)
         
@@ -142,7 +142,7 @@ def api_colaboradores_list(request):
             'foto_url': c.foto.url if c.foto else None
         })
 
-    # Usuários do Nexus que ainda não têm ficha de colaborador (podem aparecer como cards para "Criar ficha")
+    # Usuários do Brisoft que ainda não têm ficha de colaborador (podem aparecer como cards para "Criar ficha")
     users_sem_ficha = User.objects.filter(ativo=True).filter(colaborador_perfil__isnull=True).select_related('department')
     if dept_filter:
         users_sem_ficha = users_sem_ficha.filter(department_id=dept_filter)
@@ -155,7 +155,7 @@ def api_colaboradores_list(request):
             'user_id': str(u.id),
             'id': 'user_' + str(u.id),
             'nome': nome,
-            'cargo': u.get_role_display() if hasattr(u, 'get_role_display') else 'Usuário Nexus',
+            'cargo': u.get_role_display() if hasattr(u, 'get_role_display') else 'Usuário Brisoft',
             'department': u.department.name if u.department else '—',
             'department_id': str(u.department_id) if u.department_id else '',
             'username': u.username,
@@ -273,7 +273,7 @@ def api_save_colaborador(request):
             else:
                 colaborador = Colaborador()
                 created = True
-                # Vincular a um usuário Nexus (opcional): RH pode criar ficha a partir do card "usuário sem ficha"
+                # Vincular a um usuário Brisoft (opcional): RH pode criar ficha a partir do card "usuário sem ficha"
                 user_id = data.get('user_id')
                 if user_id:
                     try:

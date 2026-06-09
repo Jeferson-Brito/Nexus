@@ -190,7 +190,7 @@ class Complaint(models.Model):
     feedback_text = models.TextField(blank=True)
     repeticoes_count = models.IntegerField(default=0)
 
-    # Classificação por Inteligência Artificial (Nexus IA)
+    # Classificação por Inteligência Artificial (Brisoft IA)
     ia_urgencia = models.CharField(
         max_length=20,
         choices=[('baixa', 'Baixa'), ('media', 'Média'), ('alta', 'Alta'), ('critica', 'Crítica')],
@@ -891,7 +891,7 @@ class Cartao(models.Model):
     membros = models.ManyToManyField(User, related_name='cartoes_membro', blank=True)
     etiquetas = models.ManyToManyField(QuadroEtiqueta, related_name='cartoes', blank=True)
     
-    # Nexus Features
+    # Brisoft Features
     cover_color = models.CharField(max_length=20, blank=True)
     checklists = models.JSONField(default=list, blank=True)
     
@@ -2305,7 +2305,7 @@ class AuditoriaAtendimento(models.Model):
     gerado_por_ia = models.BooleanField(
         default=False,
         verbose_name='Gerado por IA',
-        help_text='Indica se esta auditoria foi gerada automaticamente pelo Nexus IA Auditor'
+        help_text='Indica se esta auditoria foi gerada automaticamente pelo Brisoft IA Auditor'
     )
     observacao_ia = models.TextField(
         blank=True,
@@ -3168,8 +3168,8 @@ class TrocaFeriado(models.Model):
         return f"{self.empresa.nome} - {self.descricao} ({self.data_feriado.strftime('%d/%m/%Y')} -> {self.data_troca.strftime('%d/%m/%Y')})"
 
 
-class NexusIABase(models.Model):
-    """Base de Conhecimento específica para a IA do Nexus."""
+class BrisoftIABase(models.Model):
+    """Base de Conhecimento específica para a IA do Brisoft."""
     department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name="ia_articles", verbose_name="Departamento")
     titulo = models.CharField(max_length=200, verbose_name="Título")
     conteudo = models.TextField(verbose_name="Conteúdo")
@@ -3177,8 +3177,9 @@ class NexusIABase(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = "Artigo da Base Nexus IA"
-        verbose_name_plural = "Artigos da Base Nexus IA"
+        db_table = 'core_nexusiabase'
+        verbose_name = "Artigo da Base Brisoft IA"
+        verbose_name_plural = "Artigos da Base Brisoft IA"
         ordering = ['-created_at']
 
     def __str__(self):

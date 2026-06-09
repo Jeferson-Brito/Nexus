@@ -1,5 +1,5 @@
 """
-ASGI config for nexus project.
+ASGI config for brisoft project.
 Handles both HTTP and WebSocket (via Django Channels).
 """
 import os
@@ -9,7 +9,7 @@ from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.auth import AuthMiddlewareStack
 import core.routing
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'nexus.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'brisoft.settings')
 
 application = ProtocolTypeRouter({
     "http": get_asgi_application(),

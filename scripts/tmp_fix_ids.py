@@ -1,7 +1,7 @@
 import re
 import os
 
-path = os.path.join('d:\\', 'Sites', 'Nexus', 'templates', 'core', 'verificacao_lojas.html')
+path = os.path.join('d:\\', 'Sites', 'Brisoft', 'templates', 'core', 'verificacao_lojas.html')
 with open(path, 'r', encoding='utf-8') as f:
     content = f.read()
 

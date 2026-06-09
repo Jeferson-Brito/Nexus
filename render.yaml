@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: nexus
+    name: brisoft
     env: docker
     envVars:
       - key: PYTHON_VERSION
@@ -11,4 +11,4 @@ services:
         value: "False"
 
       - key: ALLOWED_HOSTS
-        value: "nexus-deploy.onrender.com,nexus-l8jg.onrender.com,.onrender.com"
+        value: "brisoft-deploy.onrender.com,brisoft-l8jg.onrender.com,.onrender.com"

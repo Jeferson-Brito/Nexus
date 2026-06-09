@@ -6,7 +6,7 @@ from django.utils import timezone
 from django.db.models import Count, Q
 
 # Setup Django environment
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'nexus.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'brisoft.settings')
 django.setup()
 
 from core.models import Store, StoreAudit

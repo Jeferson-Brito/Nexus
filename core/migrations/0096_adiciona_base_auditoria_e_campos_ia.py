@@ -12,7 +12,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0095_nexusiabase'),
+        ('core', '0095_brisoftiabase'),
     ]
 
     operations = [
@@ -61,7 +61,7 @@ class Migration(migrations.Migration):
             name='gerado_por_ia',
             field=models.BooleanField(
                 default=False,
-                help_text='Indica se esta auditoria foi gerada automaticamente pelo Nexus IA Auditor',
+                help_text='Indica se esta auditoria foi gerada automaticamente pelo Brisoft IA Auditor',
                 verbose_name='Gerado por IA',
             ),
         ),

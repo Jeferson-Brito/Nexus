@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load l10n %}
 
-{% block title %}{% if form_type == 'create' %}Novo Usuário{% else %}Editar Perfil{% endif %} - Nexus{% endblock %}
+{% block title %}{% if form_type == 'create' %}Novo Usuário{% else %}Editar Perfil{% endif %} - Brisoft{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -238,7 +238,7 @@ html[data-bs-theme="dark"] .pf-btn-cancel { background:#334155; border-color:#47
                             <input class="pf-input" type="email" name="email"
                                 value="{{ target_user.email|default:form_data.email|default:'' }}"
                                 {% if form_type == 'edit' and not request.user.is_administrador %}readonly{% endif %}
-                                required placeholder="joao@nexus.com">
+                                required placeholder="joao@brisoft.com">
                         </div>
                     </div>
                 </div>
@@ -291,7 +291,7 @@ html[data-bs-theme="dark"] .pf-btn-cancel { background:#334155; border-color:#47
                                     <div class="pf-switch-icon"><i class="bi bi-power"></i></div>
                                     <div>
                                         <h6>Ativar Usuário</h6>
-                                        <p>Habilita ou bloqueia o acesso deste usuário ao sistema Nexus</p>
+                                        <p>Habilita ou bloqueia o acesso deste usuário ao sistema Brisoft</p>
                                     </div>
                                 </div>
                                 <div class="form-check form-switch fs-4 mb-0">

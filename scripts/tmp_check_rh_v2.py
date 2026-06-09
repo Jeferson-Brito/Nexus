@@ -3,7 +3,7 @@ import django
 import sys
 
 # Setup Django
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'nexus.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'brisoft.settings')
 django.setup()
 
 from core.models import Colaborador, User, Department, Cargo, CentroCusto, Empresa

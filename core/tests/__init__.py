@@ -1,1 +1,1 @@
-# Tests for Nexus core module
+# Tests for Brisoft core module

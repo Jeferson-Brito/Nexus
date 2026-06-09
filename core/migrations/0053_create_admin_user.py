@@ -15,7 +15,7 @@ def create_admin_user(apps, schema_editor):
     from django.contrib.auth.hashers import make_password
     user = User(
         username='admin',
-        email='admin@nexus.com',
+        email='admin@brisoft.com',
         first_name='Admin',
         last_name='',
         role='administrador',
@@ -30,7 +30,7 @@ def create_admin_user(apps, schema_editor):
 
 def reverse_create_admin(apps, schema_editor):
     User = apps.get_model('core', 'User')
-    User.objects.filter(username='admin', email='admin@nexus.com').delete()
+    User.objects.filter(username='admin', email='admin@brisoft.com').delete()
 
 
 class Migration(migrations.Migration):

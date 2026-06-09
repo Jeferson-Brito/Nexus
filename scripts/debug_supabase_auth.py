@@ -3,7 +3,7 @@ import django
 import sys
 
 # Setup Django
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'nexus.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'brisoft.settings')
 sys.path.append(os.getcwd())
 django.setup()
 

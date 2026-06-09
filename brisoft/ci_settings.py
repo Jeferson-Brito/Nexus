@@ -3,7 +3,7 @@ Settings para CI (GitHub Actions) e testes locais.
 
 Usa SQLite em memória — sem precisar de CockroachDB/Supabase.
 Rodar com:
-    python manage.py test core.tests --settings=nexus.ci_settings -v 2
+    python manage.py test core.tests --settings=brisoft.ci_settings -v 2
 """
 from .settings import *  # Herda tudo do settings principal
 

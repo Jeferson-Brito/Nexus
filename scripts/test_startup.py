@@ -4,7 +4,7 @@ import sys
 import time
 
 print("Checking environment...")
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'nexus.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'brisoft.settings')
 
 try:
     print("Setting up Django...")

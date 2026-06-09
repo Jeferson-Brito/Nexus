@@ -1,10 +1,10 @@
 @echo off
 chcp 65001 >nul
-title Nexus - Sistema de Gestão de Reclamações
+title Brisoft - Sistema de Gestão de Reclamações
 color 0A
 
 echo ========================================
-echo   Nexus - Iniciando o Projeto
+echo   Brisoft - Iniciando o Projeto
 echo ========================================
 echo.
 

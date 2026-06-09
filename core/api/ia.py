@@ -1,5 +1,5 @@
 """
-API Views de IA — Nexus
+API Views de IA — Brisoft
 Endpoints para o chatbot da KB e classificação automática de reclamações.
 """
 import json
@@ -8,7 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
-from ..models import ArtigoBaseConhecimento, Complaint, NexusIABase, Department
+from ..models import ArtigoBaseConhecimento, Complaint, BrisoftIABase, Department
 from ..services.ia_service import chatbot_kb, classificar_reclamacao
 from django_ratelimit.decorators import ratelimit
 
@@ -38,12 +38,12 @@ def api_chatbot_kb(request):
             # Administrador tem contexto de todos os departamentos (ou do selecionado)
             selected_dept_id = request.session.get('selected_department_id')
             if selected_dept_id:
-                queryset = NexusIABase.objects.filter(department_id=selected_dept_id)
+                queryset = BrisoftIABase.objects.filter(department_id=selected_dept_id)
             else:
-                queryset = NexusIABase.objects.all()
+                queryset = BrisoftIABase.objects.all()
         else:
             # Demais usuários (analistas/gestores) só veem a base do próprio departamento
-            queryset = NexusIABase.objects.filter(department=request.user.department)
+            queryset = BrisoftIABase.objects.filter(department=request.user.department)
 
         artigos = [
             {'titulo': a.titulo, 'conteudo': a.conteudo}
@@ -233,13 +233,13 @@ def api_classificar_lote(request):
 
 
 # -------------------------------------------------------------
-# APIs CRUD para a Base Nexus IA
+# APIs CRUD para a Base Brisoft IA
 # -------------------------------------------------------------
 
 @login_required
 @require_http_methods(["GET"])
 def api_ia_base_list(request):
-    """Lista artigos da base Nexus IA."""
+    """Lista artigos da base Brisoft IA."""
     if not (request.user.is_gestor() or request.user.is_administrador()):
         return JsonResponse({'erro': 'Acesso negado.'}, status=403)
 
@@ -248,11 +248,11 @@ def api_ia_base_list(request):
         
         if request.user.is_administrador():
             if dept_id:
-                qs = NexusIABase.objects.filter(department_id=dept_id)
+                qs = BrisoftIABase.objects.filter(department_id=dept_id)
             else:
-                qs = NexusIABase.objects.all()
+                qs = BrisoftIABase.objects.all()
         else:
-            qs = NexusIABase.objects.filter(department=request.user.department)
+            qs = BrisoftIABase.objects.filter(department=request.user.department)
 
         qs = qs.select_related('department').order_by('-created_at')
         
@@ -298,7 +298,7 @@ def api_ia_base_create(request):
         else:
             department = request.user.department
 
-        artigo = NexusIABase.objects.create(
+        artigo = BrisoftIABase.objects.create(
             department=department,
             titulo=titulo,
             conteudo=conteudo
@@ -319,7 +319,7 @@ def api_ia_base_update(request, pk):
         return JsonResponse({'erro': 'Acesso negado.'}, status=403)
 
     try:
-        artigo = NexusIABase.objects.get(pk=pk)
+        artigo = BrisoftIABase.objects.get(pk=pk)
         
         # Validar permissão (gestor só edita do seu dept)
         if not request.user.is_administrador() and artigo.department != request.user.department:
@@ -342,7 +342,7 @@ def api_ia_base_update(request, pk):
         artigo.save()
 
         return JsonResponse({'status': 'ok'})
-    except NexusIABase.DoesNotExist:
+    except BrisoftIABase.DoesNotExist:
         return JsonResponse({'erro': 'Artigo não encontrado.'}, status=404)
     except Exception as e:
         return JsonResponse({'erro': str(e)}, status=500)
@@ -356,13 +356,13 @@ def api_ia_base_delete(request, pk):
         return JsonResponse({'erro': 'Acesso negado.'}, status=403)
 
     try:
-        artigo = NexusIABase.objects.get(pk=pk)
+        artigo = BrisoftIABase.objects.get(pk=pk)
         if not request.user.is_administrador() and artigo.department != request.user.department:
             return JsonResponse({'erro': 'Acesso negado.'}, status=403)
             
         artigo.delete()
         return JsonResponse({'status': 'ok'})
-    except NexusIABase.DoesNotExist:
+    except BrisoftIABase.DoesNotExist:
         return JsonResponse({'erro': 'Artigo não encontrado.'}, status=404)
     except Exception as e:
         return JsonResponse({'erro': str(e)}, status=500)

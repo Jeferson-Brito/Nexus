@@ -4,11 +4,11 @@ import django
 from django.conf import settings
 from django.core.management import call_command
 
-project_root = r"c:\Users\jeffe\Documents\Sites\Nexus"
+project_root = r"c:\Users\jeffe\Documents\Sites\Brisoft"
 if project_root not in sys.path:
     sys.path.append(project_root)
 
-from nexus import settings as app_settings
+from brisoft import settings as app_settings
 
 if not settings.configured:
     settings_dict = {}

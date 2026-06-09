@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ponto - Nexus</title>
+    <title>Ponto - Brisoft</title>
     {% load static %}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -297,14 +297,14 @@
 
 <!-- ══ SCREENSAVER ══ -->
 <div id="screen-idle">
-    <!-- Help info (nexus-style) -->
+    <!-- Help info (brisoft-style) -->
     <div style="position: absolute; top: 20px; right: 20px; max-width: 250px; z-index: 100; text-align: right;">
         <p style="font-size: 0.75rem; color: var(--muted); background: rgba(255,255,255,0.8); padding: 8px 12px; border-radius: 12px; border: 1px solid var(--border);">
             <i class="fa-solid fa-circle-info" style="color: var(--blue); margin-right: 4px;"></i>
             Terminal de registro de ponto. Clique em Iniciar para começar.
         </p>
     </div>
-    <img src="{% static 'img/logo_nexus_horizontal.png' %}" alt="Nexus" class="idle-logo">
+    <img src="{% static 'img/logo_brisoft_horizontal.png' %}" alt="Brisoft" class="idle-logo">
     <div id="idle-hora">00:00:00</div>
     <div id="idle-data">--</div>
     <button id="btn-iniciar" onclick="abrirCPF()">
@@ -314,7 +314,7 @@
     {% if not is_tablet %}
     <a href="/" style="margin-top: 20px; color: var(--muted); text-decoration: none; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; transition: color 0.2s;" onmouseover="this.style.color='var(--blue)'" onmouseout="this.style.color='var(--muted)'">
         <i class="fa-solid fa-arrow-left"></i>
-        <span>Voltar ao Nexus</span>
+        <span>Voltar ao Brisoft</span>
     </a>
     {% endif %}
 </div>
@@ -328,7 +328,7 @@
             <span>Voltar ao Início</span>
         </a>
         {% endif %}
-        <img src="{% static 'img/logo_nexus_horizontal.png' %}" alt="Nexus" class="topbar-logo">
+        <img src="{% static 'img/logo_brisoft_horizontal.png' %}" alt="Brisoft" class="topbar-logo">
     </div>
     <span class="topbar-clock" id="topbar-hora">00:00:00</span>
 </div>

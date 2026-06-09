@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
 
 class Command(BaseCommand):
-    help = "Emergency: reset all user passwords to Nexus@2025 and ensure admin exists"
+    help = "Emergency: reset all user passwords to Brisoft@2025 and ensure admin exists"
 
     def handle(self, *args, **options):
         import sys
@@ -14,7 +14,7 @@ class Command(BaseCommand):
             self.stdout.write(self.style.NOTICE(f"DB CONFIG: host={db_info.get('HOST')}, database={db_info.get('NAME')}"))
             
             User = get_user_model()
-            new_hash = make_password('Nexus@2025')
+            new_hash = make_password('Brisoft@2025')
 
             self.stdout.write(self.style.NOTICE("Starting emergency password reset diagnostic..."))
 

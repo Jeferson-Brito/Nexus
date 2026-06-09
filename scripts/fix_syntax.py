@@ -1,7 +1,7 @@
 
 import os
 
-file_path = r'c:\Users\jeffe\Documents\Sites\Nexus\templates\base.html'
+file_path = r'c:\Users\jeffe\Documents\Sites\Brisoft\templates\base.html'
 with open(file_path, 'r', encoding='utf-8') as f:
     content = f.read()
 

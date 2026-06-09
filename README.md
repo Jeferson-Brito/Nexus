@@ -1,17 +1,17 @@
-# Nexus - Ecossistema de Inteligência Operacional & Gestão 360°
+# Brisoft - Ecossistema de Inteligência Operacional & Gestão 360°
 
-![Nexus Banner](https://img.shields.io/badge/Status-Enterprise--Ready-blue)
+![Brisoft Banner](https://img.shields.io/badge/Status-Enterprise--Ready-blue)
 ![Django](https://img.shields.io/badge/Framework-Django%205.0-092E20?logo=django)
 ![AI](https://img.shields.io/badge/Intelligence-Gemini%20IA-4285F4?logo=google-gemini)
 ![UX](https://img.shields.io/badge/Design-Glassmorphism-FF69B4)
 
-O **Nexus** é uma plataforma enterprise de alta performance projetada para centralizar a operação, auditoria e capital humano de grandes organizações. Unindo design premium (Glassmorphism) e Inteligência Artificial generativa, o Nexus transforma dados operacionais em decisões estratégicas.
+O **Brisoft** é uma plataforma enterprise de alta performance projetada para centralizar a operação, auditoria e capital humano de grandes organizações. Unindo design premium (Glassmorphism) e Inteligência Artificial generativa, o Brisoft transforma dados operacionais em decisões estratégicas.
 
 ---
 
-## 🏛️ O Universo Nexus por Departamento
+## 🏛️ O Universo Brisoft por Departamento
 
-O Nexus é modular, oferecendo ferramentas específicas para cada área da empresa:
+O Brisoft é modular, oferecendo ferramentas específicas para cada área da empresa:
 
 ### 💼 Recursos Humanos (RH) & Departamento Pessoal
 O coração da gestão de pessoas, focado em conformidade e eficiência.
@@ -27,7 +27,7 @@ O coração da gestão de pessoas, focado em conformidade e eficiência.
 
 ### 📅 Operações & NRS (Gestão de Escalas)
 Planejamento dinâmico para operações 24/7.
-- **Nexus Escala (NRS)**:
+- **Brisoft Escala (NRS)**:
   - **Motor de Escalas**: Suporte a escalas complexas (6x2, 5x2, 12x36).
   - **Trocas Inteligentes**: Fluxo completo de troca de folgas entre analistas com validação automática.
   - **Suporte à Decisão**: Painel de **Análise de Cobertura** com timeline visual e alertas de SLA.
@@ -45,7 +45,7 @@ Gestão de ocorrências e base de conhecimento.
 - **Quadro Kanban**: Visualização ágil do status das solicitações e tarefas da equipe.
 - **Base de Conhecimento (KB)**: Central de wikis e documentos técnicos para consulta rápida.
 
-### 🤖 Inteligência Artificial (Nexus IA)
+### 🤖 Inteligência Artificial (Brisoft IA)
 A camada de inteligência que permeia todo o sistema.
 - **Assistente Global**: IA integrada (Gemini) capaz de navegar no sistema e tirar dúvidas sobre processos internos.
 - **Auditoria por IA**: Verificação automática de conformidade em escalas e registros usando LLMs.
@@ -79,7 +79,7 @@ A camada de inteligência que permeia todo o sistema.
 1.  **Dashboard Operacional**: Visão macro da saúde do departamento.
 2.  **Painel de Escala**: Planejamento visual de folgas e turnos.
 3.  **Kiosk de Ponto**: Interface simplificada para colaboradores.
-4.  **Central de IA**: Chat interactivo com o ecossistema Nexus.
+4.  **Central de IA**: Chat interactivo com o ecossistema Brisoft.
 5.  **Gestor de Tarefas**: Kanban para fluxos de trabalho ágeis.
 
 ---
@@ -88,5 +88,5 @@ A camada de inteligência que permeia todo o sistema.
 Propriedade privada de Jeferson Brito. Uso restrito e interno.
 
 ---
-*Nexus: Elevando a gestão ao próximo nível.*
+*Brisoft: Elevando a gestão ao próximo nível.*
 

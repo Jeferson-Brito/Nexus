@@ -1,7 +1,7 @@
 import os
 import re
 
-base_dir = r"c:\Users\Dell G15\Documents\Sites\Nexus"
+base_dir = r"c:\Users\Dell G15\Documents\Sites\Brisoft"
 views_dir = os.path.join(base_dir, 'core', 'views')
 api_dir = os.path.join(base_dir, 'core', 'api')
 templates_dir = os.path.join(base_dir, 'templates')

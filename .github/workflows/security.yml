@@ -30,7 +30,7 @@ jobs:
       run: pip-audit -r requirements.txt || echo "Aviso: Vulnerabilidades encontradas."
 
     - name: Static Security Analysis (Bandit)
-      run: bandit -r core/ nexus/ -c bandit.yml || echo "Aviso: Checagem estática encontrou possíveis issues."
+      run: bandit -r core/ brisoft/ -c bandit.yml || echo "Aviso: Checagem estática encontrou possíveis issues."
 
     - name: Linting (Flake8)
       run: flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics || true

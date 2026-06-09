@@ -15,5 +15,5 @@ def api_ping(request):
     return JsonResponse({
         'status': 'ok', 
         'timestamp': timezone.now().isoformat(),
-        'service': 'Nexus'
+        'service': 'Brisoft'
     })

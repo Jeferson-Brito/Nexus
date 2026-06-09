@@ -13,7 +13,7 @@ Métodos disponíveis relevantes:
 
 LIMITAÇÃO: O webhook atual NÃO permite listar sessões encerradas em lote.
 Para isso, o gestor Bitrix24 precisa adicionar o escopo 'im' ao webhook
-OU configurar o evento OnSessionFinish para enviar os IDs ao Nexus.
+OU configurar o evento OnSessionFinish para enviar os IDs ao Brisoft.
 
 ARQUITETURA ATUAL:
   - get_sessoes_dia_anterior(): tenta via imopenlines.operator.pause.gethistory
@@ -123,7 +123,7 @@ def get_sessoes_dia_anterior(data: date = None, limit: int = 200) -> list:
     Para habilitar essa funcionalidade, o gestor Bitrix24 deve:
     1. Adicionar o escopo 'im' ao webhook, OU
     2. Criar um webhook de evento (OnSessionFinish) que envie os IDs das sessões
-       para o endpoint /api/auditoria/bitrix/webhook/ do Nexus em tempo real.
+       para o endpoint /api/auditoria/bitrix/webhook/ do Brisoft em tempo real.
 
     Por enquanto, retorna lista vazia com log de orientação.
     """
@@ -230,9 +230,9 @@ def formatar_transcript(mensagens: list) -> str:
     return "\n".join(linhas) if linhas else "[Sem mensagens de texto]"
 
 
-def encontrar_analista_nexus(email_analista: str):
+def encontrar_analista_brisoft(email_analista: str):
     """
-    Encontra o User do Nexus correspondente ao e-mail do operador do Bitrix24.
+    Encontra o User do Brisoft correspondente ao e-mail do operador do Bitrix24.
     """
     if not email_analista:
         return None

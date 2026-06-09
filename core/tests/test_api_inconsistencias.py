@@ -35,14 +35,14 @@ class BaseIntegracaoTestCase(TestCase):
         cls.user = User.objects.create_user(
             username='test_admin',
             password='testpass123',
-            email='admin@nexus.test',
+            email='admin@brisoft.test',
         )
         cls.user.profile_type = 'administrador'
         cls.user.save()
 
         # Estrutura organizacional mínima
         cls.department = Department.objects.create(name='TI')
-        cls.empresa = Empresa.objects.create(nome='Nexus Testes LTDA')
+        cls.empresa = Empresa.objects.create(nome='Brisoft Testes LTDA')
 
         # Horário padrão: Seg-Sex 08:00-12:00 / 13:00-17:00
         cls.horario = Horario.objects.create(

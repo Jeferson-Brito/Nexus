@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='NexusIABase',
+            name='BrisoftIABase',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('titulo', models.CharField(max_length=200, verbose_name='Título')),
@@ -22,8 +22,8 @@ class Migration(migrations.Migration):
                 ('department', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='ia_articles', to='core.department', verbose_name='Departamento')),
             ],
             options={
-                'verbose_name': 'Artigo da Base Nexus IA',
-                'verbose_name_plural': 'Artigos da Base Nexus IA',
+                'verbose_name': 'Artigo da Base Brisoft IA',
+                'verbose_name_plural': 'Artigos da Base Brisoft IA',
                 'ordering': ['-created_at'],
             },
         ),

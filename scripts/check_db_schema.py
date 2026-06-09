@@ -2,7 +2,7 @@ import os
 import django
 from django.db import connection
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'nexus.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'brisoft.settings')
 django.setup()
 
 def check_db():

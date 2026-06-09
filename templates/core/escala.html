@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Escala - Nexus{% endblock %}
+{% block title %}Escala - Brisoft{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -2784,14 +2784,14 @@
                 <i class="fa-solid fa-robot"></i>
             </div>
             <div>
-                <h2 style="color: white; margin: 0; font-size: 1.6rem; font-weight: 700; letter-spacing: -0.5px;">Auditoria Inteligente Nexus</h2>
+                <h2 style="color: white; margin: 0; font-size: 1.6rem; font-weight: 700; letter-spacing: -0.5px;">Auditoria Inteligente Brisoft</h2>
                 <p style="color: #a5b4fc; margin: 6px 0 0 0; font-size: 0.95rem;">Análise de conformidade e sugestões da IA com base nas leis trabalhistas</p>
             </div>
         </div>
         <div class="modal-body-escala" style="background: white; padding: 0;">
             <div id="aiAuditLoading" class="text-center" style="padding: 80px 20px;">
                 <div class="spinner-border" style="color: #6366f1; width: 3rem; height: 3rem;" role="status"></div>
-                <p class="mt-4" style="color: #64748b; font-weight: 500; font-size: 1.1rem;">Aguarde, a Nexus IA está analisando sua escala...</p>
+                <p class="mt-4" style="color: #64748b; font-weight: 500; font-size: 1.1rem;">Aguarde, a Brisoft IA está analisando sua escala...</p>
             </div>
             <div id="aiAuditContent" class="markdown-body" style="display: none; padding: 40px 50px; font-size: 1rem; line-height: 1.8; color: #334155; max-height: 60vh; overflow-y: auto;">
                 <!-- Preenchido via JS -->
@@ -6168,7 +6168,7 @@
             }
             
             const mesRef = document.getElementById('mesInput').value || 'auditoria';
-            pdf.save(`Auditoria-IA-Nexus-${mesRef}.pdf`);
+            pdf.save(`Auditoria-IA-Brisoft-${mesRef}.pdf`);
         } catch (error) {
             console.error('Erro ao gerar PDF da auditoria:', error);
             showToast('Erro ao gerar o arquivo PDF.', 'error');

@@ -1,5 +1,5 @@
 """
-API REST para o Sistema de Controle de Ponto do Nexus.
+API REST para o Sistema de Controle de Ponto do Brisoft.
 
 Endpoints:
   POST /api/ponto/buscar-colaborador/   → Busca colaborador pelos 6 primeiros dígitos do CPF

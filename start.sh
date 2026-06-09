@@ -27,4 +27,4 @@ exec daphne \
     -b 0.0.0.0 \
     -p 8000 \
     --proxy-headers \
-    nexus.asgi:application
+    brisoft.asgi:application

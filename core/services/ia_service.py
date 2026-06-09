@@ -1,5 +1,5 @@
 """
-Serviço de Inteligência Artificial — Nexus
+Serviço de Inteligência Artificial — Brisoft
 Integração com Google Gemini (SDK google-genai) para chatbot da KB,
 classificação de reclamações e auditoria autônoma de atendimentos.
 """
@@ -56,10 +56,10 @@ def chatbot_kb(pergunta: str, artigos: list, user_context: dict = None, historic
             regra_historico = "6. NÃO repita saudações se já houver histórico. Responda direto."
             texto_historico = "HISTÓRICO RECENTE DA CONVERSA:\n"
             for msg in historico[-10:]:
-                role_name = "Usuário" if msg.get('role') == 'user' else "Nexus IA"
+                role_name = "Usuário" if msg.get('role') == 'user' else "Brisoft IA"
                 texto_historico += f"[{role_name}]: {msg.get('content')}\n\n"
 
-        prompt = f"""Você é o Nexus IA, um assistente virtual proativo e empático.
+        prompt = f"""Você é o Brisoft IA, um assistente virtual proativo e empático.
 {perfil_usuario}
 
 REGRAS DE OURO DA COMUNICAÇÃO:
@@ -136,7 +136,7 @@ SUA RESPOSTA:"""
             )
         except Exception as e:
             if any(err in str(e) for err in ["503", "UNAVAILABLE", "429", "RESOURCE_EXHAUSTED"]):
-                logger.warning("[Nexus IA] Fallback para gemini-1.5-flash...")
+                logger.warning("[Brisoft IA] Fallback para gemini-1.5-flash...")
                 response = client.models.generate_content(
                     model='gemini-1.5-flash',
                     contents=prompt,
@@ -178,10 +178,10 @@ SUA RESPOSTA:"""
         return {"resposta": response.text.strip()}
 
     except ValueError as e:
-        logger.error(f"[Nexus IA] Configuração inválida: {e}")
+        logger.error(f"[Brisoft IA] Configuração inválida: {e}")
         return {"resposta": "⚠️ O assistente de IA não está configurado. Entre em contato com o administrador do sistema."}
     except Exception as e:
-        logger.error(f"[Nexus IA] Erro no chatbot: {type(e).__name__}: {e}")
+        logger.error(f"[Brisoft IA] Erro no chatbot: {type(e).__name__}: {e}")
         return {"resposta": f"⚠️ Ocorreu um erro ao processar sua pergunta ({type(e).__name__}). Tente novamente em instantes."}
 
 
@@ -206,7 +206,7 @@ RESPONDA APENAS COM O JSON:"""
             response = client.models.generate_content(model='gemini-2.5-flash', contents=prompt)
         except Exception as e:
             if any(err in str(e) for err in ["503", "UNAVAILABLE", "429", "RESOURCE_EXHAUSTED"]):
-                logger.warning("[Nexus IA] Fallback para gemini-1.5-flash em classificar_reclamacao...")
+                logger.warning("[Brisoft IA] Fallback para gemini-1.5-flash em classificar_reclamacao...")
                 response = client.models.generate_content(model='gemini-1.5-flash', contents=prompt)
             else:
                 raise e
@@ -226,10 +226,10 @@ RESPONDA APENAS COM O JSON:"""
         return {'urgencia': urgencia, 'sentimento': sentimento}
 
     except ValueError as e:
-        logger.error(f"[Nexus IA] Configuração inválida: {e}")
+        logger.error(f"[Brisoft IA] Configuração inválida: {e}")
         return {'urgencia': 'media', 'sentimento': 'neutro', 'erro': 'api_key_missing'}
     except Exception as e:
-        logger.error(f"[Nexus IA] Erro na classificação: {type(e).__name__}: {e}")
+        logger.error(f"[Brisoft IA] Erro na classificação: {type(e).__name__}: {e}")
         return {'urgencia': 'media', 'sentimento': 'neutro', 'erro': str(e)}
 
 
@@ -256,7 +256,7 @@ def gerar_avaliacao_auditoria(analista_nome: str, historico_auditorias: list, me
         else:
             instrucao_destinatario = f"gere um relatório de feedback estruturado sobre o analista '{analista_nome}' para o GESTOR repassar ao Analista no One-on-One. Use a terceira pessoa."
 
-        prompt = f"""Você é o Nexus IA, atuando como um Mentor de Qualidade e Desempenho Senior.
+        prompt = f"""Você é o Brisoft IA, atuando como um Mentor de Qualidade e Desempenho Senior.
 Sua tarefa é analisar os dados de auditoria recentes e {instrucao_destinatario}
 
 DADOS DA ANÁLISE:
@@ -278,17 +278,17 @@ REGRAS DE RESPOSTA:
             response = client.models.generate_content(model='gemini-2.5-flash', contents=prompt)
         except Exception as e:
             if any(err in str(e) for err in ["503", "UNAVAILABLE", "429", "RESOURCE_EXHAUSTED"]):
-                logger.warning("[Nexus IA] Fallback para gemini-1.5-flash em gerar_avaliacao_auditoria...")
+                logger.warning("[Brisoft IA] Fallback para gemini-1.5-flash em gerar_avaliacao_auditoria...")
                 response = client.models.generate_content(model='gemini-1.5-flash', contents=prompt)
             else:
                 raise e
         return {"resposta": response.text.strip()}
 
     except ValueError as e:
-        logger.error(f"[Nexus IA] Configuração inválida: {e}")
+        logger.error(f"[Brisoft IA] Configuração inválida: {e}")
         return {"resposta": "⚠️ A integração com a IA não está configurada."}
     except Exception as e:
-        logger.error(f"[Nexus IA] Erro ao gerar avaliação: {type(e).__name__}: {e}")
+        logger.error(f"[Brisoft IA] Erro ao gerar avaliação: {type(e).__name__}: {e}")
         return {"resposta": "⚠️ Ocorreu um erro ao processar a avaliação com a IA."}
 
 
@@ -323,7 +323,7 @@ def auditar_chat_automatico(
 
         tipo_label = "Cliente" if tipo_atendimento == 'cliente' else "Franqueado"
 
-        prompt = f"""Você é o Nexus IA Auditor, um sistema especialista em avaliação de qualidade de atendimento.
+        prompt = f"""Você é o Brisoft IA Auditor, um sistema especialista em avaliação de qualidade de atendimento.
 
 Analise o transcript de um atendimento do tipo **{tipo_label}** realizado pelo analista **{analista_nome}** e avalie os 9 critérios de qualidade.
 
@@ -381,7 +381,7 @@ RESPONDA APENAS COM O JSON:"""
             response = client.models.generate_content(model='gemini-2.5-flash', contents=prompt)
         except Exception as e:
             if any(err in str(e) for err in ["503", "UNAVAILABLE", "429", "RESOURCE_EXHAUSTED"]):
-                logger.warning("[Nexus IA Auditor] Fallback para gemini-1.5-flash...")
+                logger.warning("[Brisoft IA Auditor] Fallback para gemini-1.5-flash...")
                 response = client.models.generate_content(model='gemini-1.5-flash', contents=prompt)
             else:
                 raise e
@@ -417,13 +417,13 @@ RESPONDA APENAS COM O JSON:"""
         return resultado
 
     except json.JSONDecodeError as e:
-        logger.error(f"[Nexus IA Auditor] JSON inválido: {e}")
+        logger.error(f"[Brisoft IA Auditor] JSON inválido: {e}")
         return {'sucesso': False, 'erro': f'JSON inválido: {e}'}
     except ValueError as e:
-        logger.error(f"[Nexus IA Auditor] Config inválida: {e}")
+        logger.error(f"[Brisoft IA Auditor] Config inválida: {e}")
         return {'sucesso': False, 'erro': str(e)}
     except Exception as e:
-        logger.error(f"[Nexus IA Auditor] Erro: {type(e).__name__}: {e}")
+        logger.error(f"[Brisoft IA Auditor] Erro: {type(e).__name__}: {e}")
         return {'sucesso': False, 'erro': str(e)}
 
 def auditar_escala_ia(escala_data: dict, regras_empresa: str = "") -> dict:
@@ -464,7 +464,7 @@ SUA ANÁLISE:"""
             response = client.models.generate_content(model='gemini-2.5-flash', contents=prompt)
         except Exception as e:
             if any(err in str(e) for err in ["503", "UNAVAILABLE", "429", "RESOURCE_EXHAUSTED"]):
-                logger.warning("[Nexus IA] Fallback para gemini-1.5-flash em auditar_escala_ia...")
+                logger.warning("[Brisoft IA] Fallback para gemini-1.5-flash em auditar_escala_ia...")
                 response = client.models.generate_content(model='gemini-1.5-flash', contents=prompt)
             else:
                 raise e
@@ -473,5 +473,5 @@ SUA ANÁLISE:"""
     except Exception as e:
         if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
             return {"resposta": "⚠️ O limite de uso gratuito da IA foi atingido. Por favor, **aguarde cerca de 30 a 60 segundos** e tente novamente."}
-        logger.error(f"[Nexus IA] Erro ao auditar escala: {type(e).__name__}: {e}")
+        logger.error(f"[Brisoft IA] Erro ao auditar escala: {type(e).__name__}: {e}")
         return {"resposta": "⚠️ Ocorreu um erro ao processar a auditoria da escala com a IA."}

@@ -1,5 +1,5 @@
 """
-Views para gerenciamento da Base Nexus IA e Base de Auditoria IA
+Views para gerenciamento da Base Brisoft IA e Base de Auditoria IA
 """
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
@@ -10,7 +10,7 @@ from ..models import Department
 def configuracao_ia_view(request):
     """
     Painel Unificado de Configuração da IA e Sistema.
-    Consolida: Base Nexus IA, Base de Auditoria IA, Parâmetros e Exportação.
+    Consolida: Base Brisoft IA, Base de Auditoria IA, Parâmetros e Exportação.
     """
     if not (request.user.is_gestor() or request.user.is_administrador()):
         messages.error(request, "Você não tem permissão para acessar esta área.")

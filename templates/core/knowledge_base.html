@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Suporte - Nexus{% endblock %}
+{% block title %}Suporte - Brisoft{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/knowledge_base.css' %}">
@@ -28,7 +28,7 @@
                             <i class="bi bi-search"></i> Buscar Manuais
                         </button>
                         <button class="kb-tab-pill" id="tab-btn-copilot" onclick="toggleKBMode('copilot')">
-                            <i class="bi bi-robot animate__animated animate__pulse animate__infinite"></i> Copilot Nexus IA
+                            <i class="bi bi-robot animate__animated animate__pulse animate__infinite"></i> Copilot Brisoft IA
                         </button>
                     </div>
                 </div>
@@ -152,12 +152,12 @@
                     <i class="bi bi-geo-alt"></i>
                 </div>
                 <h3>Localização das Lojas</h3>
-                <p>Mapa e lista completa de todas as franquias e filiais da rede Nexus.</p>
+                <p>Mapa e lista completa de todas as franquias e filiais da rede Brisoft.</p>
                 <div class="kb-card-count">Acessar</div>
             </div>
         </div>
 
-        <!-- Chat Panel do Copilot Nexus IA (View: 'copilot' - Inicialmente oculto) -->
+        <!-- Chat Panel do Copilot Brisoft IA (View: 'copilot' - Inicialmente oculto) -->
         <div id="view-copilot" class="kb-copilot-container d-none mb-4">
             <div class="kb-copilot-header">
                 <div class="kb-copilot-title-wrapper">
@@ -165,7 +165,7 @@
                         <i class="bi bi-robot"></i>
                     </div>
                     <div>
-                        <h4 class="kb-copilot-title">Copilot Nexus IA</h4>
+                        <h4 class="kb-copilot-title">Copilot Brisoft IA</h4>
                         <span class="kb-copilot-badge">Online</span>
                     </div>
                 </div>
@@ -177,7 +177,7 @@
                 <div class="kb-chat-msg system">
                     <div class="kb-chat-bubble">
                         <p class="mb-0">
-                            Olá! Eu sou o <strong>Nexus IA Copilot</strong>, seu mentor de operações e suporte integrado.
+                            Olá! Eu sou o <strong>Brisoft IA Copilot</strong>, seu mentor de operações e suporte integrado.
                             <br><br>
                             Posso te ajudar a encontrar qualquer procedimento na base de conhecimento ou auxiliar com comandos do sistema! 
                             <br><br>
@@ -713,7 +713,7 @@
         modal.classList.remove('d-none');
     }
 
-    // --- Nexus IA Copilot Interactive Chat ---
+    // --- Brisoft IA Copilot Interactive Chat ---
     let chatHistory = [];
 
     window.askCopilotDirectly = function (question) {

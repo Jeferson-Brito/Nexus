@@ -33,7 +33,7 @@ jobs:
 
       - name: Rodar testes
         run: |
-          python manage.py test core.tests --settings=nexus.ci_settings -v 2
+          python manage.py test core.tests --settings=brisoft.ci_settings -v 2
 
       - name: Notificar resultado
         if: failure()

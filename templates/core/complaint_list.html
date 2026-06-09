@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Reclamações - Nexus{% endblock %}
+{% block title %}Reclamações - Brisoft{% endblock %}
 
 {% block content %}
 <div class="container-fluid py-4" style="max-width: 1400px; margin: 0 auto;">
@@ -233,7 +233,7 @@
                         <th>Loja</th>
                         <th>Status</th>
                         <th>Analista</th>
-                        <th>Nexus IA</th>
+                        <th>Brisoft IA</th>
                         <th>Data</th>
                         <th>Ações</th>
                     </tr>
@@ -620,7 +620,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// ========== NEXUS IA — CLASSIFICAÇÃO ==========
+// ========== BRISOFT IA — CLASSIFICAÇÃO ==========
 const IA_CSRF = document.cookie.split(';').find(c => c.trim().startsWith('csrftoken='))?.split('=')[1] || '';
 
 async function classificarLoteIA() {

@@ -7,7 +7,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Nexus{% endblock %}</title>
+    <title>{% block title %}Brisoft{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -852,8 +852,8 @@
 
         <!-- Logo -->
         <a href="{% url 'home' %}" class="d-flex align-items-center text-decoration-none me-4">
-            <img src="{% static 'img/logo_nexus_horizontal.png' %}" alt="Nexus" style="height: 60px;" class="logo-light">
-            <img src="{% static 'img/logo_nexus_horizontal_dark.png' %}" alt="Nexus" style="height: 60px;" class="logo-dark d-none">
+            <img src="{% static 'img/logo_brisoft_horizontal.png' %}" alt="Brisoft" style="height: 60px;" class="logo-light">
+            <img src="{% static 'img/logo_brisoft_horizontal_dark.png' %}" alt="Brisoft" style="height: 60px;" class="logo-dark d-none">
         </a>
 
         <div class="d-flex align-items-center gap-3 ms-auto">
@@ -883,7 +883,7 @@
                         style="background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%); border-radius: 16px 16px 0 0;">
                         <div>
                             <span class="fw-bold text-white d-block" style="font-size:0.95rem;">🔔 Novidades do Sistema</span>
-                            <small class="text-white" style="opacity:0.7; font-size:0.72rem;">Nexus Updates</small>
+                            <small class="text-white" style="opacity:0.7; font-size:0.72rem;">Brisoft Updates</small>
                         </div>
                         <span class="badge" style="background:rgba(255,255,255,0.2); color:#fff; font-size:0.7rem; border-radius:999px;">v1.0</span>
                     </li>
@@ -1504,8 +1504,8 @@
 
         function fetchSystemNotifications() {
             // Cache no sessionStorage com TTL de 5 minutos para evitar request a cada página
-            const CACHE_KEY = 'nexus_sysNotifs';
-            const CACHE_TIME_KEY = 'nexus_sysNotifsTime';
+            const CACHE_KEY = 'brisoft_sysNotifs';
+            const CACHE_TIME_KEY = 'brisoft_sysNotifsTime';
             const TTL_MS = 5 * 60 * 1000; // 5 minutos
 
             try {
@@ -1611,17 +1611,17 @@
 
 
 {% if user.is_authenticated %}
-    <!-- NEXUS IA — WIDGET CHATBOT FLUTUANTE -->
+    <!-- BRISOFT IA — WIDGET CHATBOT FLUTUANTE -->
 
     <!-- ============================================================ -->
-    <!-- NEXUS CÂMERA — Listener WebRTC (roda em todas as páginas)    -->
+    <!-- BRISOFT CÂMERA — Listener WebRTC (roda em todas as páginas)    -->
     <!-- Permite que o gestor solicite a câmera via WebSocket         -->
     <!-- ============================================================ -->
     <script>
     (function () {
         // Só executa para usuários autenticados
-        const NEXUS_USER_ID = {{ user.id }};
-        const NEXUS_USER_NAME = "{{ user.get_full_name|default:user.username|escapejs }}";
+        const BRISOFT_USER_ID = {{ user.id }};
+        const BRISOFT_USER_NAME = "{{ user.get_full_name|default:user.username|escapejs }}";
         let cameraWs = null;
         let localStream = null;
         let peerConn = null;
@@ -1738,14 +1738,14 @@
     </script>
 
 <style>
-    #nexus-ia-fab{position:fixed;bottom:28px;right:28px;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 24px rgba(99,102,241,.5);z-index:9998;color:#fff;font-size:22px;transition:transform .25s cubic-bezier(.34,1.56,.64,1),box-shadow .25s;}
-    #nexus-ia-fab:hover{transform:scale(1.1) translateY(-2px);box-shadow:0 8px 32px rgba(99,102,241,.65);}
-    #nexus-ia-fab .fab-badge{position:absolute;top:-3px;right:-3px;width:16px;height:16px;background:#22c55e;border-radius:50%;border:2px solid #fff;animation:ia-pulse 2s infinite;}
+    #brisoft-ia-fab{position:fixed;bottom:28px;right:28px;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 24px rgba(99,102,241,.5);z-index:9998;color:#fff;font-size:22px;transition:transform .25s cubic-bezier(.34,1.56,.64,1),box-shadow .25s;}
+    #brisoft-ia-fab:hover{transform:scale(1.1) translateY(-2px);box-shadow:0 8px 32px rgba(99,102,241,.65);}
+    #brisoft-ia-fab .fab-badge{position:absolute;top:-3px;right:-3px;width:16px;height:16px;background:#22c55e;border-radius:50%;border:2px solid #fff;animation:ia-pulse 2s infinite;}
     @keyframes ia-pulse{0%,100%{transform:scale(1);opacity:1;}50%{transform:scale(1.3);opacity:.7;}}
-    #nexus-ia-panel{position:fixed;bottom:100px;right:28px;width:380px;max-height:560px;border-radius:20px;overflow:hidden;display:flex;flex-direction:column;background:rgba(15,15,25,.93);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(99,102,241,.3);box-shadow:0 20px 60px rgba(0,0,0,.5);z-index:9999;transform:translateY(24px) scale(.95);opacity:0;pointer-events:none;transition:transform .3s cubic-bezier(.34,1.56,.64,1),opacity .25s ease;}
-    #nexus-ia-panel.ia-open{transform:translateY(0) scale(1);opacity:1;pointer-events:all;}
-    #nexus-ia-panel.ia-expanded{width:480px;height:70vh;max-height:800px;}
-    @media(max-width:480px){#nexus-ia-panel{width:calc(100vw - 24px);right:12px;bottom:88px;} #nexus-ia-panel.ia-expanded{width:calc(100vw - 24px);height:calc(100vh - 120px);}}
+    #brisoft-ia-panel{position:fixed;bottom:100px;right:28px;width:380px;max-height:560px;border-radius:20px;overflow:hidden;display:flex;flex-direction:column;background:rgba(15,15,25,.93);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(99,102,241,.3);box-shadow:0 20px 60px rgba(0,0,0,.5);z-index:9999;transform:translateY(24px) scale(.95);opacity:0;pointer-events:none;transition:transform .3s cubic-bezier(.34,1.56,.64,1),opacity .25s ease;}
+    #brisoft-ia-panel.ia-open{transform:translateY(0) scale(1);opacity:1;pointer-events:all;}
+    #brisoft-ia-panel.ia-expanded{width:480px;height:70vh;max-height:800px;}
+    @media(max-width:480px){#brisoft-ia-panel{width:calc(100vw - 24px);right:12px;bottom:88px;} #brisoft-ia-panel.ia-expanded{width:calc(100vw - 24px);height:calc(100vh - 120px);}}
     .ia-header{display:flex;align-items:center;gap:12px;padding:16px 18px;background:linear-gradient(135deg,rgba(99,102,241,.25),rgba(139,92,246,.15));border-bottom:1px solid rgba(255,255,255,.07);flex-shrink:0;}
     .ia-avatar{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff;flex-shrink:0;}
     .ia-header-info{flex:1;} .ia-header-title{color:#fff;font-size:14px;font-weight:700;margin:0;line-height:1.2;} .ia-header-sub{color:rgba(255,255,255,.45);font-size:11px;margin:0;}
@@ -1766,20 +1766,20 @@
     .ia-typing .dot:nth-child(2){animation-delay:.2s;} .ia-typing .dot:nth-child(3){animation-delay:.4s;}
     @keyframes typing-b{0%,80%,100%{transform:translateY(0);opacity:.4;}40%{transform:translateY(-6px);opacity:1;}}
     .ia-input-area{padding:12px 14px;border-top:1px solid rgba(255,255,255,.07);display:flex;gap:10px;align-items:flex-end;flex-shrink:0;}
-    #nexus-ia-input{flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;padding:10px 14px;font-size:13.5px;resize:none;outline:none;line-height:1.4;max-height:100px;min-height:40px;transition:border-color .2s;font-family:inherit;}
-    #nexus-ia-input::placeholder{color:rgba(255,255,255,.3);} #nexus-ia-input:focus{border-color:rgba(99,102,241,.6);}
+    #brisoft-ia-input{flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#fff;padding:10px 14px;font-size:13.5px;resize:none;outline:none;line-height:1.4;max-height:100px;min-height:40px;transition:border-color .2s;font-family:inherit;}
+    #brisoft-ia-input::placeholder{color:rgba(255,255,255,.3);} #brisoft-ia-input:focus{border-color:rgba(99,102,241,.6);}
     .ia-send-btn{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border:none;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .2s,opacity .2s;font-size:15px;flex-shrink:0;}
     .ia-send-btn:hover{transform:scale(1.08);} .ia-send-btn:disabled{opacity:.4;cursor:not-allowed;transform:none;}
     .ia-footer-hint{text-align:center;font-size:10.5px;color:rgba(255,255,255,.2);padding:0 14px 10px;flex-shrink:0;}
 </style>
-<button id="nexus-ia-fab" title="Assistente Nexus IA" onclick="toggleIAPanel()">
+<button id="brisoft-ia-fab" title="Assistente Brisoft IA" onclick="toggleIAPanel()">
     <i class="bi bi-stars"></i><span class="fab-badge"></span>
 </button>
-<div id="nexus-ia-panel" role="dialog" aria-label="Assistente Nexus IA">
+<div id="brisoft-ia-panel" role="dialog" aria-label="Assistente Brisoft IA">
     <div class="ia-header">
         <div class="ia-avatar"><i class="bi bi-stars"></i></div>
         <div class="ia-header-info">
-            <p class="ia-header-title">Nexus IA</p>
+            <p class="ia-header-title">Brisoft IA</p>
             <p class="ia-header-sub"><span class="ia-status-dot"></span>Assistente da Base de Conhecimento</p>
         </div>
         <div style="display:flex;gap:4px;">
@@ -1787,25 +1787,25 @@
             <button class="ia-close-btn" onclick="toggleIAPanel()"><i class="bi bi-x-lg"></i></button>
         </div>
     </div>
-    <div class="ia-messages" id="nexus-ia-messages">
+    <div class="ia-messages" id="brisoft-ia-messages">
         <div class="ia-msg ia-msg-bot">
             <div class="ia-msg-avatar"><i class="bi bi-stars"></i></div>
-            <div class="ia-bubble">Ola! Sou o <strong>Assistente Nexus IA</strong>.<br>Posso responder duvidas com base na Base de Conhecimento do seu departamento. Como posso ajudar?</div>
+            <div class="ia-bubble">Ola! Sou o <strong>Assistente Brisoft IA</strong>.<br>Posso responder duvidas com base na Base de Conhecimento do seu departamento. Como posso ajudar?</div>
         </div>
     </div>
     <div class="ia-input-area">
-        <textarea id="nexus-ia-input" placeholder="Digite sua pergunta..." rows="1" onkeydown="handleIAKey(event)" oninput="autoResizeIA(this)"></textarea>
-        <button class="ia-send-btn" id="nexus-ia-send" onclick="sendIAMessage()"><i class="bi bi-send-fill"></i></button>
+        <textarea id="brisoft-ia-input" placeholder="Digite sua pergunta..." rows="1" onkeydown="handleIAKey(event)" oninput="autoResizeIA(this)"></textarea>
+        <button class="ia-send-btn" id="brisoft-ia-send" onclick="sendIAMessage()"><i class="bi bi-send-fill"></i></button>
     </div>
-    <p class="ia-footer-hint">Respostas baseadas na Base de Conhecimento do Nexus</p>
+    <p class="ia-footer-hint">Respostas baseadas na Base de Conhecimento do Brisoft</p>
 </div>
 <script>
 (function(){
     var csrf=document.cookie.split(';').find(function(c){return c.trim().startsWith('csrftoken=');});
     csrf=csrf?csrf.split('=')[1]:'';
-    window.toggleIAPanel=function(){var p=document.getElementById('nexus-ia-panel');var o=p.classList.toggle('ia-open');if(o)setTimeout(function(){document.getElementById('nexus-ia-input').focus();},300);};
+    window.toggleIAPanel=function(){var p=document.getElementById('brisoft-ia-panel');var o=p.classList.toggle('ia-open');if(o)setTimeout(function(){document.getElementById('brisoft-ia-input').focus();},300);};
     window.resizeIAPanel=function(){
-        var p=document.getElementById('nexus-ia-panel');
+        var p=document.getElementById('brisoft-ia-panel');
         var btn=document.getElementById('ia-resize-btn').querySelector('i');
         p.classList.toggle('ia-expanded');
         if(p.classList.contains('ia-expanded')){
@@ -1820,7 +1820,7 @@
     window.autoResizeIA=function(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,100)+'px';};
     window.chatHistory = [];
     window.sendIAMessage=async function(){
-        var input=document.getElementById('nexus-ia-input');var btn=document.getElementById('nexus-ia-send');
+        var input=document.getElementById('brisoft-ia-input');var btn=document.getElementById('brisoft-ia-send');
         var q=input.value.trim();if(!q)return;
         appendMsg('user',q);input.value='';input.style.height='auto';btn.disabled=true;
         var tid=appendTyping();
@@ -1867,7 +1867,7 @@
         finally{btn.disabled=false;input.focus();}
     };
     function appendMsg(t,txt){
-        var c=document.getElementById('nexus-ia-messages');var d=document.createElement('div');d.className='ia-msg ia-msg-'+t;
+        var c=document.getElementById('brisoft-ia-messages');var d=document.createElement('div');d.className='ia-msg ia-msg-'+t;
         var h=txt.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
         
         if(t==='bot'){
@@ -1905,7 +1905,7 @@
         }
     }
     function appendTyping(){
-        var c=document.getElementById('nexus-ia-messages');var id='t'+Date.now();var d=document.createElement('div');
+        var c=document.getElementById('brisoft-ia-messages');var id='t'+Date.now();var d=document.createElement('div');
         d.className='ia-msg ia-msg-bot ia-typing';d.id=id;
         d.innerHTML='<div class="ia-msg-avatar"><i class="bi bi-stars"></i></div><div class="ia-bubble"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>';
         c.appendChild(d);c.scrollTop=c.scrollHeight;return id;

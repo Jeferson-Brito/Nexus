@@ -3,7 +3,7 @@ Script para corrigir o segundo bloco <script> no escala.html.
 Substitui referências diretas às variáveis do primeiro bloco por window._escala.
 """
 
-path = r'c:\Users\jeferson\Documents\Sites\Nexus\templates\core\escala.html'
+path = r'c:\Users\jeferson\Documents\Sites\Brisoft\templates\core\escala.html'
 
 with open(path, 'r', encoding='utf-8') as f:
     content = f.read()
