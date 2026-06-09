@@ -43,13 +43,13 @@ def departments(request):
     }
 
 from django.utils import timezone
-from .models import RegistroPonto
 
 def ponto_hoje_status(request):
     if not request.user.is_authenticated:
         return {}
     
     try:
+        from .models import RegistroPonto
         colaborador = request.user.colaborador_perfil
         if not colaborador:
             return {}
@@ -65,5 +65,5 @@ def ponto_hoje_status(request):
             'tipos_hoje': tipos_hoje,
             'ponto_habilitado': colaborador.ponto_web_permitido
         }
-    except AttributeError:
+    except Exception:
         return {}
