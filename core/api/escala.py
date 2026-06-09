@@ -810,21 +810,19 @@ def _get_ciclo_pos(data, ciclo, primeira_folga=None):
     """
     Retorna a posição (1-based) de `data` dentro do ciclo personalizado.
 
-    - ciclo_dias == 7  → ciclo puramente semanal, independente de âncora.
-                         1=DOM, 2=SEG, 3=TER, 4=QUA, 5=QUI, 6=SEX, 7=SÁB
-    - outros valores   → ciclo relativo ao domingo anterior à primeira_folga (legado).
+    Usa uma época fixa universal (2024-01-07, domingo) como âncora,
+    igual ao dia 1 do preview de configuração do ciclo.
+    Isso garante que a posição N no preview corresponda exatamente
+    ao mesmo dia real na escala, independente do analista.
     """
+    from datetime import date as date_type
+    EPOCH = date_type(2024, 1, 7)  # Domingo fixo — âncora universal
     ciclo_dias = ciclo.get('ciclo_dias', 31)
-    if ciclo_dias == 7:
-        # weekday(): 0=SEG...6=DOM → converte para 1=DOM...7=SÁB
-        weekday = data.weekday()  # 0=SEG, 6=DOM
-        return (weekday + 2) % 7 or 7  # 1=DOM, 2=SEG, ..., 7=SÁB
-    # Legado: calcula relativo à âncora
-    ancora = _get_custom_scale_anchor_date(primeira_folga)
-    if not ancora:
-        return 1
-    diff_days = (data - ancora).days
-    return (diff_days % ciclo_dias) + 1
+    if isinstance(data, date_type):
+        diff = (data - EPOCH).days
+    else:
+        diff = (data.date() - EPOCH).days
+    return (diff % ciclo_dias) + 1
 
 
 def _resolve_modelo_escala(analista, rascunho=None):

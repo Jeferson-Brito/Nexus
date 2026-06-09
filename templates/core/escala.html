@@ -4365,38 +4365,17 @@
                 const dataAtual = new Date(ano, mes, dia);
                 dataAtual.setHours(0, 0, 0, 0);
                 
-                let posicaoNoCiclo;
-                if (cicloDias === 7) {
-                    // Ciclo semanal: 1=DOM, 2=SEG, ..., 7=SÁB (independente de âncora)
-                    const dow = dataAtual.getDay(); // 0=DOM...6=SAB
-                    posicaoNoCiclo = dow === 0 ? 7 : dow; // 1=SEG...6=SAB, 7=DOM
-                    // Ajuste: queremos 1=DOM, 2=SEG..., 7=SAB para bater com o preview
-                    posicaoNoCiclo = dow + 1; // 1=DOM, 2=SEG, ..., 7=SAB
-                } else {
-                    // Legado: ciclo relativo à âncora (domingo anterior à data_primeira_folga)
-                    let dataPrimeiraFolga;
-                    if (analista.data_primeira_folga) {
-                        const [anoFolga, mesFolga, diaFolga] = analista.data_primeira_folga.split('-').map(Number);
-                        dataPrimeiraFolga = new Date(anoFolga, mesFolga - 1, diaFolga);
-                    } else {
-                        const hoje = new Date();
-                        hoje.setHours(0, 0, 0, 0);
-                        dataPrimeiraFolga = new Date(hoje);
-                        dataPrimeiraFolga.setDate(hoje.getDate() + (7 - hoje.getDay()));
-                    }
-                    dataPrimeiraFolga.setHours(0, 0, 0, 0);
-                    // Normalizar para o domingo anterior (âncora)
-                    dataPrimeiraFolga.setDate(dataPrimeiraFolga.getDate() - dataPrimeiraFolga.getDay());
-                    const diffTime = dataAtual.getTime() - dataPrimeiraFolga.getTime();
-                    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-                    posicaoNoCiclo = ((diffDays % cicloDias) + cicloDias) % cicloDias + 1;
-                }
+                // Âncora fixa universal: 2024-01-07 (domingo)
+                // Garante que a posição no ciclo seja idêntica ao preview de configuração
+                const epoch = new Date(2024, 0, 7);
+                epoch.setHours(0, 0, 0, 0);
+                const diffDays = Math.round((dataAtual - epoch) / (1000 * 60 * 60 * 24));
+                const posicaoNoCiclo = ((diffDays % cicloDias) + cicloDias) % cicloDias + 1;
                 
                 if (diasFolga.includes(posicaoNoCiclo)) {
                     return { class: 'folga', text: 'FOLGA' };
                 }
             }
-
             
             return { class: 'trabalho', text: turno.horario };
         }
@@ -4825,9 +4804,8 @@
                     if (!window.customCycleDays) {
                         window.customCycleDays = [];
                     }
-                    // Usa posição semanal: 1=DOM, 2=SEG, ..., 7=SÁB (independente de âncora)
-                    const weekPos = d + 1;
-                    isWork = !window.customCycleDays.includes(weekPos);
+                    // Usa posição 1-31 no ciclo (dayCounter), âncora fixa = época universal
+                    isWork = !window.customCycleDays.includes(dayCounter);
                 } else {
                     // Regra 1: Fins de semana proibidos?
                     if (!permiteFDS && (d === 0 || d === 6)) {
@@ -4850,9 +4828,8 @@
                 const cursorStyle = (rule === 'custom') ? 'cursor: pointer;' : '';
                 const hoverStyle = (rule === 'custom') ? 'onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1"' : '';
                 
-                const weekPosClick = d + 1; // 1=DOM...7=SAB
                 tr.innerHTML += `
-                    <td onclick="togglePreviewDay(${weekPosClick})" ${hoverStyle} style="${cursorStyle} background: ${color}; border: 1px solid ${border}; color: ${textColor}; height: 45px; transition: all 0.2s;">
+                    <td onclick="togglePreviewDay(${dayCounter})" ${hoverStyle} style="${cursorStyle} background: ${color}; border: 1px solid ${border}; color: ${textColor}; height: 45px; transition: all 0.2s;">
                         <div class="fw-bold" style="font-size: 0.8rem;">${dayCounter}</div>
                         <div style="font-size: 0.55rem; font-weight: 800; opacity: 0.8;">${isWork ? 'TRABALHO' : 'FOLGA'}</div>
                     </td>
@@ -4923,7 +4900,7 @@
             observacao: obs,
             ciclo_personalizado: regra === 'custom' ? {
                 dias_folga: window.customCycleDays || [],
-                ciclo_dias: 7  // ciclo semanal: 1=DOM, 2=SEG, ..., 7=SÁB
+                ciclo_dias: 31  // ciclo de 31 dias com âncora fixa (2024-01-07)
             } : null
         };
 
@@ -7189,34 +7166,16 @@
                 const diasFolga = modelo.ciclo_personalizado.dias_folga;
                 const cicloDias = modelo.ciclo_personalizado.ciclo_dias || 31;
                 
-                let posicaoNoCiclo;
-                if (cicloDias === 7) {
-                    // Ciclo semanal: 1=DOM, 2=SEG, ..., 7=SÁB (independente de âncora)
-                    posicaoNoCiclo = dataAtual.getDay() + 1; // 1=DOM...7=SÁB
-                } else {
-                    let dataPrimeiraFolga;
-                    if (dados.data_primeira_folga) {
-                        const [anoFolga, mesFolga, diaFolga] = dados.data_primeira_folga.split('-').map(Number);
-                        dataPrimeiraFolga = new Date(anoFolga, mesFolga - 1, diaFolga);
-                    } else {
-                        const hoje = new Date();
-                        hoje.setHours(0, 0, 0, 0);
-                        dataPrimeiraFolga = new Date(hoje);
-                        dataPrimeiraFolga.setDate(hoje.getDate() + (7 - hoje.getDay()));
-                    }
-                    dataPrimeiraFolga.setHours(0, 0, 0, 0);
-                    // Normalizar para o domingo anterior (âncora)
-                    dataPrimeiraFolga.setDate(dataPrimeiraFolga.getDate() - dataPrimeiraFolga.getDay());
-                    const diffTime = dataAtual.getTime() - dataPrimeiraFolga.getTime();
-                    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-                    posicaoNoCiclo = ((diffDays % cicloDias) + cicloDias) % cicloDias + 1;
-                }
+                // Âncora fixa universal: 2024-01-07 (domingo)
+                const epoch = new Date(2024, 0, 7);
+                epoch.setHours(0, 0, 0, 0);
+                const diffDays = Math.round((dataAtual - epoch) / (1000 * 60 * 60 * 24));
+                const posicaoNoCiclo = ((diffDays % cicloDias) + cicloDias) % cicloDias + 1;
                 
                 if (diasFolga.includes(posicaoNoCiclo)) {
                     return { class: 'folga', text: 'FOLGA' };
                 }
             }
-
             return { class: 'trabalho', text: dados.turno_horario || 'Trabalho' };
         }
 
