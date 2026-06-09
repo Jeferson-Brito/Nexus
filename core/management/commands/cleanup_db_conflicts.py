@@ -23,6 +23,14 @@ class Command(BaseCommand):
                     self.stdout.write(f'Fakando migração: {name}')
                     cursor.execute("INSERT INTO django_migrations (app, name, applied) VALUES (%s, %s, now())", [app, name])
 
+            # 0. Resolver conflito da 0069 (rh_colaborador_campos_brisoftid)
+            # A 0070 foi aplicada no banco antes da 0069 ser criada localmente.
+            # Se a coluna 'bairro' (adicionada pela 0069) já existe, marcamos a 0069 como fake
+            # para que o Django não recuse rodar a 0070 por dependência inconsistente.
+            if column_exists('core_colaborador', 'bairro'):
+                self.stdout.write('Coluna bairro já existe em core_colaborador.')
+                fake_migration('core', '0069_rh_colaborador_campos_brisoftid')
+
             # 1. Resolver conflito da 0072 (fluxo_aprovacao)
             if column_exists('core_department', 'fluxo_aprovacao'):
                 self.stdout.write('Coluna fluxo_aprovacao já existe em core_department.')
