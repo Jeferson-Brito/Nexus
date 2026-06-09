@@ -96,7 +96,7 @@ SUA RESPOSTA:"""
                     parameters=types.Schema(
                         type=types.Type.OBJECT,
                         properties={
-                            'destino': types.Schema(type=types.Type.STRING, description="Nome da tela: 'inicio', 'auditoria', 'kanban', 'escala', 'ponto', 'inconsistencias', 'reclamacoes', 'configuracoes_ia', 'refunds'.")
+                            'destino': types.Schema(type=types.Type.STRING, description="Nome da tela: 'inicio', 'auditoria', 'kanban', 'escala', 'ponto', 'inconsistencias', 'reclamacoes', 'configuracoes_ia'.")
                         },
                         required=['destino']
                     )
@@ -156,8 +156,7 @@ SUA RESPOSTA:"""
                     'kanban': '/kanban/', 'tarefas': '/kanban/', 'escala': '/rh/escala/',
                     'ponto': '/rh/ponto/', 'inconsistencias': '/rh/inconsistencias/',
                     'reclamacoes': '/reclamacoes/', 'reclamacoes_lista': '/reclamacoes/',
-                    'configuracoes_ia': '/configuracoes/ia-base/', 'ia': '/configuracoes/ia-base/',
-                    'refunds': '/rh/refunds/', 'estornos': '/rh/refunds/'
+                    'configuracoes_ia': '/configuracoes/ia-base/', 'ia': '/configuracoes/ia-base/'
                 }
                 url = mapping.get(destino, '/')
                 return {"resposta": f"Sem problemas! Estou te levando para a tela de {destino} agora mesmo.", "action": {"type": "navigate", "url": url}}

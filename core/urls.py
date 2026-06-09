@@ -7,7 +7,6 @@ from .api import kb as api_kb
 from .api import quadro as api_quadro
 from .api import tasks as api_tasks
 from .api import desempenho as api_desempenho
-from .api import refunds as api_refunds
 from .api import stores as api_stores
 from .api import kanban as api_kanban
 from .api import store_verification as api_store_verification
@@ -277,20 +276,6 @@ urlpatterns = [
     path('api/routines/alerts/', api_tasks.api_manager_alerts, name='api_manager_alerts'),
     path('api/routines/overview/', api_tasks.api_routines_overview, name='api_routines_overview'),
     
-    # Refund Request APIs
-    path('solicitacoes/', views.solicitacoes_view, name='solicitacoes'),
-    path('api/refunds/create/', api_refunds.api_refund_create, name='api_refund_create'),
-    path('api/refunds/list/', api_refunds.api_refund_list, name='api_refund_list'),
-    path('api/refunds/<int:pk>/', api_refunds.api_refund_detail, name='api_refund_detail'),
-    path('api/refunds/<int:pk>/status/', api_refunds.api_refund_update_status, name='api_refund_update_status'),
-    path('api/refunds/<int:pk>/attachment/', api_refunds.api_refund_add_attachment, name='api_refund_add_attachment'),
-    path('api/refunds/<int:pk>/cancel/', api_refunds.api_refund_request_cancellation, name='api_refund_cancel'),
-    path('api/refunds/<int:pk>/delete/', api_refunds.api_refund_delete, name='api_refund_delete'),
-    path('api/refunds/notifications/', api_refunds.api_refund_notifications, name='api_refund_notifications'),
-    path('api/refunds/stats/', api_refunds.api_refund_stats, name='api_refund_stats'),
-    path('api/refunds/<int:pk>/edit/', api_refunds.api_refund_edit, name='api_refund_edit'),
-    path('api/users/nrs-analysts/', api_refunds.api_nrs_analysts, name='api_nrs_analysts'),
-
     
     # Store Presence and History APIs
     path('api/stores/presence/', api_stores.api_stores_all_presence, name='api_stores_all_presence'),

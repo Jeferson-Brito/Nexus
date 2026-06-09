@@ -72,9 +72,6 @@ TABLES_IN_ORDER = [
     "core_routine",
     "core_task",
     "core_routinelog",
-    # Refund
-    "core_refundrequest",
-    "core_refundrequestattachment",
     # Store audit
     "core_storeauditissue",
     "core_storeaudit",

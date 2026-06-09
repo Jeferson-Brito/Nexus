@@ -96,9 +96,8 @@ class ComplaintForm(forms.ModelForm):
         # Descrição não obrigatória
         self.fields['descricao'].required = False
         
-        # Filtro de analistas: apenas departamento 'CS Clientes'
+        # Filtro de analistas: todos os analistas e gestores ativos do sistema
         responsaveis_queryset = User.objects.filter(
-            department__name='CS Clientes', 
             role__in=['analista', 'gestor'], 
             ativo=True
         ).order_by('first_name')
@@ -114,8 +113,8 @@ class ComplaintForm(forms.ModelForm):
         # Origem do contato default
         self.fields['origem_contato'].initial = 'RA'
         
-        if user and user.is_analista() and user.department and user.department.name == 'CS Clientes':
-            # Se o próprio usuário for um analista de CS Clientes, pré-selecionar ele
+        if user and user.is_analista() and user.ativo:
+            # Se o próprio usuário for um analista ativo, pré-selecionar ele
             self.fields['analista'].initial = user
     
     def clean_cpf_cliente(self):

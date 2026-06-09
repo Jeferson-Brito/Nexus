@@ -83,7 +83,7 @@ function getStepsByDepartment(dept) {
 
     let deptSteps = [];
 
-    if (dept === 'CS Clientes' || dept === 'Reclame Aqui') {
+    if (dept === 'Reclame Aqui') {
         deptSteps = [
             {
                 element: 'a[href*="dashboard"]',
@@ -106,14 +106,6 @@ function getStepsByDepartment(dept) {
                 popover: {
                     title: 'Relatórios de CS',
                     description: 'Gere relatórios detalhados para análise de tendências e performance da equipe.',
-                    position: 'right'
-                }
-            },
-            {
-                element: 'a[href*="solicitacoes"]',
-                popover: {
-                    title: 'Solicitações de Estorno',
-                    description: 'Gerencie pedidos de estorno de forma organizada e rápida.',
                     position: 'right'
                 }
             }

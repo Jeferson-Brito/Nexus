@@ -322,15 +322,6 @@ def tasks_view(request):
         'title': 'Tarefas e Solicitações', 'is_manager': is_manager, 'show_create_button': show_create_button,
     })
 
-@login_required
-def solicitacoes_view(request):
-    """View para a aba de solicitações de estorno (CS Clientes)"""
-    user = request.user
-    is_manager = user.role in ['gestor', 'administrador']
-    is_cs_clientes = user.department and user.department.name == 'CS Clientes'
-    return render(request, 'core/solicitacoes.html', {
-        'title': 'Solicitações de Estorno', 'is_manager': is_manager, 'is_cs_clientes': is_cs_clientes,
-    })
 
 @login_required
 @ensure_csrf_cookie

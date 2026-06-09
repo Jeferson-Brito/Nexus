@@ -21,13 +21,13 @@ class Command(BaseCommand):
                 try:
                     sql = f'ALTER TABLE "{table}" ADD COLUMN IF NOT EXISTS "{column}" {col_def}'
                     cursor.execute(sql)
-                    self.stdout.write(self.style.SUCCESS(f"  ✓ {table}.{column} OK"))
+                    self.stdout.write(self.style.SUCCESS(f"  [OK] {table}.{column} OK"))
                 except Exception as e:
                     err = str(e)
                     if "already exists" in err or "duplicate" in err.lower():
-                        self.stdout.write(f"  ✓ {table}.{column} já existe")
+                        self.stdout.write(f"  [OK] {table}.{column} já existe")
                     else:
-                        self.stdout.write(self.style.ERROR(f"  ✗ {table}.{column}: {err}"))
+                        self.stdout.write(self.style.ERROR(f"  [FAIL] {table}.{column}: {err}"))
 
             # =============================================
             # PARTE 2: Remover permissões duplicadas
@@ -36,6 +36,7 @@ class Command(BaseCommand):
 
             # Verifica se a tabela auth_permission existe antes de prosseguir
             cursor.execute("SELECT to_regclass('public.auth_permission')")
+            duplicates = []
             if not cursor.fetchone()[0]:
                 self.stdout.write(self.style.WARNING("  ! Tabela auth_permission ainda não existe. Pulando limpeza de permissões."))
             else:
@@ -48,7 +49,7 @@ class Command(BaseCommand):
                 duplicates = cursor.fetchall()
 
             if not duplicates:
-                self.stdout.write(self.style.SUCCESS("  ✓ Nenhuma permissão duplicada encontrada."))
+                self.stdout.write(self.style.SUCCESS("  [OK] Nenhuma permissão duplicada encontrada."))
             else:
                 for ct_id, codename, count in duplicates:
                     self.stdout.write(self.style.WARNING(f"  Corrigindo {count} duplicatas para {codename} (CT: {ct_id})"))
@@ -76,7 +77,6 @@ class Command(BaseCommand):
             # Departamentos funcionais que devem existir e aparecer no menu
             functional_departments = [
                 {'slug': 'nrs-suporte', 'name': 'NRS Suporte', 'description': 'Suporte NRS'},
-                {'slug': 'cs-clientes', 'name': 'CS Clientes', 'description': 'Customer Success'},
                 {'slug': 'rh',          'name': 'RH',          'description': 'Recursos Humanos'},
                 {'slug': 'nrp',         'name': 'NRP',         'description': 'NRP'},
                 {'slug': 'onboarding',  'name': 'Onboarding',  'description': 'Onboarding'},
@@ -92,7 +92,7 @@ class Command(BaseCommand):
                     obj.show_in_nav = True
                     obj.save(update_fields=['show_in_nav'])
                 status = "criado" if created else "atualizado"
-                self.stdout.write(self.style.SUCCESS(f"  ✓ {obj.name} ({status})"))
+                self.stdout.write(self.style.SUCCESS(f"  [OK] {obj.name} ({status})"))
 
         except Exception as e:
-            self.stdout.write(self.style.ERROR(f"  ✗ Erro ao ativar departamentos: {e}"))
+            self.stdout.write(self.style.ERROR(f"  [FAIL] Erro ao ativar departamentos: {e}"))

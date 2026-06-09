@@ -372,12 +372,11 @@ def complaint_detail(request, pk):
 
 @login_required
 def complaint_create(request):
-    # Trava de segurança: apenas Administradores ou o departamento 'CS Clientes' podem criar reclamações
-    if not request.user.is_administrador():
-        if not request.user.department or request.user.department.name != 'CS Clientes':
-            messages.error(request, 'Apenas o departamento de CS Clientes e administradores podem criar reclamações.')
-            # Redirecionar para a lista de reclamações ou dashboard
-            return redirect('complaint_list')
+    # Trava de segurança: apenas Administradores ou Gestores podem criar reclamações
+    if not (request.user.is_administrador() or request.user.is_gestor()):
+        messages.error(request, 'Apenas administradores e gestores podem criar reclamações.')
+        # Redirecionar para a lista de reclamações ou dashboard
+        return redirect('complaint_list')
 
     if request.method == 'POST':
         form = ComplaintForm(request.POST, user=request.user)
@@ -689,14 +688,14 @@ def import_complaints_xlsx(request):
         return redirect('dashboard')
     
     from .models import Department
-    # Se for gestor, usa o depto dele. Se for admin, tenta pegar do POST ou padrão CS Clientes
+    # Se for gestor, usa o depto dele. Se for admin, tenta pegar do POST ou padrão NRS Suporte
     target_dept = request.user.department
     if request.user.is_administrador():
         dept_id = request.POST.get('department')
         if dept_id:
             target_dept = Department.objects.filter(id=dept_id).first()
         if not target_dept:
-            target_dept = Department.objects.filter(slug='cs-clientes').first()
+            target_dept = Department.objects.filter(slug='nrs-suporte').first()
 
     if request.method == 'POST':
         if 'xlsx_file' not in request.FILES:
@@ -898,7 +897,11 @@ def import_complaints_batch(request):
         target_dept = request.user.department
         if request.user.is_administrador():
             # Tentar pegar dept do body se enviado, ou usar padrão
-             target_dept = Department.objects.filter(slug='cs-clientes').first()
+            dept_id = data.get('department')
+            if dept_id:
+                target_dept = Department.objects.filter(id=dept_id).first()
+            if not target_dept:
+                target_dept = Department.objects.filter(slug='nrs-suporte').first()
 
         results = {
             'created': 0,

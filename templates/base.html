@@ -718,66 +718,6 @@
                 <span class="link-text">Em desenvolvimento</span>
             </a>
 
-
-            {% elif current_department.slug == 'cs-clientes' or current_department.name == 'CS Clientes' %}
-
-            <!-- CS Clientes -->
-            <div class="nav-group-title">Operação</div>
-            <a href="#reclameAquiSubmenuCS"
-                class="nav-link dropdown-toggle-custom {% if 'complaint' in request.resolver_match.url_name or 'store' in request.resolver_match.url_name or 'reports' in request.resolver_match.url_name or request.resolver_match.url_name == 'dashboard' %}active{% endif %}"
-                data-bs-toggle="collapse"
-                aria-expanded="{% if 'complaint' in request.resolver_match.url_name or 'store' in request.resolver_match.url_name or 'reports' in request.resolver_match.url_name or request.resolver_match.url_name == 'dashboard' %}true{% else %}false{% endif %}"
-                aria-controls="reclameAquiSubmenuCS">
-                <i class="bi bi-headset"></i>
-                <span class="link-text">Reclame Aqui</span>
-                <i class="bi bi-chevron-down ms-auto arrow-icon"></i>
-            </a>
-            <div class="collapse nav-submenu-container {% if 'complaint' in request.resolver_match.url_name or 'store' in request.resolver_match.url_name or 'reports' in request.resolver_match.url_name or request.resolver_match.url_name == 'dashboard' %}show{% endif %}"
-                id="reclameAquiSubmenuCS">
-                <div class="nav-submenu">
-                    <a href="{% url 'dashboard' %}"
-                        class="nav-link sub-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"
-                        title="Dashboard">
-                        <i class="bi bi-speedometer2"></i>
-                        <span class="link-text">Dashboard</span>
-                    </a>
-                    <a href="{% url 'complaint_list' %}"
-                        class="nav-link sub-link {% if 'complaint' in request.resolver_match.url_name %}active{% endif %}"
-                        title="Reclamações">
-                        <i class="bi bi-list-ul"></i>
-                        <span class="link-text">Reclamações</span>
-                    </a>
-                    <a href="{% url 'store_list' %}"
-                        class="nav-link sub-link {% if 'store' in request.resolver_match.url_name %}active{% endif %}"
-                        title="Lojas">
-                        <i class="bi bi-shop"></i>
-                        <span class="link-text">Lojas</span>
-                    </a>
-                    <a href="{% url 'reports' %}"
-                        class="nav-link sub-link {% if request.resolver_match.url_name == 'reports' %}active{% endif %}"
-                        title="Relatórios">
-                        <i class="bi bi-graph-up"></i>
-                        <span class="link-text">Relatórios</span>
-                    </a>
-
-                </div>
-            </div>
-
-            <div class="nav-group-title">Canais</div>
-            <a href="{% url 'google_meu_negocio' %}"
-                class="nav-link {% if request.resolver_match.url_name == 'google_meu_negocio' %}active{% endif %}"
-                title="Google Meu NegÃ³cio">
-                <i class="bi bi-google"></i>
-                <span class="link-text">Google Meu NegÃ³cio</span>
-            </a>
-
-            <div class="nav-group-title">Atendimento</div>
-            <a href="{% url 'solicitacoes' %}"
-                class="nav-link {% if request.resolver_match.url_name == 'solicitacoes' %}active{% endif %}">
-                <i class="bi bi-receipt-cutoff"></i>
-                <span class="link-text">Solicitações</span>
-            </a>
-
             {% elif current_department.slug == 'logistica' or current_department.name == 'Logística' %}
             <!-- Logística -->
             <div class="nav-group-title">Logística</div>
@@ -1245,10 +1185,9 @@
         document.addEventListener('DOMContentLoaded', function () {
             const sidebar = document.getElementById('sidebar');
 
-            // Handle both Reclame Aqui submenus (original and CS Clientes)
+            // Handle submenus
             const submenuConfigs = [
                 { toggle: document.querySelector('a[href="#reclameAquiSubmenu"]'), submenu: document.getElementById('reclameAquiSubmenu') },
-                { toggle: document.querySelector('a[href="#reclameAquiSubmenuCS"]'), submenu: document.getElementById('reclameAquiSubmenuCS') },
                 { toggle: document.querySelector('a[href="#hubAtendimentoSubmenu"]'), submenu: document.getElementById('hubAtendimentoSubmenu') },
                 { toggle: document.querySelector('a[href="#auditoriaLojasSubmenu"]'), submenu: document.getElementById('auditoriaLojasSubmenu') },
                 { toggle: document.querySelector('a[href="#escalaSubmenuRH"]'), submenu: document.getElementById('escalaSubmenuRH') },
