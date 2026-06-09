@@ -4786,48 +4786,78 @@
         const noteEl = document.getElementById('previewCycleNote');
         tbody.innerHTML = '';
 
-        if (rule === 'custom') {
-            // ── MODO PERSONALIZADO: calendário real do mês atual ──────────────
-            const hoje = new Date();
-            const anoAtual = hoje.getFullYear();
-            const mesAtual = hoje.getMonth(); // 0-indexed
-            const totalDias = new Date(anoAtual, mesAtual + 1, 0).getDate();
-            const primeiroDow = new Date(anoAtual, mesAtual, 1).getDay(); // 0=DOM...6=SAB
-            const semanas = Math.ceil((primeiroDow + totalDias) / 7);
+        const hoje = new Date();
+        const anoAtual = hoje.getFullYear();
+        const mesAtual = hoje.getMonth(); // 0-indexed
+        const totalDias = new Date(anoAtual, mesAtual + 1, 0).getDate();
+        const primeiroDow = new Date(anoAtual, mesAtual, 1).getDay(); // 0=DOM...6=SAB
+        const semanas = Math.ceil((primeiroDow + totalDias) / 7);
 
-            // Época fixa para calcular posição no ciclo (alinhada com o backend)
-            const epoch = new Date(2024, 0, 7);
-            epoch.setHours(0, 0, 0, 0);
+        // Época fixa para modo custom
+        const epoch = new Date(2024, 0, 7);
+        epoch.setHours(0, 0, 0, 0);
 
-            if (!window.customCycleDays) window.customCycleDays = [];
+        if (!window.customCycleDays) window.customCycleDays = [];
 
-            const nomeMes = hoje.toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
-            if (noteEl) noteEl.textContent = `* Pré-visualização de ${nomeMes.charAt(0).toUpperCase() + nomeMes.slice(1)}. Clique nos dias para marcar como FOLGA ou TRABALHO.`;
+        const nomeMes = hoje.toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
+        if (noteEl) {
+            if (rule === 'custom') {
+                noteEl.textContent = `* Pré-visualização de ${nomeMes.charAt(0).toUpperCase() + nomeMes.slice(1)}. Clique nos dias para marcar como FOLGA ou TRABALHO.`;
+            } else {
+                noteEl.textContent = `* Pré-visualização de ${nomeMes.charAt(0).toUpperCase() + nomeMes.slice(1)}. Esta prévia utiliza o primeiro dia útil do mês como âncora do ciclo.`;
+            }
+        }
 
-            for (let w = 0; w < semanas; w++) {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `<td class="bg-light fw-bold text-muted small">S. ${w + 1}</td>`;
+        let cycleCounter = 0;
 
-                for (let d = 0; d < 7; d++) {
-                    const dayNum = w * 7 + d - primeiroDow + 1;
+        for (let w = 0; w < semanas; w++) {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td class="bg-light fw-bold text-muted small">S. ${w + 1}</td>`;
 
-                    if (dayNum < 1 || dayNum > totalDias) {
-                        tr.innerHTML += `<td class="bg-light" style="opacity:0.3;"></td>`;
-                        continue;
-                    }
+            for (let d = 0; d < 7; d++) {
+                const dayNum = w * 7 + d - primeiroDow + 1;
 
+                if (dayNum < 1 || dayNum > totalDias) {
+                    tr.innerHTML += `<td class="bg-light" style="opacity:0.3;"></td>`;
+                    continue;
+                }
+
+                let isWork = true;
+
+                if (rule === 'custom') {
                     // Posição no ciclo de 31 dias usando época fixa
                     const dataCell = new Date(anoAtual, mesAtual, dayNum);
                     dataCell.setHours(0, 0, 0, 0);
                     const diffMs = dataCell - epoch;
                     const diffDias = Math.round(diffMs / (1000 * 60 * 60 * 24));
                     const cicloPos = ((diffDias % 31) + 31) % 31 + 1;
+                    isWork = !window.customCycleDays.includes(cicloPos);
+                } else {
+                    // Regra 1: Fins de semana proibidos?
+                    if (!permiteFDS && (d === 0 || d === 6)) {
+                        isWork = false;
+                    } else {
+                        // Regra 2: Tipo de escala
+                        if (tipo === 'fixa' && cycle === 7) {
+                            // Escala fixa semanal: trabalho de SEG(d=1) até o Nº dia útil
+                            isWork = (d >= 1 && d <= trab);
+                        } else {
+                            isWork = (cycleCounter % cycle) < trab;
+                        }
+                    }
+                    cycleCounter++;
+                }
 
-                    const isWork = !window.customCycleDays.includes(cicloPos);
-                    const color = isWork ? '#dcfce7' : '#fee2e2';
-                    const border = isWork ? '#16a34a' : '#dc2626';
-                    const textColor = isWork ? '#166534' : '#991b1b';
+                const color = isWork ? '#dcfce7' : '#fee2e2';
+                const border = isWork ? '#16a34a' : '#dc2626';
+                const textColor = isWork ? '#166534' : '#991b1b';
 
+                if (rule === 'custom') {
+                    const dataCell = new Date(anoAtual, mesAtual, dayNum);
+                    dataCell.setHours(0, 0, 0, 0);
+                    const diffMs = dataCell - epoch;
+                    const diffDias = Math.round(diffMs / (1000 * 60 * 60 * 24));
+                    const cicloPos = ((diffDias % 31) + 31) % 31 + 1;
                     tr.innerHTML += `
                         <td onclick="togglePreviewDay(${cicloPos})"
                             onmouseover="this.style.opacity=0.8"
@@ -4837,55 +4867,14 @@
                             <div style="font-size:0.55rem; font-weight:800; opacity:0.8;">${isWork ? 'TRABALHO' : 'FOLGA'}</div>
                         </td>
                     `;
-                }
-                tbody.appendChild(tr);
-            }
-            return; // encerra aqui para modo custom
-        }
-
-        // ── MODOS NÃO-CUSTOM: grade genérica de 31 dias ────────────────────
-        if (noteEl) noteEl.textContent = '* Esta prévia utiliza o primeiro dia do ciclo como âncora para demonstrar o comportamento sequencial.';
-
-        let dayCounter = 1;
-        let cycleCounter = 0;
-
-        for (let w = 0; w < 5; w++) {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `<td class="bg-light fw-bold text-muted small">S. ${w + 1}</td>`;
-            
-            for (let d = 0; d < 7; d++) { // 0=DOM, 1=SEG, ..., 6=SAB
-                if (dayCounter > 31) {
-                    tr.innerHTML += `<td class="bg-light"></td>`;
-                    continue;
-                }
-
-                let isWork = true;
-                // Regra 1: Fins de semana proibidos?
-                if (!permiteFDS && (d === 0 || d === 6)) {
-                    isWork = false;
                 } else {
-                    // Regra 2: Tipo de escala
-                    if (tipo === 'fixa' && cycle === 7) {
-                        // Escala fixa semanal: trabalho de SEG(d=1) até o Nº dia útil
-                        isWork = (d >= 1 && d <= trab);
-                    } else {
-                        isWork = (cycleCounter % cycle) < trab;
-                    }
+                    tr.innerHTML += `
+                        <td style="background:${color}; border:1px solid ${border}; color:${textColor}; height:45px; transition:all 0.2s;">
+                            <div class="fw-bold" style="font-size:0.8rem;">${dayNum}</div>
+                            <div style="font-size:0.55rem; font-weight:800; opacity:0.8;">${isWork ? 'TRABALHO' : 'FOLGA'}</div>
+                        </td>
+                    `;
                 }
-
-                const color = isWork ? '#dcfce7' : '#fee2e2';
-                const border = isWork ? '#16a34a' : '#dc2626';
-                const textColor = isWork ? '#166534' : '#991b1b';
-                
-                tr.innerHTML += `
-                    <td style="background:${color}; border:1px solid ${border}; color:${textColor}; height:45px; transition:all 0.2s;">
-                        <div class="fw-bold" style="font-size:0.8rem;">${dayCounter}</div>
-                        <div style="font-size:0.55rem; font-weight:800; opacity:0.8;">${isWork ? 'TRABALHO' : 'FOLGA'}</div>
-                    </td>
-                `;
-                
-                dayCounter++;
-                cycleCounter++;
             }
             tbody.appendChild(tr);
         }
