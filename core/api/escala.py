@@ -805,6 +805,28 @@ def _get_custom_scale_anchor_date(primeira_folga):
     dias_para_subtrair = (primeira_folga.weekday() + 1) % 7
     return primeira_folga - timedelta(days=dias_para_subtrair)
 
+
+def _get_ciclo_pos(data, ciclo, primeira_folga=None):
+    """
+    Retorna a posição (1-based) de `data` dentro do ciclo personalizado.
+
+    - ciclo_dias == 7  → ciclo puramente semanal, independente de âncora.
+                         1=DOM, 2=SEG, 3=TER, 4=QUA, 5=QUI, 6=SEX, 7=SÁB
+    - outros valores   → ciclo relativo ao domingo anterior à primeira_folga (legado).
+    """
+    ciclo_dias = ciclo.get('ciclo_dias', 31)
+    if ciclo_dias == 7:
+        # weekday(): 0=SEG...6=DOM → converte para 1=DOM...7=SÁB
+        weekday = data.weekday()  # 0=SEG, 6=DOM
+        return (weekday + 2) % 7 or 7  # 1=DOM, 2=SEG, ..., 7=SÁB
+    # Legado: calcula relativo à âncora
+    ancora = _get_custom_scale_anchor_date(primeira_folga)
+    if not ancora:
+        return 1
+    diff_days = (data - ancora).days
+    return (diff_days % ciclo_dias) + 1
+
+
 def _resolve_modelo_escala(analista, rascunho=None):
     """Retorna o modelo de escala aplicável ao analista, resolvendo overrides e fallbacks."""
     if analista.modelo_escala:
@@ -904,14 +926,9 @@ def calcular_analistas_ativos(turno, data_alvo, rascunho=None):
             if modelo and modelo.ciclo_personalizado:
                 ciclo = modelo.ciclo_personalizado
                 dias_folga = ciclo.get('dias_folga', [])
-                ciclo_dias = ciclo.get('ciclo_dias', 31)
-                primeira_folga = analista.data_primeira_folga
-                if primeira_folga:
-                    ancora = _get_custom_scale_anchor_date(primeira_folga)
-                    diff_days = (data_alvo_norm - ancora).days
-                    pos = (diff_days % ciclo_dias) + 1
-                    if pos in dias_folga:
-                        continue  # Folga cíclica
+                pos = _get_ciclo_pos(data_alvo_norm, ciclo, analista.data_primeira_folga)
+                if pos in dias_folga:
+                    continue  # Folga cíclica
             ativos += 1
             continue
 
@@ -976,14 +993,9 @@ def _is_analista_trabalhando(analista, data_ref, rascunho=None, modifications=No
         if modelo and modelo.ciclo_personalizado:
             ciclo = modelo.ciclo_personalizado
             dias_folga = ciclo.get('dias_folga', [])
-            ciclo_dias = ciclo.get('ciclo_dias', 31)
-            primeira_folga = analista.data_primeira_folga
-            if primeira_folga:
-                ancora = _get_custom_scale_anchor_date(primeira_folga)
-                diff_days = (data_ref - ancora).days
-                pos = (diff_days % ciclo_dias) + 1
-                if pos in dias_folga:
-                    return False  # Folga
+            pos = _get_ciclo_pos(data_ref, ciclo, analista.data_primeira_folga)
+            if pos in dias_folga:
+                return False  # Folga
         # Sem registro na grade nem ciclo: assume trabalho
         return True
 
@@ -1804,14 +1816,9 @@ def api_escala_personalizada_get(request):
                     if modelo and modelo.ciclo_personalizado:
                         ciclo = modelo.ciclo_personalizado
                         dias_folga = ciclo.get('dias_folga', [])
-                        ciclo_dias = ciclo.get('ciclo_dias', 31)
-                        primeira_folga = analista.data_primeira_folga
-                        if primeira_folga:
-                            ancora = _get_custom_scale_anchor_date(primeira_folga)
-                            diff_days = (dia - ancora).days
-                            pos = (diff_days % ciclo_dias) + 1
-                            if pos in dias_folga:
-                                status = 'folga'
+                        pos = _get_ciclo_pos(dia, ciclo, analista.data_primeira_folga)
+                        if pos in dias_folga:
+                            status = 'folga'
                 dias_data[data_str] = status
 
             resultado.append({
