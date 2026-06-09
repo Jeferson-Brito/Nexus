@@ -24,16 +24,7 @@ def change_department(request, dept_id):
 
 @login_required
 def home(request):
-    # Identificar o departamento atual (da sessão para admins, do usuário para outros)
-    selected_dept_id = request.session.get('selected_department_id')
-    
-    current_dept = None
-    if request.user.is_administrador() and selected_dept_id:
-        current_dept = Department.objects.filter(id=selected_dept_id).first()
-    elif request.user.department:
-        current_dept = request.user.department
-        
-    return render(request, 'core/welcome.html', {'current_department': current_dept})
+    return redirect('escala')
 
 @login_required
 def dashboard(request):

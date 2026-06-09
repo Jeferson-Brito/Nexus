@@ -4,11 +4,9 @@ from . import views
 from .api import escala as api_escala
 from .api import eventos as api_eventos
 from .api import kb as api_kb
-from .api import quadro as api_quadro
 from .api import tasks as api_tasks
 from .api import desempenho as api_desempenho
 from .api import stores as api_stores
-from .api import kanban as api_kanban
 from .api import store_verification as api_store_verification
 from .api import auditoria as api_auditoria
 from .api import chat_inactivity as api_chat_inactivity
@@ -17,7 +15,6 @@ from .api import ponto as api_ponto
 from .api import ia as api_ia
 from .api import base_auditoria as api_base_auditoria
 from . import views_ponto
-from .api.quadro import api_quadro_data, api_cartao_create, api_cartao_move, api_cartao_update, api_cartao_delete, api_cartao_details, api_comentario_add, api_anexo_add, api_anexo_delete, api_lista_create, api_lista_delete
 
 
 
@@ -81,24 +78,7 @@ urlpatterns = [
     path('calendario/', views.calendar_view, name='calendario'),
     path('base-conhecimento/', views.knowledge_base_view, name='base_conhecimento'),
     path('desempenho/', views.performance_view, name='desempenho'),
-    path('quadro/', views.quadro_view, name='quadro'),
-    
-    # API Quadro
-    path('api/quadro/data/', api_quadro.api_quadro_data, name='api_quadro_data'),
-    path('api/quadro/cartao/create/', api_cartao_create, name='api_cartao_create'),
-    path('api/quadro/cartao/move/', api_cartao_move, name='api_cartao_move'),
-    path('api/quadro/cartao/<int:cartao_id>/update/', api_cartao_update, name='api_cartao_update'),
-    path('api/quadro/cartao/<int:cartao_id>/delete/', api_cartao_delete, name='api_cartao_delete'),
-    path('api/quadro/cartao/<int:cartao_id>/details/', api_quadro.api_cartao_details, name='api_cartao_details'),
-    path('api/quadro/cartao/<int:cartao_id>/comentario/', api_quadro.api_comentario_add, name='api_comentario_add'),
-    path('api/quadro/cartao/<int:cartao_id>/anexo/', api_quadro.api_anexo_add, name='api_anexo_add'),
-    path('api/quadro/anexo/<int:anexo_id>/delete/', api_quadro.api_anexo_delete, name='api_anexo_delete'),
-    path('api/quadro/lista/create/', api_quadro.api_lista_create, name='api_lista_create'),
-    path('api/quadro/lista/move/', api_quadro.api_lista_move, name='api_lista_move'),
-    path('api/quadro/lista/<int:lista_id>/delete/', api_quadro.api_lista_delete, name='api_lista_delete'),
-    path('api/quadro/lista/<int:lista_id>/archive/', api_quadro.api_lista_archive, name='api_lista_archive'),
-    path('api/quadro/cartao/<int:cartao_id>/archive/', api_quadro.api_cartao_archive, name='api_cartao_archive'),
-    
+
     # Abas em desenvolvimento - Onboarding
     path('onboarding/dev1/', views.under_development, {'page_name': 'Onboarding - Em Desenvolvimento 1'}, name='onboarding_dev_1'),
     path('onboarding/dev2/', views.under_development, {'page_name': 'Onboarding - Em Desenvolvimento 2'}, name='onboarding_dev_2'),
@@ -310,29 +290,7 @@ urlpatterns = [
     
     # Chat - REMOVED
     
-    # Kanban API
-    path('api/kanban/boards/', api_kanban.api_boards, name='api_kanban_boards'),
-    path('api/kanban/boards/<int:board_id>/', api_kanban.api_board_detail, name='api_kanban_board_detail'),
-    path('api/kanban/boards/<int:board_id>/lists/', api_kanban.api_board_lists, name='api_kanban_board_lists'),
-    path('api/kanban/boards/<int:board_id>/lists/reorder/', api_kanban.api_lists_reorder, name='api_kanban_lists_reorder'),
-    path('api/kanban/lists/<int:list_id>/', api_kanban.api_list_detail, name='api_kanban_list_detail'),
-    path('api/kanban/lists/<int:list_id>/cards/', api_kanban.api_list_cards, name='api_kanban_list_cards'),
-    path('api/kanban/lists/<int:list_id>/cards/reorder/', api_kanban.api_cards_reorder, name='api_kanban_cards_reorder'),
-    path('api/kanban/cards/<int:card_id>/', api_kanban.api_card_detail, name='api_kanban_card_detail'),
-    path('api/kanban/cards/<int:card_id>/move/', api_kanban.api_card_move, name='api_kanban_card_move'),
-    path('api/kanban/cards/<int:card_id>/labels/', api_kanban.api_card_labels, name='api_kanban_card_labels'),
-    path('api/kanban/cards/<int:card_id>/checklists/', api_kanban.api_card_checklists, name='api_kanban_card_checklists'),
-    path('api/kanban/checklists/<int:checklist_id>/items/', api_kanban.api_checklist_items, name='api_kanban_checklist_items'),
-    path('api/kanban/cards/<int:card_id>/comments/', api_kanban.api_card_comments, name='api_kanban_card_comments'),
-    path('api/kanban/cards/<int:card_id>/members/', api_kanban.api_card_members, name='api_kanban_card_members'),
-    path('api/kanban/cards/<int:card_id>/attachments/', api_kanban.api_card_attachments, name='api_kanban_card_attachments'),
-    path('api/kanban/cards/<int:card_id>/attachments/<int:attachment_id>/', api_kanban.api_card_attachment_delete, name='api_kanban_card_attachment_delete'),
-    path('api/kanban/search/', api_kanban.api_kanban_search, name='api_kanban_search'),
-    
-    # Label CRUD
-    path('api/kanban/boards/<int:board_id>/labels/', api_kanban.api_board_labels, name='api_kanban_board_labels'),
-    path('api/kanban/labels/<int:label_id>/', api_kanban.api_label_detail, name='api_kanban_label_detail'),
-    
+
     # Auditoria de Atendimentos
     path('auditoria-atendimentos/', views.auditoria_atendimentos_view, name='auditoria_atendimentos'),
     

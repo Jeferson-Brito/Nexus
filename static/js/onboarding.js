@@ -120,14 +120,7 @@ function getStepsByDepartment(dept) {
                     position: 'right'
                 }
             },
-            {
-                element: 'a[href*="quadro"]',
-                popover: {
-                    title: 'Quadro Kanban',
-                    description: 'Organize suas tarefas diárias arrastando os cartões entre as colunas.',
-                    position: 'right'
-                }
-            },
+
             {
                 element: 'a[href*="verificacao-lojas"]',
                 popover: {

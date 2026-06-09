@@ -46,28 +46,7 @@ TABLES_IN_ORDER = [
     "core_folgamanual",
     # Escala
     "core_escala",
-    # Kanban board
-    "core_kanbanboard",
-    "core_boardmembership",
-    "core_kanbanlist",
-    "core_cardlabel",
-    "core_kanbancard",
-    "core_kanbancard_assigned_to",
-    "core_kanbancard_labels",
-    "core_cardcomment",
-    "core_cardattachment",
-    "core_cardactivity",
-    # Cartao (old board)
-    "core_lista",
-    "core_cartao",
-    "core_cartao_membros",
-    "core_cartaoanexo",
-    "core_cartaocomentario",
-    "core_quadroetiqueta",
-    "core_cartao_etiquetas",
-    # Checklist
-    "core_checklist",
-    "core_checklistitem",
+
     # Routine / Task
     "core_routine",
     "core_task",

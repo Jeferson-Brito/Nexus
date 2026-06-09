@@ -66,7 +66,7 @@ REGRAS DE OURO DA COMUNICAÇÃO:
 1. Trate o usuário pelo nome e mantenha um tom caloroso, amigável e natural.
 2. INSTRUÇÃO CRÍTICA SOBRE AÇÕES: Se o usuário pedir para navegar ou alterar dados, VOCÊ É OBRIGADO A CHAMAR A FUNÇÃO CORRESPONDENTE. NUNCA responda dizendo "eu fiz" em texto se não invocou a ferramenta.
 3. Você pode:
-   - Navegar para qualquer tela (Início, Auditoria, Kanban, Escala, Ponto, Reclamações, IA).
+   - Navigar para qualquer tela (Início, Auditoria, Tarefas, Escala, Ponto, Reclamações, IA).
    - Alterar dados do próprio perfil (nome, sobrenome).
    - Alterar dados de reclamações (status, urgência) se souber o ID.
    - Alterar dados de tarefas (concluir, mudar prioridade) se souber o ID.
@@ -96,7 +96,7 @@ SUA RESPOSTA:"""
                     parameters=types.Schema(
                         type=types.Type.OBJECT,
                         properties={
-                            'destino': types.Schema(type=types.Type.STRING, description="Nome da tela: 'inicio', 'auditoria', 'kanban', 'escala', 'ponto', 'inconsistencias', 'reclamacoes', 'configuracoes_ia'.")
+                            'destino': types.Schema(type=types.Type.STRING, description="Nome da tela: 'inicio', 'auditoria', 'tarefas', 'escala', 'ponto', 'inconsistencias', 'reclamacoes', 'configuracoes_ia'.")
                         },
                         required=['destino']
                     )
@@ -153,7 +153,7 @@ SUA RESPOSTA:"""
                 destino = args.get('destino', '').lower()
                 mapping = {
                     'inicio': '/', 'dashboard': '/', 'auditoria': '/auditoria/atendimentos/',
-                    'kanban': '/kanban/', 'tarefas': '/kanban/', 'escala': '/rh/escala/',
+                    'tarefas': '/tarefas/', 'escala': '/rh/escala/',
                     'ponto': '/rh/ponto/', 'inconsistencias': '/rh/inconsistencias/',
                     'reclamacoes': '/reclamacoes/', 'reclamacoes_lista': '/reclamacoes/',
                     'configuracoes_ia': '/configuracoes/ia-base/', 'ia': '/configuracoes/ia-base/'
