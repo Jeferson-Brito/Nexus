@@ -1901,7 +1901,7 @@
                                         </tbody>
                                     </table>
                                 </div>
-                                <p class="small text-muted mt-3 mb-0" style="font-style: italic;">
+                                <p class="small text-muted mt-3 mb-0" style="font-style: italic;" id="previewCycleNote">
                                     * Esta prévia utiliza o primeiro dia do ciclo como âncora para demonstrar o comportamento sequencial.
                                 </p>
                             </div>
@@ -4775,7 +4775,7 @@
     function updatePreviewCycle() {
         const trab = parseInt(document.getElementById('formModeloTrabalho').value) || 0;
         const folga = parseInt(document.getElementById('formModeloFolga').value) || 0;
-        const tipo = document.getElementById('formModeloTipo').value; // 'fixa' ou 'rotativa'
+        const tipo = document.getElementById('formModeloTipo').value;
         const permiteFDS = document.getElementById('formModeloFDS').value === 'true';
         const rule = document.getElementById('formModeloRegra').value;
         
@@ -4783,7 +4783,68 @@
         if (cycle === 0 && rule !== 'custom') return;
 
         const tbody = document.getElementById('cyclePreviewTbody');
+        const noteEl = document.getElementById('previewCycleNote');
         tbody.innerHTML = '';
+
+        if (rule === 'custom') {
+            // ── MODO PERSONALIZADO: calendário real do mês atual ──────────────
+            const hoje = new Date();
+            const anoAtual = hoje.getFullYear();
+            const mesAtual = hoje.getMonth(); // 0-indexed
+            const totalDias = new Date(anoAtual, mesAtual + 1, 0).getDate();
+            const primeiroDow = new Date(anoAtual, mesAtual, 1).getDay(); // 0=DOM...6=SAB
+            const semanas = Math.ceil((primeiroDow + totalDias) / 7);
+
+            // Época fixa para calcular posição no ciclo (alinhada com o backend)
+            const epoch = new Date(2024, 0, 7);
+            epoch.setHours(0, 0, 0, 0);
+
+            if (!window.customCycleDays) window.customCycleDays = [];
+
+            const nomeMes = hoje.toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
+            if (noteEl) noteEl.textContent = `* Pré-visualização de ${nomeMes.charAt(0).toUpperCase() + nomeMes.slice(1)}. Clique nos dias para marcar como FOLGA ou TRABALHO.`;
+
+            for (let w = 0; w < semanas; w++) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td class="bg-light fw-bold text-muted small">S. ${w + 1}</td>`;
+
+                for (let d = 0; d < 7; d++) {
+                    const dayNum = w * 7 + d - primeiroDow + 1;
+
+                    if (dayNum < 1 || dayNum > totalDias) {
+                        tr.innerHTML += `<td class="bg-light" style="opacity:0.3;"></td>`;
+                        continue;
+                    }
+
+                    // Posição no ciclo de 31 dias usando época fixa
+                    const dataCell = new Date(anoAtual, mesAtual, dayNum);
+                    dataCell.setHours(0, 0, 0, 0);
+                    const diffMs = dataCell - epoch;
+                    const diffDias = Math.round(diffMs / (1000 * 60 * 60 * 24));
+                    const cicloPos = ((diffDias % 31) + 31) % 31 + 1;
+
+                    const isWork = !window.customCycleDays.includes(cicloPos);
+                    const color = isWork ? '#dcfce7' : '#fee2e2';
+                    const border = isWork ? '#16a34a' : '#dc2626';
+                    const textColor = isWork ? '#166534' : '#991b1b';
+
+                    tr.innerHTML += `
+                        <td onclick="togglePreviewDay(${cicloPos})"
+                            onmouseover="this.style.opacity=0.8"
+                            onmouseout="this.style.opacity=1"
+                            style="cursor:pointer; background:${color}; border:1px solid ${border}; color:${textColor}; height:45px; transition:all 0.2s;">
+                            <div class="fw-bold" style="font-size:0.8rem;">${dayNum}</div>
+                            <div style="font-size:0.55rem; font-weight:800; opacity:0.8;">${isWork ? 'TRABALHO' : 'FOLGA'}</div>
+                        </td>
+                    `;
+                }
+                tbody.appendChild(tr);
+            }
+            return; // encerra aqui para modo custom
+        }
+
+        // ── MODOS NÃO-CUSTOM: grade genérica de 31 dias ────────────────────
+        if (noteEl) noteEl.textContent = '* Esta prévia utiliza o primeiro dia do ciclo como âncora para demonstrar o comportamento sequencial.';
 
         let dayCounter = 1;
         let cycleCounter = 0;
@@ -4799,39 +4860,27 @@
                 }
 
                 let isWork = true;
-
-                if (rule === 'custom') {
-                    if (!window.customCycleDays) {
-                        window.customCycleDays = [];
-                    }
-                    // Usa posição 1-31 no ciclo (dayCounter), âncora fixa = época universal
-                    isWork = !window.customCycleDays.includes(dayCounter);
+                // Regra 1: Fins de semana proibidos?
+                if (!permiteFDS && (d === 0 || d === 6)) {
+                    isWork = false;
                 } else {
-                    // Regra 1: Fins de semana proibidos?
-                    if (!permiteFDS && (d === 0 || d === 6)) {
-                        isWork = false;
+                    // Regra 2: Tipo de escala
+                    if (tipo === 'fixa' && cycle === 7) {
+                        // Escala fixa semanal: trabalho de SEG(d=1) até o Nº dia útil
+                        isWork = (d >= 1 && d <= trab);
                     } else {
-                        // Regra 2: Tipo de escala
-                        if (tipo === 'fixa' && cycle === 7) {
-                            // Escala fixa semanal: trabalho de SEG(d=1) até o Nº dia útil
-                            // Garante que SAB(d=6) e DOM(d=0) sejam as folgas p/ 5x2
-                            isWork = (d >= 1 && d <= trab);
-                        } else {
-                            isWork = (cycleCounter % cycle) < trab;
-                        }
+                        isWork = (cycleCounter % cycle) < trab;
                     }
                 }
 
                 const color = isWork ? '#dcfce7' : '#fee2e2';
                 const border = isWork ? '#16a34a' : '#dc2626';
                 const textColor = isWork ? '#166534' : '#991b1b';
-                const cursorStyle = (rule === 'custom') ? 'cursor: pointer;' : '';
-                const hoverStyle = (rule === 'custom') ? 'onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1"' : '';
                 
                 tr.innerHTML += `
-                    <td onclick="togglePreviewDay(${dayCounter})" ${hoverStyle} style="${cursorStyle} background: ${color}; border: 1px solid ${border}; color: ${textColor}; height: 45px; transition: all 0.2s;">
-                        <div class="fw-bold" style="font-size: 0.8rem;">${dayCounter}</div>
-                        <div style="font-size: 0.55rem; font-weight: 800; opacity: 0.8;">${isWork ? 'TRABALHO' : 'FOLGA'}</div>
+                    <td style="background:${color}; border:1px solid ${border}; color:${textColor}; height:45px; transition:all 0.2s;">
+                        <div class="fw-bold" style="font-size:0.8rem;">${dayCounter}</div>
+                        <div style="font-size:0.55rem; font-weight:800; opacity:0.8;">${isWork ? 'TRABALHO' : 'FOLGA'}</div>
                     </td>
                 `;
                 
