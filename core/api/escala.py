@@ -846,7 +846,9 @@ def _resolve_modelo_escala(analista, rascunho=None):
     
     # Usar o rascunho atual se fornecido ou o rascunho do analista
     rasc = rascunho or analista.rascunho
-    if rasc and rasc.modelo_escala:
+    if rasc:
+        # Se for um rascunho, a jornada global é a definida nele (mesmo se for None/Sem Modelo).
+        # Não devemos fazer fallback para a configuração principal ativa.
         return rasc.modelo_escala
         
     from ..models import ConfiguracaoEscala
@@ -873,10 +875,27 @@ def _get_modelo_ciclo(analista, rascunho=None):
     return (modelo.dias_trabalhados, modelo.dias_folga)
 
 
+def _calcular_fallback_ciclo(analista, data_ref):
+    """Fallback 6x2 para analistas sem modelo definido."""
+    primeira_folga = analista.data_primeira_folga
+    if not primeira_folga:
+        return True
+    
+    data_ref_norm = data_ref if isinstance(data_ref, date_type) else data_ref.date()
+    primeira_folga_norm = primeira_folga if isinstance(primeira_folga, date_type) else primeira_folga.date()
+    
+    ciclo_total = 8 # 6 trab + 2 folga
+    diff_days = (data_ref_norm - primeira_folga_norm).days
+    pos = ((diff_days % ciclo_total) + ciclo_total) % ciclo_total
+    return pos >= 2
+
+
 def _analista_usa_escala_personalizada(analista, rascunho=None):
-    """Retorna True se o analista usa modelo do tipo personalizado."""
+    """Retorna True se o analista usa modelo do tipo personalizado ou rascunho sem modelo global definido."""
     modelo = _resolve_modelo_escala(analista, rascunho)
-    return modelo is not None and modelo.tipo == 'personalizado'
+    if modelo is None:
+        return True
+    return modelo.tipo == 'personalizado'
 
 
 def _get_status_escala_personalizada(analista, data_ref, rascunho=None):
@@ -941,6 +960,10 @@ def calcular_analistas_ativos(turno, data_alvo, rascunho=None):
                 pos = _get_ciclo_pos(data_alvo_norm, ciclo, analista.data_primeira_folga)
                 if pos in dias_folga:
                     continue  # Folga cíclica
+            elif modelo is None:
+                # Fallback 6x2 se não há modelo
+                if not _calcular_fallback_ciclo(analista, data_alvo_norm):
+                    continue
             ativos += 1
             continue
 
@@ -1008,6 +1031,9 @@ def _is_analista_trabalhando(analista, data_ref, rascunho=None, modifications=No
             pos = _get_ciclo_pos(data_ref, ciclo, analista.data_primeira_folga)
             if pos in dias_folga:
                 return False  # Folga
+        elif modelo is None:
+            # Fallback 6x2 se não há modelo
+            return _calcular_fallback_ciclo(analista, data_ref)
         # Sem registro na grade nem ciclo: assume trabalho
         return True
 
@@ -1831,6 +1857,10 @@ def api_escala_personalizada_get(request):
                         pos = _get_ciclo_pos(dia, ciclo, analista.data_primeira_folga)
                         if pos in dias_folga:
                             status = 'folga'
+                    elif modelo is None:
+                        # Fallback 6x2 se não há modelo
+                        is_trab = _calcular_fallback_ciclo(analista, dia)
+                        status = 'trabalho' if is_trab else 'folga'
                 dias_data[data_str] = status
 
             resultado.append({

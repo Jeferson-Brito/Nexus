@@ -3488,7 +3488,7 @@
         if (isConfigMode) {
             renderModelos();
         } else {
-            if (turnos.length > 0 && analistas.length > 0) {
+            if (analistas.length > 0) {
                 generateTables();
             } else {
                 checkEmptyStates();
@@ -3524,8 +3524,23 @@
         // Ordenar turnos para exibição organizada
         const turnosOrdenados = [...turnos].sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
 
-        turnosOrdenados.forEach(turno => {
-            const analistasDoTurno = analistas.filter(a => a.turno === turno.nome);
+        // Adicionar grupo virtual "Sem Turno" se houver analistas sem turno
+        const analistasSemTurno = analistas.filter(a => !a.turno);
+        const turnosParaRenderizar = [...turnosOrdenados];
+        if (analistasSemTurno.length > 0) {
+            turnosParaRenderizar.push({
+                id: 'sem_turno',
+                nome: 'Sem Turno',
+                cor: '#64748b',
+                horario: 'Sem Horário',
+                ordem: 9999
+            });
+        }
+
+        turnosParaRenderizar.forEach(turno => {
+            const analistasDoTurno = turno.id === 'sem_turno'
+                ? analistas.filter(a => !a.turno)
+                : analistas.filter(a => a.turno === turno.nome);
 
             analistasDoTurno.forEach(analista => {
                 let diasTrabalho = 0;
@@ -3592,8 +3607,9 @@
     }
 
     function checkEmptyStates() {
-        document.getElementById('emptyShifts').style.display = turnos.length === 0 ? 'flex' : 'none';
-        document.getElementById('emptyAnalysts').style.display = (turnos.length > 0 && analistas.length === 0) ? 'flex' : 'none';
+        const temAnalistasSemTurno = analistas.some(a => !a.turno);
+        document.getElementById('emptyShifts').style.display = (turnos.length === 0 && !temAnalistasSemTurno) ? 'flex' : 'none';
+        document.getElementById('emptyAnalysts').style.display = ((turnos.length > 0 || temAnalistasSemTurno) && analistas.length === 0) ? 'flex' : 'none';
     }
 
     // ========================================
@@ -3696,7 +3712,7 @@
 
         checkEmptyStates();
 
-        if (turnos.length === 0 || analistas.length === 0) {
+        if (analistas.length === 0) {
             checkEmptyStates();
             return;
         }
@@ -3922,7 +3938,7 @@
         const tabelasEl = document.getElementById('tabelas');
         if (tabelasEl) tabelasEl.innerHTML = '';
 
-        if (turnos.length > 0 && analistas.length > 0) {
+        if (analistas.length > 0) {
             generateTables(false);
         } else {
             checkEmptyStates();
@@ -4092,12 +4108,28 @@
         let rows = '';
         const turnosOrdenados = [...turnos].sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
 
-        turnosOrdenados.forEach((turno, turnoIndex) => {
-            const analistasDoTurno = analistas.filter(a => a.turno === turno.nome);
+        // Adicionar grupo virtual "Sem Turno" se houver analistas sem turno
+        const analistasSemTurno = analistas.filter(a => !a.turno);
+        const turnosParaRenderizar = [...turnosOrdenados];
+        if (analistasSemTurno.length > 0) {
+            turnosParaRenderizar.push({
+                id: 'sem_turno',
+                nome: 'Sem Turno',
+                cor: '#64748b',
+                horario: 'Sem Horário',
+                ordem: 9999
+            });
+        }
+
+        turnosParaRenderizar.forEach((turno, turnoIndex) => {
+            const analistasDoTurno = turno.id === 'sem_turno'
+                ? analistas.filter(a => !a.turno)
+                : analistas.filter(a => a.turno === turno.nome);
 
             if (analistasDoTurno.length > 0) {
                 analistasDoTurno.forEach((analista, idx) => {
-                    rows += `<tr data-analista="${analista.nome.toLowerCase()}" data-turno-nome="${turno.nome.toLowerCase()}">`;
+                    const rowTurnoNome = (turno.nome || '').toLowerCase();
+                    rows += `<tr data-analista="${analista.nome.toLowerCase()}" data-turno-nome="${rowTurnoNome}">`;
 
                     // Célula de turno (só na primeira linha do turno)
                     if (idx === 0) {
@@ -4157,7 +4189,7 @@
             }
 
             // Separador entre turnos
-            if (turnoIndex < turnosOrdenados.length - 1) {
+            if (turnoIndex < turnosParaRenderizar.length - 1) {
                 rows += `<tr class="separator-row"><td colspan="10"></td></tr>`;
             }
         });
@@ -4215,12 +4247,28 @@
         let rows = '';
         const turnosOrdenados = [...turnos].sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
 
-        turnosOrdenados.forEach((turno, turnoIndex) => {
-            const analistasDoTurno = analistas.filter(a => a.turno === turno.nome);
+        // Adicionar grupo virtual "Sem Turno" se houver analistas sem turno
+        const analistasSemTurno = analistas.filter(a => !a.turno);
+        const turnosParaRenderizar = [...turnosOrdenados];
+        if (analistasSemTurno.length > 0) {
+            turnosParaRenderizar.push({
+                id: 'sem_turno',
+                nome: 'Sem Turno',
+                cor: '#64748b',
+                horario: 'Sem Horário',
+                ordem: 9999
+            });
+        }
+
+        turnosParaRenderizar.forEach((turno, turnoIndex) => {
+            const analistasDoTurno = turno.id === 'sem_turno'
+                ? analistas.filter(a => !a.turno)
+                : analistas.filter(a => a.turno === turno.nome);
 
             if (analistasDoTurno.length > 0) {
                 analistasDoTurno.forEach((analista, idx) => {
-                    rows += `<tr data-analista="${analista.nome.toLowerCase()}" data-turno-nome="${turno.nome.toLowerCase()}">`;
+                    const rowTurnoNome = (turno.nome || '').toLowerCase();
+                    rows += `<tr data-analista="${analista.nome.toLowerCase()}" data-turno-nome="${rowTurnoNome}">`;
 
                     // Célula de turno (só na primeira linha do turno)
                     if (idx === 0) {
@@ -4281,7 +4329,7 @@
             }
 
             // Separador entre turnos
-            if (turnoIndex < turnosOrdenados.length - 1) {
+            if (turnoIndex < turnosParaRenderizar.length - 1) {
                 // +3 para considerar Turno, Analista e Pausa
                 rows += `<tr class="separator-row"><td colspan="${diasDoMes.length + 3}"></td></tr>`;
             }
@@ -4335,8 +4383,9 @@
         }
 
         const modelo = modelos.find(m => m.id == modeloId);
+        const isPersonalizado = (modelo && modelo.tipo === 'personalizado') || !modeloId;
         
-        if (modelo && modelo.tipo === 'personalizado') {
+        if (isPersonalizado) {
             // 1. Verificar na EscalaPersonalizada (grade mensal salva no cache do front)
             const dateStr = `${ano}-${String(mes + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
             const cacheKey = `${analista.id}-${dateStr}`;
@@ -4357,8 +4406,8 @@
                 }
             }
             
-            // 2. Fallback para o ciclo_personalizado do ModeloEscala
-            if (modelo.ciclo_personalizado && modelo.ciclo_personalizado.dias_folga) {
+            // 2. Fallback para o ciclo_personalizado do ModeloEscala se existir
+            if (modelo && modelo.ciclo_personalizado && modelo.ciclo_personalizado.dias_folga) {
                 const diasFolga = modelo.ciclo_personalizado.dias_folga;
                 const cicloDias = modelo.ciclo_personalizado.ciclo_dias || 31;
                 
@@ -4366,7 +4415,6 @@
                 dataAtual.setHours(0, 0, 0, 0);
                 
                 // Âncora fixa universal: 2024-01-07 (domingo)
-                // Garante que a posição no ciclo seja idêntica ao preview de configuração
                 const epoch = new Date(2024, 0, 7);
                 epoch.setHours(0, 0, 0, 0);
                 const diffDays = Math.round((dataAtual - epoch) / (1000 * 60 * 60 * 24));
@@ -4375,15 +4423,44 @@
                 if (diasFolga.includes(posicaoNoCiclo)) {
                     return { class: 'folga', text: 'FOLGA' };
                 }
+                return { class: 'trabalho', text: turno.horario };
+            }
+            
+            // Se for personalizado mas não tiver dados salvos nem ciclo, e não há modelo, faz o fallback para 6x2
+            if (!modelo) {
+                const trab = 6;
+                const folga = 2;
+                const cicloTotal = trab + folga;
+                const dataAtual = new Date(ano, mes, dia);
+                dataAtual.setHours(0, 0, 0, 0);
+
+                let dataPrimeiraFolga;
+                if (analista.data_primeira_folga) {
+                    const [anoFolga, mesFolga, diaFolga] = analista.data_primeira_folga.split('-').map(Number);
+                    dataPrimeiraFolga = new Date(anoFolga, mesFolga - 1, diaFolga);
+                } else {
+                    const hoje = new Date();
+                    hoje.setHours(0, 0, 0, 0);
+                    dataPrimeiraFolga = new Date(hoje);
+                    dataPrimeiraFolga.setDate(hoje.getDate() + (7 - hoje.getDay()));
+                }
+                dataPrimeiraFolga.setHours(0, 0, 0, 0);
+
+                const diffTime = dataAtual.getTime() - dataPrimeiraFolga.getTime();
+                const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+                let posicaoNoCiclo = ((diffDays % cicloTotal) + cicloTotal) % cicloTotal;
+
+                if (posicaoNoCiclo < folga) {
+                    return { class: 'folga', text: 'FOLGA' };
+                }
+                return { class: 'trabalho', text: turno.horario };
             }
             
             return { class: 'trabalho', text: turno.horario };
         }
         
-        // Se não houver modelo (ex: novo rascunho em branco sem modelo definido ainda),
-        // assume o padrão 6x2 para não quebrar a visualização
-        const trab = modelo ? modelo.dias_trabalhados : 6;
-        const folga = modelo ? modelo.dias_folga : 2;
+        const trab = modelo.dias_trabalhados;
+        const folga = modelo.dias_folga;
         const cicloTotal = trab + folga;
 
         const dataAtual = new Date(ano, mes, dia);
@@ -7186,7 +7263,9 @@
         }
 
         const modelo = modelos.find(m => m.id == modeloId);
-        if (modelo && modelo.tipo === 'personalizado') {
+        const isPersonalizado = (modelo && modelo.tipo === 'personalizado') || !modeloId;
+
+        if (isPersonalizado) {
             const cacheKey = `${dados.analista_id}-${dKey}`;
             if (window.escalaPersonalizadaCache && window.escalaPersonalizadaCache[cacheKey] !== undefined) {
                 const status = window.escalaPersonalizadaCache[cacheKey];
@@ -7203,7 +7282,7 @@
                     return { class: status, text: text };
                 }
             }
-            if (modelo.ciclo_personalizado && modelo.ciclo_personalizado.dias_folga) {
+            if (modelo && modelo.ciclo_personalizado && modelo.ciclo_personalizado.dias_folga) {
                 const diasFolga = modelo.ciclo_personalizado.dias_folga;
                 const cicloDias = modelo.ciclo_personalizado.ciclo_dias || 31;
                 
@@ -7216,12 +7295,40 @@
                 if (diasFolga.includes(posicaoNoCiclo)) {
                     return { class: 'folga', text: 'FOLGA' };
                 }
+                return { class: 'trabalho', text: dados.turno_horario || 'Trabalho' };
+            }
+            if (!modelo) {
+                // Fallback 6x2
+                const trab = 6;
+                const folga = 2;
+                const cicloTotal = trab + folga;
+
+                let dataPrimeiraFolga;
+                if (dados.data_primeira_folga) {
+                    const [anoFolga, mesFolga, diaFolga] = dados.data_primeira_folga.split('-').map(Number);
+                    dataPrimeiraFolga = new Date(anoFolga, mesFolga - 1, diaFolga);
+                } else {
+                    const hoje = new Date();
+                    hoje.setHours(0, 0, 0, 0);
+                    dataPrimeiraFolga = new Date(hoje);
+                    dataPrimeiraFolga.setDate(hoje.getDate() + (7 - hoje.getDay()));
+                }
+                dataPrimeiraFolga.setHours(0, 0, 0, 0);
+
+                const diffTime = dataAtual.getTime() - dataPrimeiraFolga.getTime();
+                const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+                let posicaoNoCiclo = ((diffDays % cicloTotal) + cicloTotal) % cicloTotal;
+
+                if (posicaoNoCiclo < folga) {
+                    return { class: 'folga', text: 'FOLGA' };
+                }
+                return { class: 'trabalho', text: dados.turno_horario || 'Trabalho' };
             }
             return { class: 'trabalho', text: dados.turno_horario || 'Trabalho' };
         }
 
-        const trab = modelo ? modelo.dias_trabalhados : 6;
-        const folga = modelo ? modelo.dias_folga : 2;
+        const trab = modelo.dias_trabalhados;
+        const folga = modelo.dias_folga;
         const cicloTotal = trab + folga;
 
         let dataPrimeiraFolga;
