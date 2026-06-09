@@ -4825,7 +4825,7 @@
                     } else {
                         // Regra 2: Tipo de escala
                         if (tipo === 'fixa' && cycle === 7) {
-                            isWork = (cycleCounter % 7) >= folga;
+                            isWork = (cycleCounter % 7) < trab;
                         } else {
                             isWork = (cycleCounter % cycle) < trab;
                         }
