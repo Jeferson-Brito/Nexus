@@ -392,8 +392,7 @@ AXES_FAILURE_LIMIT = 6
 AXES_COOLOFF_TIME = 1  # horas
 AXES_RESET_ON_SUCCESS = True
 AXES_LOCKOUT_TEMPLATE = 'core/lockout.html'
-if DEBUG:
-    AXES_ENABLED = False
+AXES_ENABLED = False
 
 # ==============================
 # SENTRY

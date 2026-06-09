@@ -6381,7 +6381,10 @@
         // Carregar Modelos de Jornada
         const selectModelo = document.getElementById('draftModeloSelect');
         if (selectModelo) {
-            selectModelo.innerHTML = '<option value="">(Modelo Atual / Sem Alteração)</option>';
+            selectModelo.innerHTML = `
+                <option value="">(Modelo Atual / Sem Alteração)</option>
+                <option value="none">❌ Sem Modelo (Definir Individualmente por Analista)</option>
+            `;
             modelos.forEach(m => {
                 selectModelo.innerHTML += `<option value="${m.id}">${m.nome} (${m.dias_trabalhados}x${m.dias_folga})</option>`;
             });

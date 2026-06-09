@@ -547,8 +547,20 @@ def api_rascunho_create(request):
         modelo_escala_id = data.get('modelo_escala_id')
 
         modelo_escala = None
-        if modelo_escala_id:
+        if modelo_escala_id == 'none':
+            modelo_escala = None
+        elif modelo_escala_id:
             modelo_escala = get_object_or_404(ModeloEscala, pk=modelo_escala_id)
+        else:
+            # Herdar da fonte
+            from ..models import ConfiguracaoEscala
+            config = ConfiguracaoEscala.objects.first()
+            if fonte_id == 'principal' or not fonte_id:
+                if config:
+                    modelo_escala = config.modelo_escala_principal_gestao if escala_tipo == 'gestao' else config.modelo_escala_principal
+            else:
+                fonte_rascunho = get_object_or_404(EscalaRascunho, pk=fonte_id)
+                modelo_escala = fonte_rascunho.modelo_escala
 
         rascunho = EscalaRascunho.objects.create(
             nome=nome,
@@ -561,6 +573,7 @@ def api_rascunho_create(request):
             # --- MODO EM BRANCO ---
             # Sem turnos, sem folgas. Apenas copia os membros da escala principal do mesmo tipo
             # sem vínculo de turno, para que possam ser atribuídos manualmente depois.
+            # Preserva a jornada individual e a data de início/âncora dos analistas.
             analistas_ativos = AnalistaEscala.objects.filter(ativo=True, rascunho__isnull=True, escala_tipo=escala_tipo)
             for a in analistas_ativos:
                 AnalistaEscala.objects.create(
@@ -568,8 +581,9 @@ def api_rascunho_create(request):
                     user=a.user,
                     nome=a.nome,
                     turno=None,
+                    modelo_escala=a.modelo_escala,
                     pausa='',
-                    data_primeira_folga=None,
+                    data_primeira_folga=a.data_primeira_folga,
                     ordem=a.ordem,
                     ativo=a.ativo,
                     escala_tipo=escala_tipo,
@@ -767,11 +781,11 @@ def api_rascunho_publish(request, pk):
             turnos_principais.update(rascunho=rascunho_backup)
             escalas_personalizadas_principais.update(rascunho=rascunho_backup)
 
-        # Promover rascunho para principal (rascunho=None)
+        # Promover rascunho para principal (rascunho=None) e desativar modo_teste nas folgas personalizadas
         Turno.objects.filter(rascunho=rascunho).update(rascunho=None)
         AnalistaEscala.objects.filter(rascunho=rascunho).update(rascunho=None)
         FolgaManual.objects.filter(rascunho=rascunho).update(rascunho=None)
-        EscalaPersonalizada.objects.filter(rascunho=rascunho).update(rascunho=None)
+        EscalaPersonalizada.objects.filter(rascunho=rascunho).update(rascunho=None, modo_teste=False)
 
         # Salvar o modelo_escala do rascunho na configuração correta
         if escala_tipo == 'gestao':
