@@ -91,5 +91,28 @@ class Command(BaseCommand):
                 status = "criado" if created else "atualizado"
                 self.stdout.write(self.style.SUCCESS(f"  [OK] {obj.name} ({status})"))
 
+            # Consolidar usuários de departamentos antigos para os novos
+            dept_escala = Department.objects.filter(slug='escala').first()
+            dept_ponto = Department.objects.filter(slug='ponto-eletronico').first()
+            User = apps.get_model('core', 'User')
+
+            if dept_escala:
+                # Usuários do NRS Suporte vão para a Escala
+                old_escala_depts = Department.objects.filter(slug='nrs-suporte') | Department.objects.filter(name='NRS Suporte')
+                for old_dept in old_escala_depts:
+                    if old_dept.id != dept_escala.id:
+                        User.objects.filter(department=old_dept).update(department=dept_escala)
+
+            if dept_ponto:
+                # Usuários do RH vão para o Ponto Eletrônico
+                old_ponto_depts = Department.objects.filter(slug='rh') | Department.objects.filter(name='RH')
+                for old_dept in old_ponto_depts:
+                    if old_dept.id != dept_ponto.id:
+                        User.objects.filter(department=old_dept).update(department=dept_ponto)
+
+            # Garantir que APENAS 'escala' e 'ponto-eletronico' aparecem no menu de navegação
+            Department.objects.exclude(slug__in=['escala', 'ponto-eletronico']).update(show_in_nav=False)
+            self.stdout.write(self.style.SUCCESS("  [OK] Menu de navegação limpo. Apenas Escala e Ponto Eletrônico ativos."))
+
         except Exception as e:
             self.stdout.write(self.style.ERROR(f"  [FAIL] Erro ao ativar departamentos: {e}"))
