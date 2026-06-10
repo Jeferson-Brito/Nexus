@@ -50,7 +50,7 @@ NOTIFICATIONS = [
   <li><strong>Notificações ao franqueado:</strong> WhatsApp e e-mail direto do sistema</li>
   <li><strong>Histórico completo:</strong> todas as auditorias organizadas por data e analista</li>
 </ul>
-<p><em>Disponível para o departamento NRS Suporte</em></p>
+<p><em>Disponível para o departamento Escala</em></p>
 """
     },
     {
@@ -103,7 +103,7 @@ NOTIFICATIONS = [
   <li><strong>Brisoft IA Mentor:</strong> Inteligência Artificial que analisa o histórico do analista e gera feedbacks estruturados para reuniões de 1-on-1.</li>
   <li><strong>Filtros Inteligentes:</strong> Agora o sistema exibe automaticamente os dados do mês atual.</li>
 </ul>
-<p><em>Acesse: NRS Suporte → Auditoria de Atendimentos</em></p>
+<p><em>Acesse: Escala → Auditoria de Atendimentos</em></p>
 """
     },
     {

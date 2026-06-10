@@ -110,13 +110,14 @@ function getStepsByDepartment(dept) {
                 }
             }
         ];
-    } else if (dept === 'NRS Suporte') {
+    } else if (dept === 'Escala') {
         deptSteps = [
             {
                 element: 'a[href*="escala"]',
                 popover: {
                     title: 'Escala de Plantão',
-                    description: 'Visualize quem está de plantão e gerencie os horários da equipe NRS.',
+                    description: 'Visualize quem está de plantão e gerencie os horários da equipe.',
+
                     position: 'right'
                 }
             },

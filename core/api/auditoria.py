@@ -58,13 +58,13 @@ def api_auditoria_create(request):
     try:
         data = json.loads(request.body)
         
-        # Obter departamento com fallback para ID 1 (NRS Suporte)
+        # Obter departamento com fallback para ID 1 (Escala)
         department = request.session.get('current_department_obj') or request.user.department
         if isinstance(department, dict):
             department = Department.objects.get(id=department['id'])
         
         if not department:
-            # Fallback: Tentar pegar NRS Suporte (ID 1) ou o primeiro disponível
+            # Fallback: Tentar pegar Escala (ID 1) ou o primeiro disponível
             department = Department.objects.filter(id=1).first() or Department.objects.first()
             
         if not department:

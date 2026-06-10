@@ -36,7 +36,7 @@ urlpatterns = [
     
 
     
-    # NRS Suporte - Abas implementadas
+    # Escala - Abas implementadas
     path('escala/', views.escala_view, name='escala'),
     path('planejamento-escala/', views.escala_view, name='planejamento_escala'),
     path('configuracao-escalas/', views.escala_view, name='configuracao_escalas'),

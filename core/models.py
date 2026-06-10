@@ -119,7 +119,7 @@ class AuditLog(models.Model):
 
 
 # ========================================
-# MODELOS PARA ESCALA NRS SUPORTE
+# MODELOS PARA ESCALA
 # ========================================
 
 class ModeloEscala(models.Model):
