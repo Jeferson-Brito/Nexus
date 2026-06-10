@@ -94,40 +94,4 @@ class Command(BaseCommand):
         except Exception as e:
             self.stdout.write(self.style.ERROR(f"  [FAIL] Erro ao criar departamentos oficiais: {e}"))
 
-        # =============================================
-        # PARTE 4: Deletar TODOS os departamentos legados (SEMPRE, sem condição)
-        # =============================================
-        self.stdout.write("==> [fix_permissions] Removendo departamentos legados do banco...")
-        try:
-            Department = apps.get_model('core', 'Department')
-            User = apps.get_model('core', 'User')
 
-            # Migrar usuários de departamentos não-oficiais para None
-            User.objects.exclude(
-                department__slug__in=['escala', 'ponto-eletronico']
-            ).update(department=None)
-
-            # Deletar TODOS os departamentos que não sejam os dois oficiais
-            # Esta operação é SEMPRE executada, independente de qualquer condição.
-            legados = Department.objects.exclude(slug__in=['escala', 'ponto-eletronico'])
-            nomes_legados = list(legados.values_list('name', flat=True))
-            deleted_count, _ = legados.delete()
-
-            if deleted_count > 0:
-                self.stdout.write(self.style.SUCCESS(
-                    f"  [OK] Removidos {deleted_count} departamento(s) legado(s): {nomes_legados}"
-                ))
-            else:
-                self.stdout.write(self.style.SUCCESS("  [OK] Nenhum departamento legado encontrado."))
-
-        except Exception as e:
-            self.stdout.write(self.style.ERROR(f"  [FAIL] Erro ao remover departamentos legados: {e}"))
-            # Fallback: tentar via SQL direto
-            try:
-                with connection.cursor() as cursor:
-                    cursor.execute(
-                        "DELETE FROM core_department WHERE slug NOT IN ('escala', 'ponto-eletronico')"
-                    )
-                    self.stdout.write(self.style.SUCCESS("  [OK] Fallback SQL executado com sucesso."))
-            except Exception as sql_err:
-                self.stdout.write(self.style.ERROR(f"  [FAIL] Fallback SQL falhou: {sql_err}"))
