@@ -187,7 +187,7 @@
 
             {% if request.user.is_administrador %}
             <select name="department" class="form-select filter-select" style="width: auto;" onchange="this.form.submit()">
-                <option value="">Departamentos</option>
+                <option value="">Módulos</option>
                 {% for dept in departments %}
                 {% localize off %}
                 <option value="{{ dept.id }}" {% if request.GET.department == dept.id|stringformat:"i" %}selected{% endif %}>
@@ -241,7 +241,7 @@
                     <th>Usuário</th>
                     <th>E-mail</th>
                     <th>Perfil</th>
-                    <th>Departamento</th>
+                    <th>Módulo Principal</th>
                     <th>Status</th>
                     <th class="text-end"></th>
                 </tr>

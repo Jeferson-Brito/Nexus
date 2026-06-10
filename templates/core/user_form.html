@@ -267,10 +267,10 @@ html[data-bs-theme="dark"] .pf-btn-cancel { background:#334155; border-color:#47
                             {% endif %}
                         </div>
                         <div class="col-md-6">
-                            <label class="pf-label">Departamento</label>
+                            <label class="pf-label">Módulo Base (Permissão)</label>
                             <select class="pf-select" name="department"
                                 {% if form_type == 'edit' and not request.user.is_administrador %}disabled{% endif %}>
-                                <option value="">Nenhum Departamento</option>
+                                <option value="">Nenhum Módulo</option>
                                 {% for dept in departments %}{% localize off %}
                                 <option value="{{ dept.id }}"
                                     {% if target_user and target_user.department_id == dept.id %}selected

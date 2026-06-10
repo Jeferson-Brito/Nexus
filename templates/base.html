@@ -282,7 +282,7 @@
         {% if user.is_administrador %}
         {% if all_departments %}
         <div class="sidebar-dept-selector">
-            <div class="dept-label text-center">Departamento:</div>
+            <div class="dept-label text-center">Módulo:</div>
             <div class="dropdown">
                 <button class="btn btn-dept-select dropdown-toggle d-flex align-items-center justify-content-center"
                     type="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-boundary="viewport">
@@ -314,7 +314,7 @@
         {% else %}
         {% if user.department %}
         <div class="sidebar-dept-selector no-dropdown">
-            <div class="dept-label text-center">Departamento:</div>
+            <div class="dept-label text-center">Módulo:</div>
             <div class="btn btn-dept-select disabled text-center w-100 opacity-100"
                 style="cursor: default; border-color: rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center;">
                 <i class="bi bi-diagram-3"></i>
