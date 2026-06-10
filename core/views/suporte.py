@@ -12,25 +12,7 @@ from ..models import (
     User, ModeloEscala, ConfiguracaoEscala
 )
 
-@login_required
-def sites_view(request):
-    """Página de Sites e Sistemas - Escala"""
-    if not request.user.is_administrador():
-        if not request.user.acesso_escala:
-            messages.error(request, 'Você não tem permissão para acessar as ferramentas da Escala.')
-            return redirect('dashboard')
-            
-    return render(request, 'core/sites.html')
 
-@login_required
-def localizacao_view(request):
-    """Página de Localização das Lojas - Escala"""
-    if not request.user.is_administrador():
-        if not request.user.acesso_escala:
-            messages.error(request, 'Você não tem permissão para acessar as ferramentas da Escala.')
-            return redirect('dashboard')
-            
-    return render(request, 'core/localizacao.html')
 
 @login_required
 def escala_view(request):
@@ -142,22 +124,7 @@ def escala_view(request):
     
     return render(request, 'core/escala.html', context)
 
-@login_required
-def calendar_view(request):
-    """Visualização do calendário"""
-    user = request.user
-    is_manager = user.role in ['gestor', 'administrador']
-    is_nrs_analyst = user.role == 'analista' and user.acesso_escala
-    
-    can_create = is_manager or is_nrs_analyst
-    
-    context = {
-        'can_edit': can_create,
-        'user_id': user.id,
-        'user_full_name': f"{user.first_name} {user.last_name}".strip() or user.username,
-        'is_manager': is_manager,
-    }
-    return render(request, 'core/calendar.html', context)
+
 
 @login_required
 def performance_view(request):

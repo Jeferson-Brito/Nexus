@@ -2,7 +2,6 @@ from django.urls import path
 from django.contrib.auth import views as auth_views
 from . import views
 from .api import escala as api_escala
-from .api import eventos as api_eventos
 from .api import auditoria as api_auditoria
 from .api import desempenho as api_desempenho
 from .api import rh as api_rh
@@ -41,12 +40,6 @@ urlpatterns = [
     path('escala/', views.escala_view, name='escala'),
     path('planejamento-escala/', views.escala_view, name='planejamento_escala'),
     path('configuracao-escalas/', views.escala_view, name='configuracao_escalas'),
-    path('sites/', views.sites_view, name='sites'),
-    path('localizacao-lojas/', views.localizacao_view, name='localizacao'),
-
-    # NRS Suporte - Abas em desenvolvimento
-
-    path('calendario/', views.calendar_view, name='calendario'),
     path('desempenho/', views.performance_view, name='desempenho'),
 
 
@@ -174,10 +167,7 @@ urlpatterns = [
     path('api/escala/personalizada/templates/<int:pk>/delete/', api_escala.api_escala_personalizada_template_delete, name='api_escala_personalizada_template_delete'),
 
 
-    path('api/eventos/users/', api_eventos.api_eventos_users_list, name='api_eventos_users_list'),
-    path('api/eventos/', api_eventos.api_eventos_list, name='api_eventos_list'),
-    path('api/eventos/create/', api_eventos.api_evento_create, name='api_evento_create'),
-    path('api/eventos/<int:pk>/', api_eventos.api_evento_detail, name='api_evento_detail'),
+
 
     # API Base de Auditoria IA
     path('api/base-auditoria/', api_base_auditoria.api_base_auditoria_list, name='api_base_auditoria_list'),

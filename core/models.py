@@ -490,38 +490,7 @@ class EscalaPersonalizadaTemplate(models.Model):
         return f"{self.nome} ({self.total_folgas}F / {self.total_trabalho}T)"
 
 
-class Evento(models.Model):
-    """Eventos para o calendário"""
-    TIPO_CHOICES = [
-        ('agendamento', 'Agendamento'),
-        ('reuniao', 'Reunião'),
-        ('visita', 'Visita'),
-        ('outro', 'Outro'),
-    ]
-    
-    titulo = models.CharField(max_length=200)
-    descricao = models.TextField(blank=True, null=True)
-    data_inicio = models.DateTimeField()
-    horario = models.CharField(max_length=10, blank=True, null=True)  # Ex: "14:30"
-    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, default='agendamento')
-    codigo_loja = models.CharField(max_length=50, blank=True, null=True)
-    analista_nome = models.CharField(max_length=200, blank=True, null=True)
-    observacao = models.TextField(blank=True, null=True)
-    
-    # Relações
-    department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name='eventos')
-    usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='eventos_criados')
-    
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    class Meta:
-        ordering = ['data_inicio', 'horario']
-        verbose_name = 'Evento'
-        verbose_name_plural = 'Eventos'
-    
-    def __str__(self):
-        return f"{self.titulo} ({self.data_inicio.strftime('%d/%m/%Y')})"
+
 
 
 # ========================================
@@ -603,87 +572,8 @@ class ObservacaoDesempenho(models.Model):
         ordering = ['-data', '-created_at']
         verbose_name = 'Observação de Desempenho'
         verbose_name_plural = 'Observações de Desempenho'
-        
     def __str__(self):
         return f"{self.analista.username} - {self.tipo} - {self.data}"
-
-
-
-
-
-
-
-
-# ========================================
-# MODELOS PARA CHAT INTERNO
-# ========================================
-
-class Conversation(models.Model):
-    """Conversa entre dois usuários"""
-    participants = models.ManyToManyField(User, related_name='chat_conversations')
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    class Meta:
-        ordering = ['-updated_at']
-        verbose_name = 'Conversa'
-        verbose_name_plural = 'Conversas'
-    
-    def get_other_participant(self, user):
-        """Retorna o outro participante da conversa"""
-        return self.participants.exclude(id=user.id).first()
-    
-    def get_last_message(self):
-        """Retorna a última mensagem da conversa"""
-        return self.messages.order_by('-created_at').first()
-    
-    def get_unread_count(self, user):
-        """Conta mensagens não lidas para um usuário"""
-        return self.messages.filter(is_read=False).exclude(sender=user).count()
-    
-    def __str__(self):
-        participants_names = ", ".join([p.get_full_name() or p.username for p in self.participants.all()[:2]])
-        return f"Conversa: {participants_names}"
-
-
-class Message(models.Model):
-    """Mensagem em uma conversa"""
-    conversation = models.ForeignKey(Conversation, on_delete=models.CASCADE, related_name='messages')
-    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='chat_messages_sent')
-    content = models.TextField()
-    attachment = models.FileField(upload_to='chat_attachments/', null=True, blank=True)
-    file_name = models.CharField(max_length=255, null=True, blank=True)
-    is_read = models.BooleanField(default=False)
-    is_deleted = models.BooleanField(default=False)
-    edited_at = models.DateTimeField(null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    
-    class Meta:
-        ordering = ['created_at']
-        indexes = [
-            models.Index(fields=['conversation', 'created_at']),
-            models.Index(fields=['sender', 'is_read']),
-        ]
-        verbose_name = 'Mensagem'
-        verbose_name_plural = 'Mensagens'
-    
-    def __str__(self):
-        return f"{self.sender.username}: {self.content[:50]}..."
-
-
-class UserOnlineStatus(models.Model):
-    """Status online do usuário para o chat"""
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='chat_online_status')
-    is_online = models.BooleanField(default=False)
-    last_seen = models.DateTimeField(auto_now=True)
-    
-    class Meta:
-        verbose_name = 'Status Online'
-        verbose_name_plural = 'Status Online'
-    
-    def __str__(self):
-        status = "Online" if self.is_online else "Offline"
-        return f"{self.user.username}: {status}"
 
 
 
