@@ -18,13 +18,13 @@ def check_nrs_permission(view_func):
     def _wrapped_view(request, *args, **kwargs):
         user = request.user
         if not user.is_administrador():
-            # Permitir acesso se for NRS Suporte OU RH
-            if not user.department or user.department.name not in ['NRS Suporte', 'RH']:
-                return JsonResponse({'error': 'Acesso negado. Apenas departamentos NRS Suporte ou RH.'}, status=403)
+            # Permitir acesso se tiver acesso_escala OU acesso_ponto
+            if not (user.acesso_escala or user.acesso_ponto):
+                return JsonResponse({'error': 'Acesso negado. Você não tem permissão para acessar a Escala.'}, status=403)
             
-            # Se for RH, permitir APENAS leitura
-            if user.department.name == 'RH' and request.method not in ['GET']:
-                return JsonResponse({'error': 'Acesso negado. RH possui apenas permissão de leitura.'}, status=403)
+            # Se tiver acesso_ponto mas não acesso_escala, permitir APENAS leitura
+            if user.acesso_ponto and not user.acesso_escala and request.method not in ['GET']:
+                return JsonResponse({'error': 'Acesso negado. Sua permissão concede apenas leitura na Escala.'}, status=403)
                 
         return view_func(request, *args, **kwargs)
     return _wrapped_view
@@ -255,9 +255,9 @@ def api_analistas_list(request):
     else:
         queryset = AnalistaEscala.objects.filter(ativo=True, rascunho__isnull=True, escala_tipo=escala_tipo).select_related('turno')
     
-    # Se for RH, filtrar apenas analistas que PERTENCEM ao NRS Suporte
-    if not request.user.is_administrador() and request.user.department and request.user.department.name == 'RH':
-        queryset = queryset.filter(user__department__name='NRS Suporte')
+    # Se tiver acesso_ponto mas não acesso_escala, filtrar apenas analistas com acesso_escala
+    if not request.user.is_administrador() and request.user.acesso_ponto and not request.user.acesso_escala:
+        queryset = queryset.filter(user__acesso_escala=True)
         
     analistas = queryset.order_by('turno__ordem', 'ordem', 'nome')
     data = [{
@@ -387,9 +387,9 @@ def api_folgas_list(request):
             analista__escala_tipo=escala_tipo
         ).select_related('analista')
     
-    # Se for RH, filtrar apenas folgas de analistas que PERTENCEM ao NRS Suporte
-    if not request.user.is_administrador() and request.user.department and request.user.department.name == 'RH':
-        queryset = queryset.filter(analista__user__department__name='NRS Suporte')
+    # Se tiver acesso_ponto mas não acesso_escala, filtrar apenas folgas de analistas com acesso_escala
+    if not request.user.is_administrador() and request.user.acesso_ponto and not request.user.acesso_escala:
+        queryset = queryset.filter(analista__user__acesso_escala=True)
         
     folgas = queryset.all()
     

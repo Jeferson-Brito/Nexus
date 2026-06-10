@@ -76,11 +76,8 @@ class Command(BaseCommand):
 
             # Departamentos funcionais que devem existir e aparecer no menu
             functional_departments = [
-                {'slug': 'nrs-suporte', 'name': 'NRS Suporte', 'description': 'Suporte NRS'},
-                {'slug': 'rh',          'name': 'RH',          'description': 'Recursos Humanos'},
-                {'slug': 'nrp',         'name': 'NRP',         'description': 'NRP'},
-                {'slug': 'onboarding',  'name': 'Onboarding',  'description': 'Onboarding'},
-                {'slug': 'logistica',   'name': 'Logística',   'description': 'Logística'},
+                {'slug': 'escala',            'name': 'Escala',            'description': 'Escala de Trabalho'},
+                {'slug': 'ponto-eletronico',  'name': 'Ponto Eletrônico',  'description': 'Ponto Eletrônico'},
             ]
 
             for dept in functional_departments:

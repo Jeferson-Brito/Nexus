@@ -1,4 +1,4 @@
-﻿from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
@@ -14,31 +14,31 @@ from ..models import (
 
 @login_required
 def sites_view(request):
-    """PÃ¡gina de Sites e Sistemas - NRS Suporte"""
+    """Página de Sites e Sistemas - Escala"""
     if not request.user.is_administrador():
-        if not request.user.department or request.user.department.name != 'NRS Suporte':
-            messages.error(request, 'VocÃª nÃ£o tem permissÃ£o para acessar as ferramentas de NRS Suporte.')
+        if not request.user.acesso_escala:
+            messages.error(request, 'Você não tem permissão para acessar as ferramentas da Escala.')
             return redirect('dashboard')
             
     return render(request, 'core/sites.html')
 
 @login_required
 def localizacao_view(request):
-    """PÃ¡gina de LocalizaÃ§Ã£o das Lojas - NRS Suporte"""
+    """Página de Localização das Lojas - Escala"""
     if not request.user.is_administrador():
-        if not request.user.department or request.user.department.name != 'NRS Suporte':
-            messages.error(request, 'VocÃª nÃ£o tem permissÃ£o para acessar as ferramentas de NRS Suporte.')
+        if not request.user.acesso_escala:
+            messages.error(request, 'Você não tem permissão para acessar as ferramentas da Escala.')
             return redirect('dashboard')
             
     return render(request, 'core/localizacao.html')
 
 @login_required
 def escala_view(request):
-    """PÃ¡gina de Escala - NRS Suporte"""
+    """Página de Escala - Escala"""
     user = request.user
     if not user.is_administrador():
-        if not user.department or user.department.name not in ['NRS Suporte', 'RH']:
-            messages.error(request, 'VocÃª nÃ£o tem permissÃ£o para acessar as ferramentas de NRS Suporte.')
+        if not (user.acesso_escala or user.acesso_ponto):
+            messages.error(request, 'Você não tem permissão para acessar as ferramentas da Escala.')
             return redirect('dashboard')
     
     rascunho_id = request.GET.get('rascunho_id')
@@ -83,8 +83,8 @@ def escala_view(request):
             'motivo': f.motivo
         }
     
-    # RH vÃª a escala em modo somente-leitura (sem botÃµes de editar/adicionar analista/turno)
-    is_rh = user.department and user.department.name == 'RH'
+    # Ponto Eletrônico (antigo RH) vê a escala em modo somente-leitura se não tiver acesso de edição
+    is_rh = user.acesso_ponto and not user.acesso_escala
     is_admin = (user.is_gestor() or user.is_administrador()) and not is_rh
     can_export = True  # Todos os usuÃ¡rios logados com acesso Ã  escala podem ver Resumo e Exportar
     
@@ -144,10 +144,10 @@ def escala_view(request):
 
 @login_required
 def calendar_view(request):
-    """VisualizaÃ§Ã£o do calendÃ¡rio"""
+    """Visualização do calendário"""
     user = request.user
     is_manager = user.role in ['gestor', 'administrador']
-    is_nrs_analyst = user.role == 'analista' and user.department and user.department.name == 'NRS Suporte'
+    is_nrs_analyst = user.role == 'analista' and user.acesso_escala
     
     can_create = is_manager or is_nrs_analyst
     
@@ -163,9 +163,9 @@ def calendar_view(request):
 def performance_view(request):
     """PÃ¡gina de Desempenho do Time"""
     user = request.user
-    nrs_dept = Department.objects.filter(name='NRS Suporte').first()
+    nrs_dept = Department.objects.filter(slug='escala').first()
     if not nrs_dept:
-        nrs_dept = Department.objects.filter(slug='nrs-suporte').first()
+        nrs_dept = Department.objects.filter(name='Escala').first()
     if not nrs_dept and user.department:
         nrs_dept = user.department
     if not nrs_dept:
@@ -267,10 +267,10 @@ def tasks_view(request):
     """View para a aba de tarefas e rotina"""
     user = request.user
     is_manager = user.role in ['gestor', 'administrador']
-    is_nrs_analyst = (user.role == 'analista' and user.department and user.department.name == 'NRS Suporte')
+    is_nrs_analyst = (user.role == 'analista' and user.acesso_escala)
     show_create_button = is_manager or is_nrs_analyst or user.is_administrador()
     return render(request, 'core/tarefas.html', {
-        'title': 'Tarefas e SolicitaÃ§Ãµes', 'is_manager': is_manager, 'show_create_button': show_create_button,
+        'title': 'Tarefas e Solicitações', 'is_manager': is_manager, 'show_create_button': show_create_button,
     })
 @login_required
 def auditoria_atendimentos_view(request):

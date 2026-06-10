@@ -1,4 +1,4 @@
-﻿from django.http import JsonResponse
+from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
@@ -17,7 +17,7 @@ def api_eventos_users_list(request):
     # O modelo User usa 'ativo'
     users = User.objects.filter(
         ativo=True,
-        department__name='NRS Suporte',
+        acesso_escala=True,
         role__in=['analista', 'gestor']
     ).values('id', 'first_name', 'last_name', 'username').order_by('first_name')
 

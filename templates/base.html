@@ -378,9 +378,9 @@
                 <span class="link-text">Google Meu Negócio</span>
             </a>
 
-            {% elif current_department.name == 'RH' or current_department.slug == 'rh' %}
+            {% elif current_department.slug == 'ponto-eletronico' or current_department.name == 'Ponto Eletrônico' or current_department.name == 'RH' or current_department.slug == 'rh' %}
             <!-- RH -->
-            <div class="nav-group-title">Recursos Humanos</div>
+            <div class="nav-group-title">Ponto Eletrônico</div>
             <a href="#escalaSubmenuRH"
                 class="nav-link dropdown-toggle-custom {% if request.resolver_match.url_name == 'escala' or request.resolver_match.url_name == 'planejamento_escala' or request.resolver_match.url_name == 'configuracao_escalas' %}active{% endif %}"
                 data-bs-toggle="collapse"
@@ -518,7 +518,7 @@
                 </div>
             </div>
 
-            <div class="nav-group-title">Operacional RH</div>
+            <div class="nav-group-title">Operacional Ponto</div>
             <a href="{% url 'ponto_admin' %}"
                 class="nav-link {% if request.resolver_match.url_name == 'ponto_admin' or request.resolver_match.url_name == 'ponto_relatorios' %}active{% endif %}">
                 <i class="bi bi-clock-history"></i>
@@ -599,8 +599,8 @@
                 <span class="link-text">Operadores</span>
             </a>
 
-            {% elif current_department.slug == 'nrs-suporte' or current_department.slug == 'nrp' or current_department.name == 'NRS Suporte' or current_department.name == 'NRP' %}
-            <!-- NRS Suporte / NRP -->
+            {% elif current_department.slug == 'escala' or current_department.name == 'Escala' or current_department.slug == 'nrs-suporte' or current_department.name == 'NRS Suporte' or current_department.slug == 'nrp' or current_department.name == 'NRP' %}
+            <!-- Escala -->
             <div class="nav-group-title">Operação</div>
             <a href="#escalaSubmenuSuporte"
                 class="nav-link dropdown-toggle-custom {% if request.resolver_match.url_name == 'escala' or request.resolver_match.url_name == 'planejamento_escala' or request.resolver_match.url_name == 'configuracao_escalas' %}active{% endif %}"

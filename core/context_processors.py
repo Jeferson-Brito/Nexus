@@ -31,9 +31,9 @@ def departments(request):
         except (ValueError, TypeError):
             selected_dept = None
 
-    # Se não houver depto válido selecionado, buscar o 'NRS Suporte' ou o primeiro da lista
+    # Se não houver depto válido selecionado, buscar o 'Escala' ou o primeiro da lista
     if not selected_dept and all_depts:
-        selected_dept = next((d for d in all_depts if d.name == 'NRS Suporte'), all_depts[0])
+        selected_dept = next((d for d in all_depts if d.name == 'Escala'), all_depts[0])
         if selected_dept:
             request.session['selected_department_id'] = selected_dept.id
 

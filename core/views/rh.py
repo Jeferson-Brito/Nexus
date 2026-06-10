@@ -6,8 +6,8 @@ from ..models import Colaborador, Department, Empresa, CentroCusto, Cargo, Holid
 @login_required
 def rh_colaboradores_view(request):
     """Página de listagem geral de colaboradores (Cards)"""
-    if not (request.user.is_gestor() or request.user.is_administrador() or getattr(request.user.department, 'name', '') == 'RH'):
-        messages.error(request, 'Acesso restrito para Gestores ou Departamento de RH.')
+    if not (request.user.is_administrador() or request.user.acesso_ponto):
+        messages.error(request, 'Acesso restrito ao Ponto Eletrônico.')
         return redirect('dashboard')
     
     return render(request, 'core/rh/colaboradores.html')
@@ -15,8 +15,8 @@ def rh_colaboradores_view(request):
 @login_required
 def rh_colaborador_perfil_view(request, pk):
     """Página de perfil detalhado do colaborador (Dossiê)"""
-    if not (request.user.is_gestor() or request.user.is_administrador() or getattr(request.user.department, 'name', '') == 'RH'):
-        messages.error(request, 'Acesso restrito para Gestores ou Departamento de RH.')
+    if not (request.user.is_administrador() or request.user.acesso_ponto):
+        messages.error(request, 'Acesso restrito ao Ponto Eletrônico.')
         return redirect('dashboard')
         
     colaborador = get_object_or_404(Colaborador, pk=pk)
@@ -29,8 +29,8 @@ def rh_colaborador_perfil_view(request, pk):
 @login_required
 def rh_cadastro_funcionario_view(request, pk=None):
     """Página de cadastro/edição de funcionário (full-page, estilo Control iD)"""
-    if not (request.user.is_gestor() or request.user.is_administrador() or getattr(request.user.department, 'name', '') == 'RH'):
-        messages.error(request, 'Acesso restrito para Gestores ou Departamento de RH.')
+    if not (request.user.is_administrador() or request.user.acesso_ponto):
+        messages.error(request, 'Acesso restrito ao Ponto Eletrônico.')
         return redirect('dashboard')
         
     colaborador = None
@@ -79,32 +79,32 @@ def rh_cadastro_empresa_view(request, pk=None):
 @login_required
 def rh_departamentos_view(request):
     """Tela de gestão de departamentos"""
-    if not (request.user.is_gestor() or request.user.is_administrador() or getattr(request.user.department, 'name', '') == 'RH'):
-        messages.error(request, 'Acesso restrito para Gestores ou Departamento de RH.')
+    if not (request.user.is_administrador() or request.user.acesso_ponto):
+        messages.error(request, 'Acesso restrito ao Ponto Eletrônico.')
         return redirect('dashboard')
     return render(request, 'core/rh/departamentos_list.html')
 
 @login_required
 def rh_cargos_view(request):
     """Tela de gestão de cargos"""
-    if not (request.user.is_gestor() or request.user.is_administrador() or getattr(request.user.department, 'name', '') == 'RH'):
-        messages.error(request, 'Acesso restrito para Gestores ou Departamento de RH.')
+    if not (request.user.is_administrador() or request.user.acesso_ponto):
+        messages.error(request, 'Acesso restrito ao Ponto Eletrônico.')
         return redirect('dashboard')
     return render(request, 'core/rh/cargos_list.html')
 
 @login_required
 def rh_centros_custo_view(request):
     """Tela de gestão de centros de custo"""
-    if not (request.user.is_gestor() or request.user.is_administrador() or getattr(request.user.department, 'name', '') == 'RH'):
-        messages.error(request, 'Acesso restrito para Gestores ou Departamento de RH.')
+    if not (request.user.is_administrador() or request.user.acesso_ponto):
+        messages.error(request, 'Acesso restrito ao Ponto Eletrônico.')
         return redirect('dashboard')
     return render(request, 'core/rh/centros_custo_list.html')
 
 @login_required
 def rh_feriados_view(request):
     """Tela de gestão de feriados"""
-    if not (request.user.is_gestor() or request.user.is_administrador() or getattr(request.user.department, 'name', '') == 'RH'):
-        messages.error(request, 'Acesso restrito para Gestores ou Departamento de RH.')
+    if not (request.user.is_administrador() or request.user.acesso_ponto):
+        messages.error(request, 'Acesso restrito ao Ponto Eletrônico.')
         return redirect('dashboard')
     return render(request, 'core/rh/feriados_list.html')
 
@@ -113,8 +113,8 @@ def rh_atribuicoes_massa_view(request):
     """View para o wizard de atribuições em massa do RH"""
     user = request.user
     if not user.is_administrador():
-        if not user.department or user.department.name != 'RH':
-            messages.error(request, 'Acesso negado. Apenas o departamento de RH pode acessar esta funcionalidade.')
+        if not user.acesso_ponto:
+            messages.error(request, 'Acesso negado. Apenas usuários com acesso ao Ponto Eletrônico podem acessar esta funcionalidade.')
             return redirect('dashboard')
 
     context = {
@@ -126,16 +126,16 @@ def rh_atribuicoes_massa_view(request):
 @login_required
 def rh_horarios_view(request):
     """Tela de listagem de horários"""
-    if not (request.user.is_gestor() or request.user.is_administrador() or getattr(request.user.department, 'name', '') == 'RH'):
-        messages.error(request, 'Acesso restrito para Gestores ou Departamento de RH.')
+    if not (request.user.is_administrador() or request.user.acesso_ponto):
+        messages.error(request, 'Acesso restrito ao Ponto Eletrônico.')
         return redirect('dashboard')
     return render(request, 'core/rh/horarios_list.html')
 
 @login_required
 def rh_cadastro_horario_view(request, pk=None):
     """Página de cadastro/edição de horário"""
-    if not (request.user.is_gestor() or request.user.is_administrador() or getattr(request.user.department, 'name', '') == 'RH'):
-        messages.error(request, 'Acesso restrito para Gestores ou Departamento de RH.')
+    if not (request.user.is_administrador() or request.user.acesso_ponto):
+        messages.error(request, 'Acesso restrito ao Ponto Eletrônico.')
         return redirect('dashboard')
         
     horario = None
@@ -158,8 +158,8 @@ def rh_apuracao_view(request):
 @login_required
 def rh_ponto_diario_view(request):
     """Página de apuração em lote por dia (Equipe)"""
-    if not (request.user.is_gestor() or request.user.is_administrador() or getattr(request.user.department, 'name', '') == 'RH'):
-        messages.error(request, 'Acesso restrito para Gestores ou Departamento de RH.')
+    if not (request.user.is_administrador() or request.user.acesso_ponto):
+        messages.error(request, 'Acesso restrito ao Ponto Eletrônico.')
         return redirect('dashboard')
     return render(request, 'core/rh/ponto_diario.html', {'page_title': 'Ponto Diário'})
 
@@ -174,8 +174,8 @@ def rh_inconsistencias_config_view(request):
 @login_required
 def rh_inconsistencias_apuracao_view(request):
     """Página do Filtro de Inconsistências (Apuração)"""
-    if not (request.user.is_gestor() or request.user.is_administrador() or getattr(request.user.department, 'name', '') == 'RH'):
-        messages.error(request, 'Acesso restrito para Gestores ou Departamento de RH.')
+    if not (request.user.is_administrador() or request.user.acesso_ponto):
+        messages.error(request, 'Acesso restrito ao Ponto Eletrônico.')
         return redirect('dashboard')
     return render(request, 'core/rh/filtro_inconsistencias.html', {'page_title': 'Inconsistências'})
 
@@ -183,8 +183,8 @@ def rh_inconsistencias_apuracao_view(request):
 @login_required
 def rh_justificativas_view(request):
     """Página de cadastro e gestão de Tipos de Justificativa"""
-    if not (request.user.is_gestor() or request.user.is_administrador() or getattr(request.user.department, 'name', '') == 'RH'):
-        messages.error(request, 'Acesso restrito para Gestores ou Departamento de RH.')
+    if not (request.user.is_administrador() or request.user.acesso_ponto):
+        messages.error(request, 'Acesso restrito ao Ponto Eletrônico.')
         return redirect('dashboard')
     return render(request, 'core/rh/cadastro_justificativas.html', {'page_title': 'Tipos de Justificativa'})
 
@@ -192,8 +192,8 @@ def rh_justificativas_view(request):
 @login_required
 def rh_relatorio_inconsistencias_view(request):
     """Página de Relatório de Inconsistências (7.3.4 do manual RHID)"""
-    if not (request.user.is_gestor() or request.user.is_administrador() or getattr(request.user.department, 'name', '') == 'RH'):
-        messages.error(request, 'Acesso restrito para Gestores ou Departamento de RH.')
+    if not (request.user.is_administrador() or request.user.acesso_ponto):
+        messages.error(request, 'Acesso restrito ao Ponto Eletrônico.')
         return redirect('dashboard')
         
     context = {

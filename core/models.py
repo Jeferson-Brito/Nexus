@@ -27,6 +27,8 @@ class User(AbstractUser):
     department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True, blank=True, related_name='users')
     ativo = models.BooleanField(default=True)
     profile_photo = models.ImageField(upload_to='profile_photos/', null=True, blank=True, verbose_name='Foto de Perfil')
+    acesso_ponto = models.BooleanField(default=False, verbose_name='Acesso Ponto Eletrônico')
+    acesso_escala = models.BooleanField(default=False, verbose_name='Acesso Escala')
     
     def is_gestor(self):
         return self.role == 'gestor'

@@ -304,6 +304,44 @@ html[data-bs-theme="dark"] .pf-btn-cancel { background:#334155; border-color:#47
                                 </div>
                             </div>
                         </div>
+                        <div class="col-12 mt-3">
+                            <div class="pf-switch">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="pf-switch-icon"><i class="bi bi-clock-history"></i></div>
+                                    <div>
+                                        <h6>Acesso ao Ponto Eletrônico</h6>
+                                        <p>Permite visualizar e gerenciar o Ponto Eletrônico (antigo RH)</p>
+                                    </div>
+                                </div>
+                                <div class="form-check form-switch fs-4 mb-0">
+                                    <input class="form-check-input shadow-none m-0" type="checkbox"
+                                        name="acesso_ponto" id="acessoPonto"
+                                        style="width:3rem;height:1.5rem;cursor:pointer;"
+                                        {% if target_user.acesso_ponto %}checked{% endif %}
+                                        {% if form_type == 'edit' and not request.user.is_administrador and not request.user.is_gestor %}disabled
+                                        {% elif request.user.is_gestor and target_user == request.user %}disabled{% endif %}>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 mt-3">
+                            <div class="pf-switch">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="pf-switch-icon"><i class="bi bi-calendar-range"></i></div>
+                                    <div>
+                                        <h6>Acesso à Escala</h6>
+                                        <p>Permite visualizar e gerenciar as escalas de trabalho (antigo NRS Suporte)</p>
+                                    </div>
+                                </div>
+                                <div class="form-check form-switch fs-4 mb-0">
+                                    <input class="form-check-input shadow-none m-0" type="checkbox"
+                                        name="acesso_escala" id="acessoEscala"
+                                        style="width:3rem;height:1.5rem;cursor:pointer;"
+                                        {% if target_user.acesso_escala %}checked{% endif %}
+                                        {% if form_type == 'edit' and not request.user.is_administrador and not request.user.is_gestor %}disabled
+                                        {% elif request.user.is_gestor and target_user == request.user %}disabled{% endif %}>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 

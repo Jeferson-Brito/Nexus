@@ -98,7 +98,7 @@ def split_night_shift(start_min, end_min, night_start=1320, night_end=300):
 @require_http_methods(["GET"])
 def api_colaboradores_list(request):
     """Retorna listagem de colaboradores + usuários Brisoft que ainda não têm ficha RH"""
-    if not (request.user.is_gestor() or request.user.is_administrador() or getattr(request.user.department, 'name', '') == 'RH'):
+    if not (request.user.is_administrador() or request.user.acesso_ponto):
         return JsonResponse({'erro': 'Acesso negado'}, status=403)
         
     status_filter = request.GET.get('status', 'ativo')
@@ -178,7 +178,7 @@ def api_colaboradores_list(request):
 @require_http_methods(["GET"])
 def api_colaborador_detail(request, pk):
     """Retorna detalhes completos de um colaborador (Dossiê)"""
-    if not (request.user.is_gestor() or request.user.is_administrador() or getattr(request.user.department, 'name', '') == 'RH'):
+    if not (request.user.is_administrador() or request.user.acesso_ponto):
         return JsonResponse({'erro': 'Acesso negado'}, status=403)
         
     colaborador = get_object_or_404(Colaborador.objects.select_related('department', 'user'), pk=pk)

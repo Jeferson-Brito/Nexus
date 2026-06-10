@@ -7,10 +7,10 @@ from ..models import IndicadorDesempenho, User, Department, MetaMensalGlobal
 
 
 def get_nrs_department(user=None):
-    """Obtém o departamento com fallback robusto (NRS Suporte -> Dept do Usuário -> Primeiro Dept) Ratio"""
-    dept = Department.objects.filter(name='NRS Suporte').first()
+    """Obtém o departamento com fallback robusto (Escala -> Dept do Usuário -> Primeiro Dept)"""
+    dept = Department.objects.filter(slug='escala').first()
     if not dept:
-        dept = Department.objects.filter(slug='nrs-suporte').first()
+        dept = Department.objects.filter(name='Escala').first()
     if not dept and user and hasattr(user, 'department') and user.department:
         dept = user.department
     if not dept:
@@ -24,11 +24,10 @@ def api_kpis_list(request):
     """Lista KPIs - filtrado por analista se for um analista"""
     user = request.user
     
-    # Obter departamento NRS Suporte
-    try:
-        nrs_dept = Department.objects.get(name='NRS Suporte')
-    except Department.DoesNotExist:
-        return JsonResponse({'error': 'Departamento NRS Suporte não encontrado'}, status=404)
+    # Obter departamento Escala
+    nrs_dept = Department.objects.filter(slug='escala').first() or Department.objects.filter(name='Escala').first()
+    if not nrs_dept:
+        return JsonResponse({'error': 'Departamento Escala não encontrado'}, status=404)
     
     # Filtrar analista específico (se solicitado)
     analista_id = request.GET.get('analista_id')
@@ -100,11 +99,10 @@ def api_kpi_save(request):
     except User.DoesNotExist:
         return JsonResponse({'error': 'Analista não encontrado'}, status=404)
     
-    # Obter departamento NRS Suporte
-    try:
-        nrs_dept = Department.objects.get(name='NRS Suporte')
-    except Department.DoesNotExist:
-        return JsonResponse({'error': 'Departamento NRS Suporte não encontrado'}, status=404)
+    # Obter departamento Escala
+    nrs_dept = Department.objects.filter(slug='escala').first() or Department.objects.filter(name='Escala').first()
+    if not nrs_dept:
+        return JsonResponse({'error': 'Departamento Escala não encontrado'}, status=404)
     
     # Criar ou atualizar
     kpi, created = IndicadorDesempenho.objects.update_or_create(
@@ -151,9 +149,8 @@ def api_kpi_delete(request, pk):
 @require_http_methods(["GET"])
 def api_global_metas_list(request):
     """Lista todas as metas globais do departamento"""
-    try:
-        nrs_dept = Department.objects.get(name='NRS Suporte')
-    except Department.DoesNotExist:
+    nrs_dept = Department.objects.filter(slug='escala').first() or Department.objects.filter(name='Escala').first()
+    if not nrs_dept:
         return JsonResponse({'error': 'Departamento não encontrado'}, status=404)
         
     metas = MetaMensalGlobal.objects.filter(department=nrs_dept).order_by('-ano', '-mes')
@@ -186,8 +183,8 @@ def api_global_meta_save(request):
         if not mes or not ano:
             return JsonResponse({'error': 'Mês e Ano são obrigatórios'}, status=400)
             
-        # Obter departamento (prioridade: 'NRS Suporte', senão o do usuário, senão o primeiro disponível)
-        nrs_dept = Department.objects.filter(name='NRS Suporte').first()
+        # Obter departamento
+        nrs_dept = Department.objects.filter(slug='escala').first() or Department.objects.filter(name='Escala').first()
         if not nrs_dept and user.department:
             nrs_dept = user.department
         if not nrs_dept:
@@ -242,14 +239,13 @@ def api_ranking(request):
     if user.role not in ['gestor', 'administrador']:
         return JsonResponse({'error': 'Sem permissão'}, status=403)
     
-    # Verificar se é do departamento NRS Suporte
-    try:
-        nrs_dept = Department.objects.get(name='NRS Suporte')
-    except Department.DoesNotExist:
-        return JsonResponse({'error': 'Departamento não encontrado'}, status=404)
-    
-    if user.department != nrs_dept and user.role != 'administrador':
-        return JsonResponse({'error': 'Acesso restrito ao NRS Suporte'}, status=403)
+    # Verificar se tem permissão de Escala
+    if not user.acesso_escala and user.role != 'administrador':
+        return JsonResponse({'error': 'Acesso restrito à Escala'}, status=403)
+        
+    nrs_dept = Department.objects.filter(slug='escala').first() or Department.objects.filter(name='Escala').first()
+    if not nrs_dept:
+        return JsonResponse({'error': 'Departamento Escala não encontrado'}, status=404)
     
     # Parâmetros
     mes = request.GET.get('mes')

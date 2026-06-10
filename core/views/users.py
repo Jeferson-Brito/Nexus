@@ -74,6 +74,8 @@ def user_create(request):
         role = request.POST.get('role', 'analista')
         department_id = request.POST.get('department')
         ativo = request.POST.get('is_active') == 'on'
+        acesso_ponto = request.POST.get('acesso_ponto') == 'on'
+        acesso_escala = request.POST.get('acesso_escala') == 'on'
         first_name = request.POST.get('first_name', '')
         last_name = request.POST.get('last_name', '')
         profile_photo = request.FILES.get('profile_photo')
@@ -137,15 +139,17 @@ def user_create(request):
             department=department,
             ativo=ativo,
             first_name=first_name,
-            last_name=last_name
+            last_name=last_name,
+            acesso_ponto=acesso_ponto,
+            acesso_escala=acesso_escala
         )
         
         if profile_photo:
             user.profile_photo = profile_photo
             user.save()
 
-        # Integração Escala NRS Suporte
-        if role == 'analista' and department and department.name == 'NRS Suporte':
+        # Integração Escala
+        if role == 'analista' and acesso_escala:
             try:
                 from ..models import AnalistaEscala
                 formatted_name = AnalistaEscala.format_schedule_name(first_name, last_name)
@@ -214,10 +218,14 @@ def user_edit(request, pk):
                 user_to_edit.department = None
                 
             user_to_edit.ativo = request.POST.get('is_active') == 'on'
+            user_to_edit.acesso_ponto = request.POST.get('acesso_ponto') == 'on'
+            user_to_edit.acesso_escala = request.POST.get('acesso_escala') == 'on'
         
         # Gestor editando um analista do seu departamento (mas não a si mesmo)
         elif request.user.is_gestor() and user_to_edit != request.user:
             user_to_edit.ativo = request.POST.get('is_active') == 'on'
+            user_to_edit.acesso_ponto = request.POST.get('acesso_ponto') == 'on'
+            user_to_edit.acesso_escala = request.POST.get('acesso_escala') == 'on'
 
         # Todos podem editar sua própria foto, nome e senha, e gestor pode editar nome/senha do analista
         profile_photo = request.FILES.get('profile_photo')
@@ -233,16 +241,24 @@ def user_edit(request, pk):
             
         user_to_edit.save()
         
-        # Sincronização Escala NRS Suporte
+        # Sincronização Escala
         try:
+            from ..models import AnalistaEscala
             analista_escala = user_to_edit.escala_perfis.filter(rascunho__isnull=True).first()
-            if analista_escala:
-                if not user_to_edit.department or user_to_edit.department.name != 'NRS Suporte':
-                    analista_escala.ativo = False
-                else:
-                    from ..models import AnalistaEscala
-                    analista_escala.nome = AnalistaEscala.format_schedule_name(user_to_edit.first_name, user_to_edit.last_name)
+            if user_to_edit.role == 'analista' and user_to_edit.acesso_escala:
+                formatted_name = AnalistaEscala.format_schedule_name(user_to_edit.first_name, user_to_edit.last_name)
+                if analista_escala:
+                    analista_escala.nome = formatted_name
                     analista_escala.ativo = user_to_edit.ativo
+                    analista_escala.save()
+                else:
+                    AnalistaEscala.objects.create(
+                        user=user_to_edit,
+                        nome=formatted_name,
+                        ativo=user_to_edit.ativo
+                    )
+            elif analista_escala:
+                analista_escala.ativo = False
                 analista_escala.save()
         except Exception as e:
             print(f"Erro ao sincronizar AnalistaEscala para {user_to_edit.username}: {e}")
