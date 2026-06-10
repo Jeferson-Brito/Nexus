@@ -1,7 +1,5 @@
 from .auth import *
 from .dashboard import *
-from .reports import *
-from .reclame_aqui import *
 from .suporte import *
 from .rh import *
 from .common import *

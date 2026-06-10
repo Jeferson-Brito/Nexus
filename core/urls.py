@@ -4,8 +4,6 @@ from . import views
 from .api import escala as api_escala
 from .api import eventos as api_eventos
 from .api import auditoria as api_auditoria
-from .api import chat_inactivity as api_chat_inactivity
-from .api import tasks as api_tasks
 from .api import desempenho as api_desempenho
 from .api import rh as api_rh
 from .api import ponto as api_ponto
@@ -21,15 +19,7 @@ urlpatterns = [
     path('login/', views.login_view_custom, name='login'),
     path('logout/', views.logout_view, name='logout'),
     
-    path('tarefas/', views.tasks_view, name='tasks_view'),
-    path('complaints/', views.complaint_list, name='complaint_list'),
-    path('complaints/<int:pk>/', views.complaint_detail, name='complaint_detail'),
-    path('complaints/new/', views.complaint_create, name='complaint_create'),
-    path('complaints/<int:pk>/edit/', views.complaint_edit, name='complaint_edit'),
-    path('complaints/<int:pk>/delete/', views.complaint_delete, name='complaint_delete'),
-    path('complaints/bulk-delete/', views.complaint_bulk_delete, name='complaint_bulk_delete'),
-    path('stores/', views.store_list, name='store_list'),
-    path('stores/<str:loja_cod>/', views.store_complaints, name='store_complaints'),
+
     path('users/', views.user_list, name='user_list'),
     path('users/new/', views.user_create, name='user_create'),
     path('users/<int:pk>/edit/', views.user_edit, name='user_edit'),
@@ -38,20 +28,14 @@ urlpatterns = [
     path('configuracoes/ia/', views.configuracao_ia_view, name='configuracao_ia'),
 
 
-    path('export/complaints/csv/', views.export_complaints_csv, name='export_complaints_csv'),
-    path('export/complaints/xlsx/', views.export_complaints_xlsx, name='export_complaints_xlsx'),
-    path('export/stores/csv/', views.export_stores_csv, name='export_stores_csv'),
-    path('export/stores/xlsx/', views.export_stores_xlsx, name='export_stores_xlsx'),
+
     path('export/users/csv/', views.export_users_csv, name='export_users_csv'),
     path('export/users/xlsx/', views.export_users_xlsx, name='export_users_xlsx'),
-    path('complaints/import/', views.import_complaints_xlsx, name='import_complaints_xlsx'),
-    path('complaints/import/batch/', views.import_complaints_batch, name='import_complaints_batch'),
-    path('reports/', views.reports_view, name='reports'),
+
     path('department/change/<int:dept_id>/', views.change_department, name='change_department'),
     
     
-    # Abas em desenvolvimento - CS Clientes
-    path('google-meu-negocio/', views.under_development, {'page_name': 'Google Meu Negócio'}, name='google_meu_negocio'),
+
     
     # NRS Suporte - Abas implementadas
     path('escala/', views.escala_view, name='escala'),
@@ -65,10 +49,7 @@ urlpatterns = [
     path('calendario/', views.calendar_view, name='calendario'),
     path('desempenho/', views.performance_view, name='desempenho'),
 
-    # Abas em desenvolvimento - Onboarding
-    path('onboarding/dev1/', views.under_development, {'page_name': 'Onboarding - Em Desenvolvimento 1'}, name='onboarding_dev_1'),
-    path('onboarding/dev2/', views.under_development, {'page_name': 'Onboarding - Em Desenvolvimento 2'}, name='onboarding_dev_2'),
-    path('onboarding/dev3/', views.under_development, {'page_name': 'Onboarding - Em Desenvolvimento 3'}, name='onboarding_dev_3'),
+
 
     # Abas em desenvolvimento - RH
     path('rh/ponto-frequencia/', views.under_development, {
@@ -133,10 +114,7 @@ urlpatterns = [
     path('api/rh/feriados/config/', api_rh.api_rh_configurar_feriados, name='api_rh_configurar_feriados'),
     path('api/rh/feriados/trocas/', api_rh.api_rh_trocas_feriados, name='api_rh_trocas_feriados'),
     path('api/rh/feriados/trocas/<int:pk>/delete/', api_rh.api_rh_delete_troca_feriado, name='api_delete_troca_feriado'),
-    path('rh/onboarding/', views.under_development, {
-        'page_name': 'Acompanhamento de Onboarding',
-        'description': 'Checklist interativo para garantir que todos os novos colaboradores recebam equipamentos, acessos e treinamentos necessários.'
-    }, name='rh_onboarding'),
+
     # API Modelos Escala
     path('api/escala/modelos/', api_escala.api_modelos_escala_list, name='api_modelos_escala_list'),
     path('api/escala/modelos/save/', api_escala.api_modelo_escala_save, name='api_modelo_escala_save'),
@@ -218,22 +196,8 @@ urlpatterns = [
     path('api/desempenho/podium/', api_desempenho.api_podium, name='api_podium'),
 
 
-    # API Tarefas e Rotinas
-    path('api/tasks/', api_tasks.api_tasks_list, name='api_tasks_list'),
-    path('api/tasks/create/', api_tasks.api_task_create, name='api_task_create'),
-    path('api/tasks/<int:pk>/toggle/', api_tasks.api_task_toggle, name='api_task_toggle'),
-    path('api/tasks/<int:pk>/edit/', api_tasks.api_task_edit, name='api_task_edit'),
-    path('api/tasks/<int:pk>/delete/', api_tasks.api_task_delete, name='api_task_delete'),
-    path('api/notifications/check/', api_tasks.api_notifications_check, name='api_notifications_check'),
     path('api/system/notifications/', views.api_get_system_notifications, name='api_get_system_notifications'),
     path('api/system/ping/', views.api_ping, name='api_ping'),
-
-    
-    path('api/routines/daily/', api_tasks.api_routines_daily, name='api_routines_daily'),
-    path('api/routines/create/', api_tasks.api_routine_create, name='api_routine_create'),
-    path('api/routines/check/<int:log_id>/', api_tasks.api_routine_check, name='api_routine_check'),
-    path('api/routines/alerts/', api_tasks.api_manager_alerts, name='api_manager_alerts'),
-    path('api/routines/overview/', api_tasks.api_routines_overview, name='api_routines_overview'),
     # Chat - REMOVED
 
 
@@ -260,11 +224,7 @@ urlpatterns = [
     path('api/auditoria/check-id/', api_auditoria.api_check_conversation_id, name='api_check_conversation_id'),
     path('api/auditoria/<int:pk>/ciente/', api_auditoria.api_registrar_ciente, name='api_registrar_ciente'),
 
-    # Chat Inactivity Removal APIs
-    path('api/chat-inactivity/list/', api_chat_inactivity.api_chat_inactivity_list, name='api_chat_inactivity_list'),
-    path('api/chat-inactivity/create/', api_chat_inactivity.api_chat_inactivity_create, name='api_chat_inactivity_create'),
-    path('api/chat-inactivity/<str:pk>/delete/', api_chat_inactivity.api_chat_inactivity_delete, name='api_chat_inactivity_delete'),
-    path('api/chat-inactivity/<str:pk>/action/', api_chat_inactivity.api_chat_inactivity_action, name='api_chat_inactivity_action'),
+
 
     # API RH - Colaboradores
     path('api/rh/auxiliar-data/', api_rh.api_rh_auxiliar_data, name='api_rh_auxiliar_data'),
@@ -330,8 +290,7 @@ urlpatterns = [
 
     # API Inteligência Artificial (Brisoft IA)
     path('api/ia/chatbot/', api_ia.api_chatbot_kb, name='api_ia_chatbot'),
-    path('api/ia/reclamacoes/<int:pk>/classificar/', api_ia.api_classificar_reclamacao, name='api_ia_classificar_reclamacao'),
-    path('api/ia/reclamacoes/classificar-lote/', api_ia.api_classificar_lote, name='api_ia_classificar_lote'),
+
     
     # Configuração IA (Unificada)
     path('api/ia/base/', api_ia.api_ia_base_list, name='api_ia_base_list'),

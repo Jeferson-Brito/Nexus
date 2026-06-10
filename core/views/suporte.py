@@ -262,16 +262,7 @@ def performance_view(request):
 
 
 
-@login_required
-def tasks_view(request):
-    """View para a aba de tarefas e rotina"""
-    user = request.user
-    is_manager = user.role in ['gestor', 'administrador']
-    is_nrs_analyst = (user.role == 'analista' and user.acesso_escala)
-    show_create_button = is_manager or is_nrs_analyst or user.is_administrador()
-    return render(request, 'core/tarefas.html', {
-        'title': 'Tarefas e Solicitações', 'is_manager': is_manager, 'show_create_button': show_create_button,
-    })
+
 @login_required
 def auditoria_atendimentos_view(request):
     if not (request.user.is_gestor() or request.user.is_administrador() or request.user.is_analista()):

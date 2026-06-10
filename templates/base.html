@@ -326,59 +326,7 @@
 
         <!-- Menu de NavegaÃ§Ã£o -->
         <nav class="sidebar-nav">
-            {% if current_department.name == 'Reclame Aqui' %}
-            <!-- Reclame Aqui -->
-            <div class="nav-group-title">OperaÃ§Ã£o</div>
-
-            <a href="#reclameAquiSubmenu"
-                class="nav-link dropdown-toggle-custom {% if 'complaint' in request.resolver_match.url_name or 'store' in request.resolver_match.url_name or 'reports' in request.resolver_match.url_name or request.resolver_match.url_name == 'dashboard' %}active{% endif %}"
-                data-bs-toggle="collapse"
-                aria-expanded="{% if 'complaint' in request.resolver_match.url_name or 'store' in request.resolver_match.url_name or 'reports' in request.resolver_match.url_name or request.resolver_match.url_name == 'dashboard' %}true{% else %}false{% endif %}"
-                aria-controls="reclameAquiSubmenu">
-                <i class="bi bi-headset"></i>
-                <span class="link-text">Reclame Aqui</span>
-                <i class="bi bi-chevron-down ms-auto arrow-icon"></i>
-            </a>
-            <div class="collapse nav-submenu-container {% if 'complaint' in request.resolver_match.url_name or 'store' in request.resolver_match.url_name or 'reports' in request.resolver_match.url_name or request.resolver_match.url_name == 'dashboard' %}show{% endif %}"
-                id="reclameAquiSubmenu">
-                <div class="nav-submenu">
-                    <a href="{% url 'dashboard' %}"
-                        class="nav-link sub-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"
-                        title="Dashboard">
-                        <i class="bi bi-speedometer2"></i>
-                        <span class="link-text">Dashboard</span>
-                    </a>
-                    <a href="{% url 'complaint_list' %}"
-                        class="nav-link sub-link {% if 'complaint' in request.resolver_match.url_name %}active{% endif %}"
-                        title="ReclamaÃ§Ãµes">
-                        <i class="bi bi-list-ul"></i>
-                        <span class="link-text">ReclamaÃ§Ãµes</span>
-                    </a>
-                    <a href="{% url 'store_list' %}"
-                        class="nav-link sub-link {% if 'store' in request.resolver_match.url_name %}active{% endif %}"
-                        title="Lojas">
-                        <i class="bi bi-shop"></i>
-                        <span class="link-text">Lojas</span>
-                    </a>
-                    <a href="{% url 'reports' %}"
-                        class="nav-link sub-link {% if request.resolver_match.url_name == 'reports' %}active{% endif %}"
-                        title="RelatÃ³rios">
-                        <i class="bi bi-graph-up"></i>
-                        <span class="link-text">RelatÃ³rios</span>
-                    </a>
-
-                </div>
-            </div>
-
-            <div class="nav-group-title">Canais</div>
-            <a href="{% url 'google_meu_negocio' %}"
-                class="nav-link {% if request.resolver_match.url_name == 'google_meu_negocio' %}active{% endif %}"
-                title="Google Meu Negócio">
-                <i class="bi bi-google"></i>
-                <span class="link-text">Google Meu Negócio</span>
-            </a>
-
-            {% elif current_department.slug == 'ponto-eletronico' or current_department.name == 'Ponto Eletrônico' or current_department.name == 'RH' or current_department.slug == 'rh' %}
+            {% if current_department.slug == 'ponto-eletronico' or current_department.name == 'Ponto Eletrônico' or current_department.name == 'RH' or current_department.slug == 'rh' %}
             <!-- RH -->
             <div class="nav-group-title">Ponto Eletrônico</div>
             <a href="#escalaSubmenuRH"
@@ -653,72 +601,7 @@
             {% endif %}
 
 
-            {% elif current_department.slug == 'onboarding' or current_department.name == 'Onboarding' %}
-            <!-- Onboarding -->
-            <div class="nav-group-title">Implantação</div>
-            <a href="{% url 'onboarding_dev_1' %}"
-                class="nav-link {% if request.resolver_match.url_name == 'onboarding_dev_1' %}active{% endif %}">
-                <i class="bi bi-hammer"></i>
-                <span class="link-text">Em desenvolvimento</span>
-            </a>
-            <a href="{% url 'onboarding_dev_2' %}"
-                class="nav-link {% if request.resolver_match.url_name == 'onboarding_dev_2' %}active{% endif %}">
-                <i class="bi bi-hammer"></i>
-                <span class="link-text">Em desenvolvimento</span>
-            </a>
-            <a href="{% url 'onboarding_dev_3' %}"
-                class="nav-link {% if request.resolver_match.url_name == 'onboarding_dev_3' %}active{% endif %}">
-                <i class="bi bi-hammer"></i>
-                <span class="link-text">Em desenvolvimento</span>
-            </a>
 
-            {% elif current_department.slug == 'logistica' or current_department.name == 'Logística' %}
-            <!-- Logística -->
-            <div class="nav-group-title">Logística</div>
-            <a href="#escalaSubmenuLog"
-                class="nav-link dropdown-toggle-custom {% if request.resolver_match.url_name == 'escala' or request.resolver_match.url_name == 'planejamento_escala' or request.resolver_match.url_name == 'configuracao_escalas' %}active{% endif %}"
-                data-bs-toggle="collapse"
-                aria-expanded="{% if request.resolver_match.url_name == 'escala' or request.resolver_match.url_name == 'planejamento_escala' or request.resolver_match.url_name == 'configuracao_escalas' %}true{% else %}false{% endif %}"
-                aria-controls="escalaSubmenuLog">
-                <i class="bi bi-calendar-event"></i>
-                <span class="link-text">Escala</span>
-                <i class="bi bi-chevron-down ms-auto arrow-icon"></i>
-            </a>
-            <div class="collapse nav-submenu-container {% if request.resolver_match.url_name == 'escala' or request.resolver_match.url_name == 'planejamento_escala' or request.resolver_match.url_name == 'configuracao_escalas' %}show{% endif %}"
-                id="escalaSubmenuLog">
-                <div class="nav-submenu">
-                    <a href="{% url 'escala' %}"
-                        class="nav-link sub-link {% if request.resolver_match.url_name == 'escala' %}active{% endif %}"
-                        title="Escala">
-                        <i class="bi bi-calendar3"></i>
-                        <span class="link-text">Escala</span>
-                    </a>
-                    {% if request.user.is_gestor or request.user.is_administrador %}
-                    <a href="{% url 'planejamento_escala' %}"
-                        class="nav-link sub-link {% if request.resolver_match.url_name == 'planejamento_escala' %}active{% endif %}"
-                        title="Planejamento de Escala">
-                        <i class="bi bi-calendar2-plus"></i>
-                        <span class="link-text">Planejamento de Escala</span>
-                    </a>
-                    <a href="{% url 'configuracao_escalas' %}"
-                        class="nav-link sub-link {% if request.resolver_match.url_name == 'configuracao_escalas' %}active{% endif %}"
-                        title="Configuração de Jornadas">
-                        <i class="bi bi-gear"></i>
-                        <span class="link-text">Configuração de Jornadas</span>
-                    </a>
-                    {% endif %}
-                </div>
-            </div>
-            <a href="{% url 'tasks_view' %}"
-                class="nav-link {% if request.resolver_match.url_name == 'tasks_view' %}active{% endif %}">
-                <i class="bi bi-list-check"></i>
-                <span class="link-text">Tarefas e Solicitações</span>
-            </a>
-            <div class="alert alert-info mx-3 my-2"
-                style="font-size: 0.75rem; border: none; background: #f0f7ff; color: #004085;">
-                <i class="bi bi-info-circle me-1"></i>
-                Outras funcionalidades de Logística em desenvolvimento.
-            </div>
 
             {% else %}
             <!-- Outros Departamentos (Em Breve) -->

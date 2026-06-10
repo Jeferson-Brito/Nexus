@@ -8,8 +8,8 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
-from ..models import Complaint, BrisoftIABase, Department
-from ..services.ia_service import chatbot_kb, classificar_reclamacao
+from ..models import BrisoftIABase, Department
+from ..services.ia_service import chatbot_kb
 from django_ratelimit.decorators import ratelimit
 
 
@@ -96,24 +96,7 @@ def api_chatbot_kb(request):
                                 setattr(user, k, v)
                         user.save()
 
-                    elif entidade == 'reclamacao' and obj_id:
-                        from ..models import Complaint
-                        reclamacao = Complaint.objects.get(pk=obj_id)
-                        # Validar se o usuário pode editar (pertence ao depto ou é admin)
-                        if request.user.is_administrador() or reclamacao.department == request.user.department:
-                            for k, v in campos.items():
-                                if hasattr(reclamacao, k):
-                                    setattr(reclamacao, k, v)
-                            reclamacao.save()
-                    
-                    elif entidade == 'tarefa' and obj_id:
-                        from ..models import Task
-                        tarefa = Task.objects.get(pk=obj_id)
-                        if request.user.is_administrador() or tarefa.assigned_to == request.user or tarefa.created_by == request.user:
-                            for k, v in campos.items():
-                                if hasattr(tarefa, k):
-                                    setattr(tarefa, k, v)
-                            tarefa.save()
+
 
                 except Exception as e:
                     resultado_ia['resposta'] = f"Consegui processar o pedido, mas houve um erro técnico ao salvar: {str(e)}"
@@ -126,110 +109,7 @@ def api_chatbot_kb(request):
         return JsonResponse({'erro': f'Erro interno: {str(e)}'}, status=500)
 
 
-@csrf_exempt
-@login_required
-@require_http_methods(["POST"])
-@ratelimit(key='user', rate='30/m', block=True)
-@ratelimit(key='ip', rate='60/m', block=True)
-def api_classificar_reclamacao(request, pk):
-    """
-    Classifica uma reclamação específica com IA.
-    """
-    if not (request.user.is_gestor() or request.user.is_administrador()):
-        return JsonResponse({'erro': 'Acesso negado.'}, status=403)
 
-    try:
-        from .models import IAQuota, IAConsumptionLog
-        
-        tenant_id = request.user.department_id if hasattr(request.user, 'department') else None
-        if tenant_id:
-            quota, _ = IAQuota.objects.get_or_create(tenant_id=tenant_id)
-            hoje = timezone.now().date()
-            consumo_diario = IAConsumptionLog.objects.filter(
-                tenant_id=tenant_id,
-                timestamp__date=hoje
-            ).count()
-            if consumo_diario >= quota.daily_limit:
-                return JsonResponse({'erro': 'Limite diário de IA excedido.'}, status=429)
-
-        complaint = Complaint.objects.get(pk=pk)
-        resultado = classificar_reclamacao(
-            descricao=complaint.descricao or complaint.feedback_text or '',
-            tipo_reclamacao=complaint.get_tipo_reclamacao_display()
-        )
-
-        if 'erro' not in resultado:
-            complaint.ia_urgencia = resultado['urgencia']
-            complaint.ia_sentimento = resultado['sentimento']
-            complaint.ia_classificado_em = timezone.now()
-            complaint.save(update_fields=['ia_urgencia', 'ia_sentimento', 'ia_classificado_em'])
-            
-            if tenant_id:
-                IAConsumptionLog.objects.create(
-                    tenant_id=tenant_id,
-                    user=request.user,
-                    endpoint='api_classificar_reclamacao',
-                    tokens_used=resultado.get('tokens', 0)
-                )
-
-        return JsonResponse({
-            'status': 'ok',
-            'urgencia': resultado.get('urgencia'),
-            'sentimento': resultado.get('sentimento'),
-        })
-
-    except Complaint.DoesNotExist:
-        return JsonResponse({'erro': 'Reclamação não encontrada.'}, status=404)
-    except Exception as e:
-        return JsonResponse({'erro': str(e)}, status=500)
-
-
-@csrf_exempt
-@login_required
-@require_http_methods(["POST"])
-@ratelimit(key='user', rate='5/m', block=True)
-@ratelimit(key='ip', rate='10/m', block=True)
-def api_classificar_lote(request):
-    """
-    Classifica em lote todas as reclamações sem classificação IA (Assíncrono).
-    Envia para o Celery processar em background.
-    """
-    if not (request.user.is_gestor() or request.user.is_administrador()):
-        return JsonResponse({'erro': 'Acesso negado.'}, status=403)
-
-    try:
-        from ..tasks import task_classificar_reclamacao
-        
-        qs = Complaint.objects.filter(ia_urgencia__isnull=True)
-        if not request.user.is_administrador():
-            qs = qs.filter(department=request.user.department)
-
-        pendentes = qs.order_by('-created_at')[:50]
-        enviadas = 0
-
-        for complaint in pendentes:
-            descricao = complaint.descricao or complaint.feedback_text or ''
-            if not descricao.strip():
-                continue
-
-            task_classificar_reclamacao.delay(
-                complaint_id=complaint.id,
-                descricao=descricao,
-                tipo_reclamacao=complaint.get_tipo_reclamacao_display(),
-                user_id=request.user.id,
-                tenant_id=request.user.department_id if hasattr(request.user, 'department') else None
-            )
-            enviadas += 1
-
-        total_restante = Complaint.objects.filter(ia_urgencia__isnull=True).count()
-        return JsonResponse({
-            'status': 'ok',
-            'enviadas_para_fila': enviadas,
-            'restante_total': total_restante
-        })
-
-    except Exception as e:
-        return JsonResponse({'erro': str(e)}, status=500)
 
 
 # -------------------------------------------------------------
