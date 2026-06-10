@@ -184,52 +184,7 @@ SUA RESPOSTA:"""
         return {"resposta": f"⚠️ Ocorreu um erro ao processar sua pergunta ({type(e).__name__}). Tente novamente em instantes."}
 
 
-def classificar_reclamacao(descricao: str, tipo_reclamacao: str) -> dict:
-    """Classifica uma reclamação do Reclame Aqui, definindo urgência e sentimento."""
-    try:
-        client = _get_client()
-        prompt = f"""Analise esta reclamação de cliente de uma rede de lavanderias e classifique-a.
 
-TIPO DA RECLAMAÇÃO: {tipo_reclamacao}
-DESCRIÇÃO: {descricao}
-
-Retorne APENAS um objeto JSON válido, sem markdown, sem texto extra, exatamente neste formato:
-{{"urgencia": "VALOR", "sentimento": "VALOR"}}
-
-Valores possíveis para "urgencia": "baixa", "media", "alta", "critica"
-Valores possíveis para "sentimento": "satisfeito", "neutro", "frustrado", "muito_irritado"
-
-RESPONDA APENAS COM O JSON:"""
-
-        try:
-            response = client.models.generate_content(model='gemini-2.5-flash', contents=prompt)
-        except Exception as e:
-            if any(err in str(e) for err in ["503", "UNAVAILABLE", "429", "RESOURCE_EXHAUSTED"]):
-                logger.warning("[Brisoft IA] Fallback para gemini-1.5-flash em classificar_reclamacao...")
-                response = client.models.generate_content(model='gemini-1.5-flash', contents=prompt)
-            else:
-                raise e
-        texto = response.text.strip()
-        if "```" in texto:
-            texto = texto.split("```")[1]
-            if texto.startswith("json"): texto = texto[4:]
-            texto = texto.strip()
-
-        resultado = json.loads(texto)
-        urgencias_validas = {'baixa', 'media', 'alta', 'critica'}
-        sentimentos_validos = {'satisfeito', 'neutro', 'frustrado', 'muito_irritado'}
-        urgencia = resultado.get('urgencia', 'media')
-        sentimento = resultado.get('sentimento', 'neutro')
-        if urgencia not in urgencias_validas: urgencia = 'media'
-        if sentimento not in sentimentos_validos: sentimento = 'neutro'
-        return {'urgencia': urgencia, 'sentimento': sentimento}
-
-    except ValueError as e:
-        logger.error(f"[Brisoft IA] Configuração inválida: {e}")
-        return {'urgencia': 'media', 'sentimento': 'neutro', 'erro': 'api_key_missing'}
-    except Exception as e:
-        logger.error(f"[Brisoft IA] Erro na classificação: {type(e).__name__}: {e}")
-        return {'urgencia': 'media', 'sentimento': 'neutro', 'erro': str(e)}
 
 
 def gerar_avaliacao_auditoria(analista_nome: str, historico_auditorias: list, metricas: dict, destinatario: str = 'gestor') -> dict:
