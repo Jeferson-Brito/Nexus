@@ -244,6 +244,9 @@ def user_edit(request, pk):
         # Sincronização Ponto Web Permitido
         if hasattr(user_to_edit, 'colaborador_perfil') and user_to_edit.colaborador_perfil:
             user_to_edit.colaborador_perfil.ponto_web_permitido = request.POST.get('ponto_web_permitido') == 'on'
+            user_to_edit.colaborador_perfil.ponto_web_foto = request.POST.get('ponto_web_foto') == 'on'
+            user_to_edit.colaborador_perfil.ponto_web_inserir = request.POST.get('ponto_web_inserir') == 'on'
+            user_to_edit.colaborador_perfil.ponto_web_justificativa = request.POST.get('ponto_web_justificativa') == 'on'
             user_to_edit.colaborador_perfil.save()
 
         
