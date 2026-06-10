@@ -3,13 +3,10 @@ from django.contrib.auth import views as auth_views
 from . import views
 from .api import escala as api_escala
 from .api import eventos as api_eventos
-from .api import kb as api_kb
-from .api import tasks as api_tasks
-from .api import desempenho as api_desempenho
-from .api import stores as api_stores
-from .api import store_verification as api_store_verification
 from .api import auditoria as api_auditoria
 from .api import chat_inactivity as api_chat_inactivity
+from .api import tasks as api_tasks
+from .api import desempenho as api_desempenho
 from .api import rh as api_rh
 from .api import ponto as api_ponto
 from .api import ia as api_ia
@@ -62,21 +59,10 @@ urlpatterns = [
     path('configuracao-escalas/', views.escala_view, name='configuracao_escalas'),
     path('sites/', views.sites_view, name='sites'),
     path('localizacao-lojas/', views.localizacao_view, name='localizacao'),
-    path('verificacao-lojas/', views.verificacao_lojas, name='verificacao_lojas'),
-    path('verificacao-lojas/auditoria/<int:store_id>/', views.store_audit_create, name='store_audit_create'),
-    path('verificacao-lojas/resolver/<int:issue_id>/', views.store_issue_resolve, name='store_issue_resolve'),
-    path('verificacao-lojas/loja/nova/', views.store_create, name='store_create'),
-    path('verificacao-lojas/loja/importar/', views.import_stores_xlsx, name='import_stores_xlsx'),
-    path('verificacao-lojas/loja/<int:store_id>/editar/', views.store_edit, name='store_edit'),
-    path('verificacao-lojas/loja/<int:store_id>/excluir/', views.store_delete, name='store_delete'),
-    path('verificacao-lojas/pendencia/<int:issue_id>/editar/', views.store_issue_edit, name='store_issue_edit'),
-    path('verificacao-lojas/pendencia/<int:issue_id>/excluir/', views.store_issue_delete, name='store_issue_delete'),
-    path('verificacao-lojas/loja/excluir-todas/', views.store_bulk_delete, name='store_bulk_delete'),
-    
+
     # NRS Suporte - Abas em desenvolvimento
 
     path('calendario/', views.calendar_view, name='calendario'),
-    path('base-conhecimento/', views.knowledge_base_view, name='base_conhecimento'),
     path('desempenho/', views.performance_view, name='desempenho'),
 
     # Abas em desenvolvimento - Onboarding
@@ -214,13 +200,6 @@ urlpatterns = [
     path('api/eventos/', api_eventos.api_eventos_list, name='api_eventos_list'),
     path('api/eventos/create/', api_eventos.api_evento_create, name='api_evento_create'),
     path('api/eventos/<int:pk>/', api_eventos.api_evento_detail, name='api_evento_detail'),
-    
-    # API Base de Conhecimento
-    path('api/kb/articles/', api_kb.api_kb_articles_list, name='api_kb_articles_list'),
-    path('api/kb/articles/create/', api_kb.api_kb_article_create, name='api_kb_article_create'),
-    path('api/kb/articles/<int:pk>/', api_kb.api_kb_article_detail, name='api_kb_article_detail'),
-    path('api/kb/articles/<int:pk>/vote/', api_kb.api_kb_article_vote, name='api_kb_article_vote'),
-    path('api/kb/tools/', api_kb.api_kb_tools_list, name='api_kb_tools_list'),
 
     # API Base de Auditoria IA
     path('api/base-auditoria/', api_base_auditoria.api_base_auditoria_list, name='api_base_auditoria_list'),
@@ -255,41 +234,8 @@ urlpatterns = [
     path('api/routines/check/<int:log_id>/', api_tasks.api_routine_check, name='api_routine_check'),
     path('api/routines/alerts/', api_tasks.api_manager_alerts, name='api_manager_alerts'),
     path('api/routines/overview/', api_tasks.api_routines_overview, name='api_routines_overview'),
-    
-    
-    # Store Presence and History APIs
-    path('api/stores/presence/', api_stores.api_stores_all_presence, name='api_stores_all_presence'),
-    path('api/stores/<int:store_id>/detail/', views.api_store_detail, name='api_store_detail'),
-    path('api/stores/<int:store_id>/presence/heartbeat/', api_stores.api_store_presence_heartbeat, name='api_store_presence_heartbeat'),
-    path('api/stores/<int:store_id>/presence/', api_stores.api_store_presence_list, name='api_store_presence_list'),
-    path('api/stores/<int:store_id>/presence/leave/', api_stores.api_store_presence_leave, name='api_store_presence_leave'),
-    path('api/stores/<int:store_id>/history/', api_stores.api_store_audit_history, name='api_store_audit_history'),
-    
-    # Store Verification APIs - Notificações e Timers
-    path('api/store-verification/issue/<int:issue_id>/notify/', api_store_verification.api_notify_franchisee, name='api_notify_franchisee'),
-    path('api/store-verification/issue/<int:issue_id>/whatsapp/start/', api_store_verification.api_start_whatsapp_notification, name='api_start_whatsapp_notification'),
-    path('api/store-verification/issue/<int:issue_id>/ticket/create/', api_store_verification.api_create_ticket_from_issue, name='api_create_ticket_from_issue'),
-    path('api/store-verification/issue/<int:issue_id>/resolve/', api_store_verification.api_mark_issue_resolved, name='api_mark_issue_resolved'),
-    path('api/store-verification/issue/<int:issue_id>/timer/status/', api_store_verification.api_get_timer_status, name='api_get_timer_status'),
-    path('api/store-verification/issue/<int:issue_id>/escalate/', api_store_verification.api_escalate_to_ticket, name='api_escalate_to_ticket'),
-    
-    # Store Verification APIs - Gestão de Analistas
-    path('api/store-verification/analyst/assignments/', api_store_verification.api_get_analyst_assignments, name='api_get_analyst_assignments'),
-    path('api/store-verification/analyst/all-assignments/', api_store_verification.api_get_all_assignments, name='api_get_all_assignments'),
-    path('api/store-verification/analyst/assign/', api_store_verification.api_assign_store_to_analyst, name='api_assign_store_to_analyst'),
-    path('api/store-verification/analyst/available-stores/', api_store_verification.api_get_available_stores, name='api_get_available_stores'),
-    path('api/store-verification/analyst/bulk-assign/', api_store_verification.api_bulk_assign_stores, name='api_bulk_assign_stores'),
-    path('api/store-verification/analyst/auto-distribute/', api_store_verification.api_auto_distribute_stores, name='api_auto_distribute_stores'),
-    path('api/store-verification/analyst/unassign/<int:assignment_id>/', api_store_verification.api_unassign_store, name='api_unassign_store'),
-    path('api/store-verification/analyst/unassign-all/', api_store_verification.api_unassign_all_stores, name='api_unassign_all_stores'),
-    path('api/store-verification/analyst/dashboard/', api_store_verification.api_get_analyst_dashboard, name='api_get_analyst_dashboard'),
-    path('api/store-verification/analyst/monthly-kpi/', api_store_verification.api_get_monthly_kpi, name='api_get_monthly_kpi'),
-    path('api/store-verification/analyst/overview/', api_store_verification.api_get_analysts_overview, name='api_get_analysts_overview'),
-    path('api/store-verification/manager/all-analysts-kpi/', api_store_verification.api_get_all_analysts_monthly_kpi, name='api_get_all_analysts_monthly_kpi'),
-    path('api/store-verification/analyst/override-quota/', api_store_verification.api_override_daily_quota, name='api_override_daily_quota'),
-    
     # Chat - REMOVED
-    
+
 
     # Auditoria de Atendimentos
     path('auditoria-atendimentos/', views.auditoria_atendimentos_view, name='auditoria_atendimentos'),

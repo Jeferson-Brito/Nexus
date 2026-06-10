@@ -637,52 +637,6 @@
                 </div>
             </div>
 
-            <a href="#auditoriaLojasSubmenu"
-                class="nav-link dropdown-toggle-custom {% if 'verificacao_lojas' in request.resolver_match.url_name %}active{% endif %}"
-                data-bs-toggle="collapse"
-                aria-expanded="{% if 'verificacao_lojas' in request.resolver_match.url_name %}true{% else %}false{% endif %}"
-                aria-controls="auditoriaLojasSubmenu">
-                <i class="bi bi-shield-check"></i>
-                <span class="link-text">Auditoria de Lojas</span>
-                <i class="bi bi-chevron-down ms-auto arrow-icon"></i>
-            </a>
-            <div class="collapse nav-submenu-container {% if 'verificacao_lojas' in request.resolver_match.url_name %}show{% endif %}"
-                id="auditoriaLojasSubmenu">
-                <div class="nav-submenu">
-                    <a href="{% url 'verificacao_lojas' %}?tab=lojas"
-                        class="nav-link sub-link {% if request.resolver_match.url_name == 'verificacao_lojas' and request.GET.tab == 'lojas' or request.resolver_match.url_name == 'verificacao_lojas' and not request.GET.tab %}active{% endif %}"
-                        title="Lojas">
-                        <i class="bi bi-shop"></i>
-                        <span class="link-text">Lojas</span>
-                    </a>
-                    <a href="{% url 'verificacao_lojas' %}?tab=management"
-                        class="nav-link sub-link {% if request.GET.tab == 'management' %}active{% endif %}"
-                        title="Gestão de Analistas">
-                        <i class="bi bi-people"></i>
-                        <span class="link-text">
-                            {% if user.is_gestor or user.is_administrador %}
-                            Gestão de Analistas
-                            {% else %}
-                            Minhas Metas
-                            {% endif %}
-                        </span>
-                    </a>
-                    <a href="{% url 'verificacao_lojas' %}?tab=history"
-                        class="nav-link sub-link {% if request.GET.tab == 'history' %}active{% endif %}"
-                        title="Histórico de Auditorias">
-                        <i class="bi bi-clock-history"></i>
-                        <span class="link-text">Histórico de Auditorias</span>
-                    </a>
-                </div>
-            </div>
-
-
-            <div class="nav-group-title">Informação</div>
-            <a href="{% url 'base_conhecimento' %}"
-                class="nav-link {% if request.resolver_match.url_name == 'base_conhecimento' %}active{% endif %}">
-                <i class="bi bi-book"></i>
-                <span class="link-text">Suporte</span>
-            </a>
             <a href="{% url 'desempenho' %}"
                 class="nav-link {% if request.resolver_match.url_name == 'desempenho' %}active{% endif %}">
                 <i class="bi bi-activity"></i>
@@ -1189,7 +1143,6 @@
             const submenuConfigs = [
                 { toggle: document.querySelector('a[href="#reclameAquiSubmenu"]'), submenu: document.getElementById('reclameAquiSubmenu') },
                 { toggle: document.querySelector('a[href="#hubAtendimentoSubmenu"]'), submenu: document.getElementById('hubAtendimentoSubmenu') },
-                { toggle: document.querySelector('a[href="#auditoriaLojasSubmenu"]'), submenu: document.getElementById('auditoriaLojasSubmenu') },
                 { toggle: document.querySelector('a[href="#escalaSubmenuRH"]'), submenu: document.getElementById('escalaSubmenuRH') },
                 { toggle: document.querySelector('a[href="#escalaSubmenuSuporte"]'), submenu: document.getElementById('escalaSubmenuSuporte') },
                 { toggle: document.querySelector('a[href="#escalaSubmenuLog"]'), submenu: document.getElementById('escalaSubmenuLog') }

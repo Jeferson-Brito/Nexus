@@ -1,6 +1,6 @@
 from django import forms
 import re
-from .models import Complaint, User, Store
+from .models import Complaint, User
 
 
 class ComplaintForm(forms.ModelForm):
@@ -138,45 +138,5 @@ class ComplaintForm(forms.ModelForm):
             if nota < 0 or nota > 10:
                 raise forms.ValidationError('A nota de satisfação deve estar entre 0 e 10.')
         return nota
-
-
-class StoreForm(forms.ModelForm):
-    class Meta:
-        model = Store
-        fields = ['code', 'active', 'suspension_reason']
-        labels = {
-            'code': 'Código da Loja',
-            'active': 'Status (Ativa/Suspensa)',
-            'suspension_reason': 'Motivo da Suspensão'
-        }
-        widgets = {
-            'code': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: PB05'}),
-            'active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'suspension_reason': forms.Select(attrs={
-                'class': 'form-select',
-                'id': 'suspensionReasonSelect'
-            })
-        }
-
-    def clean_code(self):
-        code = self.cleaned_data.get('code')
-        if code:
-            return code.upper().strip()
-        return code
-    
-    def clean(self):
-        cleaned_data = super().clean()
-        active = cleaned_data.get('active')
-        suspension_reason = cleaned_data.get('suspension_reason')
-        
-        # Se loja está inativa, motivo é obrigatório
-        if not active and not suspension_reason:
-            self.add_error('suspension_reason', 'Motivo da suspensão é obrigatório para lojas inativas.')
-        
-        # Se loja está ativa, limpar motivo
-        if active:
-            cleaned_data['suspension_reason'] = None
-        
-        return cleaned_data
 
 

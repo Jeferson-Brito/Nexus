@@ -7,7 +7,7 @@ from django.contrib import messages
 from django.db.models import Q, Count
 from openpyxl import Workbook
 from openpyxl.styles import PatternFill, Font, Alignment
-from ..models import Complaint, User, Store
+from ..models import Complaint, User
 
 @login_required
 def export_complaints_csv(request):

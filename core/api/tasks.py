@@ -1,4 +1,4 @@
-﻿from django.http import JsonResponse
+from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
@@ -7,7 +7,7 @@ from django.utils import timezone
 import json
 from datetime import datetime, timedelta, date
 
-from ..models import Task, Routine, RoutineLog, User, StoreAuditIssue
+from ..models import Task, Routine, RoutineLog, User
 
 @login_required
 def api_tasks_list(request):
@@ -446,19 +446,4 @@ def api_notifications_check(request):
                 log.warning_sent = True
                 log.save()
                 
-    # 5. Irregularidades em Auditorias de Loja (Apenas Gestores/Admins)
-    if user.role in ['gestor', 'administrador']:
-        new_issues = StoreAuditIssue.objects.filter(status='aberta', notified=False)[:50]
-        for issue in new_issues:
-            store_code = issue.store.code if issue.store else 'Loja Desconhecida'
-            notifications.append({
-                'type': 'audit_irregularity',
-                'title': f"Irregularidade: {store_code}",
-                'id': issue.id,
-                'message': f"Irregularidades detectadas na loja {store_code}. Verifique o quadro de pendências.",
-                'sound': True
-            })
-            issue.notified = True
-            issue.save()
-
     return JsonResponse({'has_notifications': len(notifications) > 0, 'notifications': notifications})

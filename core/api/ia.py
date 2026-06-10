@@ -8,7 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
-from ..models import ArtigoBaseConhecimento, Complaint, BrisoftIABase, Department
+from ..models import Complaint, BrisoftIABase, Department
 from ..services.ia_service import chatbot_kb, classificar_reclamacao
 from django_ratelimit.decorators import ratelimit
 

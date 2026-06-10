@@ -7,7 +7,7 @@ from django.http import JsonResponse
 from django.utils import timezone
 from datetime import datetime, timedelta
 import re
-from ..models import Complaint, Store, User, Department, Activity, AuditLog
+from ..models import Complaint, User, Department, Activity, AuditLog
 from ..forms import ComplaintForm
 
 @login_required
