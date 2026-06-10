@@ -320,85 +320,111 @@ html[data-bs-theme="dark"] .pf-btn-cancel { background:#334155; border-color:#47
                                         {% if target_user.acesso_ponto %}checked{% endif %}
                                         {% if form_type == 'edit' and not request.user.is_administrador and not request.user.is_gestor %}disabled
                                         {% elif request.user.is_gestor and target_user == request.user %}disabled{% endif %}>
-                                </div>
-                            </div>
-                        </div>
+
+                        <!-- Permissões de Ponto Web (Requer Colaborador) -->
                         <div class="col-12 mt-3">
                             <div class="pf-switch">
                                 <div class="d-flex align-items-center gap-3">
-                                    <div class="pf-switch-icon"><i class="bi bi-fingerprint"></i></div>
+                                    <div class="pf-switch-icon">
+                                        <i class="bi bi-fingerprint"></i>
+                                    </div>
                                     <div>
                                         <h6>Permitir Marcação via Web</h6>
                                         <p>O funcionário poderá registrar o ponto pelo sistema web</p>
+                                        {% if not target_user.colaborador_perfil and form_type == 'edit' %}
+                                        <small class="text-danger"><i class="bi bi-exclamation-triangle"></i> Requer um perfil de Colaborador vinculado.</small>
+                                        {% endif %}
                                     </div>
                                 </div>
                                 <div class="form-check form-switch fs-4 mb-0">
-                                    <input class="form-check-input shadow-none m-0" type="checkbox"
-                                        name="ponto_web_permitido" id="pontoWebPermitido"
+                                    <input class="form-check-input shadow-none m-0" type="checkbox" name="ponto_web_permitido" 
                                         style="width:3rem;height:1.5rem;cursor:pointer;"
                                         {% if target_user.colaborador_perfil and target_user.colaborador_perfil.ponto_web_permitido %}checked{% endif %}
-                                        {% if form_type == 'edit' and not request.user.is_administrador and not request.user.is_gestor %}disabled
-                                        {% elif request.user.is_gestor and target_user == request.user %}disabled{% endif %}>
+                                        {% if form_type == 'edit' and not request.user.is_administrador and not request.user.is_gestor %}disabled{% elif request.user.is_gestor and target_user == request.user %}disabled{% elif not target_user.colaborador_perfil and form_type == 'edit' %}disabled{% endif %}>
                                 </div>
                             </div>
                         </div>
+
                         <div class="col-12 mt-3">
                             <div class="pf-switch">
                                 <div class="d-flex align-items-center gap-3">
-                                    <div class="pf-switch-icon"><i class="bi bi-camera"></i></div>
+                                    <div class="pf-switch-icon">
+                                        <i class="bi bi-camera"></i>
+                                    </div>
                                     <div>
                                         <h6>Exigir foto na marcação</h6>
                                         <p>O sistema exigirá captura de foto ao registrar o ponto</p>
                                     </div>
                                 </div>
                                 <div class="form-check form-switch fs-4 mb-0">
-                                    <input class="form-check-input shadow-none m-0" type="checkbox"
-                                        name="ponto_web_foto" id="pontoWebFoto"
+                                    <input class="form-check-input shadow-none m-0" type="checkbox" name="ponto_web_foto" 
                                         style="width:3rem;height:1.5rem;cursor:pointer;"
                                         {% if target_user.colaborador_perfil and target_user.colaborador_perfil.ponto_web_foto %}checked{% endif %}
-                                        {% if form_type == 'edit' and not request.user.is_administrador and not request.user.is_gestor %}disabled
-                                        {% elif request.user.is_gestor and target_user == request.user %}disabled{% endif %}>
+                                        {% if form_type == 'edit' and not request.user.is_administrador and not request.user.is_gestor %}disabled{% elif request.user.is_gestor and target_user == request.user %}disabled{% elif not target_user.colaborador_perfil and form_type == 'edit' %}disabled{% endif %}>
                                 </div>
                             </div>
                         </div>
+
                         <div class="col-12 mt-3">
                             <div class="pf-switch">
                                 <div class="d-flex align-items-center gap-3">
-                                    <div class="pf-switch-icon"><i class="bi bi-plus-circle"></i></div>
+                                    <div class="pf-switch-icon">
+                                        <i class="bi bi-plus-circle"></i>
+                                    </div>
                                     <div>
                                         <h6>Permitir inserção de pontos</h6>
                                         <p>O funcionário pode inserir registros de ponto manualmente</p>
                                     </div>
                                 </div>
                                 <div class="form-check form-switch fs-4 mb-0">
-                                    <input class="form-check-input shadow-none m-0" type="checkbox"
-                                        name="ponto_web_inserir" id="pontoWebInserir"
+                                    <input class="form-check-input shadow-none m-0" type="checkbox" name="ponto_web_inserir" 
                                         style="width:3rem;height:1.5rem;cursor:pointer;"
                                         {% if target_user.colaborador_perfil and target_user.colaborador_perfil.ponto_web_inserir %}checked{% endif %}
-                                        {% if form_type == 'edit' and not request.user.is_administrador and not request.user.is_gestor %}disabled
-                                        {% elif request.user.is_gestor and target_user == request.user %}disabled{% endif %}>
+                                        {% if form_type == 'edit' and not request.user.is_administrador and not request.user.is_gestor %}disabled{% elif request.user.is_gestor and target_user == request.user %}disabled{% elif not target_user.colaborador_perfil and form_type == 'edit' %}disabled{% endif %}>
                                 </div>
                             </div>
                         </div>
+
                         <div class="col-12 mt-3">
                             <div class="pf-switch">
                                 <div class="d-flex align-items-center gap-3">
-                                    <div class="pf-switch-icon"><i class="bi bi-card-text"></i></div>
+                                    <div class="pf-switch-icon">
+                                        <i class="bi bi-card-text"></i>
+                                    </div>
                                     <div>
                                         <h6>Permitir inserção de justificativas</h6>
                                         <p>O funcionário pode adicionar justificativas às ocorrências</p>
                                     </div>
                                 </div>
                                 <div class="form-check form-switch fs-4 mb-0">
-                                    <input class="form-check-input shadow-none m-0" type="checkbox"
-                                        name="ponto_web_justificativa" id="pontoWebJustificativa"
+                                    <input class="form-check-input shadow-none m-0" type="checkbox" name="ponto_web_justificativa" 
                                         style="width:3rem;height:1.5rem;cursor:pointer;"
                                         {% if target_user.colaborador_perfil and target_user.colaborador_perfil.ponto_web_justificativa %}checked{% endif %}
+                                        {% if form_type == 'edit' and not request.user.is_administrador and not request.user.is_gestor %}disabled{% elif request.user.is_gestor and target_user == request.user %}disabled{% elif not target_user.colaborador_perfil and form_type == 'edit' %}disabled{% endif %}>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 mt-3">
+                            <div class="pf-switch">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="pf-switch-icon"><i class="bi bi-clock-history"></i></div>
+                                    <div>
+                                        <h6>Acesso ao Ponto Eletrônico</h6>
+                                        <p>Permite visualizar e gerenciar o Ponto Eletrônico (antigo RH)</p>
+                                    </div>
+                                </div>
+                                <div class="form-check form-switch fs-4 mb-0">
+                                    <input class="form-check-input shadow-none m-0" type="checkbox"
+                                        name="acesso_ponto" id="acessoPonto"
+                                        style="width:3rem;height:1.5rem;cursor:pointer;"
+                                        {% if target_user.acesso_ponto %}checked{% endif %}
                                         {% if form_type == 'edit' and not request.user.is_administrador and not request.user.is_gestor %}disabled
                                         {% elif request.user.is_gestor and target_user == request.user %}disabled{% endif %}>
                                 </div>
                             </div>
                         </div>
+
                         <div class="col-12 mt-3">
                             <div class="pf-switch">
                                 <div class="d-flex align-items-center gap-3">
