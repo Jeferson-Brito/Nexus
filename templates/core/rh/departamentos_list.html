@@ -35,12 +35,6 @@
                             <label class="form-label small fw-bold">Descrição</label>
                             <textarea name="description" id="deptDesc" class="form-control" rows="3" placeholder="Breve descrição do departamento"></textarea>
                         </div>
-                        <div class="col-12">
-                            <div class="form-check form-switch mt-2">
-                                <input class="form-check-input" type="checkbox" id="deptShowNav">
-                                <label class="form-check-label small fw-bold" for="deptShowNav">Exibir no Menu de Navegação</label>
-                            </div>
-                        </div>
                     </div>
 
                     <div class="mt-4 pt-3 border-top d-flex gap-2">
@@ -99,7 +93,6 @@
                         <th class="px-4 py-3">Nome</th>
                         <th class="py-3">Descrição</th>
                         <th class="py-3">Fluxo de Aprovação</th>
-                        <th class="py-3 text-center">Menu?</th>
                         <th class="py-3 text-center">Funcionários</th>
                         <th class="py-3 text-end pe-4">Ações</th>
                     </tr>
@@ -206,9 +199,6 @@ function render() {
                 <td class="text-muted small">${d.description || '—'}</td>
                 <td class="text-muted">${d.fluxo_aprovacao || '—'}</td>
                 <td class="text-center">
-                    ${d.show_in_nav ? '<span class="badge bg-success" style="font-size:10px;">SIM</span>' : '<span class="badge bg-light text-muted border" style="font-size:10px;">NÃO</span>'}
-                </td>
-                <td class="text-center">
                     <a href="{% url 'rh_colaboradores' %}?department_id=${d.id}" class="badge bg-light text-dark border text-decoration-none hover-link">
                         ${d.num_funcionarios}
                     </a>
@@ -264,7 +254,6 @@ function showForm(id = null) {
         document.getElementById('deptName').value = d.name;
         document.getElementById('deptDesc').value = d.description || '';
         document.getElementById('deptFluxo').value = d.fluxo_aprovacao || '';
-        document.getElementById('deptShowNav').checked = !!d.show_in_nav;
     } else {
         document.getElementById('formTitle').textContent = 'Novo Departamento';
         document.getElementById('deptId').value = '';
@@ -286,8 +275,7 @@ function saveDept() {
         id: id || null,
         name: document.getElementById('deptName').value,
         description: document.getElementById('deptDesc').value,
-        fluxo_aprovacao: document.getElementById('deptFluxo').value,
-        show_in_nav: document.getElementById('deptShowNav').checked
+        fluxo_aprovacao: document.getElementById('deptFluxo').value
     };
 
     if (!data.name) return alert('Nome é obrigatório.');

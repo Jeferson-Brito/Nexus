@@ -693,7 +693,10 @@ def api_save_departamento(request):
             dept.name = data.get('name', '')
             dept.description = data.get('description', '')
             dept.fluxo_aprovacao = data.get('fluxo_aprovacao', '')
-            dept.show_in_nav = data.get('show_in_nav', False)
+            if 'show_in_nav' in data:
+                dept.show_in_nav = data.get('show_in_nav')
+            elif not pk:
+                dept.show_in_nav = False
             
             # Gerar slug se for novo
             if not pk:
