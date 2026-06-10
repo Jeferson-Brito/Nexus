@@ -4,9 +4,12 @@ from django.db import migrations
 
 
 def seed_functional_departments(apps, schema_editor):
+    # Apenas os departamentos oficiais do sistema devem aparecer no menu.
+    # Departamentos legados (CS Clientes, NRS Suporte, RH, NRP, Onboarding, Logística)
+    # são deletados em migrations posteriores e não devem ser ativados.
     Department = apps.get_model('core', 'Department')
-    functional_slugs = ['nrs-suporte', 'cs-clientes', 'rh', 'nrp', 'onboarding', 'logistica']
-    Department.objects.filter(slug__in=functional_slugs).update(show_in_nav=True)
+    official_slugs = ['escala', 'ponto-eletronico']
+    Department.objects.filter(slug__in=official_slugs).update(show_in_nav=True)
 
 class Migration(migrations.Migration):
 
