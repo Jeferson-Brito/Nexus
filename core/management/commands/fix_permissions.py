@@ -91,21 +91,43 @@ class Command(BaseCommand):
                 status = "criado" if created else "atualizado"
                 self.stdout.write(self.style.SUCCESS(f"  [OK] {obj.name} ({status})"))
 
-            # Consolidar usuários e deletar departamentos legados
-            dept_escala = Department.objects.filter(slug='escala').first()
-            dept_ponto = Department.objects.filter(slug='ponto-eletronico').first()
+        except Exception as e:
+            self.stdout.write(self.style.ERROR(f"  [FAIL] Erro ao criar departamentos oficiais: {e}"))
+
+        # =============================================
+        # PARTE 4: Deletar TODOS os departamentos legados (SEMPRE, sem condição)
+        # =============================================
+        self.stdout.write("==> [fix_permissions] Removendo departamentos legados do banco...")
+        try:
+            Department = apps.get_model('core', 'Department')
             User = apps.get_model('core', 'User')
 
-            if dept_escala and dept_ponto:
-                # Se o usuário pertencia a outros deptos antigos, removemos a associação
-                User.objects.exclude(department__slug__in=['escala', 'ponto-eletronico']).update(department=None)
+            # Migrar usuários de departamentos não-oficiais para None
+            User.objects.exclude(
+                department__slug__in=['escala', 'ponto-eletronico']
+            ).update(department=None)
 
-            # Deletar ativamente do banco de dados qualquer departamento que não seja 'escala' ou 'ponto-eletronico'
-            deleted_count, _ = Department.objects.exclude(slug__in=['escala', 'ponto-eletronico']).delete()
+            # Deletar TODOS os departamentos que não sejam os dois oficiais
+            # Esta operação é SEMPRE executada, independente de qualquer condição.
+            legados = Department.objects.exclude(slug__in=['escala', 'ponto-eletronico'])
+            nomes_legados = list(legados.values_list('name', flat=True))
+            deleted_count, _ = legados.delete()
+
             if deleted_count > 0:
-                self.stdout.write(self.style.SUCCESS(f"  [OK] Deletados {deleted_count} departamentos legados."))
+                self.stdout.write(self.style.SUCCESS(
+                    f"  [OK] Removidos {deleted_count} departamento(s) legado(s): {nomes_legados}"
+                ))
             else:
                 self.stdout.write(self.style.SUCCESS("  [OK] Nenhum departamento legado encontrado."))
 
         except Exception as e:
-            self.stdout.write(self.style.ERROR(f"  [FAIL] Erro ao ativar departamentos: {e}"))
+            self.stdout.write(self.style.ERROR(f"  [FAIL] Erro ao remover departamentos legados: {e}"))
+            # Fallback: tentar via SQL direto
+            try:
+                with connection.cursor() as cursor:
+                    cursor.execute(
+                        "DELETE FROM core_department WHERE slug NOT IN ('escala', 'ponto-eletronico')"
+                    )
+                    self.stdout.write(self.style.SUCCESS("  [OK] Fallback SQL executado com sucesso."))
+            except Exception as sql_err:
+                self.stdout.write(self.style.ERROR(f"  [FAIL] Fallback SQL falhou: {sql_err}"))
