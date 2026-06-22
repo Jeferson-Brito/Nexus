@@ -3389,378 +3389,6 @@
     0%, 100% { box-shadow: 0 0 0 0 rgba(2, 132, 199, 0.4); }
     50%  { box-shadow: 0 0 0 5px rgba(2, 132, 199, 0); }
 }
-
-/* ============================================================
-   REDESIGN MODERNO DA ESCALA 2025
-   ============================================================ */
-
-/* Esconder o título antigo da semana */
-.semana-title {
-    display: none !important;
-}
-
-/* Container da tabela - novo visual limpo */
-.table-wrap {
-    border-radius: 14px !important;
-    box-shadow: 0 1px 6px rgba(0,0,0,0.05), 0 4px 18px rgba(0,0,0,0.04) !important;
-    border: 1px solid #e8edf4 !important;
-    overflow: clip; /* clipa visualmente mas nao cria scroll container, permitindo sticky funcionar */
-    background: #fff;
-    margin-bottom: 24px !important;
-}
-
-/* Tabela redesignada */
-.escala-table-redesign {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    table-layout: auto;
-}
-
-/* Headers modernos */
-.escala-table-redesign thead tr { background: #fafbfc; }
-
-/* Cabeçalho fixo (sticky) por tabela semanal */
-.escala-table-redesign thead th {
-    position: sticky;
-    top: 80px;
-    z-index: 10;
-    box-shadow: 0 2px 0 #e8edf4;
-}
-
-@media (max-width: 991.98px) {
-    .escala-table-redesign thead th {
-        top: 60px;
-    }
-}
-
-.escala-table-redesign th {
-    background: #fafbfc !important;
-    color: #94a3b8 !important;
-    padding: 10px 8px !important;
-    font-weight: 700 !important;
-    font-size: 10px !important;
-    text-transform: uppercase !important;
-    letter-spacing: 0.8px !important;
-    border: 1px solid #f0f2f5 !important;
-    text-align: center !important;
-    white-space: nowrap !important;
-}
-
-.escala-table-redesign th.col-turno-new {
-    text-align: left !important;
-    padding-left: 20px !important;
-    min-width: 165px;
-    border-right: 1px solid #e8edf4 !important;
-}
-
-.escala-table-redesign th.col-analista-new {
-    text-align: left !important;
-    padding-left: 16px !important;
-    min-width: 185px;
-    border-right: 1px solid #e8edf4 !important;
-}
-
-.escala-table-redesign th.col-pausa-new {
-    min-width: 105px;
-    border-left: 1px solid #e8edf4 !important;
-    background: #f8fafc !important;
-}
-
-.escala-table-redesign th.th-day {
-    min-width: 88px;
-    padding: 8px 6px !important;
-    line-height: 1.2;
-    text-align: center !important;
-}
-
-.escala-table-redesign th.th-fds { background: #f5f7fa !important; }
-.escala-table-redesign th.th-outside-month {
-    color: rgba(148,163,184,0.4) !important;
-    background: #fafafa !important;
-}
-.escala-table-redesign th.th-feriado-col {
-    background: #fffbeb !important;
-    color: #d97706 !important;
-}
-
-/* Número grande do dia no header */
-.th-day-num {
-    display: block;
-    font-size: 20px;
-    font-weight: 800;
-    color: #1e293b;
-    line-height: 1;
-    margin-top: 2px;
-    letter-spacing: -0.5px;
-}
-.th-day-num.fds     { color: #94a3b8; }
-.th-day-num.feriado-num { color: #f59e0b; }
-
-.th-feriado-label-new {
-    display: block;
-    font-size: 8px;
-    color: #f59e0b;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-    margin-top: 2px;
-}
-
-/* Linhas */
-.escala-table-redesign tr.escala-row-new { transition: background 0.12s ease; }
-.escala-table-redesign tr.escala-row-new:hover { background: #fafbff; }
-
-/* Separador entre grupos de turnos */
-.escala-table-redesign tr.separator-row td {
-    height: 6px !important;
-    background: #f2f5f9 !important;
-    border: none !important;
-    border-top: 1.5px solid #e8edf4 !important;
-    border-bottom: 1.5px solid #e8edf4 !important;
-    padding: 0 !important;
-}
-
-/* Célula de TURNO */
-.escala-table-redesign td.turno-cell-new {
-    padding: 0 !important;
-    border-right: 1px solid #e8edf4 !important;
-    border-bottom: 1px solid #f0f2f5 !important;
-    vertical-align: middle !important;
-    background: #fafbfc !important;
-    border-left: 4px solid var(--turno-cor, #64748b) !important;
-    color: inherit !important;
-    font-weight: normal !important;
-    white-space: nowrap;
-}
-
-.turno-cell-inner {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 14px 12px;
-}
-
-.turno-icon-new {
-    font-size: 16px;
-    flex-shrink: 0;
-    width: 22px;
-    text-align: center;
-}
-
-.turno-info-new {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-
-.turno-nome-new {
-    font-size: 13px;
-    font-weight: 700;
-    color: #1e293b;
-}
-
-.turno-horario-new {
-    font-size: 11px;
-    color: #94a3b8;
-}
-
-/* Célula de ANALISTA */
-.escala-table-redesign td.analista-cell-new {
-    padding: 10px 14px !important;
-    border-right: 1px solid #e8edf4 !important;
-    border-bottom: 1px solid #f0f2f5 !important;
-    min-width: 185px;
-    background: #fff !important;
-    color: inherit !important;
-    font-weight: normal !important;
-    vertical-align: middle !important;
-    white-space: nowrap;
-}
-
-.analista-row-new {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.analista-avatar-new {
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 11px;
-    font-weight: 700;
-    color: #fff;
-    flex-shrink: 0;
-    opacity: 0.88;
-    letter-spacing: -0.3px;
-}
-
-.analista-nome-new {
-    font-size: 13px;
-    font-weight: 600;
-    color: #1e293b;
-}
-
-/* Células de DIAS */
-.escala-table-redesign td.cell-day-new {
-    padding: 8px !important;
-    text-align: center !important;
-    vertical-align: middle !important;
-    border: 1px solid #f0f2f5 !important;
-    position: relative;
-    background: #fff !important;
-    cursor: pointer;
-    transition: background 0.12s ease;
-    min-width: 110px;
-}
-
-.escala-table-redesign td.cell-day-new.fds-col   { background: #fafafa !important; }
-.escala-table-redesign td.cell-day-new.cell-outside-month {
-    background: #f6f8fb !important;
-    cursor: default;
-    min-width: 60px;
-}
-.escala-table-redesign td.cell-day-new.cell-feriado-day { background: #fff8e6 !important; }
-
-/* Cards dentro das células */
-.cell-card-new {
-    border-radius: 10px;
-    padding: 8px 12px;
-    font-size: 13px;
-    font-weight: 600;
-    line-height: 1.5;
-    text-align: left;
-    min-height: 56px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-}
-
-/* Trabalho */
-.cell-work-card-new {
-    background: #eff6ff;
-    border: 1px solid #dbeafe;
-    color: #1d4ed8;
-}
-
-.cell-work-dot {
-    display: inline-block;
-    width: 6px;
-    height: 6px;
-    background: #3b82f6;
-    border-radius: 50%;
-    margin-right: 4px;
-    vertical-align: middle;
-    flex-shrink: 0;
-}
-
-.cell-work-dot-troca {
-    display: inline-block;
-    width: 6px;
-    height: 6px;
-    background: #0891b2;
-    border-radius: 50%;
-    margin-right: 4px;
-    vertical-align: middle;
-    flex-shrink: 0;
-}
-
-.cell-work-time-start {
-    font-size: 12px;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-}
-
-.cell-work-time-end {
-    font-size: 11px;
-    color: #64748b;
-    padding-left: 10px;
-    margin-top: 1px;
-}
-
-/* Folga */
-.cell-folga-card-new {
-    background: #f5f7fa;
-    border: 1px solid #e8edf4;
-    color: #94a3b8;
-    text-align: center;
-    font-size: 13px;
-    font-weight: 600;
-    letter-spacing: 0.3px;
-    min-height: 56px;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-/* Férias */
-.cell-ferias-card-new {
-    background: #f0fdf4;
-    border: 1px solid #bbf7d0;
-    color: #16a34a;
-    text-align: center;
-    font-size: 11px;
-    font-weight: 700;
-    justify-content: center;
-}
-
-/* Atestado */
-.cell-atestado-card-new {
-    background: #fef2f2;
-    border: 1px solid #fecaca;
-    color: #dc2626;
-    text-align: center;
-    font-size: 11px;
-    font-weight: 700;
-    justify-content: center;
-}
-
-/* Feriado */
-.cell-feriado-card-new {
-    background: #fffbeb;
-    border: 1px solid #fde68a;
-    color: #d97706;
-    text-align: center;
-    font-size: 11px;
-    font-weight: 700;
-    justify-content: center;
-}
-
-/* Troca aprovada */
-.cell-troca-card-new {
-    background: #e0f2fe;
-    border: 1px solid #7dd3fc;
-    color: #0c4a6e;
-}
-
-/* Pausa */
-.escala-table-redesign td.pausa-cell-new {
-    padding: 6px 10px !important;
-    font-size: 12px;
-    font-weight: 600;
-    color: #475569;
-    background: #f8fafc !important;
-    border-left: 1px solid #e8edf4 !important;
-    border-bottom: 1px solid #f0f2f5 !important;
-    text-align: center !important;
-    white-space: nowrap;
-    vertical-align: middle !important;
-}
-
-/* Folga alterada por troca - override no novo design */
-.escala-table-redesign td.cell-day-new.cell-folga-alterada {
-    background: #e0f2fe !important;
-    border-color: #7dd3fc !important;
-}
-.escala-table-redesign td.cell-day-new.cell-folga-alterada:hover {
-    background: #bae6fd !important;
-    box-shadow: 0 0 0 2px rgba(14,165,233,0.2);
-}
 </style>
 
 <style>
@@ -4455,130 +4083,43 @@
             diasDaSemana.push(d);
         }
 
-        // Helper: iniciais do nome
-        function getInitials(name) {
-            const parts = (name || '').trim().split(/\s+/);
-            if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-            return (name || '').substring(0, 2).toUpperCase();
-        }
-
-        // Helper: ícone do turno baseado no horário/nome
-        function getTurnoIcon(nome, horario) {
-            const n = (nome || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-            const h = parseInt((horario || '').split(/\s*[-–]\s*/)[0]?.split(':')[0] || '12');
-            if (n.includes('noturno') || n.includes('noite') || h >= 21 || h < 5)
-                return '<i class="fa-solid fa-moon" style="color:#8b5cf6;"></i>';
-            if (n.includes('tarde') || h >= 14)
-                return '<i class="fa-solid fa-cloud-sun" style="color:#f59e0b;"></i>';
-            if (n.includes('diurno') || (h >= 10 && h < 14))
-                return '<i class="fa-solid fa-cloud-sun" style="color:#f97316;"></i>';
-            if (n.includes('manha') || n.includes('matutino') || (h >= 7 && h < 10))
-                return '<i class="fa-solid fa-sun" style="color:#eab308;"></i>';
-            if (n.includes('matinal') || h < 7)
-                return '<i class="fa-solid fa-mug-hot" style="color:#f97316;"></i>';
-            return '<i class="fa-solid fa-clock" style="color:#64748b;"></i>';
-        }
-
-        // Helper: converter hex para rgba
-        function hexToRgba(hex, alpha) {
-            const c = hex.replace('#', '');
-            const r = parseInt(c.substring(0, 2), 16);
-            const g = parseInt(c.substring(2, 4), 16);
-            const b = parseInt(c.substring(4, 6), 16);
-            return `rgba(${r},${g},${b},${alpha})`;
-        }
-
-        // Helper: renderizar célula de dia com card colorido
-        function renderDayCell(cellData, isFeriado, extraClass, swapIcon, clickHandler, colorObj) {
-            const classes = ['cell-day-new'];
-            if (extraClass) classes.push(extraClass);
-            // isFeriado apenas adiciona fundo âmbar na célula (TD), sem mudar o conteúdo
-            if (isFeriado) classes.push('cell-feriado-day');
-            const cls = classes.join(' ');
-
-            if (extraClass && extraClass.includes('cell-folga-alterada')) {
-                const parts = cellData.text.split(/\s*[-–]\s*/);
-                return `<td class="${cls}" ${clickHandler}>${swapIcon}<div class="cell-card-new cell-troca-card-new">
-                    <div class="cell-work-time-start"><span class="cell-work-dot-troca"></span>${parts[0] || cellData.text}</div>
-                    ${parts[1] ? `<div class="cell-work-time-end">${parts[1]}</div>` : ''}
-                </div></td>`;
-            }
-
-            switch (cellData.class) {
-                case 'trabalho': {
-                    const parts = cellData.text.split(/\s*[-–]\s*/);
-                    // Cor do card baseada no colorObj do analista
-                    const cardBg     = colorObj ? colorObj.bg : '#eff6ff';
-                    const cardBorder = colorObj ? colorObj.border : '#dbeafe';
-                    const dotColor   = colorObj ? colorObj.dot : '#3b82f6';
-                    const txtColor   = colorObj ? colorObj.text : '#1d4ed8';
-                    return `<td class="${cls}" ${clickHandler}>${swapIcon}<div class="cell-card-new cell-work-card-new" style="background:${cardBg};border-color:${cardBorder};color:${txtColor};">
-                        <div class="cell-work-time-start"><span class="cell-work-dot" style="background:${dotColor};"></span>${parts[0] || cellData.text}</div>
-                        ${parts[1] ? `<div class="cell-work-time-end">${parts[1]}</div>` : ''}
-                    </div></td>`;
-                }
-                case 'folga':
-                    return `<td class="${cls}" ${clickHandler}>${swapIcon}<div class="cell-card-new cell-folga-card-new">FOLGA</div></td>`;
-                case 'ferias':
-                    return `<td class="${cls}" ${clickHandler}>${swapIcon}<div class="cell-card-new cell-ferias-card-new">FÉRIAS</div></td>`;
-                case 'atestado':
-                    return `<td class="${cls}" ${clickHandler}>${swapIcon}<div class="cell-card-new cell-atestado-card-new">ATESTADO</div></td>`;
-                case 'feriado':
-                    return `<td class="${cls} cell-feriado-day" ${clickHandler}>${swapIcon}<div class="cell-card-new cell-feriado-card-new">FERIADO</div></td>`;
-                default:
-                    return `<td class="${cls}" ${clickHandler}>${swapIcon}${cellData.text}</td>`;
-            }
-        }
-
-        // ---- Headers ----
-        let headers = `
-            <th class="col-analista-new">Funcionário</th>
-        `;
+        // Headers
+        let headers = '<th>Turno</th><th>Analista</th>';
         diasDaSemana.forEach((d, i) => {
             if (d.getMonth() === mesTarget) {
                 const dStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
                 const feriadoNome = feriadosNacionais[dStr];
-                const isFds = (d.getDay() === 0 || d.getDay() === 6);
-                const dayNum = String(d.getDate()).padStart(2, '0');
-
                 if (feriadoNome) {
-                    headers += `<th class="th-day${isFds ? ' th-fds' : ''} th-feriado-col" title="${feriadoNome}">
-                        ${diasSemanaNomes[i]}
-                        <span class="th-day-num feriado-num">${dayNum}</span>
-                        <span class="th-feriado-label-new">FERIADO</span>
-                    </th>`;
+                    headers += `
+                        <th class="header-feriado" title="${feriadoNome}">
+                            <div>${diasSemanaNomes[i]} (${String(d.getDate()).padStart(2, '0')})</div>
+                            <span class="feriado-badge">🎉 ${feriadoNome}</span>
+                        </th>`;
                 } else {
-                    headers += `<th class="th-day${isFds ? ' th-fds' : ''}">
-                        ${diasSemanaNomes[i]}
-                        <span class="th-day-num${isFds ? ' fds' : ''}">${dayNum}</span>
-                    </th>`;
+                    headers += `<th>${diasSemanaNomes[i]} (${String(d.getDate()).padStart(2, '0')})</th>`;
                 }
             } else {
-                headers += `<th class="th-day th-outside-month">${diasSemanaNomes[i]}</th>`;
+                headers += `<th style="background: #1e293b; color: rgba(255,255,255,0.4) !important;">${diasSemanaNomes[i]}</th>`;
             }
         });
+        headers += '<th>PAUSA</th>';
 
-        // ---- Rows ----
+        // Rows
         let rows = '';
         const turnosOrdenados = [...turnos].sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
 
+        // Adicionar grupo virtual "Sem Turno" se houver analistas sem turno
         const analistasSemTurno = analistas.filter(a => !a.turno);
         const turnosParaRenderizar = [...turnosOrdenados];
         if (analistasSemTurno.length > 0) {
-            turnosParaRenderizar.push({ id: 'sem_turno', nome: 'Sem Turno', cor: '#64748b', horario: 'Sem Horário', ordem: 9999 });
+            turnosParaRenderizar.push({
+                id: 'sem_turno',
+                nome: 'Sem Turno',
+                cor: '#64748b',
+                horario: 'Sem Horário',
+                ordem: 9999
+            });
         }
-
-        // Paleta de cores para os analistas
-        const colorsPalette = [
-            { bg: '#eff6ff', border: '#dbeafe', text: '#1d4ed8', dot: '#3b82f6', avatar: '#3b82f6' }, // Blue
-            { bg: '#f0fdf4', border: '#dcfce7', text: '#15803d', dot: '#22c55e', avatar: '#22c55e' }, // Green
-            { bg: '#fff7ed', border: '#ffedd5', text: '#c2410c', dot: '#f97316', avatar: '#f97316' }, // Orange
-            { bg: '#faf5ff', border: '#f3e8ff', text: '#7e22ce', dot: '#a855f7', avatar: '#a855f7' }, // Purple
-            { bg: '#f0fdfa', border: '#ccfbf1', text: '#0f766e', dot: '#14b8a6', avatar: '#14b8a6' }, // Teal
-            { bg: '#fff1f2', border: '#ffe4e6', text: '#be123c', dot: '#f43f5e', avatar: '#f43f5e' }  // Rose
-        ];
-
-        let analistaGlobalIndex = 0;
 
         turnosParaRenderizar.forEach((turno, turnoIndex) => {
             const analistasDoTurno = turno.id === 'sem_turno'
@@ -4586,37 +4127,20 @@
                 : analistas.filter(a => a.turno === turno.nome);
 
             if (analistasDoTurno.length > 0) {
-                // RENDERIZAR LINHA DE CABEÇALHO DO GRUPO (TURNO)
-                const icon = getTurnoIcon(turno.nome, turno.horario);
-                rows += `
-                    <tr class="escala-group-header-row">
-                        <td colspan="8">
-                            <div class="group-header-inner">
-                                <span class="group-header-icon">${icon}</span>
-                                <span class="group-header-title">${turno.nome}</span>
-                                <span class="group-header-subtitle">(${turno.horario})</span>
-                                <span class="group-header-badge">${analistasDoTurno.length}</span>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-
                 analistasDoTurno.forEach((analista, idx) => {
                     const rowTurnoNome = (turno.nome || '').toLowerCase();
-                    rows += `<tr class="escala-row-new" data-analista="${analista.nome.toLowerCase()}" data-turno-nome="${rowTurnoNome}">`;
+                    rows += `<tr data-analista="${analista.nome.toLowerCase()}" data-turno-nome="${rowTurnoNome}">`;
 
-                    // Selecionar cor baseada no index global de analistas
-                    const colorObj = colorsPalette[analistaGlobalIndex % colorsPalette.length];
-                    analistaGlobalIndex++;
-
-                    // Célula de analista com avatar
-                    const initials = getInitials(analista.nome);
-                    rows += `<td class="analista-cell-new">
-                        <div class="analista-row-new">
-                            <div class="analista-avatar-new" style="background:${colorObj.avatar};">${initials}</div>
-                            <span class="analista-nome-new">${analista.nome}</span>
-                        </div>
+                    // Célula de turno (só na primeira linha do turno)
+                    if (idx === 0) {
+                        rows += `<td class="turno" rowspan="${analistasDoTurno.length}" style="background-color: ${turno.cor};">
+                        <div style="font-weight: bold; margin-bottom: 4px; text-transform: uppercase;">${turno.nome}</div>
+                        <div style="font-size: 10px; background: rgba(0,0,0,0.3); padding: 2px 4px; border-radius: 3px;">${turno.horario}</div>
                     </td>`;
+                    }
+
+                    // Célula de analista
+                    rows += `<td class="analista" style="background-color: ${turno.cor}; border-left: 1px solid #1e293b;">${analista.nome}</td>`;
 
                     // Células de dias
                     diasDaSemana.forEach(d => {
@@ -4624,59 +4148,56 @@
                             const dia = d.getDate();
                             const dStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
                             const isFeriado = !!feriadosNacionais[dStr];
-                            const isFds = (d.getDay() === 0 || d.getDay() === 6);
-
+                            
                             const cellData = getCellData(analista, turno, d.getFullYear(), d.getMonth(), dia);
+
+                            // Verificar se o dia atual é fruto de uma troca de folga aprovada
                             const swapObj = trocasAprovadasCache[`${analista.id}-${dStr}`];
                             const isTroca = !!swapObj;
 
                             let clickHandler = '';
-                            let extraClass = isFds ? 'fds-col' : '';
+                            let extraClass = '';
                             let swapIcon = '';
 
                             if (isTroca) {
-                                extraClass += (extraClass ? ' ' : '') + 'cell-folga-alterada';
-                                swapIcon = `<span class="cell-swap-indicator" title="Folga alterada via troca aprovada — clique para detalhes"><i class="fa-solid fa-right-left"></i></span>`;
+                                // Folga alterada: mostra destaque e abre modal de detalhe ao clicar
+                                extraClass = 'cell-folga-alterada';
+                                const title = `Folga alterada via troca aprovada — clique para detalhes`;
+                                swapIcon = `<span class="cell-swap-indicator" title="${title}"><i class="fa-solid fa-right-left"></i></span>`;
                                 clickHandler = `onclick="onSwapCellClick(${swapObj.id})"`;
                             } else if (isAdmin) {
                                 clickHandler = `onclick="openEditCellModal('${analista.id}', ${dia}, ${d.getMonth() + 1}, ${d.getFullYear()})"`;
                             }
 
-                            rows += renderDayCell(cellData, isFeriado, extraClass, swapIcon, clickHandler, colorObj);
+                            rows += `<td class="${cellData.class} ${extraClass} ${isFeriado ? 'cell-feriado' : ''}" ${clickHandler}>${swapIcon}${cellData.text}</td>`;
                         } else {
-                            rows += '<td class="cell-day-new cell-outside-month"></td>';
+                            rows += '<td class="dia-vazio"></td>';
                         }
                     });
 
+                    // Célula de pausa
+                    rows += `<td class="pausa">${analista.pausa || ''}</td>`;
                     rows += '</tr>';
                 });
             } else {
-                const icon = getTurnoIcon(turno.nome, turno.horario);
-                rows += `
-                    <tr class="escala-group-header-row">
-                        <td colspan="8">
-                            <div class="group-header-inner">
-                                <span class="group-header-icon">${icon}</span>
-                                <span class="group-header-title">${turno.nome}</span>
-                                <span class="group-header-subtitle">(${turno.horario})</span>
-                                <span class="group-header-badge">0</span>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr class="escala-row-new" data-analista="" data-turno-nome="${(turno.nome || '').toLowerCase()}">
-                        <td class="analista-cell-new" style="color:#94a3b8;font-style:italic;font-size:13px;padding-left:16px !important;">(Nenhum analista)</td>
-                        ${diasDaSemana.map(d => d.getMonth() === mesTarget
-                            ? '<td class="cell-day-new"></td>'
-                            : '<td class="cell-day-new cell-outside-month"></td>'
-                        ).join('')}
-                    </tr>
-                `;
+                rows += `<tr>
+                <td class="turno" style="background-color: ${turno.cor}; border: 1px solid #1e293b; color: #fff; font-weight: bold;">${turno.nome}</td>
+                <td class="analista" style="background-color: ${turno.cor}; border: 1px solid #1e293b; color: #fff; font-weight: bold;">(Nenhum analista)</td>
+                ${diasDaSemana.map(() => '<td class="dia-vazio"></td>').join('')}
+                <td class="pausa"></td>
+            </tr>`;
+            }
+
+            // Separador entre turnos
+            if (turnoIndex < turnosParaRenderizar.length - 1) {
+                rows += `<tr class="separator-row"><td colspan="10"></td></tr>`;
             }
         });
 
         return `
         <div class="table-wrap">
-            <table class="escala-table escala-table-redesign">
+            <h2 class="semana-title">Semana ${semana}</h2>
+            <table class="escala-table">
                 <thead><tr>${headers}</tr></thead>
                 <tbody>${rows}</tbody>
             </table>
