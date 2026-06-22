@@ -3404,20 +3404,30 @@
     border-radius: 14px !important;
     box-shadow: 0 1px 6px rgba(0,0,0,0.05), 0 4px 18px rgba(0,0,0,0.04) !important;
     border: 1px solid #e8edf4 !important;
-    overflow: hidden;
+    overflow: auto;
     background: #fff;
     margin-bottom: 24px !important;
+    max-height: 70vh;
 }
 
 /* Tabela redesignada */
 .escala-table-redesign {
     width: 100%;
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0;
     table-layout: auto;
 }
 
 /* Headers modernos */
 .escala-table-redesign thead tr { background: #fafbfc; }
+
+/* Cabeçalho fixo (sticky) por tabela semanal */
+.escala-table-redesign thead th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    box-shadow: 0 2px 0 #e8edf4;
+}
 
 .escala-table-redesign th {
     background: #fafbfc !important;
@@ -3591,7 +3601,7 @@
 
 /* Células de DIAS */
 .escala-table-redesign td.cell-day-new {
-    padding: 6px !important;
+    padding: 8px !important;
     text-align: center !important;
     vertical-align: middle !important;
     border: 1px solid #f0f2f5 !important;
@@ -3599,7 +3609,7 @@
     background: #fff !important;
     cursor: pointer;
     transition: background 0.12s ease;
-    min-width: 88px;
+    min-width: 110px;
 }
 
 .escala-table-redesign td.cell-day-new.fds-col   { background: #fafafa !important; }
@@ -3608,17 +3618,17 @@
     cursor: default;
     min-width: 60px;
 }
-.escala-table-redesign td.cell-day-new.cell-feriado-day { background: #fffcf0 !important; }
+.escala-table-redesign td.cell-day-new.cell-feriado-day { background: #fff8e6 !important; }
 
 /* Cards dentro das células */
 .cell-card-new {
-    border-radius: 8px;
-    padding: 5px 8px;
-    font-size: 12px;
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-size: 13px;
     font-weight: 600;
-    line-height: 1.4;
+    line-height: 1.5;
     text-align: left;
-    min-height: 42px;
+    min-height: 56px;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -3673,11 +3683,11 @@
     border: 1.5px dashed #cbd5e1;
     color: #94a3b8;
     text-align: center;
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 600;
     letter-spacing: 0.3px;
-    min-height: 42px;
-    border-radius: 8px;
+    min-height: 56px;
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -4468,12 +4478,9 @@
         function renderDayCell(cellData, isFeriado, extraClass, swapIcon, clickHandler) {
             const classes = ['cell-day-new'];
             if (extraClass) classes.push(extraClass);
-            if (isFeriado && cellData.class !== 'folga') classes.push('cell-feriado-day');
+            // isFeriado apenas adiciona fundo âmbar na célula (TD), sem mudar o conteúdo
+            if (isFeriado) classes.push('cell-feriado-day');
             const cls = classes.join(' ');
-
-            if (isFeriado && cellData.class !== 'folga' && cellData.class !== 'ferias') {
-                return `<td class="${cls}" ${clickHandler}>${swapIcon}<div class="cell-card-new cell-feriado-card-new">FERIADO</div></td>`;
-            }
 
             if (extraClass && extraClass.includes('cell-folga-alterada')) {
                 const parts = cellData.text.split(/\s*[-–]\s*/);
