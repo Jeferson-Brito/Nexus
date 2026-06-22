@@ -3404,10 +3404,9 @@
     border-radius: 14px !important;
     box-shadow: 0 1px 6px rgba(0,0,0,0.05), 0 4px 18px rgba(0,0,0,0.04) !important;
     border: 1px solid #e8edf4 !important;
-    overflow: auto;
+    overflow: clip; /* clipa visualmente mas nao cria scroll container, permitindo sticky funcionar */
     background: #fff;
     margin-bottom: 24px !important;
-    max-height: 70vh;
 }
 
 /* Tabela redesignada */
@@ -3679,8 +3678,8 @@
 
 /* Folga */
 .cell-folga-card-new {
-    background: transparent;
-    border: 1.5px dashed #cbd5e1;
+    background: #f5f7fa;
+    border: 1px solid #e8edf4;
     color: #94a3b8;
     text-align: center;
     font-size: 13px;
@@ -4474,8 +4473,17 @@
             return '<i class="fa-solid fa-clock" style="color:#64748b;"></i>';
         }
 
-        // Helper: renderizar célula de dia com card
-        function renderDayCell(cellData, isFeriado, extraClass, swapIcon, clickHandler) {
+        // Helper: converter hex para rgba
+        function hexToRgba(hex, alpha) {
+            const c = hex.replace('#', '');
+            const r = parseInt(c.substring(0, 2), 16);
+            const g = parseInt(c.substring(2, 4), 16);
+            const b = parseInt(c.substring(4, 6), 16);
+            return `rgba(${r},${g},${b},${alpha})`;
+        }
+
+        // Helper: renderizar célula de dia com card colorido pelo turno
+        function renderDayCell(cellData, isFeriado, extraClass, swapIcon, clickHandler, turnoCor) {
             const classes = ['cell-day-new'];
             if (extraClass) classes.push(extraClass);
             // isFeriado apenas adiciona fundo âmbar na célula (TD), sem mudar o conteúdo
@@ -4493,8 +4501,14 @@
             switch (cellData.class) {
                 case 'trabalho': {
                     const parts = cellData.text.split(/\s*[-–]\s*/);
-                    return `<td class="${cls}" ${clickHandler}>${swapIcon}<div class="cell-card-new cell-work-card-new">
-                        <div class="cell-work-time-start"><span class="cell-work-dot"></span>${parts[0] || cellData.text}</div>
+                    // Cor do card baseada na cor do turno
+                    const cor = (turnoCor && turnoCor.startsWith('#') && turnoCor.length >= 7) ? turnoCor : null;
+                    const cardBg     = cor ? hexToRgba(cor, 0.10) : '#eff6ff';
+                    const cardBorder = cor ? hexToRgba(cor, 0.22) : '#dbeafe';
+                    const dotColor   = cor || '#3b82f6';
+                    const txtColor   = cor || '#1d4ed8';
+                    return `<td class="${cls}" ${clickHandler}>${swapIcon}<div class="cell-card-new cell-work-card-new" style="background:${cardBg};border-color:${cardBorder};color:${txtColor};">
+                        <div class="cell-work-time-start"><span class="cell-work-dot" style="background:${dotColor};"></span>${parts[0] || cellData.text}</div>
                         ${parts[1] ? `<div class="cell-work-time-end">${parts[1]}</div>` : ''}
                     </div></td>`;
                 }
@@ -4608,7 +4622,7 @@
                                 clickHandler = `onclick="openEditCellModal('${analista.id}', ${dia}, ${d.getMonth() + 1}, ${d.getFullYear()})"`;
                             }
 
-                            rows += renderDayCell(cellData, isFeriado, extraClass, swapIcon, clickHandler);
+                            rows += renderDayCell(cellData, isFeriado, extraClass, swapIcon, clickHandler, turno.cor);
                         } else {
                             rows += '<td class="cell-day-new cell-outside-month"></td>';
                         }
