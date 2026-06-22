@@ -3423,9 +3423,15 @@
 /* Cabeçalho fixo (sticky) por tabela semanal */
 .escala-table-redesign thead th {
     position: sticky;
-    top: 0;
+    top: 80px;
     z-index: 10;
     box-shadow: 0 2px 0 #e8edf4;
+}
+
+@media (max-width: 991.98px) {
+    .escala-table-redesign thead th {
+        top: 60px;
+    }
 }
 
 .escala-table-redesign th {
