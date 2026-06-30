@@ -1773,9 +1773,13 @@
         </div>
 
         <!-- ESTADO 2: FORMULÁRIO (Pattern RH Horários) -->
-        <div id="modeloFormState" style="display: none;">
+
+        <!-- ESTADO 2: FORMULÁRIO (Wizard) -->
+        <div id="modeloFormState" style="display: none; padding-bottom: 50px;">
             <input type="hidden" id="modeloId">
+            <input type="hidden" id="formModeloId">
             
+            <!-- Wizard Header -->
             <div class="d-flex align-items-center justify-content-between mb-4">
                 <div class="d-flex align-items-center gap-3">
                     <button class="btn btn-light btn-sm rounded-circle shadow-sm border" onclick="hideModeloForm()">
@@ -1783,40 +1787,70 @@
                     </button>
                     <h4 class="fw-bold mb-0" id="formModeloTitle">Novo Modelo de Escala</h4>
                 </div>
-                <div class="d-flex gap-2">
-                    <button type="button" class="btn btn-light px-4 border" onclick="hideModeloForm()">Cancelar</button>
-                    <button type="button" class="btn btn-primary px-4 shadow-sm" onclick="salvarModeloEscala()" style="background: #2563eb; border: none;">
+                <div class="d-flex gap-2" id="wizardButtons">
+                    <button type="button" class="btn btn-light px-4 border" onclick="prevStep()" id="btnPrevStep" style="display: none; border-radius: 8px;">
+                        <i class="fa-solid fa-arrow-left me-1"></i> Voltar
+                    </button>
+                    <button type="button" class="btn btn-primary px-4 shadow-sm fw-bold" onclick="nextStep()" id="btnNextStep" style="background: #2563eb; border: none; border-radius: 8px;">
+                        Próximo <i class="fa-solid fa-arrow-right ms-1"></i>
+                    </button>
+                    <button type="button" class="btn btn-success px-4 shadow-sm fw-bold" onclick="salvarModeloEscala()" id="btnSaveStep" style="display: none; border-radius: 8px;">
                         <i class="fa-solid fa-check me-1"></i> Salvar Modelo
                     </button>
                 </div>
             </div>
 
-            <div class="card border-0 shadow-sm" style="border-radius: 12px; min-height: 500px; overflow: hidden;">
-                <div class="card-header border-0 px-4 py-3" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);">
-                    <h5 class="text-white mb-0 fw-bold small text-uppercase letter-spacing-1">
-                        <i class="fa-solid fa-sliders me-2"></i> Parâmetros e Visualização do Ciclo
-                    </h5>
-                </div>
-
+            <!-- Stepper -->
+            <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px; overflow: visible;">
                 <div class="card-body p-4">
-                    <input type="hidden" id="formModeloId">
-                    <div class="row g-4">
-                        <!-- Lado Esquerdo: Configurações -->
-                        <div class="col-xl-5">
-                            <div class="alert alert-light border shadow-sm mb-4">
-                                <div class="d-flex align-items-start gap-2">
-                                    <i class="fa-solid fa-circle-info text-primary mt-1"></i>
-                                    <div class="small text-muted">
-                                        <strong class="text-dark d-block mb-1">Sobre Modelos de Jornada</strong>
-                                        Defina a regra de dias de trabalho e folga. O preview ao lado será atualizado instantaneamente.
-                                    </div>
-                                </div>
+                    <div class="d-flex justify-content-between position-relative">
+                        <div class="position-absolute top-50 start-0 end-0 bg-light" style="height: 2px; z-index: 1; transform: translateY(-50%);"></div>
+                        <div class="position-absolute top-50 start-0 bg-primary transition-all" id="stepperProgress" style="height: 2px; z-index: 1; transform: translateY(-50%); width: 0%; transition: width 0.3s ease;"></div>
+                        
+                        <!-- Step 1 -->
+                        <div class="d-flex align-items-center gap-2 bg-white px-3 position-relative" style="z-index: 2;">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold step-indicator active" id="indicator-step-1" style="width: 32px; height: 32px; background: #2563eb; color: white;">1</div>
+                            <div>
+                                <div class="fw-bold text-primary" style="font-size: 0.9rem;" id="label-step-1-title">Configurações</div>
+                                <div class="text-muted" style="font-size: 0.75rem;" id="label-step-1-desc">Defina o modelo e regras</div>
                             </div>
+                        </div>
+                        
+                        <!-- Step 2 -->
+                        <div class="d-flex align-items-center gap-2 bg-white px-3 position-relative" style="z-index: 2;">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold step-indicator" id="indicator-step-2" style="width: 32px; height: 32px; background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; transition: all 0.3s;">2</div>
+                            <div>
+                                <div class="fw-bold text-muted" id="label-step-2-title" style="font-size: 0.9rem;">Dias de Folga</div>
+                                <div class="text-muted" style="font-size: 0.75rem;" id="label-step-2-desc">Selecione os dias</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Step 3 -->
+                        <div class="d-flex align-items-center gap-2 bg-white px-3 position-relative" style="z-index: 2;">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold step-indicator" id="indicator-step-3" style="width: 32px; height: 32px; background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; transition: all 0.3s;">3</div>
+                            <div>
+                                <div class="fw-bold text-muted" id="label-step-3-title" style="font-size: 0.9rem;">Revisão</div>
+                                <div class="text-muted" style="font-size: 0.75rem;" id="label-step-3-desc">Revise e salve</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-                            <div class="row g-3 mb-4">
-                                <div class="col-12">
-                                    <label class="form-label fw-bold small text-muted text-uppercase">Modelo de Jornada *</label>
-                                    <select id="formModeloRegra" class="form-select form-select-lg" onchange="updateJornadaValues()" style="border-radius: 10px; border-color: #e2e8f0;">
+            <!-- STEP 1 CONTAINER -->
+            <div id="step-1-container" class="wizard-step">
+                <div class="row g-4">
+                    <!-- Esquerda: Configurações -->
+                    <div class="col-xl-6">
+                        <div class="card border-0 shadow-sm h-100" style="border-radius: 12px;">
+                            <div class="card-body p-4">
+                                <h5 class="fw-bold mb-4 d-flex align-items-center gap-2 text-dark">
+                                    <i class="fa-solid fa-gear text-primary"></i> Configurações do Modelo
+                                </h5>
+
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold small text-muted text-uppercase mb-2">Modelo de Jornada *</label>
+                                    <select id="formModeloRegra" class="form-select form-select-lg shadow-sm" onchange="updateStep1Visuals()" style="border-radius: 10px; border: 1px solid #e2e8f0; background-color: #f8fafc;">
                                         <option value="5x2">5x2 (5 Trabalha / 2 Folga)</option>
                                         <option value="6x1">6x1 (6 Trabalha / 1 Folga)</option>
                                         <option value="6x2">6x2 (6 Trabalha / 2 Folga)</option>
@@ -1826,137 +1860,306 @@
                                         <option value="custom">Personalizado...</option>
                                     </select>
                                 </div>
-                                <div class="col-12" id="infoModeloCustom" style="display: none;">
-                                    <div class="alert alert-primary border shadow-sm mb-0 d-flex flex-column gap-3" style="border-radius: 10px; background-color: #eff6ff; border-color: #bfdbfe !important;">
-                                        <div class="d-flex align-items-start gap-2">
-                                            <i class="fa-solid fa-rotate text-primary mt-1" style="font-size: 1.1rem;"></i>
-                                            <div class="small" style="color: #1e40af;">
-                                                <strong>Ciclo Personalizado (Em Semanas):</strong> Escolha de quantas semanas é o seu ciclo. Defina as folgas clicando diretamente na tabela de Pré-visualização ao lado!
+
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold small text-muted text-uppercase mb-2">Nome do Modelo *</label>
+                                    <input type="text" id="formModeloNome" class="form-control form-control-lg shadow-sm" placeholder="Ex: Jornada 5x2 Administrativa" style="border-radius: 10px; border: 1px solid #e2e8f0;">
+                                </div>
+
+                                <div class="row g-3 mb-4">
+                                    <div class="col-md-6" id="colTipoEscala">
+                                        <label class="form-label fw-bold small text-muted text-uppercase mb-2">Tipo de Escala *</label>
+                                        <select id="formModeloTipo" class="form-select shadow-sm" onchange="updateStep1Visuals()" style="border-radius: 10px; border: 1px solid #e2e8f0; height: 50px;">
+                                            <option value="fixa">Fixa (Dias fixos)</option>
+                                            <option value="rotativa">Rotativa (Alternada)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold small text-muted text-uppercase mb-2">Permitir Alterações?</label>
+                                        <select id="formModeloPermitirAlt" class="form-select shadow-sm" style="border-radius: 10px; border: 1px solid #e2e8f0; height: 50px;">
+                                            <option value="true">Sim, permitir</option>
+                                            <option value="false">Não, restringir</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Regras do Ciclo Visual Cards -->
+                                <div class="mb-4">
+                                    <h6 class="fw-bold mb-3 d-flex align-items-center gap-2"><i class="fa-solid fa-book-open text-primary"></i> Regras do Ciclo</h6>
+                                    
+                                    <div class="row g-3" id="cardsRegrasNormais">
+                                        <div class="col-4">
+                                            <div class="p-3 border rounded shadow-sm text-center bg-white h-100 d-flex flex-column justify-content-center">
+                                                <div class="d-flex align-items-center justify-content-center mb-2">
+                                                    <i class="fa-regular fa-calendar text-success me-2" style="font-size: 1.5rem;"></i>
+                                                    <span class="fs-4 fw-bold text-success" id="lblCardTrab">5</span>
+                                                </div>
+                                                <span class="small fw-bold text-dark">Dias de trabalho</span>
+                                                <input type="hidden" id="formModeloTrabalho" value="5">
                                             </div>
                                         </div>
-                                        <div>
-                                            <label class="form-label fw-bold small text-primary text-uppercase mb-1">Tamanho do Ciclo</label>
-                                            <select id="formModeloCicloSemanas" class="form-select" onchange="updatePreviewCycle()" style="border-radius: 8px; border-color: #93c5fd;">
-                                                <option value="2">2 Semanas (14 dias)</option>
-                                                <option value="3">3 Semanas (21 dias)</option>
-                                                <option value="4" selected>4 Semanas (28 dias)</option>
-                                                <option value="5">5 Semanas (35 dias)</option>
-                                                <option value="6">6 Semanas (42 dias)</option>
-                                            </select>
+                                        <div class="col-4">
+                                            <div class="p-3 border rounded shadow-sm text-center bg-white h-100 d-flex flex-column justify-content-center">
+                                                <div class="d-flex align-items-center justify-content-center mb-2">
+                                                    <i class="fa-regular fa-calendar-xmark text-danger me-2" style="font-size: 1.5rem;"></i>
+                                                    <span class="fs-4 fw-bold text-danger" id="lblCardFolga">2</span>
+                                                </div>
+                                                <span class="small fw-bold text-dark">Dias de folga</span>
+                                                <input type="hidden" id="formModeloFolga" value="2">
+                                            </div>
                                         </div>
+                                        <div class="col-4">
+                                            <div class="p-3 border rounded shadow-sm text-center bg-white h-100 d-flex flex-column justify-content-center">
+                                                <div class="d-flex align-items-center justify-content-center mb-2">
+                                                    <i class="fa-solid fa-rotate text-primary me-2" style="font-size: 1.5rem;"></i>
+                                                    <span class="fs-4 fw-bold text-primary" id="lblCardCiclo">7</span>
+                                                </div>
+                                                <span class="small fw-bold text-dark">Dias no ciclo</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row g-3" id="cardsRegrasCustom" style="display: none;">
+                                        <div class="col-12">
+                                            <div class="p-4 border rounded shadow-sm bg-light d-flex flex-column flex-sm-row align-items-center justify-content-between gap-3">
+                                                <div>
+                                                    <h6 class="fw-bold text-primary mb-1"><i class="fa-solid fa-sliders me-2"></i> Tamanho do Ciclo Personalizado</h6>
+                                                    <span class="text-muted small">Escolha quantas semanas seu ciclo possui.</span>
+                                                </div>
+                                                <select id="formModeloCicloSemanas" class="form-select shadow-sm w-auto" style="border-radius: 8px; border-color: #93c5fd; font-weight: bold;" onchange="updateStep1Visuals()">
+                                                    <option value="2">2 Semanas (14 dias)</option>
+                                                    <option value="3">3 Semanas (21 dias)</option>
+                                                    <option value="4" selected>4 Semanas (28 dias)</option>
+                                                    <option value="5">5 Semanas (35 dias)</option>
+                                                    <option value="6">6 Semanas (42 dias)</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Fim de semana e Observações -->
+                                <div class="mb-4">
+                                    <h6 class="fw-bold mb-3 d-flex align-items-center gap-2"><i class="fa-solid fa-toggle-on text-primary"></i> Outras Opções</h6>
+                                    <div class="d-flex align-items-center justify-content-between p-3 border rounded mb-2 bg-white shadow-sm" id="boxFimSemana">
+                                        <div class="fw-bold text-dark mb-1">Permitir Fim de Semana?</div>
+                                        <div class="form-check form-switch fs-4 mb-0">
+                                            <input class="form-check-input" type="checkbox" id="formModeloFDS_checkbox" checked onchange="document.getElementById('formModeloFDS').value = this.checked ? 'true' : 'false'">
+                                            <input type="hidden" id="formModeloFDS" value="true">
+                                        </div>
+                                    </div>
+
+                                    <div class="p-3 border rounded bg-white shadow-sm mt-3">
+                                        <div class="fw-bold text-dark mb-2">Observações</div>
+                                        <textarea id="formModeloObs" class="form-control" rows="2" placeholder="Opcional..."></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Direita: Pré-visualização Dummy e Resumo -->
+                    <div class="col-xl-6">
+                        <div class="card border-0 shadow-sm h-100" style="border-radius: 12px; background-color: #f8fafc;">
+                            <div class="card-body p-4 d-flex flex-column">
+                                <h5 class="fw-bold mb-3 d-flex align-items-center justify-content-between text-dark">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <i class="fa-solid fa-eye text-primary"></i> Pré-visualização do Ciclo
+                                    </div>
+                                </h5>
+                                
+                                <div class="alert alert-info border-info bg-white shadow-sm d-flex align-items-center gap-3 py-3 px-4 mb-4" style="border-radius: 10px;">
+                                    <i class="fa-solid fa-circle-info text-primary fs-5"></i>
+                                    <div class="fw-bold text-primary small">Os dias de folga serão definidos na próxima etapa.</div>
+                                </div>
+
+                                <h5 class="fw-bold mb-3 d-flex align-items-center gap-2 text-dark mt-auto">
+                                    <i class="fa-solid fa-list-check text-primary"></i> Resumo do Modelo
+                                </h5>
+                                <div class="bg-white border rounded shadow-sm p-4 d-flex flex-wrap gap-4 align-items-center justify-content-around">
+                                    <div class="text-center">
+                                        <div class="text-muted small fw-bold text-uppercase mb-1">Modelo</div>
+                                        <div class="fw-bold text-dark fs-6" id="resumoStep1Regra">Personalizado</div>
+                                    </div>
+                                    <div class="text-center">
+                                        <div class="text-muted small fw-bold text-uppercase mb-1">Tipo de Escala</div>
+                                        <div class="fw-bold text-dark fs-6" id="resumoStep1Tipo">Fixa</div>
+                                    </div>
+                                    <div class="text-center" id="resumoStep1BoxTrab">
+                                        <div class="text-muted small fw-bold text-uppercase mb-1">Dias Trabalho</div>
+                                        <div class="fw-bold text-success fs-5" id="resumoStep1Trab">5</div>
+                                    </div>
+                                    <div class="text-center" id="resumoStep1BoxFolga">
+                                        <div class="text-muted small fw-bold text-uppercase mb-1">Dias Folga</div>
+                                        <div class="fw-bold text-danger fs-5" id="resumoStep1Folga">2</div>
+                                    </div>
+                                    <div class="text-center" id="resumoStep1BoxCiclo">
+                                        <div class="text-muted small fw-bold text-uppercase mb-1">Dias no Ciclo</div>
+                                        <div class="fw-bold text-primary fs-5" id="resumoStep1Ciclo">28</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 2 CONTAINER -->
+            <div id="step-2-container" class="wizard-step" style="display: none;">
+                <div class="row g-4">
+                    <!-- Esquerda: Informações -->
+                    <div class="col-xl-4">
+                        <div class="card border-0 shadow-sm h-100" style="border-radius: 12px;">
+                            <div class="card-body p-4">
+                                <h5 class="fw-bold mb-4 d-flex align-items-center gap-2 text-dark">
+                                    <i class="fa-solid fa-circle-check text-primary"></i> Como funciona
+                                </h5>
+                                <p class="text-muted small mb-4" id="txtInstrucoesStep2">Clique nos dias para marcá-los como folga fixa.</p>
+
+                                <div class="alert bg-light border shadow-sm mb-4" style="border-radius: 10px;" id="boxRegrasCicloStep2">
+                                    <h6 class="fw-bold text-dark mb-2"><i class="fa-solid fa-circle-info text-primary me-2"></i> Regras do Ciclo</h6>
+                                    <ul class="text-muted small mb-0 ps-3" id="ulRegrasStep2"></ul>
+                                </div>
+
+                                <h6 class="fw-bold mb-3 text-dark">Resumo da Seleção</h6>
+                                <div class="d-flex flex-column gap-3">
+                                    <div class="p-3 border rounded shadow-sm d-flex align-items-center justify-content-between bg-light">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="bg-success text-white rounded d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;"><i class="fa-regular fa-calendar-check"></i></div>
+                                            <div>
+                                                <div class="fw-bold text-dark fs-5" id="selStep2Trab">0</div>
+                                                <div class="small text-muted">Dias de trabalho</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="p-3 border rounded shadow-sm d-flex align-items-center justify-content-between bg-light">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="bg-danger text-white rounded d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;"><i class="fa-regular fa-calendar-xmark"></i></div>
+                                            <div>
+                                                <div class="fw-bold text-dark fs-5" id="selStep2Folga">0</div>
+                                                <div class="small text-muted">Dias de folga</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="p-3 border rounded shadow-sm d-flex align-items-center justify-content-between bg-primary text-white">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="bg-white text-primary rounded d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;"><i class="fa-solid fa-rotate"></i></div>
+                                            <div>
+                                                <div class="fw-bold text-white fs-5" id="selStep2Ciclo">7</div>
+                                                <div class="small" style="color: rgba(255,255,255,0.8);">Total do ciclo</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Direita: Calendário ou Botões -->
+                    <div class="col-xl-8">
+                        <div class="card border-0 shadow-sm h-100" style="border-radius: 12px;">
+                            <div class="card-body p-4 d-flex flex-column">
+                                <div class="d-flex align-items-center justify-content-between mb-4">
+                                    <h5 class="fw-bold mb-0 text-dark">Selecione os dias de folga fixa</h5>
+                                </div>
+
+                                <!-- HEADER DO MÊS ESTÁTICO -->
+                                <div class="d-flex justify-content-center mb-4" id="headerMesStatico">
+                                    <div class="d-inline-flex align-items-center px-4 py-2 bg-light border rounded-pill shadow-sm">
+                                        <i class="fa-regular fa-calendar text-primary me-2"></i>
+                                        <span class="fw-bold text-dark fs-5" id="lblMesAtualStatico">Junho de 2026</span>
+                                    </div>
+                                </div>
+
+                                <!-- MODO SEMANAS (PERSONALIZADO) -->
+                                <div id="builderSemanasContainer" style="display: none;">
+                                    <div class="table-responsive rounded-3 bg-white border shadow-sm">
+                                        <table class="table table-bordered mb-0 text-center align-middle small">
+                                            <thead class="bg-light">
+                                                <tr>
+                                                    <th style="width: 80px; background: #f1f5f9;">Sem.</th>
+                                                    <th>DOM</th><th>SEG</th><th>TER</th><th>QUA</th><th>QUI</th><th>SEX</th><th>SÁB</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="cyclePreviewTbody">
+                                                <!-- JS vai preencher as semanas aqui -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <!-- MODO BOTÕES (FIXA NÃO-PERSONALIZADA) -->
+                                <div id="builderBotoesContainer" style="display: none;">
+                                    <div class="d-flex flex-wrap gap-3 justify-content-center mt-3" id="checkboxesDiasFolga">
+                                        <!-- O JS via preencher com as Divs Clicáveis -->
                                     </div>
                                 </div>
                                 
-                                <div class="col-md-6" id="colTrabalho" style="display: none;">
-                                    <label class="form-label fw-bold small text-muted text-uppercase">Dias de Trabalho *</label>
-                                    <input type="number" id="formModeloTrabalho" class="form-control form-control-lg" value="5" min="1" oninput="updatePreviewCycle()" style="border-radius: 10px;">
-                                </div>
-                                <div class="col-md-6" id="colFolga" style="display: none;">
-                                    <label class="form-label fw-bold small text-muted text-uppercase">Dias de Folga *</label>
-                                    <input type="number" id="formModeloFolga" class="form-control form-control-lg" value="2" min="1" oninput="updatePreviewCycle()" style="border-radius: 10px;">
-                                </div>
-
-                                <div class="col-12">
-                                    <label class="form-label fw-bold small text-muted text-uppercase">Nome do Modelo *</label>
-                                    <input type="text" id="formModeloNome" class="form-control form-control-lg" placeholder="Ex: Jornada 5x2 Administrativa" style="border-radius: 10px;">
-                                </div>
-
-                                <div class="col-md-6" id="colTipoEscala">
-                                    <label class="form-label fw-bold small text-muted text-uppercase">Tipo de Escala *</label>
-                                    <select id="formModeloTipo" class="form-select form-select-lg" onchange="validarTipoEscalaForm()" style="border-radius: 10px;">
-                                        <option value="fixa">Fixa (Dias fixos)</option>
-                                        <option value="rotativa">Rotativa (Alternada)</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6" id="colFimSemana">
-                                    <label class="form-label fw-bold small text-muted text-uppercase">Fins de Semana?</label>
-                                    <select id="formModeloFDS" class="form-select form-select-lg" style="border-radius: 10px;" onchange="updatePreviewCycle()">
-                                        <option value="true">Sim, permitir</option>
-                                        <option value="false">Não, restringir</option>
-                                    </select>
-                                </div>
-
-                                <!-- Seletor de Dias de Folga da Semana (para modelos não-personalizados) -->
-                                <div class="col-12" id="colDiasFolgaSemana">
-                                    <label class="form-label fw-bold small text-muted text-uppercase">Dias de Folga da Semana</label>
-                                    <div class="p-3 rounded-3 border" style="background:#f8fafc;">
-                                        <p class="small text-muted mb-2" style="font-size:0.78rem;">Selecione os dias da semana em que os colaboradores folgarão neste modelo. Isso define o padrão fixo de folgas no calendário.</p>
-                                        <div class="d-flex flex-wrap gap-2" id="checkboxesDiasFolga">
-                                            <label class="d-flex align-items-center gap-1 px-3 py-2 rounded-2 border" style="cursor:pointer; font-size:0.82rem; font-weight:600; user-select:none; transition:all 0.2s;" id="lbl-folga-0">
-                                                <input type="checkbox" name="diaFolgaSemana" value="0" onchange="updatePreviewCycle()" class="form-check-input m-0"> DOM
-                                            </label>
-                                            <label class="d-flex align-items-center gap-1 px-3 py-2 rounded-2 border" style="cursor:pointer; font-size:0.82rem; font-weight:600; user-select:none; transition:all 0.2s;" id="lbl-folga-1">
-                                                <input type="checkbox" name="diaFolgaSemana" value="1" onchange="updatePreviewCycle()" class="form-check-input m-0"> SEG
-                                            </label>
-                                            <label class="d-flex align-items-center gap-1 px-3 py-2 rounded-2 border" style="cursor:pointer; font-size:0.82rem; font-weight:600; user-select:none; transition:all 0.2s;" id="lbl-folga-2">
-                                                <input type="checkbox" name="diaFolgaSemana" value="2" onchange="updatePreviewCycle()" class="form-check-input m-0"> TER
-                                            </label>
-                                            <label class="d-flex align-items-center gap-1 px-3 py-2 rounded-2 border" style="cursor:pointer; font-size:0.82rem; font-weight:600; user-select:none; transition:all 0.2s;" id="lbl-folga-3">
-                                                <input type="checkbox" name="diaFolgaSemana" value="3" onchange="updatePreviewCycle()" class="form-check-input m-0"> QUA
-                                            </label>
-                                            <label class="d-flex align-items-center gap-1 px-3 py-2 rounded-2 border" style="cursor:pointer; font-size:0.82rem; font-weight:600; user-select:none; transition:all 0.2s;" id="lbl-folga-4">
-                                                <input type="checkbox" name="diaFolgaSemana" value="4" onchange="updatePreviewCycle()" class="form-check-input m-0"> QUI
-                                            </label>
-                                            <label class="d-flex align-items-center gap-1 px-3 py-2 rounded-2 border" style="cursor:pointer; font-size:0.82rem; font-weight:600; user-select:none; transition:all 0.2s;" id="lbl-folga-5">
-                                                <input type="checkbox" name="diaFolgaSemana" value="5" onchange="updatePreviewCycle()" class="form-check-input m-0"> SEX
-                                            </label>
-                                            <label class="d-flex align-items-center gap-1 px-3 py-2 rounded-2 border" style="cursor:pointer; font-size:0.82rem; font-weight:600; user-select:none; transition:all 0.2s;" id="lbl-folga-6">
-                                                <input type="checkbox" name="diaFolgaSemana" value="6" onchange="updatePreviewCycle()" class="form-check-input m-0"> SÁB
-                                            </label>
-                                        </div>
-                                        <p class="small text-muted mt-2 mb-0" id="aviso-dias-folga" style="font-size:0.75rem; color:#ef4444 !important; display:none;">
-                                            <i class="fa-solid fa-triangle-exclamation"></i> O número de dias de folga selecionados deve ser igual ao valor do campo "Dias de Folga".
-                                        </p>
+                                <!-- MODO ROTATIVA -->
+                                <div id="builderRotativaContainer" style="display: none;" class="mt-4 text-center">
+                                    <div style="width: 80px; height: 80px; background: #eff6ff; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: #2563eb; font-size: 2rem; margin-bottom: 20px;">
+                                        <i class="fa-solid fa-arrows-spin"></i>
                                     </div>
+                                    <h4 class="fw-bold text-dark mb-3">Escala Rotativa</h4>
+                                    <p class="text-muted mx-auto" style="max-width: 500px;">
+                                        Este modelo é de escala rotativa. Os dias de folga serão alternados automaticamente.
+                                    </p>
                                 </div>
-                            </div>
-
-                            <div class="mb-0">
-                                <label class="form-label fw-bold small text-muted text-uppercase">Observações Internas</label>
-                                <textarea id="formModeloObs" class="form-control" rows="2" placeholder="Opcional..." style="border-radius: 10px; resize: none;"></textarea>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
 
-                        <!-- Lado Direito: Preview -->
-                        <div class="col-xl-7">
-                            <div class="h-100 p-4 rounded-3 border bg-light shadow-sm" style="background-color: #f8fafc !important;">
-                                <div class="d-flex align-items-center justify-content-between mb-3">
-                                    <h6 class="fw-bold mb-0 text-dark"><i class="fa-solid fa-eye me-2 text-primary"></i> Pré-visualização (30 Dias)</h6>
-                                    <div class="d-flex gap-3">
-                                        <div class="d-flex align-items-center gap-1">
-                                            <div style="width: 12px; height: 12px; background: #dcfce7; border: 1px solid #16a34a; border-radius: 3px;"></div>
-                                            <span style="font-size: 0.7rem; font-weight: 700; color: #64748b;">TRABALHO</span>
-                                        </div>
-                                        <div class="d-flex align-items-center gap-1">
-                                            <div style="width: 12px; height: 12px; background: #fee2e2; border: 1px solid #dc2626; border-radius: 3px;"></div>
-                                            <span style="font-size: 0.7rem; font-weight: 700; color: #64748b;">FOLGA</span>
-                                        </div>
+            <!-- STEP 3 CONTAINER -->
+            <div id="step-3-container" class="wizard-step" style="display: none;">
+                <div class="row g-4">
+                    <div class="col-xl-4">
+                        <div class="card border-0 shadow-sm h-100" style="border-radius: 12px;">
+                            <div class="card-body p-4">
+                                <h5 class="fw-bold mb-4 d-flex align-items-center gap-2 text-dark">
+                                    <i class="fa-solid fa-file-contract text-primary"></i> Resumo do Modelo
+                                </h5>
+                                <div class="mb-4">
+                                    <div class="text-muted small text-uppercase fw-bold mb-1">Nome do modelo</div>
+                                    <div class="fw-bold text-dark fs-5" id="resumoFinalNome"></div>
+                                </div>
+                                <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-3">
+                                    <div class="d-flex align-items-center gap-2"><i class="fa-regular fa-calendar text-muted"></i><span class="fw-bold text-dark">Modelo de jornada</span></div>
+                                    <span class="badge bg-primary px-3 py-1 rounded-pill" id="resumoFinalRegra"></span>
+                                </div>
+                                <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-3">
+                                    <div class="d-flex align-items-center gap-2"><i class="fa-regular fa-clock text-muted"></i><span class="fw-bold text-dark">Tipo de escala</span></div>
+                                    <span class="fw-bold text-dark" id="resumoFinalTipo"></span>
+                                </div>
+                                
+                                <h6 class="fw-bold mb-3 text-dark mt-4">Regras do Ciclo</h6>
+                                <ul class="text-muted small ps-3" id="ulRegrasStep3"></ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-xl-8">
+                        <div class="card border-0 shadow-sm h-100" style="border-radius: 12px;">
+                            <div class="card-body p-4 d-flex flex-column">
+                                <h5 class="fw-bold mb-4 text-dark"><i class="fa-solid fa-eye text-primary me-2"></i> Visualização Final</h5>
+                                <div class="table-responsive rounded-3 bg-white border shadow-sm mb-4" id="finalPreviewTableContainer">
+                                </div>
+                                <div class="p-4 border rounded shadow-sm bg-light mt-auto d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <h5 class="fw-bold text-dark mb-1"><i class="fa-solid fa-shield-check text-success me-2"></i> Tudo certo para salvar!</h5>
                                     </div>
+                                    <button class="btn btn-success px-4 py-2 shadow fw-bold fs-5" onclick="salvarModeloEscala()" style="border-radius: 8px;">
+                                        <i class="fa-solid fa-check me-2"></i> Salvar Modelo
+                                    </button>
                                 </div>
-
-                                <div class="table-responsive rounded-3 bg-white border">
-                                    <table class="table table-bordered mb-0 text-center align-middle small">
-                                        <thead class="bg-light">
-                                            <tr>
-                                                <th style="width: 80px; background: #f1f5f9;">Sem.</th>
-                                                <th>DOM</th><th>SEG</th><th>TER</th><th>QUA</th><th>QUI</th><th>SEX</th><th>SÁB</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="cyclePreviewTbody">
-                                            <!-- Gerado via JS -->
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <p class="small text-muted mt-3 mb-0" style="font-style: italic;" id="previewCycleNote">
-                                    * Esta prévia utiliza o primeiro dia do ciclo como âncora para demonstrar o comportamento sequencial.
-                                </p>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
+
 
     {% elif is_planejamento_mode %}
     <!-- CABEÇALHO MODO SIMULAÇÃO (LABORATÓRIO) -->
@@ -5158,9 +5361,7 @@
         const regra = document.getElementById('formModeloRegra').value;
 
         // Coletar dias da semana selecionados como folga
-        const diasFolgaSemana = Array.from(
-            document.querySelectorAll('input[name="diaFolgaSemana"]:checked')
-        ).map(cb => parseInt(cb.value));
+        const diasFolgaSemana = window.tempDiasSemanaFolga || [];
 
         if (!nome) {
             showToast('O nome do modelo é obrigatório.', 'error');
@@ -8976,5 +9177,386 @@
         });
     })();
 
+
+// WIZARD LOGIC
+let currentWizardStep = 1;
+
+function hideModeloForm() {
+    document.getElementById('modeloFormState').style.display = 'none';
+    document.getElementById('modelosListState').style.display = 'block';
+}
+
+function showModeloForm(modelo = null) {
+    document.getElementById('modelosListState').style.display = 'none';
+    document.getElementById('modeloFormState').style.display = 'block';
+    
+    currentWizardStep = 1;
+    updateWizardUI();
+    
+    if (modelo) {
+        document.getElementById('formModeloTitle').innerText = 'Editar Modelo de Escala';
+        document.getElementById('modeloId').value = modelo.id;
+        document.getElementById('formModeloNome').value = modelo.nome;
+        document.getElementById('formModeloRegra').value = modelo.regra;
+        document.getElementById('formModeloTipo').value = modelo.tipo;
+        document.getElementById('formModeloPermitirAlt').value = modelo.permitir_alteracoes ? 'true' : 'false';
+        document.getElementById('formModeloFDS_checkbox').checked = modelo.permite_fds;
+        document.getElementById('formModeloFDS').value = modelo.permite_fds ? 'true' : 'false';
+        document.getElementById('formModeloObs').value = modelo.observacoes || '';
+        
+        if (modelo.regra === 'custom' && modelo.ciclo_personalizado) {
+            document.getElementById('formModeloCicloSemanas').value = (modelo.ciclo_personalizado.ciclo_dias || 28) / 7;
+            window.customCycleDays = modelo.ciclo_personalizado.dias_folga || [];
+        } else {
+            window.customCycleDays = [];
+            document.getElementById('formModeloCicloSemanas').value = '4';
+        }
+        
+        const diasSemanaFolga = (modelo && modelo.ciclo_personalizado && modelo.ciclo_personalizado.dias_semana_folga) ? modelo.ciclo_personalizado.dias_semana_folga : [];
+        window.tempDiasSemanaFolga = diasSemanaFolga;
+        
+    } else {
+        document.getElementById('formModeloTitle').innerText = 'Novo Modelo de Escala';
+        document.getElementById('modeloId').value = '';
+        document.getElementById('formModeloNome').value = '';
+        document.getElementById('formModeloRegra').value = '5x2';
+        document.getElementById('formModeloTipo').value = 'fixa';
+        document.getElementById('formModeloPermitirAlt').value = 'true';
+        document.getElementById('formModeloFDS_checkbox').checked = true;
+        document.getElementById('formModeloFDS').value = 'true';
+        document.getElementById('formModeloObs').value = '';
+        document.getElementById('formModeloCicloSemanas').value = '4';
+        window.customCycleDays = [];
+        window.tempDiasSemanaFolga = [];
+    }
+    
+    updateStep1Visuals();
+}
+
+function nextStep() {
+    if (currentWizardStep === 1) {
+        const nome = document.getElementById('formModeloNome').value.trim();
+        if (!nome) {
+            Swal.fire('Atenção', 'Preencha o nome do modelo.', 'warning');
+            return;
+        }
+    }
+    if (currentWizardStep < 3) {
+        currentWizardStep++;
+        updateWizardUI();
+    }
+}
+
+function prevStep() {
+    if (currentWizardStep > 1) {
+        currentWizardStep--;
+        updateWizardUI();
+    }
+}
+
+function updateWizardUI() {
+    document.getElementById('step-1-container').style.display = 'none';
+    document.getElementById('step-2-container').style.display = 'none';
+    document.getElementById('step-3-container').style.display = 'none';
+    document.getElementById(`step-${currentWizardStep}-container`).style.display = 'block';
+    
+    const progress = ((currentWizardStep - 1) / 2) * 100;
+    document.getElementById('stepperProgress').style.width = `${progress}%`;
+    
+    for (let i = 1; i <= 3; i++) {
+        const ind = document.getElementById(`indicator-step-${i}`);
+        const title = document.getElementById(`label-step-${i}-title`);
+        
+        if (i < currentWizardStep) {
+            ind.style.background = '#2563eb';
+            ind.style.color = 'white';
+            ind.style.borderColor = '#2563eb';
+            ind.innerHTML = '<i class="fa-solid fa-check"></i>';
+            title.className = 'fw-bold text-dark';
+        } else if (i === currentWizardStep) {
+            ind.style.background = '#2563eb';
+            ind.style.color = 'white';
+            ind.style.borderColor = '#2563eb';
+            ind.innerHTML = i;
+            title.className = 'fw-bold text-primary';
+        } else {
+            ind.style.background = '#f1f5f9';
+            ind.style.color = '#64748b';
+            ind.style.borderColor = '#cbd5e1';
+            ind.innerHTML = i;
+            title.className = 'fw-bold text-muted';
+        }
+    }
+    
+    document.getElementById('btnPrevStep').style.display = currentWizardStep > 1 ? 'block' : 'none';
+    document.getElementById('btnNextStep').style.display = currentWizardStep < 3 ? 'block' : 'none';
+    document.getElementById('btnSaveStep').style.display = currentWizardStep === 3 ? 'block' : 'none';
+    
+    if (currentWizardStep === 2) buildStep2();
+    if (currentWizardStep === 3) buildStep3();
+}
+
+function updateStep1Visuals() {
+    const regra = document.getElementById('formModeloRegra').value;
+    const tipo = document.getElementById('formModeloTipo').value;
+    
+    const cardsNormais = document.getElementById('cardsRegrasNormais');
+    const cardsCustom = document.getElementById('cardsRegrasCustom');
+    const colTipo = document.getElementById('colTipoEscala');
+    
+    let trab = 0; let folga = 0; let ciclo = 0;
+    
+    if (regra === 'custom') {
+        cardsNormais.style.display = 'none';
+        cardsCustom.style.display = 'block';
+        colTipo.style.display = 'none';
+        
+        document.getElementById('formModeloTipo').value = 'fixa';
+        ciclo = (parseInt(document.getElementById('formModeloCicloSemanas').value) || 4) * 7;
+        
+        document.getElementById('resumoStep1BoxTrab').style.display = 'none';
+        document.getElementById('resumoStep1BoxFolga').style.display = 'none';
+    } else {
+        cardsNormais.style.display = 'flex';
+        cardsCustom.style.display = 'none';
+        colTipo.style.display = 'block';
+        
+        document.getElementById('resumoStep1BoxTrab').style.display = 'block';
+        document.getElementById('resumoStep1BoxFolga').style.display = 'block';
+        
+        if (regra === '12x36') { trab = 1; folga = 1; }
+        else if (regra === '24x72') { trab = 1; folga = 3; }
+        else {
+            const parts = regra.split('x');
+            trab = parseInt(parts[0]);
+            folga = parseInt(parts[1]);
+        }
+        ciclo = trab + folga;
+        
+        document.getElementById('lblCardTrab').innerText = trab;
+        document.getElementById('lblCardFolga').innerText = folga;
+        document.getElementById('lblCardCiclo').innerText = ciclo;
+        document.getElementById('formModeloTrabalho').value = trab;
+        document.getElementById('formModeloFolga').value = folga;
+        
+        document.getElementById('resumoStep1Trab').innerText = trab;
+        document.getElementById('resumoStep1Folga').innerText = folga;
+    }
+    
+    document.getElementById('resumoStep1Regra').innerText = document.getElementById('formModeloRegra').options[document.getElementById('formModeloRegra').selectedIndex].text;
+    document.getElementById('resumoStep1Tipo').innerText = document.getElementById('formModeloTipo').options[document.getElementById('formModeloTipo').selectedIndex].text;
+    document.getElementById('resumoStep1Ciclo').innerText = ciclo;
+}
+
+function buildStep2() {
+    const regra = document.getElementById('formModeloRegra').value;
+    const tipo = document.getElementById('formModeloTipo').value;
+    
+    const hoje = new Date();
+    const nomeMes = hoje.toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
+    document.getElementById('lblMesAtualStatico').innerText = nomeMes.charAt(0).toUpperCase() + nomeMes.slice(1);
+    
+    document.getElementById('builderSemanasContainer').style.display = 'none';
+    document.getElementById('builderBotoesContainer').style.display = 'none';
+    document.getElementById('builderRotativaContainer').style.display = 'none';
+    
+    if (regra === 'custom') {
+        document.getElementById('builderSemanasContainer').style.display = 'block';
+        buildSemanasGrid();
+        document.getElementById('ulRegrasStep2').innerHTML = `<li>Este modelo possui um ciclo de <strong class="text-dark">${(parseInt(document.getElementById('formModeloCicloSemanas').value)||4)*7} dias</strong>.</li>`;
+    } else if (tipo === 'rotativa') {
+        document.getElementById('builderRotativaContainer').style.display = 'block';
+        document.getElementById('ulRegrasStep2').innerHTML = `<li><strong class="text-success">${document.getElementById('formModeloTrabalho').value} dias</strong> de trabalho.</li><li><strong class="text-danger">${document.getElementById('formModeloFolga').value} dias</strong> de folga.</li>`;
+    } else {
+        document.getElementById('builderBotoesContainer').style.display = 'block';
+        buildDiasSemanaButtons();
+        document.getElementById('ulRegrasStep2').innerHTML = `<li>Ciclo base semanal. Escolha os dias fixos.</li>`;
+    }
+    updateSelecaoStep2();
+}
+
+function buildSemanasGrid() {
+    const tbody = document.getElementById('cyclePreviewTbody');
+    tbody.innerHTML = '';
+    const numSemanas = parseInt(document.getElementById('formModeloCicloSemanas').value) || 4;
+    
+    let currentDay = 1;
+    for (let w = 0; w < numSemanas; w++) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td class="bg-light fw-bold text-muted small align-middle">S. ${w + 1}</td>`;
+        
+        for (let d = 0; d < 7; d++) {
+            const td = document.createElement('td');
+            td.className = 'p-0 position-relative cursor-pointer select-none';
+            td.style.cursor = 'pointer';
+            td.dataset.day = currentDay;
+            
+            const isFolga = window.customCycleDays && window.customCycleDays.includes(currentDay);
+            
+            if (isFolga) {
+                td.style.background = '#fee2e2';
+                td.style.border = '1px solid #fca5a5';
+                td.innerHTML = `
+                    <div class="d-flex flex-column align-items-center justify-content-center py-2" style="height: 60px; transition: all 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">
+                        <span class="fw-bold fs-6 text-danger mb-1">${currentDay}</span>
+                        <span style="font-size: 0.6rem; font-weight: 700; color: #dc2626; letter-spacing: 0.5px;">FOLGA</span>
+                    </div>
+                `;
+                td.dataset.state = 'folga';
+            } else {
+                td.style.background = '#dcfce7';
+                td.style.border = '1px solid #86efac';
+                td.innerHTML = `
+                    <div class="d-flex flex-column align-items-center justify-content-center py-2" style="height: 60px; transition: all 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">
+                        <span class="fw-bold fs-6 text-success mb-1">${currentDay}</span>
+                        <span style="font-size: 0.6rem; font-weight: 700; color: #16a34a; letter-spacing: 0.5px;">TRABALHO</span>
+                    </div>
+                `;
+                td.dataset.state = 'trabalho';
+            }
+            
+            td.onclick = function() {
+                if (this.dataset.state === 'trabalho') {
+                    this.dataset.state = 'folga';
+                    this.style.background = '#fee2e2';
+                    this.style.border = '1px solid #fca5a5';
+                    this.querySelector('.text-success').className = 'fw-bold fs-6 text-danger mb-1';
+                    this.querySelectorAll('span')[1].style.color = '#dc2626';
+                    this.querySelectorAll('span')[1].innerText = 'FOLGA';
+                } else {
+                    this.dataset.state = 'trabalho';
+                    this.style.background = '#dcfce7';
+                    this.style.border = '1px solid #86efac';
+                    this.querySelector('.text-danger').className = 'fw-bold fs-6 text-success mb-1';
+                    this.querySelectorAll('span')[1].style.color = '#16a34a';
+                    this.querySelectorAll('span')[1].innerText = 'TRABALHO';
+                }
+                
+                window.customCycleDays = [];
+                const tds = tbody.querySelectorAll('td[data-day]');
+                tds.forEach(cell => {
+                    if (cell.dataset.state === 'folga') {
+                        window.customCycleDays.push(parseInt(cell.dataset.day));
+                    }
+                });
+                updateSelecaoStep2();
+            };
+            
+            tr.appendChild(td);
+            currentDay++;
+        }
+        tbody.appendChild(tr);
+    }
+}
+
+const NOME_DIAS = ['DOMINGO', 'SEGUNDA', 'TERÇA', 'QUARTA', 'QUINTA', 'SEXTA', 'SÁBADO'];
+function buildDiasSemanaButtons() {
+    const container = document.getElementById('checkboxesDiasFolga');
+    container.innerHTML = '';
+    
+    if (!window.tempDiasSemanaFolga) window.tempDiasSemanaFolga = [];
+    
+    for (let i = 0; i < 7; i++) {
+        const isFolga = window.tempDiasSemanaFolga.includes(i);
+        const div = document.createElement('div');
+        div.className = 'p-3 rounded-3 border shadow-sm text-center cursor-pointer select-none transition-all';
+        div.style.width = '120px';
+        div.style.cursor = 'pointer';
+        
+        if (isFolga) {
+            div.style.background = '#fee2e2';
+            div.style.borderColor = '#fca5a5 !important';
+            div.innerHTML = `<div class="fw-bold fs-5 text-danger mb-1">${NOME_DIAS[i].substring(0,3)}</div><div class="small fw-bold text-danger">FOLGA</div>`;
+            div.dataset.state = 'folga';
+        } else {
+            div.style.background = '#dcfce7';
+            div.style.borderColor = '#86efac !important';
+            div.innerHTML = `<div class="fw-bold fs-5 text-success mb-1">${NOME_DIAS[i].substring(0,3)}</div><div class="small fw-bold text-success">TRABALHO</div>`;
+            div.dataset.state = 'trabalho';
+        }
+        div.dataset.day = i;
+        
+        div.onclick = function() {
+            if (this.dataset.state === 'trabalho') {
+                this.dataset.state = 'folga';
+                this.style.background = '#fee2e2';
+                this.style.borderColor = '#fca5a5 !important';
+                this.innerHTML = `<div class="fw-bold fs-5 text-danger mb-1">${NOME_DIAS[i].substring(0,3)}</div><div class="small fw-bold text-danger">FOLGA</div>`;
+            } else {
+                this.dataset.state = 'trabalho';
+                this.style.background = '#dcfce7';
+                this.style.borderColor = '#86efac !important';
+                this.innerHTML = `<div class="fw-bold fs-5 text-success mb-1">${NOME_DIAS[i].substring(0,3)}</div><div class="small fw-bold text-success">TRABALHO</div>`;
+            }
+            
+            window.tempDiasSemanaFolga = [];
+            const buttons = container.querySelectorAll('div[data-day]');
+            buttons.forEach(btn => {
+                if (btn.dataset.state === 'folga') {
+                    window.tempDiasSemanaFolga.push(parseInt(btn.dataset.day));
+                }
+            });
+            updateSelecaoStep2();
+        };
+        
+        container.appendChild(div);
+    }
+}
+
+function updateSelecaoStep2() {
+    const regra = document.getElementById('formModeloRegra').value;
+    const tipo = document.getElementById('formModeloTipo').value;
+    
+    let folgas = 0;
+    let ciclo = 0;
+    
+    if (regra === 'custom') {
+        folgas = (window.customCycleDays || []).length;
+        ciclo = (parseInt(document.getElementById('formModeloCicloSemanas').value) || 4) * 7;
+    } else if (tipo === 'rotativa') {
+        folgas = parseInt(document.getElementById('formModeloFolga').value) || 0;
+        ciclo = (parseInt(document.getElementById('formModeloTrabalho').value) || 0) + folgas;
+    } else {
+        folgas = (window.tempDiasSemanaFolga || []).length;
+        ciclo = 7;
+    }
+    
+    const trab = ciclo - folgas;
+    
+    document.getElementById('selStep2Trab').innerText = trab;
+    document.getElementById('selStep2Folga').innerText = folgas;
+    document.getElementById('selStep2Ciclo').innerText = ciclo;
+}
+
+function buildStep3() {
+    document.getElementById('resumoFinalNome').innerText = document.getElementById('formModeloNome').value || '-';
+    document.getElementById('resumoFinalRegra').innerText = document.getElementById('formModeloRegra').options[document.getElementById('formModeloRegra').selectedIndex].text;
+    document.getElementById('resumoFinalTipo').innerText = document.getElementById('formModeloTipo').options[document.getElementById('formModeloTipo').selectedIndex].text;
+    
+    document.getElementById('ulRegrasStep3').innerHTML = document.getElementById('ulRegrasStep2').innerHTML;
+    
+    const finalContainer = document.getElementById('finalPreviewTableContainer');
+    finalContainer.innerHTML = '';
+    
+    const regra = document.getElementById('formModeloRegra').value;
+    const tipo = document.getElementById('formModeloTipo').value;
+    
+    if (regra === 'custom') {
+        const clone = document.getElementById('builderSemanasContainer').cloneNode(true);
+        clone.style.display = 'block';
+        clone.querySelectorAll('td').forEach(td => { td.style.pointerEvents = 'none'; });
+        finalContainer.appendChild(clone);
+    } else if (tipo === 'rotativa') {
+        const clone = document.getElementById('builderRotativaContainer').cloneNode(true);
+        clone.style.display = 'block';
+        finalContainer.appendChild(clone);
+    } else {
+        const clone = document.getElementById('builderBotoesContainer').cloneNode(true);
+        clone.style.display = 'block';
+        clone.querySelectorAll('div[data-day]').forEach(btn => { btn.style.pointerEvents = 'none'; });
+        finalContainer.appendChild(clone);
+    }
+}
+</script>
 </script>
 {% endblock %}
