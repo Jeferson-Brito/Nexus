@@ -1831,19 +1831,18 @@
                                         <div class="d-flex align-items-start gap-2">
                                             <i class="fa-solid fa-rotate text-primary mt-1" style="font-size: 1.1rem;"></i>
                                             <div class="small" style="color: #1e40af;">
-                                                <strong>Ciclo Personalizado (N dias):</strong> Defina o tamanho do ciclo e clique nos dias da grade para marcar as folgas.
+                                                <strong>Ciclo Personalizado (Em Semanas):</strong> Escolha de quantas semanas é o seu ciclo. Defina as folgas clicando diretamente na tabela de Pré-visualização ao lado!
                                             </div>
                                         </div>
                                         <div>
-                                            <label class="form-label fw-bold small text-primary text-uppercase mb-1">Tamanho do Ciclo (Dias)</label>
-                                            <input type="number" id="formModeloCicloDias" class="form-control" value="28" min="2" max="365" oninput="renderCycleGrid()" style="border-radius: 8px; width: 120px; border-color: #93c5fd;">
-                                        </div>
-                                        <div>
-                                            <label class="form-label fw-bold small text-primary text-uppercase mb-1">Grade do Ciclo</label>
-                                            <div id="cycleGridContainer" class="d-flex flex-wrap gap-2 p-3 bg-white border rounded" style="border-color: #93c5fd !important;">
-                                                <!-- Grid renderizado via JS -->
-                                            </div>
-                                            <div class="small text-muted mt-2">Clique em um dia para alternar entre <span class="badge bg-success">Trabalho</span> e <span class="badge bg-danger">Folga</span>.</div>
+                                            <label class="form-label fw-bold small text-primary text-uppercase mb-1">Tamanho do Ciclo</label>
+                                            <select id="formModeloCicloSemanas" class="form-select" onchange="updatePreviewCycle()" style="border-radius: 8px; border-color: #93c5fd;">
+                                                <option value="2">2 Semanas (14 dias)</option>
+                                                <option value="3">3 Semanas (21 dias)</option>
+                                                <option value="4" selected>4 Semanas (28 dias)</option>
+                                                <option value="5">5 Semanas (35 dias)</option>
+                                                <option value="6">6 Semanas (42 dias)</option>
+                                            </select>
                                         </div>
                                     </div>
                                 </div>
@@ -4819,9 +4818,9 @@
         setDiasFolgaSemana(diasSemanaFolga);
         
         if (modelo && modelo.tipo === 'personalizado' && modelo.ciclo_personalizado) {
-            document.getElementById('formModeloCicloDias').value = modelo.ciclo_personalizado.ciclo_dias || 28;
+            document.getElementById('formModeloCicloSemanas').value = (modelo.ciclo_personalizado.ciclo_dias || 28) / 7;
         } else {
-            document.getElementById('formModeloCicloDias').value = 28;
+            document.getElementById('formModeloCicloSemanas').value = "4";
         }
 
         document.getElementById('formModeloTitle').innerText = modelo ? 'Editar Modelo de Escala' : 'Novo Modelo de Escala';
@@ -4857,7 +4856,7 @@
             inputTrab.value = 0;
             inputFolga.value = 0;
             selectTipo.value = 'fixa';
-            renderCycleGrid();
+            updatePreviewCycle();
         } else {
             colTrab.style.display = 'block';
             colFolga.style.display = 'block';
@@ -4903,68 +4902,6 @@
             cb.checked = dias.includes(parseInt(cb.value));
             atualizarEstiloCheckboxDia(cb);
         });
-    }
-
-    function renderCycleGrid() {
-        const input = document.getElementById('formModeloCicloDias');
-        if (!input) return;
-        let dias = parseInt(input.value) || 28;
-        if (dias < 2) dias = 2;
-        if (dias > 365) dias = 365;
-        
-        const container = document.getElementById('cycleGridContainer');
-        if (!container) return;
-        
-        container.innerHTML = '';
-        for (let i = 1; i <= dias; i++) {
-            const isFolga = window.customCycleDays && window.customCycleDays.includes(i);
-            const btn = document.createElement('div');
-            btn.className = `p-2 text-center rounded border cursor-pointer select-none transition-colors`;
-            btn.style.width = '45px';
-            btn.style.height = '45px';
-            btn.style.cursor = 'pointer';
-            btn.style.fontWeight = 'bold';
-            btn.style.display = 'flex';
-            btn.style.alignItems = 'center';
-            btn.style.justifyContent = 'center';
-            
-            if (isFolga) {
-                btn.classList.add('bg-danger', 'text-white', 'border-danger');
-                btn.dataset.state = 'folga';
-            } else {
-                btn.classList.add('bg-success', 'text-white', 'border-success');
-                btn.dataset.state = 'trabalho';
-            }
-            
-            btn.innerText = i;
-            
-            btn.onclick = function() {
-                if (btn.dataset.state === 'trabalho') {
-                    btn.dataset.state = 'folga';
-                    btn.classList.remove('bg-success', 'border-success');
-                    btn.classList.add('bg-danger', 'border-danger');
-                } else {
-                    btn.dataset.state = 'trabalho';
-                    btn.classList.remove('bg-danger', 'border-danger');
-                    btn.classList.add('bg-success', 'border-success');
-                }
-                updateCustomCycleDaysArray();
-            };
-            
-            container.appendChild(btn);
-        }
-    }
-
-    function updateCustomCycleDaysArray() {
-        window.customCycleDays = [];
-        const container = document.getElementById('cycleGridContainer');
-        if (!container) return;
-        const btns = container.children;
-        for (let i = 0; i < btns.length; i++) {
-            if (btns[i].dataset.state === 'folga') {
-                window.customCycleDays.push(parseInt(btns[i].innerText));
-            }
-        }
     }
 
     function atualizarEstiloCheckboxDia(cb) {
@@ -5033,6 +4970,79 @@
         const tbody = document.getElementById('cyclePreviewTbody');
         const noteEl = document.getElementById('previewCycleNote');
         tbody.innerHTML = '';
+
+        if (rule === 'custom') {
+            const numSemanas = parseInt(document.getElementById('formModeloCicloSemanas').value) || 4;
+            if (noteEl) noteEl.textContent = `* Clique nas células para definir as folgas no seu ciclo de ${numSemanas} semanas.`;
+            
+            let currentDay = 1;
+            for (let w = 0; w < numSemanas; w++) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td class="bg-light fw-bold text-muted small align-middle">S. ${w + 1}</td>`;
+                
+                for (let d = 0; d < 7; d++) {
+                    const td = document.createElement('td');
+                    td.className = 'p-0 position-relative cursor-pointer select-none';
+                    td.style.cursor = 'pointer';
+                    td.dataset.day = currentDay;
+                    
+                    const isFolga = window.customCycleDays && window.customCycleDays.includes(currentDay);
+                    
+                    if (isFolga) {
+                        td.style.background = '#fee2e2';
+                        td.style.border = '1px solid #fca5a5';
+                        td.innerHTML = `
+                            <div class="d-flex flex-column align-items-center justify-content-center py-2" style="height: 60px; transition: all 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">
+                                <span class="fw-bold fs-6 text-danger mb-1">${currentDay}</span>
+                                <span style="font-size: 0.6rem; font-weight: 700; color: #dc2626; letter-spacing: 0.5px;">FOLGA</span>
+                            </div>
+                        `;
+                        td.dataset.state = 'folga';
+                    } else {
+                        td.style.background = '#dcfce7';
+                        td.style.border = '1px solid #86efac';
+                        td.innerHTML = `
+                            <div class="d-flex flex-column align-items-center justify-content-center py-2" style="height: 60px; transition: all 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">
+                                <span class="fw-bold fs-6 text-success mb-1">${currentDay}</span>
+                                <span style="font-size: 0.6rem; font-weight: 700; color: #16a34a; letter-spacing: 0.5px;">TRABALHO</span>
+                            </div>
+                        `;
+                        td.dataset.state = 'trabalho';
+                    }
+                    
+                    td.onclick = function() {
+                        if (this.dataset.state === 'trabalho') {
+                            this.dataset.state = 'folga';
+                            this.style.background = '#fee2e2';
+                            this.style.border = '1px solid #fca5a5';
+                            this.querySelector('.text-success').className = 'fw-bold fs-6 text-danger mb-1';
+                            this.querySelectorAll('span')[1].style.color = '#dc2626';
+                            this.querySelectorAll('span')[1].innerText = 'FOLGA';
+                        } else {
+                            this.dataset.state = 'trabalho';
+                            this.style.background = '#dcfce7';
+                            this.style.border = '1px solid #86efac';
+                            this.querySelector('.text-danger').className = 'fw-bold fs-6 text-success mb-1';
+                            this.querySelectorAll('span')[1].style.color = '#16a34a';
+                            this.querySelectorAll('span')[1].innerText = 'TRABALHO';
+                        }
+                        
+                        window.customCycleDays = [];
+                        const tds = tbody.querySelectorAll('td[data-day]');
+                        tds.forEach(cell => {
+                            if (cell.dataset.state === 'folga') {
+                                window.customCycleDays.push(parseInt(cell.dataset.day));
+                            }
+                        });
+                    };
+                    
+                    tr.appendChild(td);
+                    currentDay++;
+                }
+                tbody.appendChild(tr);
+            }
+            return;
+        }
 
         const hoje = new Date();
         const anoAtual = hoje.getFullYear();
@@ -5165,7 +5175,8 @@
         // Montar ciclo_personalizado conforme modo
         let cicloPersonalizado = null;
         if (regra === 'custom') {
-            const cicloDias = parseInt(document.getElementById('formModeloCicloDias').value) || 28;
+            const cicloSemanas = parseInt(document.getElementById('formModeloCicloSemanas').value) || 4;
+            const cicloDias = cicloSemanas * 7;
             cicloPersonalizado = {
                 tipo: 'ciclo',
                 ciclo_dias: cicloDias,
