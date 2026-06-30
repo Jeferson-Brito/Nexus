@@ -1830,7 +1830,7 @@
                                     <div class="alert alert-primary border shadow-sm mb-0 d-flex align-items-start gap-2" style="border-radius: 10px; background-color: #eff6ff; border-color: #bfdbfe !important;">
                                         <i class="fa-solid fa-hand-pointer text-primary mt-1" style="font-size: 1.1rem;"></i>
                                         <div class="small" style="color: #1e40af;">
-                                            <strong>Montagem Livre:</strong> Clique diretamente nos dias do calendário de pré-visualização ao lado para marcar as <strong>Folgas</strong> (em vermelho) e <strong>Trabalho</strong> (em verde).
+                                            <strong>Escala Semanal:</strong> Selecione os dias da semana que serão folga fixa para este modelo personalizado.
                                         </div>
                                     </div>
                                 </div>
@@ -1868,7 +1868,7 @@
                                 <div class="col-12" id="colDiasFolgaSemana">
                                     <label class="form-label fw-bold small text-muted text-uppercase">Dias de Folga da Semana</label>
                                     <div class="p-3 rounded-3 border" style="background:#f8fafc;">
-                                        <p class="small text-muted mb-2" style="font-size:0.78rem;">Selecione os dias da semana em que os colaboradores folgarão neste modelo. Isso define o padrão de folgas no calendário.</p>
+                                        <p class="small text-muted mb-2" style="font-size:0.78rem;">Selecione os dias da semana em que os colaboradores folgarão neste modelo. Isso define o padrão fixo de folgas no calendário.</p>
                                         <div class="d-flex flex-wrap gap-2" id="checkboxesDiasFolga">
                                             <label class="d-flex align-items-center gap-1 px-3 py-2 rounded-2 border" style="cursor:pointer; font-size:0.82rem; font-weight:600; user-select:none; transition:all 0.2s;" id="lbl-folga-0">
                                                 <input type="checkbox" name="diaFolgaSemana" value="0" onchange="updatePreviewCycle()" class="form-check-input m-0"> DOM
@@ -4835,8 +4835,8 @@
             colTrab.style.display = 'none';
             colFolga.style.display = 'none';
             if (infoCustom) infoCustom.style.display = 'block';
-            if (colDiasFolga) colDiasFolga.style.display = 'none';
-            inputTrab.value = 1;
+            if (colDiasFolga) colDiasFolga.style.display = 'block';
+            inputTrab.value = 0;
             inputFolga.value = 0;
             selectTipo.value = 'fixa';
         } else {
@@ -4899,17 +4899,7 @@
     }
 
     window.togglePreviewDay = function(dayNum) {
-        const rule = document.getElementById('formModeloRegra').value;
-        if (rule !== 'custom') return;
-        // Bug 1 fix: armazena o número do dia do mês diretamente (não posição de ciclo)
-        if (!window.customCycleDays) window.customCycleDays = [];
-        const idx = window.customCycleDays.indexOf(dayNum);
-        if (idx > -1) {
-            window.customCycleDays.splice(idx, 1);
-        } else {
-            window.customCycleDays.push(dayNum);
-        }
-        updatePreviewCycle();
+        return;
     }
 
     function hideModeloForm() {
@@ -4963,21 +4953,14 @@
 
         const hoje = new Date();
         const anoAtual = hoje.getFullYear();
-        const mesAtual = hoje.getMonth(); // 0-indexed
+        const mesAtual = hoje.getMonth();
         const totalDias = new Date(anoAtual, mesAtual + 1, 0).getDate();
-        const primeiroDow = new Date(anoAtual, mesAtual, 1).getDay(); // 0=DOM...6=SAB
-        // Bug 2 fix: garantir semanas suficientes para todos os dias do mês
+        const primeiroDow = new Date(anoAtual, mesAtual, 1).getDay();
         const semanas = Math.ceil((primeiroDow + totalDias) / 7);
-
-        if (!window.customCycleDays) window.customCycleDays = [];
 
         const nomeMes = hoje.toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
         if (noteEl) {
-            if (rule === 'custom') {
-                noteEl.textContent = `* Pré-visualização de ${nomeMes.charAt(0).toUpperCase() + nomeMes.slice(1)}. Clique nos dias para marcar como FOLGA ou TRABALHO.`;
-            } else {
-                noteEl.textContent = `* Pré-visualização de ${nomeMes.charAt(0).toUpperCase() + nomeMes.slice(1)}. Os dias marcados em vermelho seguem a configuração de folgas da semana.`;
-            }
+            noteEl.textContent = `* Pré-visualização de ${nomeMes.charAt(0).toUpperCase() + nomeMes.slice(1)}.`;
         }
 
         let cycleCounter = 0;
@@ -4988,6 +4971,7 @@
 
             for (let d = 0; d < 7; d++) {
                 const dayNum = w * 7 + d - primeiroDow + 1;
+                const dow = d;
 
                 if (dayNum < 1 || dayNum > totalDias) {
                     tr.innerHTML += `<td class="bg-light" style="opacity:0.3;"></td>`;
@@ -4996,15 +4980,12 @@
 
                 let isWork = true;
 
-                if (rule === 'custom') {
-                    // Bug 1 fix: comparar com dayNum diretamente (não cicloPos)
-                    isWork = !window.customCycleDays.includes(dayNum);
+                if (diasFolgaSemana.length > 0) {
+                    isWork = !diasFolgaSemana.includes(dow);
                 } else {
-                    // Modo normal: usar dias da semana configurados nos checkboxes
-                    if (diasFolgaSemana.length > 0) {
-                        isWork = !diasFolgaSemana.includes(d);
+                    if (rule === 'custom') {
+                        isWork = true; 
                     } else {
-                        // Fallback: lógica antiga (fins de semana / ciclo)
                         if (!permiteFDS && (d === 0 || d === 6)) {
                             isWork = false;
                         } else {
@@ -5100,12 +5081,7 @@
 
         // Montar ciclo_personalizado conforme modo
         let cicloPersonalizado = null;
-        if (regra === 'custom') {
-            cicloPersonalizado = {
-                dias_folga: window.customCycleDays || [],
-                tipo: 'dias_mes'  // Bug 1/3 fix: dias do mês direto (1-31)
-            };
-        } else if (diasFolgaSemana.length > 0) {
+        if (diasFolgaSemana.length > 0) {
             cicloPersonalizado = {
                 dias_semana_folga: diasFolgaSemana  // Dias da semana configuráveis
             };
