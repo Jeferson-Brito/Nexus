@@ -364,12 +364,17 @@
             </td>
             <td>
               <div class="ah-user-cell">
-                {% if log.usuario.profile_photo %}
-                  <img src="{{ log.usuario.profile_photo.url }}" alt="{{ log.usuario.get_full_name|default:log.usuario.username }}" class="user-photo" style="width:32px;height:32px;">
+                {% if log.usuario %}
+                  {% if log.usuario.profile_photo %}
+                    <img src="{{ log.usuario.profile_photo.url }}" alt="{{ log.usuario.get_full_name|default:log.usuario.username }}" class="user-photo" style="width:32px;height:32px;">
+                  {% else %}
+                    <div class="user-photo-placeholder" style="width:32px;height:32px;font-size:.7rem;">{{ log.usuario|get_user_initials }}</div>
+                  {% endif %}
+                  <span style="font-weight:600; color:#1e293b;">{{ log.usuario.get_full_name|default:log.usuario.username }}</span>
                 {% else %}
-                  <div class="user-photo-placeholder" style="width:32px;height:32px;font-size:.7rem;">{{ log.usuario|get_user_initials }}</div>
+                  <div class="user-photo-placeholder" style="width:32px;height:32px;font-size:.7rem;">?</div>
+                  <span style="font-weight:600; color:#94a3b8; font-style:italic;">Usuário removido</span>
                 {% endif %}
-                <span style="font-weight:600; color:#1e293b;">{{ log.usuario.get_full_name|default:log.usuario.username }}</span>
               </div>
             </td>
             <td><span class="badge-login"><i class="bi bi-box-arrow-in-right"></i> Login</span></td>
