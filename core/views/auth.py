@@ -92,7 +92,12 @@ def user_access_history(request):
         return redirect('dashboard')
     
     # Logs de login
-    login_logs = AuditLog.objects.filter(action='login').select_related('usuario').order_by('-created_at')
+    login_logs = (
+        AuditLog.objects
+        .filter(action='login')
+        .select_related('usuario')
+        .order_by('-created_at')
+    )
     
     # Estatísticas por usuário
     user_stats = User.objects.filter(ativo=True).annotate(
@@ -104,6 +109,12 @@ def user_access_history(request):
     paginator = Paginator(login_logs, 50)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
+
+    # Sanitiza registros com detalhes_json=None (registros antigos sem default)
+    # evita TypeError: 'NoneType' object is not subscriptable no template
+    for log in page_obj.object_list:
+        if log.detalhes_json is None:
+            log.detalhes_json = {}
     
     context = {
         'page_obj': page_obj,
